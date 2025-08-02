@@ -1,18 +1,18 @@
 <template>
-  <div class="hero min-h-[60vh]">
+  <div class="hero min-h-[calc(100vh-200px)]">
     <div class="hero-content text-center">
       <div class="max-w-md">
-        <h1 class="text-5xl font-bold text-primary">
+        <h1 class="text-5xl font-bold">
           🏠 Doma
         </h1>
-        <p class="py-6 text-lg">
-          Управляйте своими финансами легко и удобно. Ведите учёт доходов и расходов, планируйте бюджет и контролируйте свои траты.
+        <p class="py-6">
+          Управляйте своими финансами легко и удобно
         </p>
         <NuxtLink
           to="/budget"
           class="btn btn-primary btn-lg"
         >
-          Перейти к бюджету
+          💰 Перейти к бюджету
         </NuxtLink>
       </div>
     </div>

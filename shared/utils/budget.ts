@@ -1,13 +1,25 @@
-import type { BalanceSourceData } from '~~/shared/types/budget'
+import type { BalanceSourceData } from '../types/budget'
 
 export const formatAmount = (amount: number, currency: string): string => {
   const formatter = new Intl.NumberFormat('ru-RU', {
     style: 'currency',
-    currency: currency || 'RUB',
+    currency: currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   })
+
   return formatter.format(amount)
+}
+
+export const calculateTotalBalance = (
+  sources: BalanceSourceData[],
+  baseCurrency: string,
+  exchangeRates: Record<string, number>,
+): number => {
+  return sources.reduce((total, source) => {
+    const rate = source.currency === baseCurrency ? 1 : (exchangeRates[source.currency] || 1)
+    return total + (source.amount / rate)
+  }, 0)
 }
 
 export const getBalanceChangeClass = (balanceChange: number): string => {
@@ -17,23 +29,9 @@ export const getBalanceChangeClass = (balanceChange: number): string => {
 }
 
 export const getPocketExpensesClass = (pocketExpenses: number, income: number): string => {
-  const ratio = pocketExpenses / income
-  if (ratio > 0.3) return 'text-error'
-  if (ratio > 0.2) return 'text-warning'
+  const ratio = income > 0 ? pocketExpenses / income : 0
+
+  if (ratio > 0.5) return 'text-error'
+  if (ratio > 0.3) return 'text-warning'
   return 'text-success'
-}
-
-export const calculateTotalBalance = (
-  items: BalanceSourceData[],
-  baseCurrency: string,
-  exchangeRates: Record<string, number>,
-): number => {
-  return items.reduce((total, item) => {
-    if (item.currency === baseCurrency) {
-      return total + item.amount
-    }
-
-    const rate = exchangeRates[`${item.currency}_${baseCurrency}`] || 1
-    return total + (item.amount * rate)
-  }, 0)
 }

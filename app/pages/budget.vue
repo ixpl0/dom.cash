@@ -26,26 +26,23 @@
       </button>
     </div>
 
-    <ul
-      v-else
-      class="timeline timeline-vertical [--timeline-col-start:15ch]"
-    >
-      <YearSection
-        v-for="year in years"
-        :key="year"
-        :year="year"
-        :months="groupedData[year]"
-        :month-names="monthNames"
-        :exchange-rates="currentMonthRates"
-        :base-currency="baseCurrency"
-      />
-    </ul>
+    <div v-else>
+      <ul class="timeline timeline-vertical [--timeline-col-start:15ch]">
+        <BudgetYearSection
+          v-for="year in years"
+          :key="year"
+          :year="year"
+          :months="groupedData[year]"
+          :month-names="monthNames"
+          :exchange-rates="exchangeRates"
+        />
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import YearSection from '~/components/budget/YearSection.vue'
 
 const monthNames = [
   'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
@@ -57,74 +54,55 @@ const currentYear = now.getFullYear()
 const currentMonth = now.getMonth()
 
 const isCreatingCurrentMonth = ref(false)
-const baseCurrency = ref('RUB')
+
+const exchangeRates = ref({
+  '2025-01-01': { USD: 1, EUR: 0.85, RUB: 95 },
+  '2025-02-01': { USD: 1, EUR: 0.84, RUB: 96 },
+})
 
 const monthsData = ref<MonthData[]>([
   {
+    year: 2025,
+    month: 0,
     userMonthId: '1',
-    year: 2025,
-    month: 6,
-    balanceChange: 15000,
+    balanceSources: [
+      { id: '1', name: 'Сбербанк', currency: 'RUB', amount: 150000 },
+      { id: '2', name: 'Тинькофф', currency: 'RUB', amount: 75000 },
+      { id: '3', name: 'Наличные', currency: 'USD', amount: 500 },
+    ],
+    incomeEntries: [
+      { id: '1', description: 'Зарплата', amount: 120000, currency: 'RUB', date: '2025-01-15' },
+      { id: '2', description: 'Фриланс', amount: 800, currency: 'USD', date: '2025-01-20' },
+    ],
+    expenseEntries: [
+      { id: '1', description: 'Аренда квартиры', amount: 45000, currency: 'RUB', date: '2025-01-01' },
+      { id: '2', description: 'Продукты', amount: 25000, currency: 'RUB', date: '2025-01-10' },
+    ],
+    balanceChange: 1500,
+    pocketExpenses: 15000,
     income: 120000,
-    pocketExpenses: 25000,
-    balanceSources: [
-      { id: '1', name: 'Накопления', currency: 'RUB', amount: 500000 },
-      { id: '2', name: 'Доллары', currency: 'USD', amount: 2000 },
-    ],
-    incomeEntries: [
-      { id: '1', description: 'Зарплата', currency: 'RUB', amount: 100000, date: '2025-07-15' },
-      { id: '2', description: 'Фриланс', currency: 'USD', amount: 200, date: '2025-07-20' },
-    ],
-    expenseEntries: [
-      { id: '1', description: 'Аренда квартиры', currency: 'RUB', amount: 45000, date: '2025-07-01' },
-      { id: '2', description: 'Продукты', currency: 'RUB', amount: 15000, date: '2025-07-10' },
-    ],
   },
   {
-    userMonthId: '2',
-    year: 2025,
-    month: 5,
-    balanceChange: -5000,
-    income: 110000,
-    pocketExpenses: 30000,
-    balanceSources: [
-      { id: '3', name: 'Накопления', currency: 'RUB', amount: 485000 },
-      { id: '4', name: 'Доллары', currency: 'USD', amount: 2000 },
-    ],
-    incomeEntries: [
-      { id: '3', description: 'Зарплата', currency: 'RUB', amount: 100000, date: '2025-06-15' },
-      { id: '4', description: 'Бонус', currency: 'RUB', amount: 10000, date: '2025-06-30' },
-    ],
-    expenseEntries: [
-      { id: '3', description: 'Аренда квартиры', currency: 'RUB', amount: 45000, date: '2025-06-01' },
-      { id: '4', description: 'Отпуск', currency: 'RUB', amount: 70000, date: '2025-06-15' },
-    ],
-  },
-  {
-    userMonthId: '3',
     year: 2024,
     month: 11,
-    balanceChange: 25000,
-    income: 95000,
-    pocketExpenses: 20000,
+    userMonthId: '2',
     balanceSources: [
-      { id: '5', name: 'Накопления', currency: 'RUB', amount: 460000 },
-      { id: '6', name: 'Доллары', currency: 'USD', amount: 1800 },
+      { id: '3', name: 'Сбербанк', currency: 'RUB', amount: 140000 },
+      { id: '4', name: 'Тинькофф', currency: 'RUB', amount: 65000 },
     ],
     incomeEntries: [
-      { id: '5', description: 'Зарплата', currency: 'RUB', amount: 95000, date: '2024-12-15' },
+      { id: '3', description: 'Зарплата', amount: 115000, currency: 'RUB', date: '2024-12-15' },
+      { id: '4', description: 'Бонус', amount: 30000, currency: 'RUB', date: '2024-12-30' },
     ],
     expenseEntries: [
-      { id: '5', description: 'Аренда квартиры', currency: 'RUB', amount: 40000, date: '2024-12-01' },
-      { id: '6', description: 'Техника', currency: 'RUB', amount: 30000, date: '2024-12-20' },
+      { id: '3', description: 'Аренда квартиры', amount: 43000, currency: 'RUB', date: '2024-12-01' },
+      { id: '4', description: 'Новый год', amount: 40000, currency: 'RUB', date: '2024-12-25' },
     ],
+    balanceChange: -2000,
+    pocketExpenses: 18000,
+    income: 115000,
   },
 ])
-
-const currentMonthRates = ref<Record<string, number>>({
-  USD_RUB: 95.5,
-  EUR_RUB: 105.2,
-})
 
 const groupedData = computed(() => {
   return monthsData.value.reduce((acc, month) => {
@@ -136,34 +114,34 @@ const groupedData = computed(() => {
   }, {} as Record<number, MonthData[]>)
 })
 
-const years = computed(() =>
-  Object.keys(groupedData.value)
+const years = computed(() => {
+  return Object.keys(groupedData.value)
     .map(Number)
-    .sort((a, b) => b - a),
-)
+    .sort((a, b) => b - a)
+})
 
-const createCurrentMonth = async () => {
+const createCurrentMonth = async (): Promise<void> => {
   isCreatingCurrentMonth.value = true
 
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     const newMonth: MonthData = {
-      userMonthId: String(Date.now()),
       year: currentYear,
       month: currentMonth,
-      balanceChange: 0,
-      income: 0,
-      pocketExpenses: 0,
+      userMonthId: String(Date.now()),
       balanceSources: [],
       incomeEntries: [],
       expenseEntries: [],
+      balanceChange: 0,
+      pocketExpenses: 0,
+      income: 0,
     }
 
     monthsData.value.unshift(newMonth)
   }
   catch (error) {
-    console.error('Error creating current month:', error)
+    console.error('Ошибка создания месяца:', error)
   }
   finally {
     isCreatingCurrentMonth.value = false

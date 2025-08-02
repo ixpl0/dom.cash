@@ -28,8 +28,7 @@
     :key="`${monthData.year}-${monthData.month}`"
     :month-data="monthData"
     :month-names="monthNames"
-    :exchange-rates="exchangeRates"
-    :base-currency="baseCurrency"
+    :exchange-rates="getCurrentRates(monthData)"
   />
 </template>
 
@@ -41,9 +40,13 @@ interface Props {
   year: number
   months: MonthData[]
   monthNames: string[]
-  exchangeRates: Record<string, number>
-  baseCurrency: string
+  exchangeRates: Record<string, Record<string, number>>
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const getCurrentRates = (monthData: MonthData): Record<string, number> => {
+  const rateDate = `${monthData.year}-${String(monthData.month + 1).padStart(2, '0')}-01`
+  return props.exchangeRates[rateDate] || { USD: 1, EUR: 0.85, RUB: 95 }
+}
 </script>

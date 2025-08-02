@@ -1,13 +1,13 @@
 export interface MonthData {
-  userMonthId: string
   year: number
   month: number
-  balanceChange: number
-  income: number
-  pocketExpenses: number
+  userMonthId: string
   balanceSources: BalanceSourceData[]
   incomeEntries: IncomeEntryData[]
   expenseEntries: ExpenseEntryData[]
+  balanceChange: number
+  pocketExpenses: number
+  income: number
 }
 
 export interface BalanceSourceData {
@@ -20,16 +20,16 @@ export interface BalanceSourceData {
 export interface IncomeEntryData {
   id: string
   description: string
-  currency: string
   amount: number
+  currency: string
   date: string
 }
 
 export interface ExpenseEntryData {
   id: string
   description: string
-  currency: string
   amount: number
+  currency: string
   date: string
 }
 

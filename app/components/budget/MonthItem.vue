@@ -20,7 +20,7 @@
       >
         <path
           clip-rule="evenodd"
-          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
           fill="currentColor"
           fill-rule="evenodd"
         />
@@ -54,7 +54,7 @@
         <div class="stat-value">
           <div
             class="tooltip tooltip-right font-normal"
-            data-tip="Всё, что осталось после вычета крупных расходов из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д."
+            data-tip="Разница между доходами и расходами за месяц"
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
@@ -131,56 +131,66 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmount, getBalanceChangeClass, getPocketExpensesClass, calculateTotalBalance } from '~~/shared/utils/budget'
+import { formatAmount, calculateTotalBalance, getBalanceChangeClass, getPocketExpensesClass } from '~~/shared/utils/budget'
 
 interface Props {
   monthData: MonthData
   monthNames: string[]
   exchangeRates: Record<string, number>
-  baseCurrency: string
 }
 
 const props = defineProps<Props>()
 
-const startBalance = computed(() =>
-  calculateTotalBalance(props.monthData.balanceSources, props.baseCurrency, props.exchangeRates),
-)
+const baseCurrency = 'RUB'
 
-const totalIncome = computed(() =>
-  calculateTotalBalance(
+const currentMonthRates = computed(() => {
+  const rateDate = `${props.monthData.year}-${String(props.monthData.month + 1).padStart(2, '0')}-01`
+  return props.exchangeRates || {}
+})
+
+const startBalance = computed(() => {
+  return calculateTotalBalance(
+    props.monthData.balanceSources,
+    baseCurrency,
+    currentMonthRates.value,
+  )
+})
+
+const totalIncome = computed(() => {
+  return calculateTotalBalance(
     props.monthData.incomeEntries.map(entry => ({
       id: entry.id,
       name: entry.description,
       currency: entry.currency,
       amount: entry.amount,
     })),
-    props.baseCurrency,
-    props.exchangeRates,
-  ),
-)
+    baseCurrency,
+    currentMonthRates.value,
+  )
+})
 
-const totalExpenses = computed(() =>
-  calculateTotalBalance(
+const totalExpenses = computed(() => {
+  return calculateTotalBalance(
     props.monthData.expenseEntries.map(entry => ({
       id: entry.id,
       name: entry.description,
       currency: entry.currency,
       amount: entry.amount,
     })),
-    props.baseCurrency,
-    props.exchangeRates,
-  ),
-)
+    baseCurrency,
+    currentMonthRates.value,
+  )
+})
 
-const openBalanceModal = () => {
-  console.log('Opening balance modal for', props.monthData.userMonthId)
+const openBalanceModal = (): void => {
+  console.log('Открытие модала баланса для месяца:', props.monthData.month + 1, props.monthData.year)
 }
 
-const openIncomeModal = () => {
-  console.log('Opening income modal for', props.monthData.userMonthId)
+const openIncomeModal = (): void => {
+  console.log('Открытие модала доходов для месяца:', props.monthData.month + 1, props.monthData.year)
 }
 
-const openExpenseModal = () => {
-  console.log('Opening expense modal for', props.monthData.userMonthId)
+const openExpenseModal = (): void => {
+  console.log('Открытие модала расходов для месяца:', props.monthData.month + 1, props.monthData.year)
 }
 </script>
