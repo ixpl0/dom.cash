@@ -7,16 +7,26 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@nuxt/eslint": "1.7.1",
     "@tailwindcss/vite": "^4.1.11",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.2.0",
     "daisyui": "^5.0.50",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.4",
     "eslint": "^9.32.0",
     "nuxt": "^4.0.1",
     "tailwindcss": "^4.1.11",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
   }
 }

@@ -1,82 +1,172 @@
 <template>
-  <div class="space-y-6">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold mb-4">
-        Управление бюджетом
-      </h1>
-      <p class="text-lg text-base-content/70">
-        Контролируйте свои доходы и расходы
+  <div class="min-h-screen bg-base-100">
+    <div
+      v-if="monthsData.length === 0"
+      class="text-center py-12"
+    >
+      <div class="text-6xl mb-4">
+        💰
+      </div>
+      <h2 class="text-2xl font-bold mb-2">
+        Пока нет данных о бюджете
+      </h2>
+      <p class="text-lg opacity-70 mb-6">
+        Начните с создания месяца и добавления источников баланса
       </p>
+      <button
+        class="btn btn-primary btn-lg"
+        :disabled="isCreatingCurrentMonth"
+        @click="createCurrentMonth"
+      >
+        <span
+          v-if="isCreatingCurrentMonth"
+          class="loading loading-spinner loading-sm"
+        />
+        {{ isCreatingCurrentMonth ? 'Создание месяца...' : `📅 Создать ${monthNames[currentMonth]} ${currentYear}` }}
+      </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" stroke="currentColor">
-              <path fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Доходы
-          </h2>
-          <p class="text-3xl font-bold text-success">₽ 0</p>
-          <div class="card-actions justify-end">
-            <button class="btn btn-success btn-sm">Добавить</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-error">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" stroke="currentColor">
-              <path fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-            </svg>
-            Расходы
-          </h2>
-          <p class="text-3xl font-bold text-error">₽ 0</p>
-          <div class="card-actions justify-end">
-            <button class="btn btn-error btn-sm">Добавить</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-info">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" stroke="currentColor">
-              <path fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Баланс
-          </h2>
-          <p class="text-3xl font-bold text-info">₽ 0</p>
-          <div class="card-actions justify-end">
-            <button class="btn btn-info btn-sm">Детали</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card bg-base-200 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title mb-4">Быстрые действия</h2>
-        <div class="flex flex-wrap gap-4">
-          <button class="btn btn-outline btn-success">
-            Добавить доход
-          </button>
-          <button class="btn btn-outline btn-error">
-            Добавить расход
-          </button>
-          <button class="btn btn-outline btn-info">
-            Создать категорию
-          </button>
-          <button class="btn btn-outline">
-            Экспорт данных
-          </button>
-        </div>
-      </div>
-    </div>
+    <ul
+      v-else
+      class="timeline timeline-vertical [--timeline-col-start:15ch]"
+    >
+      <YearSection
+        v-for="year in years"
+        :key="year"
+        :year="year"
+        :months="groupedData[year]"
+        :month-names="monthNames"
+        :exchange-rates="currentMonthRates"
+        :base-currency="baseCurrency"
+      />
+    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { MonthData } from '~~/shared/types/budget'
+import YearSection from '~/components/budget/YearSection.vue'
+
+const monthNames = [
+  'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+  'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
+]
+
+const now = new Date()
+const currentYear = now.getFullYear()
+const currentMonth = now.getMonth()
+
+const isCreatingCurrentMonth = ref(false)
+const baseCurrency = ref('RUB')
+
+const monthsData = ref<MonthData[]>([
+  {
+    userMonthId: '1',
+    year: 2025,
+    month: 6,
+    balanceChange: 15000,
+    income: 120000,
+    pocketExpenses: 25000,
+    balanceSources: [
+      { id: '1', name: 'Накопления', currency: 'RUB', amount: 500000 },
+      { id: '2', name: 'Доллары', currency: 'USD', amount: 2000 },
+    ],
+    incomeEntries: [
+      { id: '1', description: 'Зарплата', currency: 'RUB', amount: 100000, date: '2025-07-15' },
+      { id: '2', description: 'Фриланс', currency: 'USD', amount: 200, date: '2025-07-20' },
+    ],
+    expenseEntries: [
+      { id: '1', description: 'Аренда квартиры', currency: 'RUB', amount: 45000, date: '2025-07-01' },
+      { id: '2', description: 'Продукты', currency: 'RUB', amount: 15000, date: '2025-07-10' },
+    ],
+  },
+  {
+    userMonthId: '2',
+    year: 2025,
+    month: 5,
+    balanceChange: -5000,
+    income: 110000,
+    pocketExpenses: 30000,
+    balanceSources: [
+      { id: '3', name: 'Накопления', currency: 'RUB', amount: 485000 },
+      { id: '4', name: 'Доллары', currency: 'USD', amount: 2000 },
+    ],
+    incomeEntries: [
+      { id: '3', description: 'Зарплата', currency: 'RUB', amount: 100000, date: '2025-06-15' },
+      { id: '4', description: 'Бонус', currency: 'RUB', amount: 10000, date: '2025-06-30' },
+    ],
+    expenseEntries: [
+      { id: '3', description: 'Аренда квартиры', currency: 'RUB', amount: 45000, date: '2025-06-01' },
+      { id: '4', description: 'Отпуск', currency: 'RUB', amount: 70000, date: '2025-06-15' },
+    ],
+  },
+  {
+    userMonthId: '3',
+    year: 2024,
+    month: 11,
+    balanceChange: 25000,
+    income: 95000,
+    pocketExpenses: 20000,
+    balanceSources: [
+      { id: '5', name: 'Накопления', currency: 'RUB', amount: 460000 },
+      { id: '6', name: 'Доллары', currency: 'USD', amount: 1800 },
+    ],
+    incomeEntries: [
+      { id: '5', description: 'Зарплата', currency: 'RUB', amount: 95000, date: '2024-12-15' },
+    ],
+    expenseEntries: [
+      { id: '5', description: 'Аренда квартиры', currency: 'RUB', amount: 40000, date: '2024-12-01' },
+      { id: '6', description: 'Техника', currency: 'RUB', amount: 30000, date: '2024-12-20' },
+    ],
+  },
+])
+
+const currentMonthRates = ref<Record<string, number>>({
+  USD_RUB: 95.5,
+  EUR_RUB: 105.2,
+})
+
+const groupedData = computed(() => {
+  return monthsData.value.reduce((acc, month) => {
+    if (!acc[month.year]) {
+      acc[month.year] = []
+    }
+    acc[month.year].push(month)
+    return acc
+  }, {} as Record<number, MonthData[]>)
+})
+
+const years = computed(() =>
+  Object.keys(groupedData.value)
+    .map(Number)
+    .sort((a, b) => b - a),
+)
+
+const createCurrentMonth = async () => {
+  isCreatingCurrentMonth.value = true
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    const newMonth: MonthData = {
+      userMonthId: String(Date.now()),
+      year: currentYear,
+      month: currentMonth,
+      balanceChange: 0,
+      income: 0,
+      pocketExpenses: 0,
+      balanceSources: [],
+      incomeEntries: [],
+      expenseEntries: [],
+    }
+
+    monthsData.value.unshift(newMonth)
+  }
+  catch (error) {
+    console.error('Error creating current month:', error)
+  }
+  finally {
+    isCreatingCurrentMonth.value = false
+  }
+}
 </script>
