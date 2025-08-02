@@ -1,5 +1,3 @@
-import { db } from '../database'
-
-export default defineNitroPlugin(async (nitroApp) => {
+export default defineNitroPlugin(async () => {
   console.log('Database initialized')
 })
