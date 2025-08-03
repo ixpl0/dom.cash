@@ -9,7 +9,7 @@ export const user = sqliteTable('user', {
 export const settings = sqliteTable('settings', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().unique().references(() => user.id),
-  baseCurrency: text('base_currency').notNull(),
+  mainCurrency: text('main_currency').notNull(),
 })
 
 export const session = sqliteTable('session', {
@@ -38,19 +38,19 @@ export const income = createIncomeOrExpenseTable('income')
 export const expense = createIncomeOrExpenseTable('expense')
 
 export type User = typeof user.$inferSelect
+export type Settings = typeof settings.$inferSelect
 export type Session = typeof session.$inferSelect
 export type Currency = typeof currency.$inferSelect
 export type Month = typeof month.$inferSelect
 export type Balance = typeof balance.$inferSelect
 export type Income = typeof income.$inferSelect
 export type Expense = typeof expense.$inferSelect
-export type Settings = typeof settings.$inferSelect
 
 function createIncomeOrExpenseTable(tableName: string) {
   return sqliteTable(tableName, {
     id: text('id').primaryKey(),
     monthId: text('month_id').notNull().references(() => month.id),
-    name: text('name').notNull(),
+    description: text('description').notNull(),
     amount: real('amount').notNull(),
     currency: text('currency').notNull(),
     date: text('date'),
