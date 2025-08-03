@@ -17,7 +17,6 @@
     "@libsql/client": "^0.15.10",
     "@nuxt/eslint": "1.7.1",
     "@tailwindcss/vite": "^4.1.11",
-    "@types/better-sqlite3": "^7.6.13",
     "daisyui": "^5.0.50",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.4",

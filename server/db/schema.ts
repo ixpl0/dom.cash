@@ -1,10 +1,16 @@
-import {
-  sqliteTable,
-  integer,
-  text,
-  real,
-  unique,
-} from 'drizzle-orm/sqlite-core'
+import { sqliteTable, integer, text, real, unique } from 'drizzle-orm/sqlite-core'
+
+const createIncomeOrExpenseTable = (tableName: string) =>
+  sqliteTable(tableName, {
+    id: text('id').primaryKey(),
+    userMonthId: text('user_month_id').notNull().references(() => userMonths.id),
+    description: text('description').notNull(),
+    amount: real('amount').notNull(),
+    currency: text('currency').notNull(),
+    date: text('date').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  })
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -14,9 +20,8 @@ export const user = sqliteTable('user', {
 
 export const session = sqliteTable('session', {
   id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id),
+  userId: text('user_id').notNull().references(() => user.id),
+  token: text('token').notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
 })
 
@@ -25,28 +30,20 @@ export const exchangeRates = sqliteTable('exchange_rates', {
   rates: text('rates', { mode: 'json' }).notNull(),
 })
 
-export const userMonths = sqliteTable(
-  'user_months',
-  {
-    id: text('id').primaryKey(),
-    userId: text('user_id')
-      .notNull()
-      .references(() => user.id),
-    year: integer('year').notNull(),
-    month: integer('month').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-  },
-  table => ({
-    uniqueUserMonth: unique().on(table.userId, table.year, table.month),
-  }),
-)
+export const userMonths = sqliteTable('user_months', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id),
+  year: integer('year').notNull(),
+  month: integer('month').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, table => [
+  unique('unique_user_month').on(table.userId, table.year, table.month),
+])
 
 export const balanceSources = sqliteTable('balance_sources', {
   id: text('id').primaryKey(),
-  userMonthId: text('user_month_id')
-    .notNull()
-    .references(() => userMonths.id),
+  userMonthId: text('user_month_id').notNull().references(() => userMonths.id),
   name: text('name').notNull(),
   currency: text('currency').notNull(),
   amount: real('amount').notNull().default(0),
@@ -54,38 +51,12 @@ export const balanceSources = sqliteTable('balance_sources', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
-export const incomeEntries = sqliteTable('income_entries', {
-  id: text('id').primaryKey(),
-  userMonthId: text('user_month_id')
-    .notNull()
-    .references(() => userMonths.id),
-  description: text('description').notNull(),
-  amount: real('amount').notNull(),
-  currency: text('currency').notNull(),
-  date: text('date').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
-
-export const expenseEntries = sqliteTable('expense_entries', {
-  id: text('id').primaryKey(),
-  userMonthId: text('user_month_id')
-    .notNull()
-    .references(() => userMonths.id),
-  description: text('description').notNull(),
-  amount: real('amount').notNull(),
-  currency: text('currency').notNull(),
-  date: text('date').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+export const incomeEntries = createIncomeOrExpenseTable('income_entries')
+export const expenseEntries = createIncomeOrExpenseTable('expense_entries')
 
 export const userSettings = sqliteTable('user_settings', {
   id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .unique()
-    .references(() => user.id),
+  userId: text('user_id').notNull().unique().references(() => user.id),
   baseCurrency: text('base_currency').notNull().default('USD'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
