@@ -1,4 +1,4 @@
-import type { BalanceSourceData } from '../types/budget'
+import type { BalanceSourceData } from '~~/shared/types/budget'
 
 export const formatAmount = (amount: number, currency: string): string => {
   const formatter = new Intl.NumberFormat('ru-RU', {

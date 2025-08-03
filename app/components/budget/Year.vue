@@ -23,7 +23,7 @@
     <hr>
   </li>
 
-  <MonthItem
+  <BudgetMonth
     v-for="monthData in months"
     :key="`${monthData.year}-${monthData.month}`"
     :month-data="monthData"
@@ -33,7 +33,6 @@
 </template>
 
 <script setup lang="ts">
-import MonthItem from './MonthItem.vue'
 import type { MonthData } from '~~/shared/types/budget'
 
 interface Props {
