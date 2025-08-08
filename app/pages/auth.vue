@@ -22,7 +22,7 @@
               :class="{ 'input-error': errors.username }"
               required
               minlength="3"
-              maxlength="20"
+              maxlength="64"
               :disabled="isLoading"
             >
             <label
@@ -44,7 +44,7 @@
               class="input input-bordered w-full"
               :class="{ 'input-error': errors.password }"
               required
-              minlength="6"
+              minlength="8"
               maxlength="100"
               :disabled="isLoading"
             >
@@ -86,7 +86,7 @@
                 v-if="isLoading"
                 class="loading loading-spinner loading-sm"
               />
-              {{ isLoading ? 'Входим...' : 'Войти' }}
+              {{ isLoading ? 'Входим...' : 'Войти / Зарегистрироваться' }}
             </button>
           </div>
         </form>
@@ -107,7 +107,7 @@
           </div>
 
           <p class="text-sm opacity-70">
-            Если у вас нет аккаунта, он будет создан автоматически
+            Если у вас нет аккаунта, он будет создан автоматически с валютой USD
           </p>
         </div>
       </div>
@@ -141,7 +141,7 @@ const isLoading = ref(false)
 
 const isFormValid = computed(() =>
   formData.value.username.length >= 3
-  && formData.value.password.length >= 6
+  && formData.value.password.length >= 8
   && !Object.keys(errors.value).length,
 )
 
@@ -156,15 +156,12 @@ const validateForm = (): boolean => {
   if (formData.value.username.length < 3) {
     newErrors.username = 'Имя пользователя должно содержать минимум 3 символа'
   }
-  else if (formData.value.username.length > 20) {
-    newErrors.username = 'Имя пользователя не должно превышать 20 символов'
-  }
-  else if (!/^[a-zA-Z0-9_]+$/.test(formData.value.username)) {
-    newErrors.username = 'Имя пользователя может содержать только буквы, цифры и подчеркивания'
+  else if (formData.value.username.length > 64) {
+    newErrors.username = 'Имя пользователя не должно превышать 64 символа'
   }
 
-  if (formData.value.password.length < 6) {
-    newErrors.password = 'Пароль должен содержать минимум 6 символов'
+  if (formData.value.password.length < 8) {
+    newErrors.password = 'Пароль должен содержать минимум 8 символов'
   }
   else if (formData.value.password.length > 100) {
     newErrors.password = 'Пароль не должен превышать 100 символов'
@@ -184,13 +181,14 @@ const handleSubmit = async (): Promise<void> => {
   isLoading.value = true
 
   try {
-    const result = await login({
+    await login({
       username: formData.value.username,
       password: formData.value.password,
     })
 
-    if (result.success) {
-      await router.push(redirectPath.value ?? '/')
+    // Redirect будет обработан в useAuth
+    if (redirectPath.value) {
+      await router.push(redirectPath.value)
     }
   }
   catch (error) {

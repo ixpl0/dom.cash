@@ -1,52 +1,97 @@
-import { sqliteTable, integer, text, real, unique } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, integer, text, unique, index, check } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
 
-export const user = sqliteTable('user', {
-  id: text('id').primaryKey(),
-  username: text('username').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
-  mainCurrency: text('main_currency').notNull().default('USD'),
-})
+type Rates = Record<string, number>
 
-export const session = sqliteTable('session', {
-  id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => user.id),
-  token: text('token').notNull(),
-  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-})
-
-export const currency = sqliteTable('currency', {
-  date: text('date').primaryKey(),
-  rates: text('rates', { mode: 'json' }).notNull(),
-})
-
-export const month = sqliteTable('month', {
-  id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => user.id),
-  year: integer('year').notNull(),
-  month: integer('month').notNull(),
-}, table => [
-  unique('unique_user_month').on(table.userId, table.year, table.month),
-])
-
-export const balance = createIncomeOrExpenseTable('balance')
-export const income = createIncomeOrExpenseTable('income')
-export const expense = createIncomeOrExpenseTable('expense')
-
-export type User = typeof user.$inferSelect
-export type Session = typeof session.$inferSelect
-export type Currency = typeof currency.$inferSelect
-export type Month = typeof month.$inferSelect
-export type Balance = typeof balance.$inferSelect
-export type Income = typeof income.$inferSelect
-export type Expense = typeof expense.$inferSelect
-
-function createIncomeOrExpenseTable(tableName: string) {
-  return sqliteTable(tableName, {
+export const user = sqliteTable(
+  'user',
+  {
     id: text('id').primaryKey(),
-    monthId: text('month_id').notNull().references(() => month.id),
+    username: text('username').notNull().unique(),
+    passwordHash: text('password_hash').notNull(),
+    mainCurrency: text('main_currency').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  t => [
+    check('ck_user_currency_3_upper', sql`${t.mainCurrency} GLOB '[A-Z][A-Z][A-Z]'`),
+  ],
+)
+
+export const session = sqliteTable(
+  'session',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  t => [
+    index('idx_session_user').on(t.userId),
+    index('idx_session_expires').on(t.expiresAt),
+    check('ck_session_time_order', sql`${t.expiresAt} >= ${t.createdAt}`),
+  ],
+)
+
+export const currency = sqliteTable(
+  'currency',
+  {
+    date: text('date').primaryKey(),
+    rates: text('rates', { mode: 'json' }).$type<Rates>().notNull(),
+  },
+  t => [
+    check('ck_currency_date_format', sql`${t.date} GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'`),
+    check('ck_currency_rates_is_object', sql`${t.rates} GLOB '{*}'`),
+  ],
+)
+
+export const month = sqliteTable(
+  'month',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    year: integer('year').notNull(),
+    month: integer('month').notNull(),
+  },
+  t => [
+    unique('uq_user_year_month').on(t.userId, t.year, t.month),
+    index('idx_month_user').on(t.userId),
+    check('ck_month_range', sql`${t.month} between 0 and 11`),
+  ],
+)
+
+export const entry = sqliteTable(
+  'entry',
+  {
+    id: text('id').primaryKey(),
+    monthId: text('month_id').notNull().references(() => month.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: ['balance', 'income', 'expense'] }).notNull(),
     description: text('description').notNull(),
-    amount: real('amount').notNull(),
+    amount: integer('amount').notNull(),
     currency: text('currency').notNull(),
     date: text('date'),
-  })
-}
+  },
+  t => [
+    index('idx_entry_month').on(t.monthId),
+    index('idx_entry_date').on(t.date),
+    check('ck_amount_nonneg', sql`${t.amount} >= 0`),
+    check('ck_entry_currency_3_upper', sql`${t.currency} GLOB '[A-Z][A-Z][A-Z]'`),
+  ],
+)
+
+export type User = typeof user.$inferSelect
+export type NewUser = typeof user.$inferInsert
+
+export type Session = typeof session.$inferSelect
+export type NewSession = typeof session.$inferInsert
+
+export type Currency = typeof currency.$inferSelect
+export type NewCurrency = typeof currency.$inferInsert
+export type CurrencyRates = Currency['rates']
+
+export type Month = typeof month.$inferSelect
+export type NewMonth = typeof month.$inferInsert
+
+export type Entry = typeof entry.$inferSelect
+export type NewEntry = typeof entry.$inferInsert
+export type EntryKind = Entry['kind']
