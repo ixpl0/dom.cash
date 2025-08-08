@@ -28,15 +28,25 @@ export const useAuth = () => {
   }
 
   const logout = async (): Promise<void> => {
-    user.value = null
-
     await $fetch('/api/auth/logout', {
       method: 'POST',
-    }).catch(() => {
-      // Ignore logout errors
-    })
+    }).catch(() => {})
 
-    await navigateTo('/auth')
+    user.value = null
+
+    await navigateTo('/', { replace: true })
+  }
+
+  const restoreSession = async (): Promise<void> => {
+    if (user.value || import.meta.server) return
+
+    try {
+      const response = await $fetch<{ user: User }>('/api/auth/me')
+      user.value = response.user
+    }
+    catch {
+      user.value = null
+    }
   }
 
   const isAuthenticated = computed(() => Boolean(user.value))
@@ -46,5 +56,6 @@ export const useAuth = () => {
     isAuthenticated,
     login,
     logout,
+    restoreSession,
   }
 }

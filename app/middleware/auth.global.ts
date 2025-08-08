@@ -1,10 +1,10 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, initializeAuth } = useAuth()
+  const { isAuthenticated, restoreSession } = useAuth()
 
   const isPublicRoute = constants.publicRoutes.includes(to.path)
 
   if (!isPublicRoute) {
-    await initializeAuth()
+    await restoreSession()
 
     if (!isAuthenticated.value) {
       return navigateTo({

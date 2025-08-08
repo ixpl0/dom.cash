@@ -16,7 +16,7 @@
             to="/budget"
             class="btn btn-primary btn-lg"
           >
-            📊 Перейти к бюджету
+            Перейти к бюджету
           </NuxtLink>
         </div>
       </div>

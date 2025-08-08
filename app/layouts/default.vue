@@ -5,7 +5,9 @@
         <NuxtLink
           to="/"
           class="text-xl font-bold"
-        >💰 Домашние финансы</NuxtLink>
+        >
+          🏠 Doma
+        </NuxtLink>
       </div>
       <div class="navbar-center">
         <div
@@ -15,7 +17,9 @@
           <NuxtLink
             to="/budget"
             class="btn btn-ghost"
-          >📊 Бюджет</NuxtLink>
+          >
+            Бюджет
+          </NuxtLink>
         </div>
       </div>
       <div class="navbar-end">

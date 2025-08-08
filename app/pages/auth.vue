@@ -3,7 +3,7 @@
     <div class="card w-full max-w-md bg-base-200 shadow-xl">
       <div class="card-body">
         <h2 class="card-title justify-center text-3xl mb-6">
-          💰 Добро пожаловать
+          Добро пожаловать
         </h2>
 
         <form
@@ -79,8 +79,8 @@
           <div class="form-control mt-6">
             <button
               type="submit"
-              class="btn btn-primary"
-              :disabled="isLoading || !isFormValid"
+              class="btn btn-primary w-full"
+              :disabled="isLoading"
             >
               <span
                 v-if="isLoading"
@@ -96,18 +96,16 @@
         </div>
 
         <div class="text-center space-y-2">
-          <div class="mb-4">
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm"
-              @click="goHome"
-            >
-              🏠 На главную
-            </button>
-          </div>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm mb-4"
+            @click="goHome"
+          >
+            На главную
+          </button>
 
           <p class="text-sm opacity-70">
-            Если у вас нет аккаунта, он будет создан автоматически с валютой USD
+            Если у вас нет аккаунта, он будет создан автоматически
           </p>
         </div>
       </div>
@@ -186,7 +184,6 @@ const handleSubmit = async (): Promise<void> => {
       password: formData.value.password,
     })
 
-    // Redirect будет обработан в useAuth
     if (redirectPath.value) {
       await router.push(redirectPath.value)
     }
