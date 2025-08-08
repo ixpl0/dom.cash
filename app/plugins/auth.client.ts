@@ -1,8 +1,8 @@
 export default defineNuxtPlugin(async () => {
   const { restoreSession } = useAuth()
-  const userState = useState('auth.user')
+  const { user } = useAuthState()
 
-  if (!userState.value) {
+  if (!user.value) {
     await restoreSession()
   }
 })

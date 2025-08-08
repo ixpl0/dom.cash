@@ -1,38 +1,15 @@
-import { defineEventHandler, getCookie, createError } from 'h3'
-import { createHash } from 'node:crypto'
-import { eq, and, gt } from 'drizzle-orm'
-import { db } from '~~/server/db'
-import { user, session } from '~~/server/db/schema'
+import { defineEventHandler, createError } from 'h3'
+import { validateAuthToken } from '~~/shared/utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const token = getCookie(event, 'auth-token')
+  const { user, error } = await validateAuthToken(event)
 
-  if (!token) {
-    throw createError({ statusCode: 401, statusMessage: 'No token provided' })
-  }
-
-  const tokenHash = createHash('sha256').update(token).digest('hex')
-  const now = new Date()
-
-  const [userRecord] = await db
-    .select({
-      id: user.id,
-      username: user.username,
-      mainCurrency: user.mainCurrency,
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: error || 'Authentication failed',
     })
-    .from(session)
-    .innerJoin(user, eq(session.userId, user.id))
-    .where(and(
-      eq(session.tokenHash, tokenHash),
-      gt(session.expiresAt, now),
-    ))
-    .limit(1)
-
-  if (!userRecord) {
-    throw createError({ statusCode: 401, statusMessage: 'Invalid or expired token' })
   }
 
-  return {
-    user: userRecord,
-  }
+  return { user }
 })

@@ -1,3 +1,5 @@
+import constants from '~/utils/constants'
+
 export default defineNuxtRouteMiddleware(async (to) => {
   const { isAuthenticated, restoreSession } = useAuth()
 

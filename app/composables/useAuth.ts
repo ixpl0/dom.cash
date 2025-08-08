@@ -1,16 +1,7 @@
-export interface User {
-  id: string
-  username: string
-  mainCurrency: string
-}
-
-export interface LoginCredentials {
-  username: string
-  password: string
-}
+import type { User, LoginCredentials } from '~~/shared/types'
 
 export const useAuth = () => {
-  const user = useState<User | null>('auth.user', () => null)
+  const { user, setUser, clearUser, isAuthenticated } = useAuthState()
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     const response = await $fetch<{
@@ -22,7 +13,7 @@ export const useAuth = () => {
       body: credentials,
     })
 
-    user.value = response.user
+    setUser(response.user)
 
     await navigateTo('/')
   }
@@ -32,7 +23,7 @@ export const useAuth = () => {
       method: 'POST',
     }).catch(() => {})
 
-    user.value = null
+    clearUser()
 
     await navigateTo('/', { replace: true })
   }
@@ -42,17 +33,15 @@ export const useAuth = () => {
 
     try {
       const response = await $fetch<{ user: User }>('/api/auth/me')
-      user.value = response.user
+      setUser(response.user)
     }
     catch {
-      user.value = null
+      clearUser()
     }
   }
 
-  const isAuthenticated = computed(() => Boolean(user.value))
-
   return {
-    user: readonly(user),
+    user,
     isAuthenticated,
     login,
     logout,

@@ -144,7 +144,6 @@ const props = defineProps<Props>()
 const baseCurrency = 'RUB'
 
 const currentMonthRates = computed(() => {
-  const rateDate = `${props.monthData.year}-${String(props.monthData.month + 1).padStart(2, '0')}-01`
   return props.exchangeRates || {}
 })
 
