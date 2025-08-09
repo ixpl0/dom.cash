@@ -45,7 +45,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { MonthData } from '~~/shared/types/budget'
+import { calculateTotalBalance } from '~~/shared/utils/budget'
+import { useAuthState } from '~/composables/useAuthState'
+
 const monthNames = [
   'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
   'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
@@ -55,57 +59,78 @@ const now = new Date()
 const currentYear = now.getFullYear()
 const currentMonth = now.getMonth()
 
+const { user } = useAuthState()
+const baseCurrency = computed(() => user.value?.mainCurrency || 'USD')
+
 const isCreatingCurrentMonth = ref(false)
 
-const monthsData = ref([])
+const monthsData = ref<MonthData[]>([])
 
-const exchangeRates = ref({
-  '2024-01-01': {
-    USD: 1,
-    EUR: 0.85,
-    RUB: 75,
-  },
-})
+const exchangeRates = ref<Record<string, Record<string, number>>>({})
 
 const groupedData = computed(() => {
-  return monthsData.value.reduce((acc, month) => {
-    if (!acc[month.year]) {
-      acc[month.year] = []
+  return monthsData.value.reduce((acc: Record<number, MonthData[]>, m) => {
+    if (!acc[m.year]) {
+      acc[m.year] = []
     }
-    acc[month.year].push(month)
+    acc[m.year] = acc[m.year].concat(m)
     return acc
   }, {})
 })
 
 const years = computed(() => {
-  return Object.keys(groupedData.value)
-    .map(Number)
-    .sort((a, b) => b - a)
+  return Object.keys(groupedData.value).map(Number).sort((a, b) => b - a)
 })
+
+const computeStats = () => {
+  const sorted = [...monthsData.value].sort((a, b) => {
+    if (a.year === b.year) return a.month - b.month
+    return a.year - b.year
+  })
+  sorted.forEach((m, i) => {
+    const rateDate = `${m.year}-${String(m.month + 1).padStart(2, '0')}-01`
+    const rates = exchangeRates.value[rateDate] || {}
+    const incomeTotal = calculateTotalBalance(
+      m.incomeEntries.map(e => ({ id: e.id, name: e.description, currency: e.currency, amount: e.amount })),
+      baseCurrency.value,
+      rates,
+    )
+    const expenseTotal = calculateTotalBalance(
+      m.expenseEntries.map(e => ({ id: e.id, name: e.description, currency: e.currency, amount: e.amount })),
+      baseCurrency.value,
+      rates,
+    )
+    const startBalance = calculateTotalBalance(m.balanceSources, baseCurrency.value, rates)
+    const prev = sorted[i - 1]
+    const prevRateDate = prev ? `${prev.year}-${String(prev.month + 1).padStart(2, '0')}-01` : ''
+    const prevBalance = prev
+      ? calculateTotalBalance(prev.balanceSources, baseCurrency.value, exchangeRates.value[prevRateDate] || {})
+      : 0
+    m.income = incomeTotal
+    m.balanceChange = incomeTotal - expenseTotal
+    m.pocketExpenses = prev ? prevBalance - startBalance + incomeTotal - expenseTotal : 0
+  })
+}
+
+const fetchData = async () => {
+  const data = await $fetch<{ months: MonthData[]; rates: Record<string, Record<string, number>> }>('/api/budget')
+  monthsData.value = data.months
+  exchangeRates.value = data.rates
+  computeStats()
+}
+
+onMounted(fetchData)
+
+watch(monthsData, computeStats, { deep: true })
 
 const createCurrentMonth = async () => {
   isCreatingCurrentMonth.value = true
-
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const newMonth = {
-      id: `month-${Date.now()}`,
-      year: currentYear,
-      month: currentMonth,
-      userMonthId: `user-month-${Date.now()}`,
-      balanceSources: [],
-      incomeEntries: [],
-      expenseEntries: [],
-      balanceChange: 0,
-      pocketExpenses: 0,
-      income: 0,
-    }
-
-    monthsData.value.push(newMonth)
-  }
-  catch (error) {
-    console.error('Error creating current month:', error)
+    const newMonth = await $fetch<MonthData>('/api/budget', {
+      method: 'POST',
+      body: { year: currentYear, month: currentMonth },
+    })
+    monthsData.value = monthsData.value.concat(newMonth)
   }
   finally {
     isCreatingCurrentMonth.value = false
