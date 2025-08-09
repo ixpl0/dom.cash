@@ -1,10 +1,10 @@
-import { validateAuthToken } from '~~/shared/utils/auth'
+import { getOptionalAuth } from '~~/server/utils/session'
 
 export default defineNuxtPlugin(async () => {
   const event = useRequestEvent()
   if (!event) return
 
-  const { user } = await validateAuthToken(event)
+  const user = await getOptionalAuth(event)
 
   if (user) {
     const { setUser } = useAuthState()

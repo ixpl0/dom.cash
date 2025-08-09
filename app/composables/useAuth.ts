@@ -4,16 +4,12 @@ export const useAuth = () => {
   const { user, setUser, clearUser, isAuthenticated } = useAuthState()
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
-    const response = await $fetch<{
-      user: User
-      token: string
-      expiresAt: string
-    }>('/api/auth', {
+    const user = await $fetch<User>('/api/auth', {
       method: 'POST',
       body: credentials,
     })
 
-    setUser(response.user)
+    setUser(user)
 
     await navigateTo('/')
   }
@@ -32,8 +28,8 @@ export const useAuth = () => {
     if (user.value || import.meta.server) return
 
     try {
-      const response = await $fetch<{ user: User }>('/api/auth/me')
-      setUser(response.user)
+      const user = await $fetch<User>('/api/auth/me')
+      setUser(user)
     }
     catch {
       clearUser()

@@ -60,7 +60,7 @@ export const ensureUser = async (username: string, password: string, mainCurrenc
   return existing
 }
 
-export const createSession = async (userId: string, now: Date) => {
+export const createSession = async (userId: string, now: Date): Promise<string> => {
   const token = generateSessionToken()
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
@@ -73,7 +73,7 @@ export const createSession = async (userId: string, now: Date) => {
     expiresAt,
   })
 
-  return { token, expiresAt }
+  return token
 }
 
 export const setAuthCookie = (event: H3Event, token: string) => {

@@ -23,7 +23,8 @@
   * **Never** use `any`. If needed, use `unknown` and narrow. Prefer generics when possible.
   * Destructure where appropriate. Prefer `map`/`filter`/`reduce` over `for/forEach` when suitable.
   * Every `if`/`else`/`for` must have a block (no one-liners).
-  * **Never** add comments in code. If something needs explaining, extract a well-named function. If anything’s unclear, I’ll ask.
+  * **NEVER USE COMMENTS**. NEVER. Only use comments for disabling ESLint rules, or for TODOs.
   * Variables and functions should be simple and in simple English, but meaningful, self-explanatory and no abbreviations.
+  * Add empty line to the end of every new file.
 * Vue: **Vue 3, Composition API, `<script setup lang="ts">`**, prefer `ref` over `reactive`.
 * Follow the existing ESLint and TS config.

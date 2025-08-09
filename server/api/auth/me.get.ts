@@ -1,15 +1,6 @@
-import { defineEventHandler, createError } from 'h3'
-import { validateAuthToken } from '~~/shared/utils/auth'
+import { defineEventHandler } from 'h3'
+import { requireAuth } from '~~/server/utils/session'
 
 export default defineEventHandler(async (event) => {
-  const { user, error } = await validateAuthToken(event)
-
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: error || 'Authentication failed',
-    })
-  }
-
-  return { user }
+  return await requireAuth(event)
 })
