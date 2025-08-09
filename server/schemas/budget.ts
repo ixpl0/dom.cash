@@ -11,14 +11,14 @@ export const createEntrySchema = z.object({
   description: z.string().min(1),
   amount: z.number().int().nonnegative(),
   currency: z.string().length(3),
-  date: z.string().optional(),
+  date: z.string().date().optional(),
 })
 
 export const updateEntrySchema = z.object({
   description: z.string().min(1),
   amount: z.number().int().nonnegative(),
   currency: z.string().length(3),
-  date: z.string().optional(),
+  date: z.string().date().optional(),
 })
 
 export type CreateMonthInput = z.infer<typeof createMonthSchema>
