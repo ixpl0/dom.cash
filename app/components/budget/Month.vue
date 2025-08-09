@@ -157,8 +157,18 @@
 </template>
 
 <script setup lang="ts">
-import type { MonthData, BalanceSourceData, IncomeEntryData, ExpenseEntryData } from '~~/shared/types/budget'
-import { formatAmount, calculateTotalBalance, getBalanceChangeClass, getPocketExpensesClass } from '~~/shared/utils/budget'
+import type {
+  MonthData,
+  BalanceSourceData,
+  IncomeEntryData,
+  ExpenseEntryData,
+} from '~~/shared/types/budget'
+import {
+  formatAmount,
+  calculateTotalBalance,
+  getBalanceChangeClass,
+  getPocketExpensesClass,
+} from '~~/shared/utils/budget'
 import EntryModal from '~/components/budget/EntryModal.vue'
 import { useAuthState } from '~/composables/useAuthState'
 
@@ -169,6 +179,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  (e: 'updateBalance', entries: BalanceSourceData[]): void
+  (e: 'updateIncome', entries: IncomeEntryData[]): void
+  (e: 'updateExpense', entries: ExpenseEntryData[]): void
+}>()
 
 const { user } = useAuthState()
 const baseCurrency = computed(() => user.value?.mainCurrency || 'USD')
@@ -228,14 +243,14 @@ const openExpenseModal = () => {
 }
 
 const updateBalance = (entries: BalanceSourceData[]) => {
-  props.monthData.balanceSources = entries
+  emit('updateBalance', entries)
 }
 
 const updateIncome = (entries: IncomeEntryData[]) => {
-  props.monthData.incomeEntries = entries
+  emit('updateIncome', entries)
 }
 
 const updateExpense = (entries: ExpenseEntryData[]) => {
-  props.monthData.expenseEntries = entries
+  emit('updateExpense', entries)
 }
 </script>

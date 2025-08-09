@@ -29,11 +29,19 @@
     :month-data="monthData"
     :month-names="monthNames"
     :exchange-rates="getCurrentRates(monthData)"
+    @update-balance="entries => emit('updateBalance', monthData, entries)"
+    @update-income="entries => emit('updateIncome', monthData, entries)"
+    @update-expense="entries => emit('updateExpense', monthData, entries)"
   />
 </template>
 
 <script setup lang="ts">
-import type { MonthData } from '~~/shared/types/budget'
+import type {
+  MonthData,
+  BalanceSourceData,
+  IncomeEntryData,
+  ExpenseEntryData,
+} from '~~/shared/types/budget'
 
 interface Props {
   year: number
@@ -43,6 +51,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  (e: 'updateBalance', month: MonthData, entries: BalanceSourceData[]): void
+  (e: 'updateIncome', month: MonthData, entries: IncomeEntryData[]): void
+  (e: 'updateExpense', month: MonthData, entries: ExpenseEntryData[]): void
+}>()
 
 const getCurrentRates = (monthData: MonthData): Record<string, number> => {
   const rateDate = `${monthData.year}-${String(monthData.month + 1).padStart(2, '0')}-01`

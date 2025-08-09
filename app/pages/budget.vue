@@ -40,13 +40,21 @@
         :months="groupedData[year]"
         :month-names="monthNames"
         :exchange-rates="exchangeRates"
+        @update-balance="(month, entries) => onUpdateBalance(month, entries)"
+        @update-income="(month, entries) => onUpdateIncome(month, entries)"
+        @update-expense="(month, entries) => onUpdateExpense(month, entries)"
       />
     </ul>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { MonthData } from '~~/shared/types/budget'
+import type {
+  MonthData,
+  BalanceSourceData,
+  IncomeEntryData,
+  ExpenseEntryData,
+} from '~~/shared/types/budget'
 import { calculateTotalBalance } from '~~/shared/utils/budget'
 import { useAuthState } from '~/composables/useAuthState'
 
@@ -110,6 +118,30 @@ const computeStats = () => {
     m.balanceChange = incomeTotal - expenseTotal
     m.pocketExpenses = prev ? prevBalance - startBalance + incomeTotal - expenseTotal : 0
   })
+}
+
+const onUpdateBalance = (
+  month: MonthData,
+  entries: BalanceSourceData[],
+) => {
+  month.balanceSources = entries
+  computeStats()
+}
+
+const onUpdateIncome = (
+  month: MonthData,
+  entries: IncomeEntryData[],
+) => {
+  month.incomeEntries = entries
+  computeStats()
+}
+
+const onUpdateExpense = (
+  month: MonthData,
+  entries: ExpenseEntryData[],
+) => {
+  month.expenseEntries = entries
+  computeStats()
 }
 
 const fetchData = async () => {
