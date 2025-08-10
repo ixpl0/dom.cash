@@ -58,10 +58,10 @@
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getBalanceChangeClass(monthData.balanceChange)"
+              :class="getBalanceChangeClass(balanceChange)"
               disabled
             >
-              {{ formatAmount(monthData.balanceChange, baseCurrency) }}
+              {{ formatAmount(balanceChange, baseCurrency) }}
             </button>
           </div>
         </div>
@@ -111,20 +111,55 @@
         </div>
         <div class="stat-value">
           <div
+            v-if="pocketExpenses !== null"
             class="tooltip tooltip-left font-normal"
             data-tip="Всё, что осталось после вычета крупных расходов из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д."
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getPocketExpensesClass(monthData.pocketExpenses, monthData.income)"
+              :class="getPocketExpensesClass(pocketExpenses, totalIncome)"
               disabled
             >
-              {{ formatAmount(monthData.pocketExpenses, baseCurrency) }}
+              {{ formatAmount(pocketExpenses, baseCurrency) }}
+            </button>
+          </div>
+          <div
+            v-else
+            class="tooltip tooltip-left font-normal"
+            data-tip="Будет доступно после появления баланса следующего месяца"
+          >
+            <button
+              class="btn btn-ghost text-[2rem] font-extrabold text-base-content/50"
+              disabled
+            >
+              —
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <BudgetEntryModal
+      ref="balanceModal"
+      :month-id="monthData.id"
+      entry-kind="balance"
+      :entries="monthData.balanceSources"
+    />
+
+    <BudgetEntryModal
+      ref="incomeModal"
+      :month-id="monthData.id"
+      entry-kind="income"
+      :entries="monthData.incomeEntries"
+    />
+
+    <BudgetEntryModal
+      ref="expenseModal"
+      :month-id="monthData.id"
+      entry-kind="expense"
+      :entries="monthData.expenseEntries"
+    />
+
     <hr>
   </li>
 </template>
@@ -137,11 +172,16 @@ interface Props {
   monthData: MonthData
   monthNames: string[]
   exchangeRates: Record<string, number>
+  nextMonthBalance?: number | null
+  allMonths: MonthData[]
 }
 
 const props = defineProps<Props>()
 
 const baseCurrency = 'RUB'
+const balanceModal = ref()
+const incomeModal = ref()
+const expenseModal = ref()
 
 const currentMonthRates = computed(() => {
   return props.exchangeRates || {}
@@ -157,12 +197,7 @@ const startBalance = computed(() => {
 
 const totalIncome = computed(() => {
   return calculateTotalBalance(
-    props.monthData.incomeEntries.map(entry => ({
-      id: entry.id,
-      name: entry.description,
-      currency: entry.currency,
-      amount: entry.amount,
-    })),
+    props.monthData.incomeEntries,
     baseCurrency,
     currentMonthRates.value,
   )
@@ -170,26 +205,52 @@ const totalIncome = computed(() => {
 
 const totalExpenses = computed(() => {
   return calculateTotalBalance(
-    props.monthData.expenseEntries.map(entry => ({
-      id: entry.id,
-      name: entry.description,
-      currency: entry.currency,
-      amount: entry.amount,
-    })),
+    props.monthData.expenseEntries,
     baseCurrency,
     currentMonthRates.value,
   )
 })
 
+const balanceChange = computed(() => {
+  return totalIncome.value - totalExpenses.value
+})
+
+const nextMonthData = computed(() => {
+  const nextMonth = props.monthData.month === 11 ? 0 : props.monthData.month + 1
+  const nextYear = props.monthData.month === 11 ? props.monthData.year + 1 : props.monthData.year
+
+  return props.allMonths.find(m => m.year === nextYear && m.month === nextMonth)
+})
+
+const nextMonthStartBalance = computed(() => {
+  if (!nextMonthData.value) {
+    return null
+  }
+
+  return calculateTotalBalance(
+    nextMonthData.value.balanceSources,
+    baseCurrency,
+    currentMonthRates.value,
+  )
+})
+
+const pocketExpenses = computed(() => {
+  if (nextMonthStartBalance.value === null) {
+    return null
+  }
+
+  return startBalance.value + totalIncome.value - totalExpenses.value - nextMonthStartBalance.value
+})
+
 const openBalanceModal = (): void => {
-  console.log('Открытие модала баланса для месяца:', props.monthData.month + 1, props.monthData.year)
+  balanceModal.value?.show()
 }
 
 const openIncomeModal = (): void => {
-  console.log('Открытие модала доходов для месяца:', props.monthData.month + 1, props.monthData.year)
+  incomeModal.value?.show()
 }
 
 const openExpenseModal = (): void => {
-  console.log('Открытие модала расходов для месяца:', props.monthData.month + 1, props.monthData.year)
+  expenseModal.value?.show()
 }
 </script>

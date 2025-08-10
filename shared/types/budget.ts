@@ -1,4 +1,5 @@
 export interface MonthData {
+  id: string
   year: number
   month: number
   userMonthId: string
@@ -10,28 +11,24 @@ export interface MonthData {
   income: number
 }
 
-export interface BalanceSourceData {
-  id: string
-  name: string
-  currency: string
-  amount: number
-}
-
-export interface IncomeEntryData {
+interface BaseBudgetEntry {
   id: string
   description: string
   amount: number
   currency: string
-  date: string
 }
 
-export interface ExpenseEntryData {
-  id: string
-  description: string
-  amount: number
-  currency: string
-  date: string
+export type BalanceSourceData = BaseBudgetEntry
+
+export interface IncomeEntryData extends BaseBudgetEntry {
+  date: string | null
 }
+
+export interface ExpenseEntryData extends BaseBudgetEntry {
+  date: string | null
+}
+
+export type BudgetEntry = BalanceSourceData | IncomeEntryData | ExpenseEntryData
 
 export interface UserSettings {
   baseCurrency: string

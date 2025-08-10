@@ -3,8 +3,12 @@
     "allow": [
       "Bash(pnpm run:*)",
       "Bash(pnpm tsc:*)",
-      "Bash(pnpm eslint:*)"
+      "Bash(pnpm eslint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(pnpm run dev)"
+    ]
   }
 }

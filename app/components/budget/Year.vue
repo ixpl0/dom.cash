@@ -29,6 +29,7 @@
     :month-data="monthData"
     :month-names="monthNames"
     :exchange-rates="getCurrentRates(monthData)"
+    :all-months="allMonths"
   />
 </template>
 
@@ -40,6 +41,7 @@ interface Props {
   months: MonthData[]
   monthNames: string[]
   exchangeRates: Record<string, Record<string, number>>
+  allMonths: MonthData[]
 }
 
 const props = defineProps<Props>()

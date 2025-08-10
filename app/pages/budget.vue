@@ -1,7 +1,20 @@
 <template>
   <div class="min-h-screen bg-base-100 p-6">
     <div
-      v-if="monthsData.length === 0"
+      v-if="pending"
+      class="text-center py-12"
+    >
+      <div class="text-6xl mb-4">
+        💰
+      </div>
+      <h2 class="text-2xl font-bold mb-2">
+        Загрузка данных бюджета...
+      </h2>
+      <span class="loading loading-spinner loading-lg" />
+    </div>
+
+    <div
+      v-else-if="!monthsData || monthsData.length === 0"
       class="text-center py-12"
     >
       <div class="text-6xl mb-4">
@@ -37,15 +50,18 @@
         v-for="year in years"
         :key="year"
         :year="year"
-        :months="groupedData[year]"
+        :months="groupedData[year] || []"
         :month-names="monthNames"
         :exchange-rates="exchangeRates"
+        :all-months="monthsData ? [...monthsData] : []"
       />
     </ul>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { MonthData } from '~~/shared/types/budget'
+
 const monthNames = [
   'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
   'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
@@ -57,24 +73,40 @@ const currentMonth = now.getMonth()
 
 const isCreatingCurrentMonth = ref(false)
 
-const monthsData = ref([])
+const { monthsData, loadMonthsData, createMonth } = useBudgetData()
+const pending = ref(false)
+
+// Загружаем данные при инициализации
+onMounted(async () => {
+  pending.value = true
+  await loadMonthsData()
+  pending.value = false
+})
 
 const exchangeRates = ref({
   '2024-01-01': {
     USD: 1,
     EUR: 0.85,
-    RUB: 75,
+    RUB: 95,
+  },
+  '2025-01-01': {
+    USD: 1,
+    EUR: 0.85,
+    RUB: 95,
   },
 })
 
 const groupedData = computed(() => {
-  return monthsData.value.reduce((acc, month) => {
+  const months = monthsData.value
+  if (!months || !Array.isArray(months)) return {}
+
+  return months.reduce((acc: Record<number, MonthData[]>, month) => {
     if (!acc[month.year]) {
       acc[month.year] = []
     }
-    acc[month.year].push(month)
+    acc[month.year] = [...(acc[month.year] || []), month]
     return acc
-  }, {})
+  }, {} as Record<number, MonthData[]>)
 })
 
 const years = computed(() => {
@@ -83,26 +115,11 @@ const years = computed(() => {
     .sort((a, b) => b - a)
 })
 
-const createCurrentMonth = async () => {
+const createCurrentMonth = async (): Promise<void> => {
   isCreatingCurrentMonth.value = true
 
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const newMonth = {
-      id: `month-${Date.now()}`,
-      year: currentYear,
-      month: currentMonth,
-      userMonthId: `user-month-${Date.now()}`,
-      balanceSources: [],
-      incomeEntries: [],
-      expenseEntries: [],
-      balanceChange: 0,
-      pocketExpenses: 0,
-      income: 0,
-    }
-
-    monthsData.value.push(newMonth)
+    await createMonth(currentYear, currentMonth)
   }
   catch (error) {
     console.error('Error creating current month:', error)

@@ -1,4 +1,4 @@
-import type { BalanceSourceData } from '~~/shared/types/budget'
+import type { BudgetEntry } from '~~/shared/types/budget'
 
 export const formatAmount = (amount: number, currency: string): string => {
   const formatter = new Intl.NumberFormat('ru-RU', {
@@ -12,13 +12,13 @@ export const formatAmount = (amount: number, currency: string): string => {
 }
 
 export const calculateTotalBalance = (
-  sources: BalanceSourceData[],
+  entries: BudgetEntry[],
   baseCurrency: string,
   exchangeRates: Record<string, number>,
 ): number => {
-  return sources.reduce((total, source) => {
-    const rate = source.currency === baseCurrency ? 1 : (exchangeRates[source.currency] || 1)
-    return total + (source.amount / rate)
+  return entries.reduce((total, entry) => {
+    const rate = entry.currency === baseCurrency ? 1 : (exchangeRates[entry.currency] || 1)
+    return total + (entry.amount / rate)
   }, 0)
 }
 

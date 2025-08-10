@@ -25,6 +25,6 @@
   * Every `if`/`else`/`for` must have a block (no one-liners).
   * **NEVER USE COMMENTS**. NEVER. Only use comments for disabling ESLint rules, or for TODOs.
   * Variables and functions should be simple and in simple English, but meaningful, self-explanatory and no abbreviations.
-  * Add empty line to the end of every new file.
+  * Add an empty line to the end of every new file.
 * Vue: **Vue 3, Composition API, `<script setup lang="ts">`**, prefer `ref` over `reactive`.
 * Follow the existing ESLint and TS config.
