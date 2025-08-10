@@ -17,8 +17,14 @@ export const calculateTotalBalance = (
   exchangeRates: Record<string, number>,
 ): number => {
   return entries.reduce((total, entry) => {
-    const rate = entry.currency === baseCurrency ? 1 : (exchangeRates[entry.currency] || 1)
-    return total + (entry.amount / rate)
+    if (entry.currency === baseCurrency) {
+      return total + entry.amount
+    }
+
+    const fromRate = exchangeRates[entry.currency] || 1
+    const toRate = exchangeRates[baseCurrency] || 1
+
+    return total + (entry.amount / fromRate) * toRate
   }, 0)
 }
 

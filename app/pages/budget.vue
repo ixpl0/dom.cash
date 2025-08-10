@@ -39,7 +39,6 @@
         :year="year"
         :months="groupedData[year] || []"
         :month-names="monthNames"
-        :exchange-rates="exchangeRates"
         :all-months="monthsData ? [...monthsData] : []"
       />
     </ul>
@@ -61,23 +60,11 @@ const currentMonth = now.getMonth()
 const isCreatingCurrentMonth = ref(false)
 
 const { monthsData, loadMonthsData, createMonth } = useBudgetData()
+const { loadUserData } = useUser()
 
-await useAsyncData('budget-months', async () => {
-  await loadMonthsData()
+await useAsyncData('budget-data', async () => {
+  await Promise.all([loadMonthsData(), loadUserData()])
   return monthsData.value
-})
-
-const exchangeRates = ref({
-  '2024-01-01': {
-    USD: 1,
-    EUR: 0.85,
-    RUB: 95,
-  },
-  '2025-01-01': {
-    USD: 1,
-    EUR: 0.85,
-    RUB: 95,
-  },
 })
 
 const groupedData = computed(() => {

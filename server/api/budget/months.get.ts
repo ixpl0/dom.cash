@@ -1,7 +1,9 @@
 import { desc, eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
-import { entry, month } from '~~/server/db/schema'
+import { entry, month, currency } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
+
+const ratesCache = new Map<string, Record<string, number>>()
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -11,6 +13,32 @@ export default defineEventHandler(async (event) => {
     .from(month)
     .where(eq(month.userId, user.id))
     .orderBy(desc(month.year), desc(month.month))
+
+  const getExchangeRatesForMonth = async (year: number, month: number): Promise<Record<string, number> | undefined> => {
+    const rateDate = `${year}-${String(month + 1).padStart(2, '0')}-01`
+
+    if (ratesCache.has(rateDate)) {
+      return ratesCache.get(rateDate)
+    }
+
+    const currencyData = await db
+      .select()
+      .from(currency)
+      .where(eq(currency.date, rateDate))
+      .limit(1)
+
+    if (currencyData.length === 0) {
+      return undefined
+    }
+
+    const rates = currencyData[0]?.rates
+    if (rates) {
+      ratesCache.set(rateDate, rates)
+      return rates
+    }
+
+    return undefined
+  }
 
   return await Promise.all(
     monthsData.map(async (monthData) => {
@@ -52,6 +80,8 @@ export default defineEventHandler(async (event) => {
       const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
       const balanceChange = totalIncome - totalExpenses
 
+      const exchangeRates = await getExchangeRatesForMonth(monthData.year, monthData.month)
+
       return {
         id: monthData.id,
         year: monthData.year,
@@ -63,6 +93,7 @@ export default defineEventHandler(async (event) => {
         balanceChange,
         pocketExpenses: 0,
         income: totalIncome,
+        exchangeRates,
       }
     }),
   )

@@ -41,7 +41,7 @@
               class="btn btn-ghost text-[2rem] font-extrabold"
               @click="openBalanceModal"
             >
-              {{ formatAmount(startBalance, baseCurrency) }}
+              {{ formatAmount(startBalance, mainCurrency) }}
             </button>
           </div>
         </div>
@@ -61,7 +61,7 @@
               :class="getBalanceChangeClass(balanceChange)"
               disabled
             >
-              {{ formatAmount(balanceChange, baseCurrency) }}
+              {{ formatAmount(balanceChange, mainCurrency) }}
             </button>
           </div>
         </div>
@@ -80,7 +80,7 @@
               class="btn btn-ghost text-[2rem] font-extrabold"
               @click="openIncomeModal"
             >
-              {{ formatAmount(totalIncome, baseCurrency) }}
+              {{ formatAmount(totalIncome, mainCurrency) }}
             </button>
           </div>
         </div>
@@ -99,7 +99,7 @@
               class="btn btn-ghost text-[2rem] font-extrabold"
               @click="openExpenseModal"
             >
-              {{ formatAmount(totalExpenses, baseCurrency) }}
+              {{ formatAmount(totalExpenses, mainCurrency) }}
             </button>
           </div>
         </div>
@@ -120,7 +120,7 @@
               :class="getPocketExpensesClass(pocketExpenses, totalIncome)"
               disabled
             >
-              {{ formatAmount(pocketExpenses, baseCurrency) }}
+              {{ formatAmount(pocketExpenses, mainCurrency) }}
             </button>
           </div>
           <div
@@ -171,26 +171,25 @@ import { formatAmount, calculateTotalBalance, getBalanceChangeClass, getPocketEx
 interface Props {
   monthData: MonthData
   monthNames: string[]
-  exchangeRates: Record<string, number>
   nextMonthBalance?: number | null
   allMonths: MonthData[]
 }
 
 const props = defineProps<Props>()
 
-const baseCurrency = 'RUB'
+const { mainCurrency } = useUser()
 const balanceModal = ref()
 const incomeModal = ref()
 const expenseModal = ref()
 
 const currentMonthRates = computed(() => {
-  return props.exchangeRates || {}
+  return props.monthData.exchangeRates || { USD: 1, EUR: 0.85, RUB: 95 }
 })
 
 const startBalance = computed(() => {
   return calculateTotalBalance(
     props.monthData.balanceSources,
-    baseCurrency,
+    mainCurrency.value,
     currentMonthRates.value,
   )
 })
@@ -198,7 +197,7 @@ const startBalance = computed(() => {
 const totalIncome = computed(() => {
   return calculateTotalBalance(
     props.monthData.incomeEntries,
-    baseCurrency,
+    mainCurrency.value,
     currentMonthRates.value,
   )
 })
@@ -206,7 +205,7 @@ const totalIncome = computed(() => {
 const totalExpenses = computed(() => {
   return calculateTotalBalance(
     props.monthData.expenseEntries,
-    baseCurrency,
+    mainCurrency.value,
     currentMonthRates.value,
   )
 })
@@ -227,10 +226,12 @@ const nextMonthStartBalance = computed(() => {
     return null
   }
 
+  const nextMonthRates = nextMonthData.value.exchangeRates || { USD: 1, EUR: 0.85, RUB: 95 }
+
   return calculateTotalBalance(
     nextMonthData.value.balanceSources,
-    baseCurrency,
-    currentMonthRates.value,
+    mainCurrency.value,
+    nextMonthRates,
   )
 })
 
