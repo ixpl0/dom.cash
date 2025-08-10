@@ -1,20 +1,7 @@
 <template>
   <div class="min-h-screen bg-base-100 p-6">
     <div
-      v-if="pending"
-      class="text-center py-12"
-    >
-      <div class="text-6xl mb-4">
-        💰
-      </div>
-      <h2 class="text-2xl font-bold mb-2">
-        Загрузка данных бюджета...
-      </h2>
-      <span class="loading loading-spinner loading-lg" />
-    </div>
-
-    <div
-      v-else-if="!monthsData || monthsData.length === 0"
+      v-if="!monthsData || monthsData.length === 0"
       class="text-center py-12"
     >
       <div class="text-6xl mb-4">
@@ -74,13 +61,10 @@ const currentMonth = now.getMonth()
 const isCreatingCurrentMonth = ref(false)
 
 const { monthsData, loadMonthsData, createMonth } = useBudgetData()
-const pending = ref(false)
 
-// Загружаем данные при инициализации
-onMounted(async () => {
-  pending.value = true
+await useAsyncData('budget-months', async () => {
   await loadMonthsData()
-  pending.value = false
+  return monthsData.value
 })
 
 const exchangeRates = ref({

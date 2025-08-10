@@ -7,7 +7,8 @@ export const useBudgetData = () => {
 
   const loadMonthsData = async (): Promise<void> => {
     try {
-      const data = await $fetch<MonthData[]>('/api/budget/months')
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      const data = await $fetch<MonthData[]>('/api/budget/months', { headers })
       monthsData.value = toMutable(data || [])
     }
     catch (error) {
