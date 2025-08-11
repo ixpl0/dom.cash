@@ -260,6 +260,8 @@
 <script setup lang="ts">
 import type { BudgetEntry } from '~~/shared/types/budget'
 import { formatAmount } from '~~/shared/utils/budget'
+import { useEntryForm } from '~/composables/useEntryForm'
+import { useEntryOperations } from '~/composables/useEntryOperations'
 
 interface Props {
   monthId: string
@@ -277,110 +279,49 @@ const emit = defineEmits<{
 }>()
 
 const modal = ref<HTMLDialogElement>()
-const isAdding = ref(false)
-const isDeleting = ref<string | null>(null)
-const editingEntryId = ref<string | null>(null)
-const isSaving = ref(false)
-const isAddingNewEntry = ref(false)
-const editingEntry = ref({
-  description: '',
-  amount: 0,
-  currency: 'RUB',
-  date: '',
-})
 
-const newEntry = ref({
-  description: '',
-  amount: 0,
-  currency: 'RUB',
-  date: new Date().toISOString().split('T')[0],
-})
+const {
+  isAdding,
+  isDeleting,
+  editingEntryId,
+  isSaving,
+  isAddingNewEntry,
+  editingEntry,
+  newEntry,
+  modalTitle,
+  emptyMessage,
+  getEntryDate,
+  formatDate,
+  startAdd,
+  cancelAdd,
+  startEdit,
+  cancelEdit,
+} = useEntryForm(props.entryKind)
 
-const modalTitle = computed(() => {
-  switch (props.entryKind) {
-    case 'balance':
-      return 'Источники баланса'
-    case 'income':
-      return 'Доходы'
-    case 'expense':
-      return 'Крупные расходы'
-    default:
-      return 'Записи'
+const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) => {
+  if (event === 'added') {
+    emit('added')
   }
-})
-
-const emptyMessage = computed(() => {
-  switch (props.entryKind) {
-    case 'balance':
-      return 'Пока нет источников баланса'
-    case 'income':
-      return 'Пока нет доходов'
-    case 'expense':
-      return 'Пока нет крупных расходов'
-    default:
-      return 'Пока нет записей'
+  else if (event === 'deleted' && entryId) {
+    emit('deleted', entryId)
   }
-})
-
-const formatDate = (date: string | null | undefined): string => {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('ru-RU')
-}
-
-const getEntryDate = (entry: BudgetEntry): string | null => {
-  return 'date' in entry ? entry.date : null
-}
-
-const startAdd = (): void => {
-  isAddingNewEntry.value = true
-  newEntry.value = {
-    description: '',
-    amount: 0,
-    currency: 'RUB',
-    date: new Date().toISOString().split('T')[0],
+  else if (event === 'updated' && entryId) {
+    emit('updated', entryId)
   }
 }
 
-const cancelAdd = (): void => {
-  isAddingNewEntry.value = false
-  newEntry.value = {
-    description: '',
-    amount: 0,
-    currency: 'RUB',
-    date: new Date().toISOString().split('T')[0],
-  }
-}
+const {
+  addEntry: performAddEntry,
+  updateEntry: performUpdateEntry,
+  deleteEntry: performDeleteEntry,
+} = useEntryOperations(props.monthId, props.entryKind, emitWrapper)
 
 const addEntry = async (): Promise<void> => {
-  if (!newEntry.value.description.trim() || newEntry.value.amount <= 0) {
-    return
-  }
-
   isAdding.value = true
 
   try {
-    const { addEntry: addEntryToStore } = useBudgetData()
-
-    await addEntryToStore(
-      props.monthId,
-      props.entryKind,
-      {
-        description: newEntry.value.description,
-        amount: newEntry.value.amount,
-        currency: newEntry.value.currency,
-        date: props.entryKind !== 'balance' ? newEntry.value.date : undefined,
-      },
-    )
-
-    emit('added')
-
-    isAddingNewEntry.value = false
-    newEntry.value = {
-      description: '',
-      amount: 0,
-      currency: 'RUB',
-      date: new Date().toISOString().split('T')[0],
-    }
+    await performAddEntry(newEntry.value)
+    cancelAdd()
   }
   catch (error) {
     console.error('Error adding entry:', error)
@@ -394,10 +335,7 @@ const deleteEntry = async (entryId: string): Promise<void> => {
   isDeleting.value = entryId
 
   try {
-    const { deleteEntry: deleteEntryFromStore } = useBudgetData()
-    await deleteEntryFromStore(entryId)
-
-    emit('deleted', entryId)
+    await performDeleteEntry(entryId)
   }
   catch (error) {
     console.error('Error deleting entry:', error)
@@ -423,26 +361,6 @@ const handleBackdropClick = (): void => {
   hide()
 }
 
-const startEdit = (entry: BudgetEntry): void => {
-  editingEntryId.value = entry.id
-  editingEntry.value = {
-    description: entry.description,
-    amount: entry.amount,
-    currency: entry.currency,
-    date: getEntryDate(entry) || '',
-  }
-}
-
-const cancelEdit = (): void => {
-  editingEntryId.value = null
-  editingEntry.value = {
-    description: '',
-    amount: 0,
-    currency: 'RUB',
-    date: '',
-  }
-}
-
 const saveEntry = async (): Promise<void> => {
   if (!editingEntryId.value || !editingEntry.value.description.trim() || editingEntry.value.amount <= 0) {
     return
@@ -451,16 +369,7 @@ const saveEntry = async (): Promise<void> => {
   isSaving.value = true
 
   try {
-    const { updateEntry: updateEntryInStore } = useBudgetData()
-
-    await updateEntryInStore(editingEntryId.value, {
-      description: editingEntry.value.description,
-      amount: editingEntry.value.amount,
-      currency: editingEntry.value.currency,
-      date: props.entryKind !== 'balance' ? editingEntry.value.date : undefined,
-    })
-
-    emit('updated', editingEntryId.value)
+    await performUpdateEntry(editingEntryId.value, editingEntry.value)
     cancelEdit()
   }
   catch (error) {
