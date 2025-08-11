@@ -4,7 +4,7 @@
     class="modal"
     @close="handleDialogClose"
   >
-    <div class="modal-box w-11/12 max-w-2xl">
+    <div class="modal-box w-11/12 max-w-5xl">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -29,7 +29,9 @@
                   <th v-if="entryKind !== 'balance'">
                     Дата
                   </th>
-                  <th>Действия</th>
+                  <th class="w-1">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -55,7 +57,7 @@
                       type="number"
                       min="0"
                       step="0.01"
-                      class="input input-sm input-bordered w-20"
+                      class="input input-sm input-bordered w-full"
                       @keyup.enter="saveEntry()"
                       @keyup.esc="cancelEdit()"
                     >
@@ -65,7 +67,7 @@
                     <select
                       v-if="editingEntryId === entry.id"
                       v-model="editingEntry.currency"
-                      class="select select-sm select-bordered"
+                      class="select select-sm select-bordered min-w-20"
                     >
                       <option value="RUB">
                         RUB
@@ -90,7 +92,7 @@
                     >
                     <span v-else>{{ formatDate(getEntryDate(entry)) }}</span>
                   </td>
-                  <td>
+                  <td class="w-1">
                     <div class="flex gap-2">
                       <template v-if="editingEntryId === entry.id">
                         <button
@@ -151,7 +153,7 @@
                       min="0"
                       step="0.01"
                       placeholder="0.00"
-                      class="input input-sm input-bordered w-20"
+                      class="input input-sm input-bordered w-full"
                       @keyup.enter="addEntry()"
                       @keyup.esc="cancelAdd()"
                     >
@@ -159,7 +161,7 @@
                   <td>
                     <select
                       v-model="newEntry.currency"
-                      class="select select-sm select-bordered"
+                      class="select select-sm select-bordered min-w-20"
                     >
                       <option value="RUB">
                         RUB
@@ -181,7 +183,7 @@
                       @keyup.esc="cancelAdd()"
                     >
                   </td>
-                  <td>
+                  <td class="w-1">
                     <div class="flex gap-2">
                       <button
                         type="button"
