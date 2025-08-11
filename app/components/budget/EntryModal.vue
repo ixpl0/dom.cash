@@ -18,7 +18,7 @@
       </h3>
 
       <div class="space-y-4 mb-6">
-        <div v-if="entries.length > 0 || isAddingNewEntry">
+        <div v-if="entries?.length || isAddingNewEntry">
           <div class="overflow-x-auto">
             <table class="table table-zebra">
               <thead>
@@ -34,7 +34,7 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="entry in entries"
+                  v-for="entry in (entries || [])"
                   :key="entry.id"
                 >
                   <td>
@@ -262,7 +262,7 @@ import { formatAmount } from '~~/shared/utils/budget'
 interface Props {
   monthId: string
   entryKind: 'balance' | 'income' | 'expense'
-  entries: BudgetEntry[]
+  entries?: BudgetEntry[]
 }
 
 const props = defineProps<Props>()

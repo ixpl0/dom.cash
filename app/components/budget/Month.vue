@@ -143,21 +143,21 @@
       ref="balanceModal"
       :month-id="monthData.id"
       entry-kind="balance"
-      :entries="monthData.balanceSources"
+      :entries="monthData.balanceSources || []"
     />
 
     <BudgetEntryModal
       ref="incomeModal"
       :month-id="monthData.id"
       entry-kind="income"
-      :entries="monthData.incomeEntries"
+      :entries="monthData.incomeEntries || []"
     />
 
     <BudgetEntryModal
       ref="expenseModal"
       :month-id="monthData.id"
       entry-kind="expense"
-      :entries="monthData.expenseEntries"
+      :entries="monthData.expenseEntries || []"
     />
 
     <hr>
