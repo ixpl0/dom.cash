@@ -25,7 +25,15 @@ export const useBudgetData = () => {
       })
 
       if (newMonth) {
-        monthsData.value = [...monthsData.value, toMutable(newMonth)]
+        const newMonthData = toMutable(newMonth)
+        const updatedMonths = [...monthsData.value, newMonthData]
+
+        updatedMonths.sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year
+          return b.month - a.month
+        })
+
+        monthsData.value = updatedMonths
       }
     }
     catch (error) {
@@ -245,10 +253,60 @@ export const useBudgetData = () => {
     }
   }
 
+  const getNextMonth = (currentMonths: MonthData[]): { year: number, month: number } => {
+    if (currentMonths.length === 0) {
+      const now = new Date()
+      return { year: now.getFullYear(), month: now.getMonth() }
+    }
+
+    const sortedMonths = [...currentMonths].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year
+      return b.month - a.month
+    })
+
+    const latest = sortedMonths[0]!
+    const nextMonth = latest.month === 11 ? 0 : latest.month + 1
+    const nextYear = latest.month === 11 ? latest.year + 1 : latest.year
+
+    return { year: nextYear, month: nextMonth }
+  }
+
+  const getPreviousMonth = (currentMonths: MonthData[]): { year: number, month: number } => {
+    if (currentMonths.length === 0) {
+      const now = new Date()
+      return { year: now.getFullYear(), month: now.getMonth() }
+    }
+
+    const sortedMonths = [...currentMonths].sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year
+      return a.month - b.month
+    })
+
+    const earliest = sortedMonths[0]!
+    const prevMonth = earliest.month === 0 ? 11 : earliest.month - 1
+    const prevYear = earliest.month === 0 ? earliest.year - 1 : earliest.year
+
+    return { year: prevYear, month: prevMonth }
+  }
+
+  const createNextMonth = async (): Promise<void> => {
+    const nextMonth = getNextMonth(monthsData.value)
+    await createMonth(nextMonth.year, nextMonth.month)
+  }
+
+  const createPreviousMonth = async (): Promise<void> => {
+    const prevMonth = getPreviousMonth(monthsData.value)
+    await createMonth(prevMonth.year, prevMonth.month)
+  }
+
   return {
     monthsData: computed(() => monthsData.value),
     loadMonthsData,
     createMonth,
+    createNextMonth,
+    createPreviousMonth,
+    getNextMonth: () => getNextMonth(monthsData.value),
+    getPreviousMonth: () => getPreviousMonth(monthsData.value),
     addEntry,
     updateEntry,
     deleteEntry,

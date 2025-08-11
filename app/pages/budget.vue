@@ -31,8 +31,15 @@
 
     <ul
       v-else
-      class="timeline timeline-vertical [--timeline-col-start:15ch]"
+      class="timeline timeline-vertical [--timeline-col-start:20ch]"
     >
+      <BudgetTimelineAddButton
+        direction="next"
+        :month-text="getNextMonthText()"
+        :is-loading="isCreatingNextMonth"
+        @create="handleCreateNextMonth"
+      />
+
       <BudgetYear
         v-for="year in years"
         :key="year"
@@ -40,6 +47,13 @@
         :months="groupedData[year] || []"
         :month-names="monthNames"
         :all-months="monthsData ? [...monthsData] : []"
+      />
+
+      <BudgetTimelineAddButton
+        direction="previous"
+        :month-text="getPreviousMonthText()"
+        :is-loading="isCreatingPreviousMonth"
+        @create="handleCreatePreviousMonth"
       />
     </ul>
   </div>
@@ -58,8 +72,10 @@ const currentYear = now.getFullYear()
 const currentMonth = now.getMonth()
 
 const isCreatingCurrentMonth = ref(false)
+const isCreatingNextMonth = ref(false)
+const isCreatingPreviousMonth = ref(false)
 
-const { monthsData, loadMonthsData, createMonth } = useBudgetData()
+const { monthsData, loadMonthsData, createMonth, createNextMonth, createPreviousMonth, getNextMonth, getPreviousMonth } = useBudgetData()
 const { loadUserData } = useUser()
 
 await useAsyncData('budget-data', async () => {
@@ -85,6 +101,44 @@ const years = computed(() => {
     .map(Number)
     .sort((a, b) => b - a)
 })
+
+const getNextMonthText = (): string => {
+  const nextMonth = getNextMonth()
+  return `${monthNames[nextMonth.month]} ${nextMonth.year}`
+}
+
+const getPreviousMonthText = (): string => {
+  const prevMonth = getPreviousMonth()
+  return `${monthNames[prevMonth.month]} ${prevMonth.year}`
+}
+
+const handleCreateNextMonth = async (): Promise<void> => {
+  isCreatingNextMonth.value = true
+
+  try {
+    await createNextMonth()
+  }
+  catch (error) {
+    console.error('Error creating next month:', error)
+  }
+  finally {
+    isCreatingNextMonth.value = false
+  }
+}
+
+const handleCreatePreviousMonth = async (): Promise<void> => {
+  isCreatingPreviousMonth.value = true
+
+  try {
+    await createPreviousMonth()
+  }
+  catch (error) {
+    console.error('Error creating previous month:', error)
+  }
+  finally {
+    isCreatingPreviousMonth.value = false
+  }
+}
 
 const createCurrentMonth = async (): Promise<void> => {
   isCreatingCurrentMonth.value = true
