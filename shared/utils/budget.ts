@@ -37,11 +37,3 @@ export const getBalanceChangeClass = (balanceChange: number): string => {
   if (balanceChange < 0) return 'text-error'
   return 'text-base-content'
 }
-
-export const getPocketExpensesClass = (pocketExpenses: number, income: number): string => {
-  const ratio = income > 0 ? pocketExpenses / income : 0
-
-  if (ratio > 0.5) return 'text-error'
-  if (ratio > 0.3) return 'text-warning'
-  return 'text-success'
-}

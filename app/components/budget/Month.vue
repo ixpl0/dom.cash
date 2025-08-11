@@ -54,14 +54,14 @@
         <div class="stat-value">
           <div
             class="tooltip tooltip-right font-normal"
-            data-tip="Разница между доходами и расходами за месяц"
+            data-tip="Изменение баланса по сравнению с предыдущим месяцем"
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getBalanceChangeClass(balanceChange)"
+              :class="balanceChange !== null ? getBalanceChangeClass(balanceChange) : ''"
               disabled
             >
-              {{ formatAmount(balanceChange, mainCurrency) }}
+              {{ balanceChange !== null ? formatAmount(balanceChange, mainCurrency) : '—' }}
             </button>
           </div>
         </div>
@@ -117,7 +117,6 @@
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getPocketExpensesClass(pocketExpenses, totalIncome)"
               disabled
             >
               {{ formatAmount(pocketExpenses, mainCurrency) }}
@@ -166,7 +165,7 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmount, calculateTotalBalance, getBalanceChangeClass, getPocketExpensesClass } from '~~/shared/utils/budget'
+import { formatAmount, calculateTotalBalance, getBalanceChangeClass } from '~~/shared/utils/budget'
 
 interface Props {
   monthData: MonthData
@@ -210,8 +209,32 @@ const totalExpenses = computed(() => {
   )
 })
 
+const previousMonthData = computed(() => {
+  const prevMonth = props.monthData.month === 0 ? 11 : props.monthData.month - 1
+  const prevYear = props.monthData.month === 0 ? props.monthData.year - 1 : props.monthData.year
+
+  return props.allMonths.find(m => m.year === prevYear && m.month === prevMonth)
+})
+
+const previousMonthBalance = computed(() => {
+  if (!previousMonthData.value) {
+    return null
+  }
+
+  const prevMonthRates = previousMonthData.value.exchangeRates || { USD: 1, EUR: 0.85, RUB: 95 }
+  return calculateTotalBalance(
+    previousMonthData.value.balanceSources,
+    mainCurrency.value,
+    prevMonthRates,
+  )
+})
+
 const balanceChange = computed(() => {
-  return totalIncome.value - totalExpenses.value
+  if (previousMonthBalance.value === null) {
+    return null
+  }
+
+  return startBalance.value - previousMonthBalance.value
 })
 
 const nextMonthData = computed(() => {
