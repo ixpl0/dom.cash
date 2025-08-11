@@ -17,23 +17,25 @@ export const useBudgetData = () => {
     }
   }
 
-  const createMonth = async (year: number, month: number): Promise<void> => {
+  interface CreateMonthRequest {
+    year: number
+    month: number
+    copyFromMonthId?: string
+  }
+
+  const createMonth = async (year: number, month: number, copyFromMonthId?: string): Promise<void> => {
     try {
+      const requestBody: CreateMonthRequest = copyFromMonthId
+        ? { year, month, copyFromMonthId }
+        : { year, month }
+
       const newMonth = await $fetch<MonthData>('/api/budget/months', {
         method: 'POST',
-        body: { year, month },
+        body: requestBody,
       })
 
       if (newMonth) {
-        const newMonthData = toMutable(newMonth)
-        const updatedMonths = [...monthsData.value, newMonthData]
-
-        updatedMonths.sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year
-          return b.month - a.month
-        })
-
-        monthsData.value = updatedMonths
+        await loadMonthsData()
       }
     }
     catch (error) {
@@ -289,14 +291,73 @@ export const useBudgetData = () => {
     return { year: prevYear, month: prevMonth }
   }
 
+  const findClosestMonthForCopy = (targetYear: number, targetMonth: number, direction: 'next' | 'previous'): string | undefined => {
+    if (monthsData.value.length === 0) return undefined
+
+    if (direction === 'next') {
+      const sortedMonths = [...monthsData.value].sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year
+        return b.month - a.month
+      })
+
+      const targetMonthValue = targetYear * 12 + targetMonth
+      let closestMonth: MonthData | undefined = undefined
+
+      for (const month of sortedMonths) {
+        const monthValue = month.year * 12 + month.month
+        if (monthValue < targetMonthValue) {
+          if (!closestMonth) {
+            closestMonth = month
+          }
+          else {
+            const closestValue = closestMonth.year * 12 + closestMonth.month
+            if (monthValue > closestValue) {
+              closestMonth = month
+            }
+          }
+        }
+      }
+
+      return closestMonth?.id
+    }
+    else {
+      const sortedMonths = [...monthsData.value].sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year
+        return a.month - b.month
+      })
+
+      const targetMonthValue = targetYear * 12 + targetMonth
+      let closestMonth: MonthData | undefined = undefined
+
+      for (const month of sortedMonths) {
+        const monthValue = month.year * 12 + month.month
+        if (monthValue > targetMonthValue) {
+          if (!closestMonth) {
+            closestMonth = month
+          }
+          else {
+            const closestValue = closestMonth.year * 12 + closestMonth.month
+            if (monthValue < closestValue) {
+              closestMonth = month
+            }
+          }
+        }
+      }
+
+      return closestMonth?.id
+    }
+  }
+
   const createNextMonth = async (): Promise<void> => {
     const nextMonth = getNextMonth(monthsData.value)
-    await createMonth(nextMonth.year, nextMonth.month)
+    const copyFromMonthId = findClosestMonthForCopy(nextMonth.year, nextMonth.month, 'next')
+    await createMonth(nextMonth.year, nextMonth.month, copyFromMonthId)
   }
 
   const createPreviousMonth = async (): Promise<void> => {
     const prevMonth = getPreviousMonth(monthsData.value)
-    await createMonth(prevMonth.year, prevMonth.month)
+    const copyFromMonthId = findClosestMonthForCopy(prevMonth.year, prevMonth.month, 'previous')
+    await createMonth(prevMonth.year, prevMonth.month, copyFromMonthId)
   }
 
   return {
