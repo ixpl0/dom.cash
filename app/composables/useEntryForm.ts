@@ -1,4 +1,5 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
+import { getEntryConfig } from '~~/shared/utils/entry-strategies'
 
 export interface EntryFormData {
   description: string
@@ -68,31 +69,10 @@ export const useEntryForm = (entryKind: 'balance' | 'income' | 'expense') => {
     editingEntry.value = createDefaultFormData()
   }
 
-  const getModalTitle = (): string => {
-    switch (entryKind) {
-      case 'balance':
-        return 'Источники баланса'
-      case 'income':
-        return 'Доходы'
-      case 'expense':
-        return 'Крупные расходы'
-      default:
-        return 'Записи'
-    }
-  }
+  const config = getEntryConfig(entryKind)
 
-  const getEmptyMessage = (): string => {
-    switch (entryKind) {
-      case 'balance':
-        return 'Пока нет источников баланса'
-      case 'income':
-        return 'Пока нет доходов'
-      case 'expense':
-        return 'Пока нет крупных расходов'
-      default:
-        return 'Пока нет записей'
-    }
-  }
+  const getModalTitle = (): string => config.title
+  const getEmptyMessage = (): string => config.emptyMessage
 
   return {
     // State
