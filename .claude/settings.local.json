@@ -5,10 +5,12 @@
       "Bash(pnpm tsc:*)",
       "Bash(pnpm eslint:*)",
       "Bash(pnpm typecheck:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "WebFetch(domain:daisyui.com)"
     ],
     "deny": [
-      "Bash(pnpm run dev)"
+      "Bash(pnpm run dev)",
+      "Read(./.env)"
     ]
   }
 }
