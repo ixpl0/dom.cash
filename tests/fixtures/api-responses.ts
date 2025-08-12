@@ -1,0 +1,66 @@
+export const MOCK_LATEST_RATES_RESPONSE = {
+  disclaimer: 'Usage subject to terms: https://openexchangerates.org/terms',
+  license: 'https://openexchangerates.org/license',
+  timestamp: 1704067199,
+  base: 'USD',
+  rates: {
+    USD: 1.0,
+    EUR: 0.85432,
+    GBP: 0.73251,
+    JPY: 110.2567,
+    RUB: 95.4321,
+    CNY: 6.4523,
+    CHF: 0.9234,
+    CAD: 1.2543,
+    AUD: 1.3521,
+    SEK: 8.7654,
+    NOK: 9.1234,
+    DKK: 6.3456,
+    PLN: 3.9876,
+    CZK: 21.4567,
+    HUF: 345.67,
+    BRL: 5.2341,
+    MXN: 18.4567,
+    INR: 82.3456,
+    KRW: 1234.56,
+    SGD: 1.3456,
+  },
+}
+
+export const MOCK_HISTORICAL_RATES_RESPONSE = {
+  disclaimer: 'Usage subject to terms: https://openexchangerates.org/terms',
+  license: 'https://openexchangerates.org/license',
+  timestamp: 1703980799,
+  base: 'USD',
+  rates: {
+    USD: 1.0,
+    EUR: 0.85123,
+    GBP: 0.73012,
+    JPY: 109.8765,
+    RUB: 94.8765,
+    CNY: 6.4234,
+    CHF: 0.9187,
+    CAD: 1.2456,
+    AUD: 1.3387,
+    SEK: 8.7123,
+    NOK: 9.0876,
+    DKK: 6.3234,
+    PLN: 3.9654,
+    CZK: 21.3456,
+    HUF: 344.21,
+    BRL: 5.1987,
+    MXN: 18.3456,
+    INR: 82.1234,
+    KRW: 1229.87,
+    SGD: 1.3387,
+  },
+}
+
+export const MOCK_ERROR_RESPONSE = {
+  error: true,
+  status: 401,
+  message: 'invalid_app_id',
+  description: 'Invalid App ID provided',
+}
+
+export const MOCK_NETWORK_ERROR = new Error('Failed to fetch')

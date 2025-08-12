@@ -1,5 +1,5 @@
 import { fetchLatestRates, fetchHistoricalRates } from './api'
-import { saveCurrencyRates, hasCurrencyRates } from './database'
+import { saveCurrencyRates } from './database'
 
 const formatDateAsYmd = (date: Date): string => {
   const year = date.getUTCFullYear()
@@ -30,14 +30,11 @@ export const updateCurrentRates = async (): Promise<void> => {
 
 export const updateHistoricalRatesForCurrentMonth = async (): Promise<void> => {
   const today = new Date()
-  const targetDate = getLastDayOfPreviousMonth(today)
+  const firstDayOfMonth = formatDateAsYmd(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)))
+  const lastDayOfPreviousMonth = getLastDayOfPreviousMonth(today)
 
-  if (await hasCurrencyRates(targetDate)) {
-    return
-  }
-
-  const rates = await fetchHistoricalRates(targetDate)
-  await saveCurrencyRates(targetDate, rates)
+  const rates = await fetchHistoricalRates(lastDayOfPreviousMonth)
+  await saveCurrencyRates(firstDayOfMonth, rates)
 }
 
 export const shouldUpdateRatesNow = (now: Date): { updateCurrent: boolean, updateHistorical: boolean } => {

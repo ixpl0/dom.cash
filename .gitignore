@@ -1,10 +1,11 @@
-# Nuxt dev/build outputs
+# Nuxt/vitest dev/build outputs
 .output
 .data
 .nuxt
 .nitro
 .cache
 dist
+coverage
 
 # Node dependencies
 node_modules

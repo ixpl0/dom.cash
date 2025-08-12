@@ -6,7 +6,8 @@
       "Bash(pnpm eslint:*)",
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm lint:*)",
-      "WebFetch(domain:daisyui.com)"
+      "WebFetch(domain:daisyui.com)",
+      "WebFetch(domain:nuxt.com)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
