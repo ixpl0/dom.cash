@@ -27,14 +27,17 @@
       </svg>
     </div>
 
-    <div class="timeline-end stats shadow">
+    <div class="timeline-end stats shadow overflow-visible">
       <div class="stat place-items-center">
-        <div class="stat-title">
+        <div
+          class="stat-title tooltip tooltip-top"
+          data-tip="Сумма всех сбережений, конвертированных в основную валюту"
+        >
           Баланс на начало месяца
         </div>
         <div class="stat-value text-primary">
           <div
-            class="tooltip tooltip-right font-normal"
+            class="tooltip tooltip-bottom font-normal"
             :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
           >
             <button
@@ -48,32 +51,51 @@
       </div>
 
       <div class="stat place-items-center">
-        <div class="stat-title text-center">
+        <div
+          class="stat-title text-center tooltip tooltip-top"
+          data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
+        >
           Изменение баланса
         </div>
         <div class="stat-value">
           <div
-            class="tooltip tooltip-right font-normal"
+            v-if="balanceChange !== null"
+            class="tooltip tooltip-bottom font-normal"
             data-tip="Изменение баланса по сравнению с предыдущим месяцем"
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="balanceChange !== null ? getBalanceChangeClass(balanceChange) : ''"
+              :class="getBalanceChangeClass(balanceChange)"
               disabled
             >
-              {{ balanceChange !== null ? formatAmount(balanceChange, mainCurrency) : '—' }}
+              {{ formatAmount(balanceChange, mainCurrency) }}
+            </button>
+          </div>
+          <div
+            v-else
+            class="tooltip tooltip-bottom font-normal"
+            data-tip="Нужен баланс предыдущего месяца для расчета"
+          >
+            <button
+              class="btn btn-ghost text-[2rem] font-extrabold"
+              disabled
+            >
+              —
             </button>
           </div>
         </div>
       </div>
 
       <div class="stat place-items-center">
-        <div class="stat-title">
+        <div
+          class="stat-title tooltip tooltip-top"
+          data-tip="Сумма всех доходов, конвертированных в основную валюту"
+        >
           Доходы
         </div>
         <div class="stat-value text-success">
           <div
-            class="tooltip tooltip-left font-normal"
+            class="tooltip tooltip-bottom font-normal"
             :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
           >
             <button
@@ -87,12 +109,15 @@
       </div>
 
       <div class="stat place-items-center">
-        <div class="stat-title">
+        <div
+          class="stat-title tooltip tooltip-top"
+          data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
+        >
           Крупные расходы
         </div>
         <div class="stat-value text-error">
           <div
-            class="tooltip tooltip-left font-normal"
+            class="tooltip tooltip-bottom font-normal"
             :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
           >
             <button
@@ -106,14 +131,19 @@
       </div>
 
       <div class="stat place-items-center">
-        <div class="stat-title text-center">
+        <div
+          class="stat-title text-center tooltip tooltip-top"
+          data-tip="Баланс + Доходы - Баланс следующего месяца - Крупные расходы - Валютные колебания"
+        >
           Карманные расходы
         </div>
         <div class="stat-value">
           <div
             v-if="pocketExpenses !== null"
-            class="tooltip tooltip-left font-normal"
-            data-tip="Всё, что осталось после вычета крупных расходов из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д."
+            class="tooltip tooltip-bottom font-normal"
+            :data-tip="pocketExpenses < 0
+              ? 'Вероятно, вы не добавили все доходы, или по ошибке добавили лишнюю запись в крупные расходы. Ещё может быть связано с неточностями при работе с валютой'
+              : 'Всё, что осталось после вычета крупных расходов и валютных колебаний из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д. Может быть неточным, если вы не добавили все доходы или расходы, или валютные колебания были вычислены неточно.'"
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
@@ -124,11 +154,47 @@
           </div>
           <div
             v-else
-            class="tooltip tooltip-left font-normal"
+            class="tooltip tooltip-bottom font-normal"
             data-tip="Будет доступно после появления баланса следующего месяца"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold text-base-content/50"
+              class="btn btn-ghost text-[2rem] font-extrabold"
+              disabled
+            >
+              —
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div
+          class="stat-title text-center tooltip tooltip-top"
+          data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по крусам текущего месяца"
+        >
+          Валютные колебания
+        </div>
+        <div class="stat-value">
+          <div
+            v-if="currencyProfitLoss !== null"
+            class="tooltip tooltip-bottom font-normal"
+            :data-tip="`Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`"
+          >
+            <button
+              class="btn btn-ghost text-[2rem] font-extrabold"
+              :class="getBalanceChangeClass(currencyProfitLoss)"
+              disabled
+            >
+              {{ formatAmount(currencyProfitLoss, mainCurrency) }}
+            </button>
+          </div>
+          <div
+            v-else
+            class="tooltip tooltip-bottom font-normal"
+            data-tip="Будет доступно после появления баланса следующего месяца"
+          >
+            <button
+              class="btn btn-ghost text-[2rem] font-extrabold"
               disabled
             >
               —
@@ -258,12 +324,32 @@ const nextMonthStartBalance = computed(() => {
   )
 })
 
-const pocketExpenses = computed(() => {
-  if (nextMonthStartBalance.value === null) {
+const nextMonthBalanceAtCurrentRates = computed(() => {
+  if (!nextMonthData.value) {
     return null
   }
 
-  return startBalance.value + totalIncome.value - totalExpenses.value - nextMonthStartBalance.value
+  return calculateTotalBalance(
+    nextMonthData.value.balanceSources,
+    mainCurrency.value,
+    currentMonthRates.value,
+  )
+})
+
+const currencyProfitLoss = computed(() => {
+  if (nextMonthBalanceAtCurrentRates.value === null || nextMonthStartBalance.value === null) {
+    return null
+  }
+
+  return nextMonthStartBalance.value - nextMonthBalanceAtCurrentRates.value
+})
+
+const pocketExpenses = computed(() => {
+  if (nextMonthBalanceAtCurrentRates.value === null || currencyProfitLoss.value === null) {
+    return null
+  }
+
+  return startBalance.value + totalIncome.value - totalExpenses.value - nextMonthBalanceAtCurrentRates.value
 })
 
 const openBalanceModal = (): void => {
