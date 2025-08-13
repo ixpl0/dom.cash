@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).defineNitroPlugin = (fn: any) => fn
 
-vi.mock('../../server/utils/rates/database', () => ({
+vi.mock('~~/server/utils/rates/database', () => ({
   hasRatesForCurrentMonth: vi.fn(),
   saveHistoricalRatesForCurrentMonth: vi.fn(),
 }))
@@ -13,15 +13,15 @@ let updateCurrencyRates: () => Promise<void>
 let hasRatesForCurrentMonth: ReturnType<typeof vi.fn>
 let saveHistoricalRatesForCurrentMonth: ReturnType<typeof vi.fn>
 
-describe('currency rates plugin', () => {
+describe('server/plugins/currency-rates', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    const database = await import('../../server/utils/rates/database')
+    const database = await import('~~/server/utils/rates/database')
     hasRatesForCurrentMonth = database.hasRatesForCurrentMonth as ReturnType<typeof vi.fn>
     saveHistoricalRatesForCurrentMonth = database.saveHistoricalRatesForCurrentMonth as ReturnType<typeof vi.fn>
 
-    const plugin = await import('../../server/plugins/currency-rates')
+    const plugin = await import('~~/server/plugins/currency-rates')
     updateCurrencyRates = plugin.__testables__.updateCurrencyRates
   })
 

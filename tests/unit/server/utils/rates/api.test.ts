@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { MOCK_LATEST_RATES_RESPONSE, MOCK_HISTORICAL_RATES_RESPONSE } from '../fixtures/api-responses'
-import { MOCK_CURRENCY_RATES, MOCK_HISTORICAL_RATES } from '../fixtures/currency-rates'
+import { MOCK_LATEST_RATES_RESPONSE, MOCK_HISTORICAL_RATES_RESPONSE } from '#fixtures/api-responses'
+import { MOCK_CURRENCY_RATES, MOCK_HISTORICAL_RATES } from '#fixtures/currency-rates'
 
 import { fetchLatestRates, fetchHistoricalRates } from '~~/server/utils/rates/api'
 
@@ -18,7 +18,7 @@ afterEach(() => {
   process.env = originalEnv
 })
 
-describe('api.ts', () => {
+describe('server/utils/rates/api', () => {
   describe('fetchLatestRates', () => {
     it('should fetch and return latest rates successfully', async () => {
       mockFetch.mockResolvedValue({

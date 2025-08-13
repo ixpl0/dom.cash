@@ -7,7 +7,10 @@
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm lint:*)",
       "WebFetch(domain:daisyui.com)",
-      "WebFetch(domain:nuxt.com)"
+      "WebFetch(domain:nuxt.com)",
+      "Bash(mkdir:*)",
+      "Bash(git mv:*)",
+      "Bash(pnpm test:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

@@ -26,6 +26,7 @@ export default defineConfig({
             '@@': root,
             '~': resolve(root, 'app'),
             '@': resolve(root, 'app'),
+            '#fixtures': resolve(root, 'tests/fixtures'),
           },
         },
       },
