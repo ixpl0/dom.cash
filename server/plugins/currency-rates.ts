@@ -1,25 +1,8 @@
 import { updateCurrentRates, updateHistoricalRatesForCurrentMonth, shouldUpdateRatesNow } from '~~/server/utils/rates/scheduler'
 
 const ENABLE_CURRENCY_RATES_UPDATE = 'ENABLE_CURRENCY_RATES_AUTO_UPDATE'
-const SCHEDULED_TIME_UTC = '00:13'
-const TIME_WINDOW_SECONDS = 30
-const CHECK_INTERVAL_MS = 30_000
-
-const isTimeForScheduledUpdate = (now: Date, targetTime: string): boolean => {
-  const [hours, minutes] = targetTime.split(':').map(Number)
-  const targetTimestamp = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    hours,
-    minutes,
-    0,
-    0,
-  )
-
-  const timeDifferenceSeconds = Math.abs((now.getTime() - targetTimestamp) / 1000)
-  return timeDifferenceSeconds <= TIME_WINDOW_SECONDS
-}
+const CHECK_INTERVAL_MS = 5 * 60 * 1000
+const MAX_ATTEMPTS_PER_TASK = 5
 
 const formatDateKey = (date: Date): string => {
   const year = date.getUTCFullYear()
@@ -28,7 +11,12 @@ const formatDateKey = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
-const completedTasks = new Set<string>()
+interface TaskState {
+  attempts: number
+  completed: boolean
+}
+
+const taskStates = new Map<string, TaskState>()
 let currentDateKey = formatDateKey(new Date())
 let updateTimer: NodeJS.Timeout | null = null
 let isSchedulerActive = false
@@ -38,12 +26,8 @@ const executeScheduledTasks = async (): Promise<void> => {
   const todayKey = formatDateKey(now)
 
   if (todayKey !== currentDateKey) {
-    completedTasks.clear()
+    taskStates.clear()
     currentDateKey = todayKey
-  }
-
-  if (!isTimeForScheduledUpdate(now, SCHEDULED_TIME_UTC)) {
-    return
   }
 
   const { updateCurrent, updateHistorical } = shouldUpdateRatesNow(now)
@@ -64,23 +48,27 @@ const executeScheduledTasks = async (): Promise<void> => {
     })
   }
 
-  const pendingTasks = tasks.filter(({ key }) => !completedTasks.has(key))
+  for (const { key, action } of tasks) {
+    const state = taskStates.get(key) ?? { attempts: 0, completed: false }
 
-  if (pendingTasks.length === 0) {
-    return
+    if (state.completed) {
+      continue
+    }
+
+    if (state.attempts >= MAX_ATTEMPTS_PER_TASK) {
+      continue
+    }
+
+    try {
+      await action()
+      taskStates.set(key, { attempts: state.attempts + 1, completed: true })
+      console.log(`Currency rate update task succeeded: ${key}`)
+    }
+    catch (error) {
+      taskStates.set(key, { attempts: state.attempts + 1, completed: false })
+      console.error(`Currency rate update task failed: ${key}`, error)
+    }
   }
-
-  await Promise.all(
-    pendingTasks.map(async ({ key, action }) => {
-      try {
-        await action()
-        completedTasks.add(key)
-      }
-      catch (error) {
-        console.error(`Error executing currency rate update task: ${key}`, error)
-      }
-    }),
-  )
 }
 
 const startCurrencyRatesScheduler = (): void => {
@@ -92,6 +80,7 @@ const startCurrencyRatesScheduler = (): void => {
     void executeScheduledTasks()
   }, CHECK_INTERVAL_MS)
 
+  void executeScheduledTasks()
   isSchedulerActive = true
 }
 
@@ -103,6 +92,15 @@ const stopCurrencyRatesScheduler = (): void => {
   clearInterval(updateTimer)
   updateTimer = null
   isSchedulerActive = false
+}
+
+export const __testables__ = {
+  executeScheduledTasks,
+  taskStates,
+  resetState: (): void => {
+    taskStates.clear()
+    currentDateKey = formatDateKey(new Date())
+  },
 }
 
 export default defineNitroPlugin(async (nitroApp) => {
