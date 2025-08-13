@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MOCK_LATEST_RATES_RESPONSE, MOCK_HISTORICAL_RATES_RESPONSE } from '../fixtures/api-responses'
 import { MOCK_CURRENCY_RATES, MOCK_HISTORICAL_RATES } from '../fixtures/currency-rates'
 
-import { fetchLatestRates, fetchHistoricalRates } from '../../server/utils/rates/api'
+import { fetchLatestRates, fetchHistoricalRates } from '~~/server/utils/rates/api'
 
 const mockFetch = vi.fn()
 global.fetch = mockFetch

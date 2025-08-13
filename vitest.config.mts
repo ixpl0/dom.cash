@@ -1,0 +1,42 @@
+import { defineConfig } from 'vitest/config'
+import { defineVitestProject } from '@nuxt/test-utils/config'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const root = dirname(fileURLToPath(import.meta.url))
+
+export default defineConfig({
+  test: {
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'tests/', '*.config.*', '.nuxt/', '.output/', 'scripts/'],
+    },
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          include: ['test/unit/**/*.{test,spec}.ts', 'tests/unit/**/*.{test,spec}.ts'],
+          environment: 'node',
+        },
+        resolve: {
+          alias: {
+            '~~': root,
+            '@@': root,
+            '~': resolve(root, 'app'),
+            '@': resolve(root, 'app'),
+          },
+        },
+      },
+      await defineVitestProject({
+        test: {
+          name: 'nuxt',
+          include: ['test/nuxt/**/*.{test,spec}.ts', 'tests/nuxt/**/*.{test,spec}.ts'],
+          environment: 'nuxt',
+          environmentOptions: { nuxt: { domEnvironment: 'happy-dom' } },
+        },
+      }),
+    ],
+  },
+})

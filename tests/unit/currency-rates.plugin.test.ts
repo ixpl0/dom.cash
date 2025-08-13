@@ -4,63 +4,57 @@ import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).defineNitroPlugin = (fn: any) => fn
 
-vi.mock('~~/server/utils/rates/scheduler', () => ({
-  updateCurrentRates: vi.fn(),
-  updateHistoricalRatesForCurrentMonth: vi.fn(),
-  shouldUpdateRatesNow: vi.fn(),
+vi.mock('../../server/utils/rates/database', () => ({
+  hasRatesForCurrentMonth: vi.fn(),
+  saveHistoricalRatesForCurrentMonth: vi.fn(),
 }))
 
-let executeScheduledTasks: () => Promise<void>
-let resetState: () => void
-let updateCurrentRates: ReturnType<typeof vi.fn>
-let shouldUpdateRatesNow: ReturnType<typeof vi.fn>
+let updateCurrencyRates: () => Promise<void>
+let hasRatesForCurrentMonth: ReturnType<typeof vi.fn>
+let saveHistoricalRatesForCurrentMonth: ReturnType<typeof vi.fn>
 
-describe('currency rates plugin scheduler', () => {
+describe('currency rates plugin', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2025-02-01T00:00:00Z'))
 
-    const sched = await import('~~/server/utils/rates/scheduler')
-    updateCurrentRates = sched.updateCurrentRates as ReturnType<typeof vi.fn>
-    shouldUpdateRatesNow = sched.shouldUpdateRatesNow as ReturnType<typeof vi.fn>
+    const database = await import('../../server/utils/rates/database')
+    hasRatesForCurrentMonth = database.hasRatesForCurrentMonth as ReturnType<typeof vi.fn>
+    saveHistoricalRatesForCurrentMonth = database.saveHistoricalRatesForCurrentMonth as ReturnType<typeof vi.fn>
 
     const plugin = await import('../../server/plugins/currency-rates')
-    executeScheduledTasks = plugin.__testables__.executeScheduledTasks
-    resetState = plugin.__testables__.resetState
-    resetState()
+    updateCurrencyRates = plugin.__testables__.updateCurrencyRates
   })
 
   afterEach(() => {
-    vi.useRealTimers()
+    vi.clearAllMocks()
   })
 
-  it('should stop retrying after a successful update', async () => {
-    shouldUpdateRatesNow.mockReturnValue({ updateCurrent: true, updateHistorical: false })
-    updateCurrentRates.mockResolvedValue()
+  it('should skip update if rates for current month already exist', async () => {
+    hasRatesForCurrentMonth.mockResolvedValue(true)
 
-    await executeScheduledTasks()
-    await executeScheduledTasks()
+    await updateCurrencyRates()
 
-    expect(updateCurrentRates).toHaveBeenCalledOnce()
-
-    vi.setSystemTime(new Date('2025-02-02T00:00:00Z'))
-    await executeScheduledTasks()
-
-    expect(updateCurrentRates).toHaveBeenCalledTimes(2)
+    expect(hasRatesForCurrentMonth).toHaveBeenCalledOnce()
+    expect(saveHistoricalRatesForCurrentMonth).not.toHaveBeenCalled()
   })
 
-  it('should retry up to the limit on failure', async () => {
-    shouldUpdateRatesNow.mockReturnValue({ updateCurrent: true, updateHistorical: false })
-    updateCurrentRates.mockRejectedValue(new Error('fail'))
+  it('should update rates if rates for current month do not exist', async () => {
+    hasRatesForCurrentMonth.mockResolvedValue(false)
+    saveHistoricalRatesForCurrentMonth.mockResolvedValue(undefined)
 
-    for (let i = 0; i < 5; i++) {
-      await executeScheduledTasks()
-      vi.setSystemTime(new Date(Date.UTC(2025, 1, 1, 0, (i + 1) * 5)))
-    }
+    await updateCurrencyRates()
 
-    await executeScheduledTasks()
+    expect(hasRatesForCurrentMonth).toHaveBeenCalledOnce()
+    expect(saveHistoricalRatesForCurrentMonth).toHaveBeenCalledOnce()
+  })
 
-    expect(updateCurrentRates).toHaveBeenCalledTimes(5)
+  it('should handle errors gracefully', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    hasRatesForCurrentMonth.mockRejectedValue(new Error('Database error'))
+
+    await updateCurrencyRates()
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to update currency rates:', expect.any(Error))
+    consoleSpy.mockRestore()
   })
 })

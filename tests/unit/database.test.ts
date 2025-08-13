@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MOCK_CURRENCY_RATES, MOCK_HISTORICAL_RATES, MOCK_DATABASE_RECORD } from '../fixtures/currency-rates'
 import { EXPECTED_DATE_FORMATS } from '../fixtures/dates'
 
-import { saveCurrencyRates, getCurrencyRates, hasCurrencyRates } from '../../server/utils/rates/database'
+import { saveCurrencyRates, getCurrencyRates, hasCurrencyRates } from '~~/server/utils/rates/database'
+import type { currency } from '~~/server/db/schema'
 
 vi.mock('~~/server/db/schema', () => ({
-  currency: { date: 'date_column' },
+  currency: {
+    date: 'date_column',
+    rates: 'rates_column',
+  },
 }))
 
 vi.mock('~~/server/db', () => ({
@@ -22,7 +26,7 @@ vi.mock('drizzle-orm', () => ({
 let mockInsert: ReturnType<typeof vi.fn>
 let mockSelect: ReturnType<typeof vi.fn>
 let mockEq: ReturnType<typeof vi.fn>
-let mockCurrencySchema: { date: string }
+let mockCurrencySchema: typeof currency
 
 describe('database.ts', () => {
   beforeEach(async () => {
