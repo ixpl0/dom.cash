@@ -61,6 +61,15 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
+import BudgetHeaderControls from '~/components/budget/BudgetHeaderControls.vue'
+
+const headerControls = useHeaderControls()
+onMounted(() => {
+  headerControls.value = [BudgetHeaderControls]
+})
+onUnmounted(() => {
+  headerControls.value = []
+})
 
 const monthNames = [
   'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',

@@ -23,6 +23,7 @@
         </div>
       </div>
       <div class="navbar-end">
+        <HeaderControls />
         <div
           v-if="isAuthenticated"
           class="dropdown dropdown-end"
