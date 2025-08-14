@@ -1,4 +1,4 @@
-import * as cron from 'node-cron'
+import { CronJob } from 'cron'
 import { hasRatesForCurrentMonth, saveHistoricalRatesForCurrentMonth } from '~~/server/utils/rates/database'
 
 const ENABLE_CURRENCY_RATES_UPDATE = 'ENABLE_CURRENCY_RATES_AUTO_UPDATE'
@@ -21,25 +21,29 @@ const updateCurrencyRates = async (): Promise<void> => {
   }
 }
 
-let scheduledTask: cron.ScheduledTask | null = null
+let cronJob: CronJob | null = null
 
 const startCurrencyRatesScheduler = (): void => {
-  if (scheduledTask !== null) {
+  if (cronJob !== null) {
     return
   }
 
-  scheduledTask = cron.schedule('5 0 * * *', updateCurrencyRates, {
-    timezone: 'UTC',
-  })
+  cronJob = new CronJob(
+    '0 5 0 * * *',
+    updateCurrencyRates,
+    null,
+    false,
+    'UTC',
+  )
 
-  scheduledTask.start()
+  cronJob.start()
   console.log('Currency rates scheduler started (runs daily at 00:05 UTC)')
 }
 
 const stopCurrencyRatesScheduler = (): void => {
-  if (scheduledTask !== null) {
-    scheduledTask.stop()
-    scheduledTask = null
+  if (cronJob !== null) {
+    cronJob.stop()
+    cronJob = null
     console.log('Currency rates scheduler stopped')
   }
 }

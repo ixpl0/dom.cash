@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi, afterEach, beforeAll, afterAll } from 'vitest'
 
 // Stub Nitro's global helper for unit tests
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).defineNitroPlugin = (fn: any) => fn
 
 vi.mock('~~/server/utils/rates/database', () => ({
@@ -9,8 +8,8 @@ vi.mock('~~/server/utils/rates/database', () => ({
   saveHistoricalRatesForCurrentMonth: vi.fn(),
 }))
 
-vi.mock('node-cron', () => ({
-  schedule: vi.fn(),
+vi.mock('cron', () => ({
+  CronJob: vi.fn(),
 }))
 
 // Mock console methods to avoid noise in tests
@@ -30,7 +29,7 @@ afterAll(() => {
 let updateCurrencyRates: () => Promise<void>
 let hasRatesForCurrentMonth: ReturnType<typeof vi.fn>
 let saveHistoricalRatesForCurrentMonth: ReturnType<typeof vi.fn>
-let mockCron: any
+let mockCronJob: ReturnType<typeof vi.fn>
 
 describe('server/plugins/currency-rates', () => {
   beforeEach(async () => {
@@ -40,8 +39,8 @@ describe('server/plugins/currency-rates', () => {
     hasRatesForCurrentMonth = database.hasRatesForCurrentMonth as ReturnType<typeof vi.fn>
     saveHistoricalRatesForCurrentMonth = database.saveHistoricalRatesForCurrentMonth as ReturnType<typeof vi.fn>
 
-    const cron = await import('node-cron')
-    mockCron = cron as any
+    const cron = await import('cron')
+    mockCronJob = cron.CronJob as unknown as ReturnType<typeof vi.fn>
 
     const plugin = await import('~~/server/plugins/currency-rates')
     updateCurrencyRates = plugin.__testables__.updateCurrencyRates
@@ -82,12 +81,12 @@ describe('server/plugins/currency-rates', () => {
 
   describe('plugin integration', () => {
     it('should start scheduler when environment variable is set', async () => {
-      const mockScheduledTask = {
+      const mockCronJobInstance = {
         start: vi.fn(),
         stop: vi.fn(),
       }
 
-      mockCron.schedule.mockReturnValue(mockScheduledTask)
+      mockCronJob.mockImplementation(() => mockCronJobInstance)
 
       const mockNitroApp = {
         hooks: {
@@ -102,14 +101,16 @@ describe('server/plugins/currency-rates', () => {
       try {
         vi.resetModules()
         const plugin = await import('~~/server/plugins/currency-rates?t=' + Date.now())
-        plugin.default(mockNitroApp as any)
+        plugin.default(mockNitroApp as Parameters<typeof plugin.default>[0])
 
-        expect(mockCron.schedule).toHaveBeenCalledWith(
-          '5 0 * * *',
+        expect(mockCronJob).toHaveBeenCalledWith(
+          '0 5 0 * * *',
           expect.any(Function),
-          { timezone: 'UTC' },
+          null,
+          false,
+          'UTC',
         )
-        expect(mockScheduledTask.start).toHaveBeenCalled()
+        expect(mockCronJobInstance.start).toHaveBeenCalled()
         expect(mockNitroApp.hooks.hook).toHaveBeenCalledWith('close', expect.any(Function))
       }
       finally {
@@ -137,9 +138,9 @@ describe('server/plugins/currency-rates', () => {
       try {
         vi.resetModules()
         const plugin = await import('~~/server/plugins/currency-rates?t=' + Date.now())
-        plugin.default(mockNitroApp as any)
+        plugin.default(mockNitroApp as Parameters<typeof plugin.default>[0])
 
-        expect(mockCron.schedule).not.toHaveBeenCalled()
+        expect(mockCronJob).not.toHaveBeenCalled()
         expect(mockNitroApp.hooks.hook).not.toHaveBeenCalled()
       }
       finally {
@@ -151,12 +152,12 @@ describe('server/plugins/currency-rates', () => {
     })
 
     it('should stop scheduler on nitro close hook', async () => {
-      const mockScheduledTask = {
+      const mockCronJobInstance = {
         start: vi.fn(),
         stop: vi.fn(),
       }
 
-      mockCron.schedule.mockReturnValue(mockScheduledTask)
+      mockCronJob.mockImplementation(() => mockCronJobInstance)
 
       const mockNitroApp = {
         hooks: {
@@ -171,7 +172,7 @@ describe('server/plugins/currency-rates', () => {
       try {
         vi.resetModules()
         const plugin = await import('~~/server/plugins/currency-rates?t=' + Date.now())
-        plugin.default(mockNitroApp as any)
+        plugin.default(mockNitroApp as Parameters<typeof plugin.default>[0])
 
         // Get the close hook callback that was registered
         expect(mockNitroApp.hooks.hook).toHaveBeenCalledWith('close', expect.any(Function))
@@ -180,7 +181,7 @@ describe('server/plugins/currency-rates', () => {
         // Call the close callback
         closeCallback()
 
-        expect(mockScheduledTask.stop).toHaveBeenCalled()
+        expect(mockCronJobInstance.stop).toHaveBeenCalled()
       }
       finally {
         // Clean up

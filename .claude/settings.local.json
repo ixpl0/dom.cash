@@ -1,16 +1,20 @@
 {
   "permissions": {
     "allow": [
+      "Bash(mkdir:*)",
+      "Bash(git mv:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm tsc:*)",
       "Bash(pnpm eslint:*)",
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm lint:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm remove:*)",
       "WebFetch(domain:daisyui.com)",
       "WebFetch(domain:nuxt.com)",
-      "Bash(mkdir:*)",
-      "Bash(git mv:*)",
-      "Bash(pnpm test:*)"
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(grep:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
