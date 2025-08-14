@@ -25,41 +25,55 @@
       <div class="navbar-end">
         <div
           v-if="isAuthenticated"
-          class="dropdown dropdown-end"
+          class="flex items-center gap-2"
         >
-          <div
-            tabindex="0"
-            role="button"
-            class="btn btn-ghost"
+          <button
+            class="btn btn-outline btn-sm"
+            @click="openSharedBudgetsModal"
           >
-            {{ user?.username }}
-            <svg
-              class="w-4 h-4 ml-1"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            📋 Общие бюджеты
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            @click="openShareModal"
+          >
+            🔗 Общий доступ
+          </button>
+          <div class="dropdown dropdown-end">
+            <div
+              tabindex="0"
+              role="button"
+              class="btn btn-ghost"
             >
-              <path
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </div>
-          <ul
-            tabindex="0"
-            class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
-          >
-            <li>
-              <button
-                class="btn btn-ghost btn-sm"
-                @click="logout"
+              {{ user?.username }}
+              <svg
+                class="w-4 h-4 ml-1"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                Выйти
-              </button>
-            </li>
-          </ul>
+                <path
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+            >
+              <li>
+                <button
+                  class="btn btn-ghost btn-sm"
+                  @click="logout"
+                >
+                  Выйти
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
         <NuxtLink
           v-else
@@ -72,9 +86,23 @@
     <main>
       <slot />
     </main>
+
+    <BudgetShareModal ref="shareModal" />
+    <BudgetSharedBudgetsModal ref="sharedBudgetsModal" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
+
+const shareModal = ref()
+const sharedBudgetsModal = ref()
+
+const openShareModal = (): void => {
+  shareModal.value?.show()
+}
+
+const openSharedBudgetsModal = (): void => {
+  sharedBudgetsModal.value?.show()
+}
 </script>
