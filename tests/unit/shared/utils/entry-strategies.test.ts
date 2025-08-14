@@ -9,15 +9,12 @@ import {
   findEntryKindByEntryId,
 } from '~~/shared/utils/entry-strategies'
 import type { MonthData, BalanceSourceData, IncomeEntryData, ExpenseEntryData } from '~~/shared/types/budget'
-import type { EntryKind } from '~~/server/db/schema'
 
 const createMockMonth = (): MonthData => ({
   id: 'month-1',
   year: 2025,
   month: 1,
-  userId: 'user-1',
-  budget: 5000,
-  entries: [],
+  userMonthId: 'user-month-1',
   balanceSources: [
     { id: 'balance-1', description: 'Savings', amount: 1000, currency: 'USD' },
   ],
@@ -27,6 +24,9 @@ const createMockMonth = (): MonthData => ({
   expenseEntries: [
     { id: 'expense-1', description: 'Rent', amount: 1500, currency: 'USD', date: '2025-02-01' },
   ],
+  balanceChange: 0,
+  pocketExpenses: 0,
+  income: 3000,
 })
 
 describe('shared/utils/entry-strategies', () => {
@@ -385,12 +385,13 @@ describe('shared/utils/entry-strategies', () => {
         id: 'month-1',
         year: 2025,
         month: 1,
-        userId: 'user-1',
-        budget: 5000,
-        entries: [],
+        userMonthId: 'user-month-1',
         balanceSources: [],
         incomeEntries: [],
         expenseEntries: [],
+        balanceChange: 0,
+        pocketExpenses: 0,
+        income: 0,
       }
 
       const result = findEntryKindByEntryId(emptyMonth, 'any-id')

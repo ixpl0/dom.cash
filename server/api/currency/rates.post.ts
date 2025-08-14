@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { H3Event } from 'h3'
 import { saveCurrencyRates } from '~~/server/utils/rates/database'
 
 const updateRatesSchema = z.object({
@@ -6,7 +7,7 @@ const updateRatesSchema = z.object({
   rates: z.record(z.string(), z.number()),
 })
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event)
   const { date, rates } = updateRatesSchema.parse(body)
 

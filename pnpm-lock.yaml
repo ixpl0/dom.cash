@@ -72,6 +72,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.4
         version: 0.31.4
+      h3:
+        specifier: ^1.15.4
+        version: 1.15.4
       happy-dom:
         specifier: ^18.0.1
         version: 18.0.1

@@ -3,9 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { formatAmount, calculateTotalBalance, getBalanceChangeClass } from '~~/shared/utils/budget'
 import type { BudgetEntry } from '~~/shared/types/budget'
 
+const mockNumberFormatConstructor = vi.fn() as any
+mockNumberFormatConstructor.supportedLocalesOf = vi.fn()
+
 Object.defineProperty(globalThis, 'Intl', {
   value: {
-    NumberFormat: vi.fn(),
+    NumberFormat: mockNumberFormatConstructor,
   },
   writable: true,
 })
@@ -18,16 +21,16 @@ describe('shared/utils/budget', () => {
   describe('formatAmount', () => {
     it('should format amount correctly with currency', () => {
       const mockFormat = vi.fn().mockReturnValue('1 000,50 ₽')
-      const mockNumberFormat = vi.fn().mockReturnValue({
+      mockNumberFormatConstructor.mockReturnValue({
         format: mockFormat,
       })
 
-      globalThis.Intl.NumberFormat = mockNumberFormat
+      globalThis.Intl.NumberFormat = mockNumberFormatConstructor
 
       const result = formatAmount(1000.5, 'RUB')
 
       expect(result).toBe('1 000,50 ₽')
-      expect(mockNumberFormat).toHaveBeenCalledWith('ru-RU', {
+      expect(mockNumberFormatConstructor).toHaveBeenCalledWith('ru-RU', {
         style: 'currency',
         currency: 'RUB',
         minimumFractionDigits: 0,
@@ -38,16 +41,16 @@ describe('shared/utils/budget', () => {
 
     it('should format USD currency', () => {
       const mockFormat = vi.fn().mockReturnValue('$100.00')
-      const mockNumberFormat = vi.fn().mockReturnValue({
+      mockNumberFormatConstructor.mockReturnValue({
         format: mockFormat,
       })
 
-      globalThis.Intl.NumberFormat = mockNumberFormat
+      globalThis.Intl.NumberFormat = mockNumberFormatConstructor
 
       const result = formatAmount(100, 'USD')
 
       expect(result).toBe('$100.00')
-      expect(mockNumberFormat).toHaveBeenCalledWith('ru-RU', {
+      expect(mockNumberFormatConstructor).toHaveBeenCalledWith('ru-RU', {
         style: 'currency',
         currency: 'USD',
         minimumFractionDigits: 0,
@@ -57,11 +60,11 @@ describe('shared/utils/budget', () => {
 
     it('should handle zero amount', () => {
       const mockFormat = vi.fn().mockReturnValue('0 ₽')
-      const mockNumberFormat = vi.fn().mockReturnValue({
+      mockNumberFormatConstructor.mockReturnValue({
         format: mockFormat,
       })
 
-      globalThis.Intl.NumberFormat = mockNumberFormat
+      globalThis.Intl.NumberFormat = mockNumberFormatConstructor
 
       const result = formatAmount(0, 'RUB')
 
@@ -71,11 +74,11 @@ describe('shared/utils/budget', () => {
 
     it('should handle negative amount', () => {
       const mockFormat = vi.fn().mockReturnValue('-500,25 ₽')
-      const mockNumberFormat = vi.fn().mockReturnValue({
+      mockNumberFormatConstructor.mockReturnValue({
         format: mockFormat,
       })
 
-      globalThis.Intl.NumberFormat = mockNumberFormat
+      globalThis.Intl.NumberFormat = mockNumberFormatConstructor
 
       const result = formatAmount(-500.25, 'RUB')
 
@@ -105,9 +108,9 @@ describe('shared/utils/budget', () => {
 
     it('should calculate total for same currency entries', () => {
       const entries: BudgetEntry[] = [
-        { id: '1', amount: 100, currency: 'USD', category: 'food', description: 'Test 1', date: '2023-01-01', type: 'expense', userId: 'user1' },
-        { id: '2', amount: 200, currency: 'USD', category: 'transport', description: 'Test 2', date: '2023-01-02', type: 'expense', userId: 'user1' },
-        { id: '3', amount: -50, currency: 'USD', category: 'income', description: 'Test 3', date: '2023-01-03', type: 'income', userId: 'user1' },
+        { id: '1', amount: 100, currency: 'USD', description: 'Test 1' },
+        { id: '2', amount: 200, currency: 'USD', description: 'Test 2' },
+        { id: '3', amount: -50, currency: 'USD', description: 'Test 3' },
       ]
 
       const result = calculateTotalBalance(entries, 'USD', {})
@@ -117,8 +120,8 @@ describe('shared/utils/budget', () => {
 
     it('should convert different currencies correctly', () => {
       const entries: BudgetEntry[] = [
-        { id: '1', amount: 100, currency: 'USD', category: 'food', description: 'Test 1', date: '2023-01-01', type: 'expense', userId: 'user1' },
-        { id: '2', amount: 200, currency: 'EUR', category: 'transport', description: 'Test 2', date: '2023-01-02', type: 'expense', userId: 'user1' },
+        { id: '1', amount: 100, currency: 'USD', description: 'Test 1' },
+        { id: '2', amount: 200, currency: 'EUR', description: 'Test 2' },
       ]
 
       const exchangeRates = {
@@ -133,8 +136,8 @@ describe('shared/utils/budget', () => {
 
     it('should handle missing exchange rates with default rate 1', () => {
       const entries: BudgetEntry[] = [
-        { id: '1', amount: 100, currency: 'USD', category: 'food', description: 'Test 1', date: '2023-01-01', type: 'expense', userId: 'user1' },
-        { id: '2', amount: 200, currency: 'UNKNOWN', category: 'transport', description: 'Test 2', date: '2023-01-02', type: 'expense', userId: 'user1' },
+        { id: '1', amount: 100, currency: 'USD', description: 'Test 1' },
+        { id: '2', amount: 200, currency: 'UNKNOWN', description: 'Test 2' },
       ]
 
       const exchangeRates = {
@@ -148,7 +151,7 @@ describe('shared/utils/budget', () => {
 
     it('should handle missing base currency rate with default rate 1', () => {
       const entries: BudgetEntry[] = [
-        { id: '1', amount: 100, currency: 'USD', category: 'food', description: 'Test 1', date: '2023-01-01', type: 'expense', userId: 'user1' },
+        { id: '1', amount: 100, currency: 'USD', description: 'Test 1' },
       ]
 
       const exchangeRates = {}
@@ -160,9 +163,9 @@ describe('shared/utils/budget', () => {
 
     it('should handle complex multi-currency calculation', () => {
       const entries: BudgetEntry[] = [
-        { id: '1', amount: 1000, currency: 'RUB', category: 'food', description: 'Test 1', date: '2023-01-01', type: 'expense', userId: 'user1' },
-        { id: '2', amount: 100, currency: 'USD', category: 'transport', description: 'Test 2', date: '2023-01-02', type: 'expense', userId: 'user1' },
-        { id: '3', amount: 50, currency: 'EUR', category: 'income', description: 'Test 3', date: '2023-01-03', type: 'income', userId: 'user1' },
+        { id: '1', amount: 1000, currency: 'RUB', description: 'Test 1' },
+        { id: '2', amount: 100, currency: 'USD', description: 'Test 2' },
+        { id: '3', amount: 50, currency: 'EUR', description: 'Test 3' },
       ]
 
       const exchangeRates = {

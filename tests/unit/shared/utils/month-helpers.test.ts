@@ -23,8 +23,8 @@ describe('shared/utils/month-helpers', () => {
 
     it('should return next month correctly for middle of year', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2025, month: 2, userId: 'user1', budget: 1000, entries: [] },
-        { id: '2', year: 2025, month: 1, userId: 'user1', budget: 2000, entries: [] },
+        { id: '1', year: 2025, month: 2, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '2', year: 2025, month: 1, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getNextMonth(months)
@@ -34,8 +34,8 @@ describe('shared/utils/month-helpers', () => {
 
     it('should wrap to next year when current month is December', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2024, month: 11, userId: 'user1', budget: 1000, entries: [] },
-        { id: '2', year: 2024, month: 10, userId: 'user1', budget: 2000, entries: [] },
+        { id: '1', year: 2024, month: 11, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '2', year: 2024, month: 10, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getNextMonth(months)
@@ -45,9 +45,9 @@ describe('shared/utils/month-helpers', () => {
 
     it('should handle unsorted months correctly', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2024, month: 5, userId: 'user1', budget: 1000, entries: [] },
-        { id: '2', year: 2025, month: 3, userId: 'user1', budget: 2000, entries: [] },
-        { id: '3', year: 2024, month: 11, userId: 'user1', budget: 3000, entries: [] },
+        { id: '1', year: 2024, month: 5, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '2', year: 2025, month: 3, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '3', year: 2024, month: 11, userMonthId: 'user-month-3', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getNextMonth(months)
@@ -57,7 +57,7 @@ describe('shared/utils/month-helpers', () => {
 
     it('should handle single month', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2025, month: 6, userId: 'user1', budget: 1000, entries: [] },
+        { id: '1', year: 2025, month: 6, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getNextMonth(months)
@@ -77,8 +77,8 @@ describe('shared/utils/month-helpers', () => {
 
     it('should return previous month correctly for middle of year', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2025, month: 5, userId: 'user1', budget: 1000, entries: [] },
-        { id: '2', year: 2025, month: 3, userId: 'user1', budget: 2000, entries: [] },
+        { id: '1', year: 2025, month: 5, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '2', year: 2025, month: 3, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getPreviousMonth(months)
@@ -88,8 +88,8 @@ describe('shared/utils/month-helpers', () => {
 
     it('should wrap to previous year when earliest month is January', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2025, month: 0, userId: 'user1', budget: 1000, entries: [] },
-        { id: '2', year: 2025, month: 2, userId: 'user1', budget: 2000, entries: [] },
+        { id: '1', year: 2025, month: 0, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '2', year: 2025, month: 2, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getPreviousMonth(months)
@@ -99,9 +99,9 @@ describe('shared/utils/month-helpers', () => {
 
     it('should handle unsorted months correctly', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2025, month: 5, userId: 'user1', budget: 1000, entries: [] },
-        { id: '2', year: 2024, month: 8, userId: 'user1', budget: 2000, entries: [] },
-        { id: '3', year: 2025, month: 3, userId: 'user1', budget: 3000, entries: [] },
+        { id: '1', year: 2025, month: 5, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '2', year: 2024, month: 8, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+        { id: '3', year: 2025, month: 3, userMonthId: 'user-month-3', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getPreviousMonth(months)
@@ -111,7 +111,7 @@ describe('shared/utils/month-helpers', () => {
 
     it('should handle single month', () => {
       const months: MonthData[] = [
-        { id: '1', year: 2025, month: 6, userId: 'user1', budget: 1000, entries: [] },
+        { id: '1', year: 2025, month: 6, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = getPreviousMonth(months)
@@ -122,10 +122,10 @@ describe('shared/utils/month-helpers', () => {
 
   describe('findClosestMonthForCopy', () => {
     const monthsData: MonthData[] = [
-      { id: 'month-2024-06', year: 2024, month: 6, userId: 'user1', budget: 1000, entries: [] },
-      { id: 'month-2024-08', year: 2024, month: 8, userId: 'user1', budget: 2000, entries: [] },
-      { id: 'month-2025-01', year: 2025, month: 1, userId: 'user1', budget: 3000, entries: [] },
-      { id: 'month-2025-03', year: 2025, month: 3, userId: 'user1', budget: 4000, entries: [] },
+      { id: 'month-2024-06', year: 2024, month: 6, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+      { id: 'month-2024-08', year: 2024, month: 8, userMonthId: 'user-month-2', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+      { id: 'month-2025-01', year: 2025, month: 1, userMonthId: 'user-month-3', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
+      { id: 'month-2025-03', year: 2025, month: 3, userMonthId: 'user-month-4', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
     ]
 
     it('should return undefined for empty months array', () => {
@@ -184,7 +184,7 @@ describe('shared/utils/month-helpers', () => {
 
     it('should handle single month scenario for next direction', () => {
       const singleMonth: MonthData[] = [
-        { id: 'single-month', year: 2024, month: 5, userId: 'user1', budget: 1000, entries: [] },
+        { id: 'single-month', year: 2024, month: 5, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = findClosestMonthForCopy(singleMonth, 2024, 7, 'next')
@@ -194,7 +194,7 @@ describe('shared/utils/month-helpers', () => {
 
     it('should handle single month scenario for previous direction', () => {
       const singleMonth: MonthData[] = [
-        { id: 'single-month', year: 2024, month: 5, userId: 'user1', budget: 1000, entries: [] },
+        { id: 'single-month', year: 2024, month: 5, userMonthId: 'user-month-1', balanceSources: [], incomeEntries: [], expenseEntries: [], balanceChange: 0, pocketExpenses: 0, income: 0 },
       ]
 
       const result = findClosestMonthForCopy(singleMonth, 2024, 3, 'previous')

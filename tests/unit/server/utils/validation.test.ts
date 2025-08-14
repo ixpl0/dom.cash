@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createError, readBody } from 'h3'
 import { z } from 'zod'
 import type { H3Event } from 'h3'
 

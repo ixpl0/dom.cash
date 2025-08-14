@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { H3Event } from 'h3'
 
 // Set up global mocks for h3 functions that are auto-imported
-globalThis.defineEventHandler = vi.fn(handler => handler)
-globalThis.readBody = vi.fn()
+;
+
+(globalThis as any).defineEventHandler = vi.fn(handler => handler)
+;(globalThis as any).readBody = vi.fn()
 
 vi.mock('~~/server/utils/rates/database', () => ({
   saveCurrencyRates: vi.fn(),
@@ -18,7 +20,7 @@ describe('server/api/currency/rates.post', () => {
 
     const database = await import('~~/server/utils/rates/database')
 
-    mockReadBody = globalThis.readBody as ReturnType<typeof vi.fn>
+    mockReadBody = (globalThis as any).readBody as ReturnType<typeof vi.fn>
     mockSaveCurrencyRates = database.saveCurrencyRates as ReturnType<typeof vi.fn>
   })
 

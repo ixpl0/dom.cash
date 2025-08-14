@@ -52,7 +52,7 @@ export const __testables__ = {
   updateCurrencyRates,
 }
 
-export default defineNitroPlugin(async (nitroApp) => {
+export default defineNitroPlugin(async (nitroApp: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   if (process.env[ENABLE_CURRENCY_RATES_UPDATE] !== '1') {
     return
   }

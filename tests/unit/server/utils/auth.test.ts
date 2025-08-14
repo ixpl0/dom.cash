@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createError } from 'h3'
 
 import {
   hashPassword,
@@ -13,10 +12,8 @@ import {
 } from '~~/server/utils/auth'
 
 vi.mock('bcrypt', () => ({
-  default: {
-    hash: vi.fn(),
-    compare: vi.fn(),
-  },
+  hash: vi.fn(),
+  compare: vi.fn(),
 }))
 
 vi.mock('node:crypto', () => ({
@@ -80,7 +77,7 @@ describe('server/utils/auth', () => {
     const db = await import('~~/server/db')
     const schema = await import('~~/server/db/schema')
 
-    mockBcrypt = bcrypt.default
+    mockBcrypt = bcrypt
     mockCrypto = crypto
     mockCreateHash = crypto.createHash as ReturnType<typeof vi.fn>
     mockDb = db.db

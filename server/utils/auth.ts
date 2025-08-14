@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt'
 import { randomBytes, createHash } from 'node:crypto'
 import { createError, setCookie, type H3Event } from 'h3'
 import { eq } from 'drizzle-orm'

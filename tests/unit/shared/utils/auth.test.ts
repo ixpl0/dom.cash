@@ -43,9 +43,6 @@ let mockGetCookie: ReturnType<typeof vi.fn>
 let mockCreateHash: ReturnType<typeof vi.fn>
 let mockHashUpdate: ReturnType<typeof vi.fn>
 let mockHashDigest: ReturnType<typeof vi.fn>
-let mockEq: ReturnType<typeof vi.fn>
-let mockAnd: ReturnType<typeof vi.fn>
-let mockGt: ReturnType<typeof vi.fn>
 let mockDb: any
 
 describe('shared/utils/auth', () => {
@@ -54,14 +51,10 @@ describe('shared/utils/auth', () => {
 
     const h3 = await import('h3')
     const crypto = await import('node:crypto')
-    const drizzle = await import('drizzle-orm')
     const db = await import('~~/server/db')
 
     mockGetCookie = h3.getCookie as ReturnType<typeof vi.fn>
     mockCreateHash = crypto.createHash as ReturnType<typeof vi.fn>
-    mockEq = drizzle.eq as ReturnType<typeof vi.fn>
-    mockAnd = drizzle.and as ReturnType<typeof vi.fn>
-    mockGt = drizzle.gt as ReturnType<typeof vi.fn>
     mockDb = db.db
 
     mockHashUpdate = vi.fn().mockReturnThis()
@@ -213,7 +206,6 @@ describe('shared/utils/auth', () => {
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit })
       const mockInnerJoin = vi.fn().mockReturnValue({ where: mockWhere })
       const mockFrom = vi.fn().mockReturnValue({ innerJoin: mockInnerJoin })
-      const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
       mockDb.select.mockReturnValue({ from: mockFrom })
 
       await validateAuthToken(mockEvent)

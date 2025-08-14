@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createError } from 'h3'
 import type { H3Event } from 'h3'
 
 import { requireAuth, getOptionalAuth } from '~~/server/utils/session'
