@@ -22,7 +22,8 @@
           </NuxtLink>
         </div>
       </div>
-      <div class="navbar-end">
+      <div class="navbar-end gap-2">
+        <slot name="page-controls" />
         <div
           v-if="isAuthenticated"
           class="dropdown dropdown-end"
