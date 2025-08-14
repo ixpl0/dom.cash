@@ -248,7 +248,7 @@ const incomeModal = ref()
 const expenseModal = ref()
 
 const currentMonthRates = computed(() => {
-  return props.monthData.exchangeRates || { USD: 1, EUR: 0.85, RUB: 95 }
+  return props.monthData.exchangeRates || {}
 })
 
 const startBalance = computed(() => {
@@ -287,7 +287,7 @@ const previousMonthBalance = computed(() => {
     return null
   }
 
-  const prevMonthRates = previousMonthData.value.exchangeRates || { USD: 1, EUR: 0.85, RUB: 95 }
+  const prevMonthRates = previousMonthData.value.exchangeRates || {}
   return calculateTotalBalance(
     previousMonthData.value.balanceSources,
     mainCurrency.value,
@@ -315,7 +315,7 @@ const nextMonthStartBalance = computed(() => {
     return null
   }
 
-  const nextMonthRates = nextMonthData.value.exchangeRates || { USD: 1, EUR: 0.85, RUB: 95 }
+  const nextMonthRates = nextMonthData.value.exchangeRates || {}
 
   return calculateTotalBalance(
     nextMonthData.value.balanceSources,

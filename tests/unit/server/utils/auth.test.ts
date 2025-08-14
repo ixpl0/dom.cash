@@ -85,8 +85,6 @@ describe('server/utils/auth', () => {
     mockSession = schema.session
     mockCreateError = h3.createError as ReturnType<typeof vi.fn>
     mockSetCookie = h3.setCookie as ReturnType<typeof vi.fn>
-
-    // Мок crypto.randomUUID уже настроен глобально
   })
 
   afterEach(() => {

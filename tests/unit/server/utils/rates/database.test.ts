@@ -98,19 +98,35 @@ describe('server/utils/rates/database', () => {
       })
     })
 
-    it('should handle empty rates object', async () => {
-      const mockValues = vi.fn().mockReturnValue({
-        onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
-      })
-      mockInsert.mockReturnValue({ values: mockValues })
-
+    it('should reject empty rates object', async () => {
       const emptyRates = {}
-      await saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, emptyRates)
 
-      expect(mockValues).toHaveBeenCalledWith({
-        date: EXPECTED_DATE_FORMATS.FIRST_FEBRUARY,
-        rates: emptyRates,
-      })
+      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, emptyRates))
+        .rejects.toThrow('Invalid rates data: empty or invalid object')
+    })
+
+    it('should reject invalid rate values', async () => {
+      const invalidRates = { USD: -1, EUR: 'invalid' as any, GEL: NaN }
+
+      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, invalidRates))
+        .rejects.toThrow('Invalid rate for currency USD: -1')
+    })
+
+    it('should reject invalid date format', async () => {
+      const validRates = { USD: 1, EUR: 0.85 }
+
+      await expect(saveCurrencyRates('invalid-date', validRates))
+        .rejects.toThrow('Invalid date format: invalid-date. Expected YYYY-MM-DD')
+    })
+
+    it('should reject too large data', async () => {
+      const largeRates: Record<string, number> = {}
+      for (let i = 0; i < 5000; i++) {
+        largeRates[`CURRENCY_${i.toString().padStart(10, '0')}`] = i + 1
+      }
+
+      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, largeRates))
+        .rejects.toThrow('Rates data too large')
     })
 
     it('should handle database errors', async () => {
@@ -282,10 +298,8 @@ describe('server/utils/rates/database', () => {
 
       await saveHistoricalRatesForCurrentMonth()
 
-      // Проверяем, что fetchHistoricalRates вызван с последним днем предыдущего месяца
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2025-01-31')
 
-      // Проверяем, что saveCurrencyRates вызван с первым днем текущего месяца
       expect(mockValues).toHaveBeenCalledWith({
         date: '2025-02-01',
         rates: MOCK_HISTORICAL_RATES,
@@ -309,7 +323,6 @@ describe('server/utils/rates/database', () => {
 
       await saveHistoricalRatesForCurrentMonth()
 
-      // Январь 2025: последний день декабря 2024
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2024-12-31')
       expect(mockValues).toHaveBeenCalledWith({
         date: '2025-01-01',
@@ -334,7 +347,6 @@ describe('server/utils/rates/database', () => {
 
       await saveHistoricalRatesForCurrentMonth()
 
-      // Март 2024: последний день февраля (високосный год)
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2024-02-29')
       expect(mockValues).toHaveBeenCalledWith({
         date: '2024-03-01',

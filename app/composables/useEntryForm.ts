@@ -75,7 +75,6 @@ export const useEntryForm = (entryKind: 'balance' | 'income' | 'expense') => {
   const getEmptyMessage = (): string => config.emptyMessage
 
   return {
-    // State
     isAdding,
     isDeleting,
     editingEntryId,
@@ -83,12 +82,8 @@ export const useEntryForm = (entryKind: 'balance' | 'income' | 'expense') => {
     isAddingNewEntry,
     editingEntry,
     newEntry,
-
-    // Computed
     modalTitle: computed(getModalTitle),
     emptyMessage: computed(getEmptyMessage),
-
-    // Methods
     getEntryDate,
     formatDate,
     startAdd,

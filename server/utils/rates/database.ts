@@ -3,12 +3,37 @@ import { db } from '~~/server/db'
 import { eq } from 'drizzle-orm'
 
 export const saveCurrencyRates = async (date: string, rates: Record<string, number>): Promise<void> => {
-  await db.insert(currency)
-    .values({ date, rates })
-    .onConflictDoUpdate({
-      target: currency.date,
-      set: { rates },
-    })
+  if (!rates || typeof rates !== 'object' || Object.keys(rates).length === 0) {
+    throw new Error(`Invalid rates data: empty or invalid object`)
+  }
+  for (const [currency, rate] of Object.entries(rates)) {
+    if (!Number.isFinite(rate) || rate <= 0) {
+      throw new Error(`Invalid rate for currency ${currency}: ${rate}`)
+    }
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid date format: ${date}. Expected YYYY-MM-DD`)
+  }
+  const jsonSize = JSON.stringify(rates).length
+  if (jsonSize > 50000) { // 50KB лимит
+    throw new Error(`Rates data too large: ${jsonSize} bytes`)
+  }
+
+  try {
+    await db.insert(currency)
+      .values({ date, rates })
+      .onConflictDoUpdate({
+        target: currency.date,
+        set: { rates },
+      })
+  }
+  catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to save currency rates for ${date}: ${error.message}`)
+    }
+    throw error
+  }
 }
 
 export const getCurrencyRates = async (date: string): Promise<Record<string, number> | null> => {

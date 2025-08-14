@@ -94,7 +94,6 @@ describe('server/plugins/currency-rates', () => {
         },
       }
 
-      // Set environment variable to enable scheduler
       const originalEnv = process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE
       process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = '1'
 
@@ -114,7 +113,6 @@ describe('server/plugins/currency-rates', () => {
         expect(mockNitroApp.hooks.hook).toHaveBeenCalledWith('close', expect.any(Function))
       }
       finally {
-        // Clean up
         if (originalEnv !== undefined) {
           process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = originalEnv
         }
@@ -131,7 +129,6 @@ describe('server/plugins/currency-rates', () => {
         },
       }
 
-      // Ensure env var is not set
       const originalEnv = process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE
       delete process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE
 
@@ -144,7 +141,6 @@ describe('server/plugins/currency-rates', () => {
         expect(mockNitroApp.hooks.hook).not.toHaveBeenCalled()
       }
       finally {
-        // Restore original env
         if (originalEnv !== undefined) {
           process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = originalEnv
         }
@@ -165,7 +161,6 @@ describe('server/plugins/currency-rates', () => {
         },
       }
 
-      // Set environment variable to enable scheduler
       const originalEnv = process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE
       process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = '1'
 
@@ -174,17 +169,14 @@ describe('server/plugins/currency-rates', () => {
         const plugin = await import('~~/server/plugins/currency-rates?t=' + Date.now())
         plugin.default(mockNitroApp as Parameters<typeof plugin.default>[0])
 
-        // Get the close hook callback that was registered
         expect(mockNitroApp.hooks.hook).toHaveBeenCalledWith('close', expect.any(Function))
         const closeCallback = mockNitroApp.hooks.hook.mock.calls[0][1]
 
-        // Call the close callback
         closeCallback()
 
         expect(mockCronJobInstance.stop).toHaveBeenCalled()
       }
       finally {
-        // Clean up
         if (originalEnv !== undefined) {
           process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = originalEnv
         }

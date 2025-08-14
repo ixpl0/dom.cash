@@ -133,7 +133,6 @@ describe('server/api/currency/rates.post', () => {
     const mockEvent = {} as H3Event
     const mockBody = {
       date: '2025-02-01',
-      // Missing rates field
     }
 
     mockReadBody.mockResolvedValue(mockBody)
