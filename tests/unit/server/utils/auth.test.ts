@@ -9,6 +9,7 @@ import {
   ensureUser,
   createSession,
   setAuthCookie,
+  getUserFromRequest,
 } from '~~/server/utils/auth'
 
 vi.mock('bcrypt', () => ({
@@ -31,6 +32,7 @@ Object.defineProperty(globalThis, 'crypto', {
 vi.mock('h3', () => ({
   createError: vi.fn(),
   setCookie: vi.fn(),
+  getCookie: vi.fn(),
 }))
 
 vi.mock('~~/server/db', () => ({
@@ -41,6 +43,10 @@ vi.mock('~~/server/db', () => ({
       },
     },
     insert: vi.fn(),
+    select: vi.fn(),
+    from: vi.fn(),
+    where: vi.fn(),
+    limit: vi.fn(),
   },
 }))
 
@@ -56,6 +62,8 @@ vi.mock('~~/server/db/schema', () => ({
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
+  and: vi.fn(),
+  gt: vi.fn(),
 }))
 
 let mockBcrypt: any
@@ -66,6 +74,7 @@ let mockUser: any
 let mockSession: any
 let mockCreateError: any
 let mockSetCookie: any
+let mockGetCookie: any
 
 describe('server/utils/auth', () => {
   beforeEach(async () => {
@@ -85,6 +94,7 @@ describe('server/utils/auth', () => {
     mockSession = schema.session
     mockCreateError = h3.createError as ReturnType<typeof vi.fn>
     mockSetCookie = h3.setCookie as ReturnType<typeof vi.fn>
+    mockGetCookie = h3.getCookie as ReturnType<typeof vi.fn>
   })
 
   afterEach(() => {
@@ -376,6 +386,144 @@ describe('server/utils/auth', () => {
       })
 
       process.env.NODE_ENV = originalEnv
+    })
+  })
+
+  describe('getUserFromRequest', () => {
+    it('should return user for valid token', async () => {
+      const token = 'valid-token'
+      const tokenHash = 'token-hash'
+      const userId = 'user-id'
+      const userData = {
+        id: userId,
+        username: 'testuser',
+        mainCurrency: 'USD',
+      }
+
+      const mockEvent = {} as any
+      const mockHashInstance = {
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue(tokenHash),
+      }
+
+      mockGetCookie.mockReturnValue(token)
+      mockCreateHash.mockReturnValue(mockHashInstance)
+
+      mockDb.select.mockReturnThis()
+      mockDb.from.mockReturnThis()
+      mockDb.where.mockReturnThis()
+      mockDb.limit
+        .mockResolvedValueOnce([{ userId }])
+        .mockResolvedValueOnce([userData])
+
+      const result = await getUserFromRequest(mockEvent)
+
+      expect(mockGetCookie).toHaveBeenCalledWith(mockEvent, 'auth-token')
+      expect(mockCreateHash).toHaveBeenCalledWith('sha256')
+      expect(result).toEqual(userData)
+    })
+
+    it('should return null when no token', async () => {
+      const mockEvent = {} as any
+      mockGetCookie.mockReturnValue(undefined)
+
+      const result = await getUserFromRequest(mockEvent)
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when session not found', async () => {
+      const token = 'invalid-token'
+      const tokenHash = 'token-hash'
+      const mockEvent = {} as any
+      const mockHashInstance = {
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue(tokenHash),
+      }
+
+      mockGetCookie.mockReturnValue(token)
+      mockCreateHash.mockReturnValue(mockHashInstance)
+
+      mockDb.select.mockReturnThis()
+      mockDb.from.mockReturnThis()
+      mockDb.where.mockReturnThis()
+      mockDb.limit.mockResolvedValue([])
+
+      const result = await getUserFromRequest(mockEvent)
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when session data is invalid', async () => {
+      const token = 'valid-token'
+      const tokenHash = 'token-hash'
+      const mockEvent = {} as any
+      const mockHashInstance = {
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue(tokenHash),
+      }
+
+      mockGetCookie.mockReturnValue(token)
+      mockCreateHash.mockReturnValue(mockHashInstance)
+
+      mockDb.select.mockReturnThis()
+      mockDb.from.mockReturnThis()
+      mockDb.where.mockReturnThis()
+      mockDb.limit.mockResolvedValueOnce([undefined])
+
+      const result = await getUserFromRequest(mockEvent)
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when user not found', async () => {
+      const token = 'valid-token'
+      const tokenHash = 'token-hash'
+      const userId = 'user-id'
+      const mockEvent = {} as any
+      const mockHashInstance = {
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue(tokenHash),
+      }
+
+      mockGetCookie.mockReturnValue(token)
+      mockCreateHash.mockReturnValue(mockHashInstance)
+
+      mockDb.select.mockReturnThis()
+      mockDb.from.mockReturnThis()
+      mockDb.where.mockReturnThis()
+      mockDb.limit
+        .mockResolvedValueOnce([{ userId }])
+        .mockResolvedValueOnce([])
+
+      const result = await getUserFromRequest(mockEvent)
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when user data is invalid', async () => {
+      const token = 'valid-token'
+      const tokenHash = 'token-hash'
+      const userId = 'user-id'
+      const mockEvent = {} as any
+      const mockHashInstance = {
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue(tokenHash),
+      }
+
+      mockGetCookie.mockReturnValue(token)
+      mockCreateHash.mockReturnValue(mockHashInstance)
+
+      mockDb.select.mockReturnThis()
+      mockDb.from.mockReturnThis()
+      mockDb.where.mockReturnThis()
+      mockDb.limit
+        .mockResolvedValueOnce([{ userId }])
+        .mockResolvedValueOnce([undefined])
+
+      const result = await getUserFromRequest(mockEvent)
+
+      expect(result).toBeNull()
     })
   })
 })

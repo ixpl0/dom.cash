@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "WebSearch",
       "Bash(mkdir:*)",
       "Bash(git mv:*)",
       "Bash(pnpm run:*)",
