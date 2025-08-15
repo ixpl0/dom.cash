@@ -161,10 +161,7 @@ const isCreatingPreviousMonth = ref(false)
 
 const { user: currentUser } = useUser()
 
-const isOwnBudget = computed(() =>
-  !props.budget?.user.username
-  || props.budget.user.username === currentUser.value?.username,
-)
+const isOwnBudget = computed(() => props.budget?.access === 'owner')
 
 const groupedData = computed(() => {
   const months = props.budget?.months

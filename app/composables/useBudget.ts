@@ -49,7 +49,7 @@ export interface BudgetMethods {
 }
 
 export const useBudget = (targetUsername?: string) => {
-  const { user: currentUser, loadUserData } = useUser()
+  const { user: currentUser } = useUser()
 
   const stateKey = targetUsername ? `budget.${targetUsername}` : 'budget.own'
   const budgetState = useState<BudgetState>(stateKey, () => ({
@@ -70,15 +70,15 @@ export const useBudget = (targetUsername?: string) => {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 
       if (isOwnBudget.value) {
-        if (!currentUser.value) {
-          await loadUserData()
-        }
+        const [userData, months] = await Promise.all([
+          $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/me', { headers }),
+          $fetch<MonthData[]>('/api/budget/months', { headers })
+        ])
 
-        const months = await $fetch<MonthData[]>('/api/budget/months', { headers })
         budgetState.value.data = {
           user: {
-            username: currentUser.value?.username || '',
-            mainCurrency: currentUser.value?.mainCurrency || 'USD',
+            username: userData.username,
+            mainCurrency: userData.mainCurrency,
           },
           access: 'owner',
           months: months || [],
