@@ -20,6 +20,7 @@
     :all-months="allMonths"
     :is-read-only="isReadOnly"
     :target-username="targetUsername"
+    :main-currency="mainCurrency"
   />
 </template>
 
@@ -33,6 +34,7 @@ interface Props {
   allMonths: MonthData[]
   isReadOnly?: boolean
   targetUsername?: string
+  mainCurrency?: string
 }
 defineProps<Props>()
 </script>

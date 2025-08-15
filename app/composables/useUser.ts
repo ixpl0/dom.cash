@@ -15,6 +15,7 @@ export const useUser = () => {
 
   return {
     userData: readonly(userData),
+    user: readonly(userData),
     mainCurrency,
     loadUserData,
   }

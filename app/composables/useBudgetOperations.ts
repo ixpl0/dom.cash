@@ -2,20 +2,20 @@ import type { EntryFormData } from './useEntryForm'
 
 type EmitFunction = (event: 'added' | 'deleted' | 'updated', entryId?: string) => void
 
-export const useEntryOperations = (
+export const useBudgetOperations = (
   monthId: string,
   entryKind: 'balance' | 'income' | 'expense',
   emit: EmitFunction,
   targetUsername?: string,
 ) => {
-  const { addEntry: addEntryToStore, updateEntry: updateEntryInStore, deleteEntry: deleteEntryFromStore } = useBudgetData(targetUsername)
+  const budget = useBudget(targetUsername)
 
   const addEntry = async (entryData: EntryFormData): Promise<void> => {
     if (!entryData.description.trim() || entryData.amount <= 0) {
       return
     }
 
-    await addEntryToStore(
+    await budget.addEntry(
       monthId,
       entryKind,
       {
@@ -34,7 +34,7 @@ export const useEntryOperations = (
       return
     }
 
-    await updateEntryInStore(entryId, {
+    await budget.updateEntry(entryId, {
       description: entryData.description,
       amount: entryData.amount,
       currency: entryData.currency,
@@ -45,7 +45,7 @@ export const useEntryOperations = (
   }
 
   const deleteEntry = async (entryId: string): Promise<void> => {
-    await deleteEntryFromStore(entryId)
+    await budget.deleteEntry(entryId)
     emit('deleted', entryId)
   }
 

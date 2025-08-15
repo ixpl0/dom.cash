@@ -263,7 +263,7 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
 import { formatAmount } from '~~/shared/utils/budget'
 import { useEntryForm } from '~/composables/useEntryForm'
-import { useEntryOperations } from '~/composables/useEntryOperations'
+import { useBudgetOperations } from '~/composables/useBudgetOperations'
 
 interface Props {
   monthId: string
@@ -318,7 +318,7 @@ const {
   addEntry: performAddEntry,
   updateEntry: performUpdateEntry,
   deleteEntry: performDeleteEntry,
-} = useEntryOperations(props.monthId, props.entryKind, emitWrapper, props.targetUsername)
+} = useBudgetOperations(props.monthId, props.entryKind, emitWrapper, props.targetUsername)
 
 const addEntry = async (): Promise<void> => {
   isAdding.value = true
