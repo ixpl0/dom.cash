@@ -21,7 +21,7 @@
         Ошибка доступа
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ error.message || 'Не удалось загрузить бюджет' }}
+        {{ error || 'Не удалось загрузить бюджет' }}
       </p>
       <NuxtLink
         to="/budget"
@@ -105,7 +105,7 @@
           :month-names="monthNames"
           :all-months="budget.months"
           :is-read-only="!canEdit"
-          :main-currency="budget.user.mainCurrency"
+          :main-currency="budget?.user?.mainCurrency"
         />
 
         <BudgetTimelineAddButton
@@ -127,7 +127,7 @@ interface Props {
   budget: BudgetData | null
   canEdit?: boolean
   isLoading?: boolean
-  error?: Error | null
+  error?: string | null
   onCreateMonth?: (year: number, month: number, copyFromMonthId?: string) => Promise<void>
   onCreateNextMonth?: () => Promise<void>
   onCreatePreviousMonth?: () => Promise<void>

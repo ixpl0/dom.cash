@@ -14,7 +14,7 @@ export interface BudgetData {
 export interface BudgetState {
   data: BudgetData | null
   isLoading: boolean
-  error: Error | null
+  error: string | null
   canEdit: boolean
   canView: boolean
 }
@@ -49,7 +49,7 @@ export interface BudgetMethods {
 }
 
 export const useBudget = (targetUsername?: string) => {
-  const { user: currentUser } = useUser()
+  const { user: currentUser, loadUserData } = useUser()
 
   const stateKey = targetUsername ? `budget.${targetUsername}` : 'budget.own'
   const budgetState = useState<BudgetState>(stateKey, () => ({
@@ -70,11 +70,15 @@ export const useBudget = (targetUsername?: string) => {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 
       if (isOwnBudget.value) {
+        if (!currentUser.value) {
+          await loadUserData()
+        }
+
         const months = await $fetch<MonthData[]>('/api/budget/months', { headers })
         budgetState.value.data = {
           user: {
             username: currentUser.value?.username || '',
-            mainCurrency: currentUser.value?.mainCurrency || 'RUB',
+            mainCurrency: currentUser.value?.mainCurrency || 'USD',
           },
           access: 'owner',
           months: months || [],
@@ -91,7 +95,7 @@ export const useBudget = (targetUsername?: string) => {
     }
     catch (error) {
       console.error('Error loading budget data:', error)
-      budgetState.value.error = error as Error
+      budgetState.value.error = error instanceof Error ? error.message : 'Unknown error'
       budgetState.value.canEdit = false
       budgetState.value.canView = false
     }
