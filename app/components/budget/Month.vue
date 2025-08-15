@@ -42,6 +42,7 @@
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
+              :disabled="isReadOnly"
               @click="openBalanceModal"
             >
               {{ formatAmount(startBalance, mainCurrency) }}
@@ -100,6 +101,7 @@
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
+              :disabled="isReadOnly"
               @click="openIncomeModal"
             >
               {{ formatAmount(totalIncome, mainCurrency) }}
@@ -122,6 +124,7 @@
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
+              :disabled="isReadOnly"
               @click="openExpenseModal"
             >
               {{ formatAmount(totalExpenses, mainCurrency) }}
@@ -209,6 +212,8 @@
       :month-id="monthData.id"
       entry-kind="balance"
       :entries="monthData.balanceSources || []"
+      :is-read-only="isReadOnly"
+      :target-username="targetUsername"
     />
 
     <BudgetEntryModal
@@ -216,6 +221,8 @@
       :month-id="monthData.id"
       entry-kind="income"
       :entries="monthData.incomeEntries || []"
+      :is-read-only="isReadOnly"
+      :target-username="targetUsername"
     />
 
     <BudgetEntryModal
@@ -223,6 +230,8 @@
       :month-id="monthData.id"
       entry-kind="expense"
       :entries="monthData.expenseEntries || []"
+      :is-read-only="isReadOnly"
+      :target-username="targetUsername"
     />
 
     <hr>
@@ -238,6 +247,8 @@ interface Props {
   monthNames: string[]
   nextMonthBalance?: number | null
   allMonths: MonthData[]
+  isReadOnly?: boolean
+  targetUsername?: string
 }
 
 const props = defineProps<Props>()

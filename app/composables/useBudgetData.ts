@@ -4,14 +4,27 @@ import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, u
 
 const toMutable = <T>(data: T): T => JSON.parse(JSON.stringify(data))
 
-export const useBudgetData = () => {
-  const monthsData = useState<MonthData[]>('budget.months', () => [])
+export const useBudgetData = (targetUsername?: string) => {
+  const stateKey = targetUsername ? `budget.${targetUsername}.months` : 'budget.months'
+  const monthsData = useState<MonthData[]>(stateKey, () => [])
 
   const loadMonthsData = async (): Promise<void> => {
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-      const data = await $fetch<MonthData[]>('/api/budget/months', { headers })
-      monthsData.value = toMutable(data || [])
+      const endpoint = targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget/months'
+
+      if (targetUsername) {
+        const userData = await $fetch<{
+          user: { username: string, mainCurrency: string }
+          access: string
+          months: MonthData[]
+        }>(endpoint, { headers })
+        monthsData.value = toMutable(userData?.months || [])
+      }
+      else {
+        const data = await $fetch<MonthData[]>(endpoint, { headers })
+        monthsData.value = toMutable(data || [])
+      }
     }
     catch (error) {
       console.error('Error loading budget data:', error)

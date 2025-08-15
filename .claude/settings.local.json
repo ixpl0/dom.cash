@@ -1,5 +1,4 @@
 {
-  "defaultMode": "acceptEdits",
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
@@ -20,6 +19,8 @@
     "deny": [
       "Bash(pnpm run dev)",
       "Read(./.env)"
-    ]
-  }
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "defaultMode": "acceptEdits"
 }

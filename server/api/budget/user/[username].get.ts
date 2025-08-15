@@ -1,0 +1,144 @@
+import { eq, or, and } from 'drizzle-orm'
+import { db } from '~~/server/db'
+import { budgetShare, user, month, entry } from '~~/server/db/schema'
+import type { BudgetShareAccess } from '~~/server/db/schema'
+import { getUserFromRequest } from '~~/server/utils/auth'
+
+export default defineEventHandler(async (event) => {
+  const currentUser = await getUserFromRequest(event)
+  if (!currentUser) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+    })
+  }
+
+  const username = getRouterParam(event, 'username')
+  if (!username) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Username is required',
+    })
+  }
+
+  const targetUser = await db
+    .select()
+    .from(user)
+    .where(eq(user.username, username))
+    .limit(1)
+
+  if (targetUser.length === 0) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'User not found',
+    })
+  }
+
+  const targetUserData = targetUser[0]
+  if (!targetUserData) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'User not found',
+    })
+  }
+
+  let access: BudgetShareAccess | 'owner' = 'owner'
+  const isOwner = targetUserData.id === currentUser.id
+
+  if (!isOwner) {
+    const shareRecord = await db
+      .select({ access: budgetShare.access })
+      .from(budgetShare)
+      .where(and(
+        eq(budgetShare.ownerId, targetUserData.id),
+        eq(budgetShare.sharedWithId, currentUser.id),
+      ))
+      .limit(1)
+
+    if (shareRecord.length === 0) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Access denied',
+      })
+    }
+
+    const shareData = shareRecord[0]
+    if (!shareData) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Access denied',
+      })
+    }
+    access = shareData.access
+  }
+
+  const months = await db
+    .select({
+      id: month.id,
+      year: month.year,
+      month: month.month,
+    })
+    .from(month)
+    .where(eq(month.userId, targetUserData.id))
+    .orderBy(month.year, month.month)
+
+  const monthIds = months.map(m => m.id)
+  let entries: Array<{
+    id: string
+    monthId: string
+    kind: 'balance' | 'income' | 'expense'
+    description: string
+    amount: number
+    currency: string
+    date: string | null
+  }> = []
+
+  if (monthIds.length > 0) {
+    entries = await db
+      .select()
+      .from(entry)
+      .where(or(...monthIds.map(id => eq(entry.monthId, id))))
+  }
+
+  const monthsWithEntries = months.map((monthData) => {
+    const monthEntries = entries.filter(e => e.monthId === monthData.id)
+    return {
+      id: monthData.id,
+      year: monthData.year,
+      month: monthData.month,
+      userMonthId: monthData.id,
+      balanceSources: monthEntries.filter(e => e.kind === 'balance').map(e => ({
+        id: e.id,
+        description: e.description,
+        amount: e.amount,
+        currency: e.currency,
+      })),
+      incomeEntries: monthEntries.filter(e => e.kind === 'income').map(e => ({
+        id: e.id,
+        description: e.description,
+        amount: e.amount,
+        currency: e.currency,
+        date: e.date,
+      })),
+      expenseEntries: monthEntries.filter(e => e.kind === 'expense').map(e => ({
+        id: e.id,
+        description: e.description,
+        amount: e.amount,
+        currency: e.currency,
+        date: e.date,
+      })),
+      balanceChange: 0,
+      pocketExpenses: 0,
+      income: 0,
+    }
+  })
+
+  return {
+    user: {
+      username: targetUserData.username,
+      mainCurrency: targetUserData.mainCurrency,
+    },
+    access,
+    months: monthsWithEntries,
+  }
+})

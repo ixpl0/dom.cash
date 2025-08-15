@@ -18,6 +18,8 @@
     :month-data="monthData"
     :month-names="monthNames"
     :all-months="allMonths"
+    :is-read-only="isReadOnly"
+    :target-username="targetUsername"
   />
 </template>
 
@@ -29,6 +31,8 @@ interface Props {
   months: MonthData[]
   monthNames: string[]
   allMonths: MonthData[]
+  isReadOnly?: boolean
+  targetUsername?: string
 }
 defineProps<Props>()
 </script>

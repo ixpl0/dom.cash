@@ -115,12 +115,14 @@
                       </template>
                       <template v-else>
                         <button
+                          v-if="!isReadOnly"
                           class="btn btn-sm btn-warning"
                           @click="startEdit(entry)"
                         >
                           ✏️
                         </button>
                         <button
+                          v-if="!isReadOnly"
                           class="btn btn-sm btn-error"
                           :disabled="isDeleting === entry.id"
                           @click="deleteEntry(entry.id)"
@@ -213,7 +215,7 @@
 
           <div class="flex justify-center mt-4">
             <button
-              v-if="!isAddingNewEntry"
+              v-if="!isAddingNewEntry && !isReadOnly"
               class="btn btn-primary btn-sm"
               @click="startAdd()"
             >
@@ -230,7 +232,7 @@
             {{ emptyMessage }}
           </div>
           <button
-            v-if="!isAddingNewEntry"
+            v-if="!isAddingNewEntry && !isReadOnly"
             type="button"
             class="btn btn-primary btn-sm"
             @click="startAdd()"
@@ -267,6 +269,8 @@ interface Props {
   monthId: string
   entryKind: 'balance' | 'income' | 'expense'
   entries?: BudgetEntry[]
+  isReadOnly?: boolean
+  targetUsername?: string
 }
 
 const props = defineProps<Props>()
@@ -314,7 +318,7 @@ const {
   addEntry: performAddEntry,
   updateEntry: performUpdateEntry,
   deleteEntry: performDeleteEntry,
-} = useEntryOperations(props.monthId, props.entryKind, emitWrapper)
+} = useEntryOperations(props.monthId, props.entryKind, emitWrapper, props.targetUsername)
 
 const addEntry = async (): Promise<void> => {
   isAdding.value = true

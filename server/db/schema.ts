@@ -92,6 +92,27 @@ export type CurrencyRates = Currency['rates']
 export type Month = typeof month.$inferSelect
 export type NewMonth = typeof month.$inferInsert
 
+export const budgetShare = sqliteTable(
+  'budget_share',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    sharedWithId: text('shared_with_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    access: text('access', { enum: ['read', 'write'] }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  t => [
+    unique('uq_owner_shared_with').on(t.ownerId, t.sharedWithId),
+    index('idx_budget_share_owner').on(t.ownerId),
+    index('idx_budget_share_shared_with').on(t.sharedWithId),
+    check('ck_no_self_share', sql`${t.ownerId} <> ${t.sharedWithId}`),
+  ],
+)
+
 export type Entry = typeof entry.$inferSelect
 export type NewEntry = typeof entry.$inferInsert
 export type EntryKind = Entry['kind']
+
+export type BudgetShare = typeof budgetShare.$inferSelect
+export type NewBudgetShare = typeof budgetShare.$inferInsert
+export type BudgetShareAccess = BudgetShare['access']

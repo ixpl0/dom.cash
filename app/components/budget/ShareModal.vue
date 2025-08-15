@@ -206,9 +206,11 @@ interface ShareEntry {
   id: string
   username: string
   access: 'read' | 'write'
+  createdAt?: Date | string
 }
 
 const shares = ref<ShareEntry[]>([])
+const isLoading = ref(false)
 const modal = ref<HTMLDialogElement>()
 
 const isAddingNew = ref(false)
@@ -236,12 +238,19 @@ const addShare = async (): Promise<void> => {
   isAdding.value = true
 
   try {
-    shares.value = [...shares.value, { 
-      id: Date.now().toString(), 
-      username: newShare.value.username, 
-      access: newShare.value.access 
-    }]
+    const response = await $fetch('/api/budget/shares', {
+      method: 'POST',
+      body: {
+        username: newShare.value.username,
+        access: newShare.value.access,
+      },
+    })
+
+    shares.value = [...shares.value, response]
     cancelAdd()
+  }
+  catch (error) {
+    console.error('Error adding share:', error)
   }
   finally {
     isAdding.value = false
@@ -258,22 +267,32 @@ const cancelEdit = (): void => {
 }
 
 const saveShare = async (): Promise<void> => {
-  if (!editingId.value || !editingShare.value.username.trim()) {
+  if (!editingId.value) {
     return
   }
 
   isSaving.value = true
 
   try {
+    const response = await $fetch(`/api/budget/shares/${editingId.value}`, {
+      method: 'PUT',
+      body: {
+        access: editingShare.value.access,
+      },
+    })
+
     const index = shares.value.findIndex(s => s.id === editingId.value)
     if (index !== -1) {
       shares.value = [
         ...shares.value.slice(0, index),
-        { ...editingShare.value, id: editingId.value },
-        ...shares.value.slice(index + 1)
+        response,
+        ...shares.value.slice(index + 1),
       ]
     }
     cancelEdit()
+  }
+  catch (error) {
+    console.error('Error saving share:', error)
   }
   finally {
     isSaving.value = false
@@ -284,7 +303,14 @@ const deleteShare = async (id: string): Promise<void> => {
   isDeleting.value = id
 
   try {
+    await $fetch(`/api/budget/shares/${id}`, {
+      method: 'DELETE',
+    })
+
     shares.value = shares.value.filter(s => s.id !== id)
+  }
+  catch (error) {
+    console.error('Error deleting share:', error)
   }
   finally {
     isDeleting.value = null
@@ -295,8 +321,27 @@ const getAccessText = (access: ShareEntry['access']): string => {
   return access === 'read' ? 'Только чтение' : 'Чтение и редактирование'
 }
 
-const show = (): void => {
+const loadShares = async (): Promise<void> => {
+  if (isLoading.value) return
+
+  isLoading.value = true
+  try {
+    const response = await fetch('/api/budget/shares')
+    if (response.ok) {
+      shares.value = await response.json()
+    }
+  }
+  catch (error) {
+    console.error('Error loading shares:', error)
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+const show = async (): Promise<void> => {
   modal.value?.showModal()
+  await loadShares()
 }
 
 const hide = (): void => {

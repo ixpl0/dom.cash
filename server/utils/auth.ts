@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt'
 import { randomBytes, createHash } from 'node:crypto'
-import { createError, setCookie, type H3Event } from 'h3'
-import { eq } from 'drizzle-orm'
+import { createError, setCookie, getCookie, type H3Event } from 'h3'
+import { eq, gt, and } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 
@@ -84,4 +84,55 @@ export const setAuthCookie = (event: H3Event, token: string) => {
     path: '/',
     maxAge: 60 * 60 * 24 * 30,
   })
+}
+
+export const getUserFromRequest = async (event: H3Event) => {
+  const token = getCookie(event, 'auth-token')
+  if (!token) {
+    return null
+  }
+
+  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const now = new Date()
+
+  const sessionData = await db
+    .select({
+      userId: session.userId,
+    })
+    .from(session)
+    .where(and(
+      eq(session.tokenHash, tokenHash),
+      gt(session.expiresAt, now),
+    ))
+    .limit(1)
+
+  if (sessionData.length === 0) {
+    return null
+  }
+
+  const sessionInfo = sessionData[0]
+  if (!sessionInfo) {
+    return null
+  }
+
+  const userData = await db
+    .select({
+      id: user.id,
+      username: user.username,
+      mainCurrency: user.mainCurrency,
+    })
+    .from(user)
+    .where(eq(user.id, sessionInfo.userId))
+    .limit(1)
+
+  if (userData.length === 0) {
+    return null
+  }
+
+  const userInfo = userData[0]
+  if (!userInfo) {
+    return null
+  }
+
+  return userInfo
 }

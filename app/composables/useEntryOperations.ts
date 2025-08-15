@@ -6,8 +6,9 @@ export const useEntryOperations = (
   monthId: string,
   entryKind: 'balance' | 'income' | 'expense',
   emit: EmitFunction,
+  targetUsername?: string,
 ) => {
-  const { addEntry: addEntryToStore, updateEntry: updateEntryInStore, deleteEntry: deleteEntryFromStore } = useBudgetData()
+  const { addEntry: addEntryToStore, updateEntry: updateEntryInStore, deleteEntry: deleteEntryFromStore } = useBudgetData(targetUsername)
 
   const addEntry = async (entryData: EntryFormData): Promise<void> => {
     if (!entryData.description.trim() || entryData.amount <= 0) {
