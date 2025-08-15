@@ -1,4 +1,4 @@
-import { eq, or, and } from 'drizzle-orm'
+import { eq, or, and, desc } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(month)
     .where(eq(month.userId, targetUserData.id))
-    .orderBy(month.year, month.month)
+    .orderBy(desc(month.year), desc(month.month))
 
   const monthIds = months.map(m => m.id)
   let entries: Array<{

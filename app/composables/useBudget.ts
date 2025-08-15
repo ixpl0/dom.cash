@@ -1,6 +1,9 @@
 import type { MonthData } from '~~/shared/types/budget'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
+import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/entry-strategies'
+
+const toMutable = <T>(data: T): T => JSON.parse(JSON.stringify(data))
 
 export interface BudgetData {
   user: {
@@ -72,7 +75,7 @@ export const useBudget = (targetUsername?: string) => {
       if (isOwnBudget.value) {
         const [userData, months] = await Promise.all([
           $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/me', { headers }),
-          $fetch<MonthData[]>('/api/budget/months', { headers })
+          $fetch<MonthData[]>('/api/budget/months', { headers }),
         ])
 
         budgetState.value.data = {
@@ -105,14 +108,25 @@ export const useBudget = (targetUsername?: string) => {
   }
 
   const createMonth = async (year: number, month: number, copyFromMonthId?: string): Promise<void> => {
-    if (!budgetState.value.canEdit || !isOwnBudget.value) {
+    if (!budgetState.value.canEdit) {
       throw new Error('No permission to create months')
     }
 
     try {
-      const requestBody = copyFromMonthId
-        ? { year, month, copyFromMonthId }
-        : { year, month }
+      const requestBody: {
+        year: number
+        month: number
+        copyFromMonthId?: string
+        targetUsername?: string
+      } = { year, month }
+
+      if (copyFromMonthId) {
+        requestBody.copyFromMonthId = copyFromMonthId
+      }
+
+      if (!isOwnBudget.value && budgetState.value.data?.user.username) {
+        requestBody.targetUsername = budgetState.value.data.user.username
+      }
 
       await $fetch<MonthData>('/api/budget/months', {
         method: 'POST',
@@ -137,12 +151,14 @@ export const useBudget = (targetUsername?: string) => {
       date?: string
     },
   ): Promise<void> => {
-    if (!budgetState.value.canEdit) {
-      throw new Error('No permission to add entries')
-    }
-
     try {
-      await $fetch('/api/budget/entries', {
+      const response = await $fetch<{
+        id: string
+        description: string
+        amount: number
+        currency: string
+        date?: string | null
+      }>('/api/budget/entries', {
         method: 'POST',
         body: {
           monthId,
@@ -151,7 +167,29 @@ export const useBudget = (targetUsername?: string) => {
         },
       })
 
-      await loadBudgetData()
+      if (!response || !budgetState.value.data) return
+
+      const months = budgetState.value.data.months
+      const monthIndex = months.findIndex(m => m.id === monthId)
+      if (monthIndex === -1) return
+
+      const config = getEntryConfig(entryKind)
+      const newEntry = config.createEntry({
+        id: response.id ?? '',
+        description: response.description ?? '',
+        currency: response.currency ?? '',
+        amount: response.amount ?? 0,
+        date: response.date ?? null,
+      })
+
+      const updatedMonths = months.map((m, index) =>
+        index === monthIndex ? updateMonthWithNewEntry(m, entryKind, newEntry) : m,
+      )
+
+      budgetState.value.data = {
+        ...budgetState.value.data,
+        months: toMutable(updatedMonths),
+      }
     }
     catch (error) {
       console.error('Error adding entry:', error)
@@ -168,17 +206,37 @@ export const useBudget = (targetUsername?: string) => {
       date?: string
     },
   ): Promise<void> => {
-    if (!budgetState.value.canEdit) {
-      throw new Error('No permission to update entries')
-    }
-
     try {
-      await $fetch(`/api/budget/entries/${entryId}`, {
+      const response = await $fetch<{
+        id: string
+        description: string
+        amount: number
+        currency: string
+        date?: string | null
+      }>(`/api/budget/entries/${entryId}`, {
         method: 'PUT',
         body: entryData,
       })
 
-      await loadBudgetData()
+      if (!response || !budgetState.value.data) return
+
+      const months = budgetState.value.data.months
+      const updatedMonths = months.map((month) => {
+        const entryKind = findEntryKindByEntryId(month, entryId)
+        if (!entryKind) return month
+
+        return updateMonthWithUpdatedEntry(month, entryKind, entryId, {
+          description: response.description,
+          amount: response.amount,
+          currency: response.currency,
+          date: response.date,
+        })
+      })
+
+      budgetState.value.data = {
+        ...budgetState.value.data,
+        months: toMutable(updatedMonths),
+      }
     }
     catch (error) {
       console.error('Error updating entry:', error)
@@ -187,16 +245,25 @@ export const useBudget = (targetUsername?: string) => {
   }
 
   const deleteEntry = async (entryId: string): Promise<void> => {
-    if (!budgetState.value.canEdit) {
-      throw new Error('No permission to delete entries')
-    }
-
     try {
       await $fetch(`/api/budget/entries/${entryId}`, {
         method: 'DELETE',
       })
 
-      await loadBudgetData()
+      if (!budgetState.value.data) return
+
+      const months = budgetState.value.data.months
+      const updatedMonths = months.map((month) => {
+        const entryKind = findEntryKindByEntryId(month, entryId)
+        if (!entryKind) return month
+
+        return updateMonthWithDeletedEntry(month, entryKind, entryId)
+      })
+
+      budgetState.value.data = {
+        ...budgetState.value.data,
+        months: toMutable(updatedMonths),
+      }
     }
     catch (error) {
       console.error('Error deleting entry:', error)

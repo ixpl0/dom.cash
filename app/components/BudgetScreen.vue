@@ -106,6 +106,7 @@
           :all-months="budget.months"
           :is-read-only="!canEdit"
           :main-currency="budget?.user?.mainCurrency"
+          :target-username="!isOwnBudget ? budget?.user?.username : undefined"
         />
 
         <BudgetTimelineAddButton
@@ -158,8 +159,6 @@ const currentMonth = now.getMonth()
 const isCreatingCurrentMonth = ref(false)
 const isCreatingNextMonth = ref(false)
 const isCreatingPreviousMonth = ref(false)
-
-const { user: currentUser } = useUser()
 
 const isOwnBudget = computed(() => props.budget?.access === 'owner')
 

@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { db } from '~~/server/db'
-import { entry, month } from '~~/server/db/schema'
+import { entry, month, budgetShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 const createEntrySchema = z.object({
   monthId: z.uuid(),
@@ -24,11 +24,37 @@ export default defineEventHandler(async (event) => {
     .where(eq(month.id, data.monthId))
     .limit(1)
 
-  if (monthData.length === 0 || monthData[0]?.userId !== user.id) {
+  if (monthData.length === 0) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Month not found',
     })
+  }
+
+  const monthOwner = monthData[0]
+  if (!monthOwner) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Month not found',
+    })
+  }
+
+  if (monthOwner.userId !== user.id) {
+    const shareRecord = await db
+      .select({ access: budgetShare.access })
+      .from(budgetShare)
+      .where(and(
+        eq(budgetShare.ownerId, monthOwner.userId),
+        eq(budgetShare.sharedWithId, user.id),
+      ))
+      .limit(1)
+
+    if (shareRecord.length === 0 || shareRecord[0]?.access !== 'write') {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Insufficient permissions to add entries',
+      })
+    }
   }
 
   const newEntry = await db

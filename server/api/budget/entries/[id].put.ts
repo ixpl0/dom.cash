@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '~~/server/db'
-import { entry, month } from '~~/server/db/schema'
+import { entry, month, budgetShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 
@@ -34,11 +34,37 @@ export default defineEventHandler(async (event) => {
     .where(eq(entry.id, entryId))
     .limit(1)
 
-  if (entryData.length === 0 || entryData[0]?.month?.userId !== user.id) {
+  if (entryData.length === 0) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Entry not found',
     })
+  }
+
+  const entryRecord = entryData[0]
+  if (!entryRecord?.month) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Entry not found',
+    })
+  }
+
+  if (entryRecord.month.userId !== user.id) {
+    const shareRecord = await db
+      .select({ access: budgetShare.access })
+      .from(budgetShare)
+      .where(and(
+        eq(budgetShare.ownerId, entryRecord.month.userId),
+        eq(budgetShare.sharedWithId, user.id),
+      ))
+      .limit(1)
+
+    if (shareRecord.length === 0 || shareRecord[0]?.access !== 'write') {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Insufficient permissions to update entries',
+      })
+    }
   }
 
   const updatedEntry = await db
