@@ -37,7 +37,7 @@
         </div>
         <div class="stat-value text-primary">
           <div
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
           >
             <button
@@ -61,12 +61,12 @@
         <div class="stat-value">
           <div
             v-if="balanceChange !== null"
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             data-tip="Изменение баланса по сравнению с предыдущим месяцем"
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getBalanceChangeClass(balanceChange)"
+              :class="getTextColorByNumber(balanceChange)"
               disabled
             >
               {{ formatAmount(balanceChange, effectiveMainCurrency) }}
@@ -74,7 +74,7 @@
           </div>
           <div
             v-else
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             data-tip="Нужен баланс предыдущего месяца для расчета"
           >
             <button
@@ -96,7 +96,7 @@
         </div>
         <div class="stat-value text-success">
           <div
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
           >
             <button
@@ -119,7 +119,7 @@
         </div>
         <div class="stat-value text-error">
           <div
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
           >
             <button
@@ -143,13 +143,13 @@
         <div class="stat-value">
           <div
             v-if="pocketExpenses !== null"
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             :data-tip="pocketExpenses < 0
               ? 'Вероятно, вы не добавили все доходы, или по ошибке добавили лишнюю запись в крупные расходы. Ещё может быть связано с неточностями при работе с валютой'
               : 'Всё, что осталось после вычета крупных расходов и валютных колебаний из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д. Может быть неточным, если вы не добавили все доходы или расходы, или валютные колебания были вычислены неточно.'"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-[2rem] font-extrabold text-error"
               disabled
             >
               {{ formatAmount(pocketExpenses, effectiveMainCurrency) }}
@@ -157,7 +157,7 @@
           </div>
           <div
             v-else
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             data-tip="Будет доступно после появления баланса следующего месяца"
           >
             <button
@@ -180,12 +180,12 @@
         <div class="stat-value">
           <div
             v-if="currencyProfitLoss !== null"
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             :data-tip="`Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`"
           >
             <button
               class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getBalanceChangeClass(currencyProfitLoss)"
+              :class="getTextColorByNumber(currencyProfitLoss)"
               disabled
             >
               {{ formatAmount(currencyProfitLoss, effectiveMainCurrency) }}
@@ -193,7 +193,7 @@
           </div>
           <div
             v-else
-            class="tooltip tooltip-bottom font-normal"
+            class="tooltip font-normal"
             data-tip="Будет доступно после появления баланса следующего месяца"
           >
             <button
@@ -202,6 +202,40 @@
             >
               —
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="canDeleteMonth"
+        class="stat place-items-center border-l border-base-300"
+      >
+        <div class="stat-value">
+          <div class="flex flex-col gap-1">
+            <div
+              class="tooltip font-normal"
+              data-tip="Удалить месяц"
+            >
+              <button
+                class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
+                @click="handleDeleteMonth"
+              >
+                <svg
+                  class="w-4 h-4"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -240,7 +274,8 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmount, calculateTotalBalance, getBalanceChangeClass } from '~~/shared/utils/budget'
+import { formatAmount, calculateTotalBalance, getTextColorByNumber } from '~~/shared/utils/budget'
+import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
 
 interface Props {
   monthData: MonthData
@@ -250,6 +285,7 @@ interface Props {
   isReadOnly?: boolean
   targetUsername?: string
   mainCurrency?: string
+  onDeleteMonth?: (monthId: string) => Promise<void>
 }
 
 const props = defineProps<Props>()
@@ -375,5 +411,26 @@ const openIncomeModal = (): void => {
 
 const openExpenseModal = (): void => {
   expenseModal.value?.show()
+}
+
+const canDeleteMonth = computed(() => {
+  return !props.isReadOnly && props.onDeleteMonth && (isFirstMonth(props.monthData, props.allMonths) || isLastMonth(props.monthData, props.allMonths))
+})
+
+const handleDeleteMonth = async (): Promise<void> => {
+  if (!props.onDeleteMonth) return
+
+  const monthName = `${props.monthNames[props.monthData.month]} ${props.monthData.year}`
+  const confirmMessage = `Вы уверены, что хотите удалить месяц ${monthName}? Все записи этого месяца будут безвозвратно удалены.`
+
+  if (confirm(confirmMessage)) {
+    try {
+      await props.onDeleteMonth(props.monthData.id)
+    }
+    catch (error) {
+      console.error('Error deleting month:', error)
+      alert('Не удалось удалить месяц. Попробуйте ещё раз.')
+    }
+  }
 }
 </script>

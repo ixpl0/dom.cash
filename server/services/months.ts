@@ -217,3 +217,25 @@ export const checkWritePermission = async (ownerId: string, requesterId: string)
 
   return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
 }
+
+export const deleteMonth = async (monthId: string): Promise<void> => {
+  const monthToDelete = await db
+    .select()
+    .from(month)
+    .where(eq(month.id, monthId))
+    .limit(1)
+
+  if (monthToDelete.length === 0) {
+    throw new Error('Month not found')
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(entry)
+      .where(eq(entry.monthId, monthId))
+
+    await tx
+      .delete(month)
+      .where(eq(month.id, monthId))
+  })
+}

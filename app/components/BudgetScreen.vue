@@ -117,6 +117,7 @@
           :is-read-only="!canEdit"
           :main-currency="budget?.user?.mainCurrency"
           :target-username="!isOwnBudget ? budget?.user?.username : undefined"
+          :on-delete-month="props.onDeleteMonth"
         />
 
         <BudgetTimelineAddButton
@@ -146,6 +147,7 @@ interface Props {
   onGetNextMonth?: () => { year: number, month: number }
   onGetPreviousMonth?: () => { year: number, month: number }
   onUpdateCurrency?: (currency: string) => Promise<void>
+  onDeleteMonth?: (monthId: string) => Promise<void>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -157,6 +159,7 @@ const props = withDefaults(defineProps<Props>(), {
   onCreatePreviousMonth: undefined,
   onGetNextMonth: undefined,
   onGetPreviousMonth: undefined,
+  onDeleteMonth: undefined,
   onUpdateCurrency: undefined,
 })
 

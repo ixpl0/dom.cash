@@ -97,3 +97,27 @@ export const findClosestMonthForCopy = (
     return closestMonth?.id
   }
 }
+
+export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
+  if (allMonths.length <= 1) return false
+
+  const sortedMonths = [...allMonths].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year
+    return a.month - b.month
+  })
+
+  const firstMonth = sortedMonths[0]
+  return firstMonth?.id === monthData.id
+}
+
+export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
+  if (allMonths.length <= 1) return false
+
+  const sortedMonths = [...allMonths].sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year
+    return b.month - a.month
+  })
+
+  const lastMonth = sortedMonths[0]
+  return lastMonth?.id === monthData.id
+}

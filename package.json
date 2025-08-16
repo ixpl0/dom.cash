@@ -16,7 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:backup": "tsx drizzle/backup-db.ts",
-    "db:reset": "pnpm db:backup && rm -f db.sqlite && pnpm db:migrate",
+    "db:reset": "pnpm db:backup && del db.sqlite && pnpm db:migrate",
     "db:update": "pnpm db:generate && pnpm db:migrate",
     "db:studio": "drizzle-kit studio",
     "test": "vitest",

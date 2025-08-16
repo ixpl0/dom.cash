@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { formatAmount, calculateTotalBalance, getBalanceChangeClass } from '~~/shared/utils/budget'
+import { formatAmount, calculateTotalBalance, getTextColorByNumber } from '~~/shared/utils/budget'
 import type { BudgetEntry } from '~~/shared/types/budget'
 
 const mockNumberFormatConstructor = vi.fn() as any
@@ -196,37 +196,37 @@ describe('shared/utils/budget', () => {
 
   describe('getBalanceChangeClass', () => {
     it('should return success class for positive balance', () => {
-      const result = getBalanceChangeClass(100)
+      const result = getTextColorByNumber(100)
 
       expect(result).toBe('text-success')
     })
 
     it('should return success class for small positive balance', () => {
-      const result = getBalanceChangeClass(0.01)
+      const result = getTextColorByNumber(0.01)
 
       expect(result).toBe('text-success')
     })
 
     it('should return error class for negative balance', () => {
-      const result = getBalanceChangeClass(-100)
+      const result = getTextColorByNumber(-100)
 
       expect(result).toBe('text-error')
     })
 
     it('should return error class for small negative balance', () => {
-      const result = getBalanceChangeClass(-0.01)
+      const result = getTextColorByNumber(-0.01)
 
       expect(result).toBe('text-error')
     })
 
     it('should return base content class for zero balance', () => {
-      const result = getBalanceChangeClass(0)
+      const result = getTextColorByNumber(0)
 
       expect(result).toBe('text-base-content')
     })
 
     it('should handle edge case of -0', () => {
-      const result = getBalanceChangeClass(-0)
+      const result = getTextColorByNumber(-0)
 
       expect(result).toBe('text-base-content')
     })

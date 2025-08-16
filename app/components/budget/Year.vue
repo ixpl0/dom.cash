@@ -21,6 +21,7 @@
     :is-read-only="isReadOnly"
     :target-username="targetUsername"
     :main-currency="mainCurrency"
+    :on-delete-month="onDeleteMonth"
   />
 </template>
 
@@ -35,6 +36,7 @@ interface Props {
   isReadOnly?: boolean
   targetUsername?: string
   mainCurrency?: string
+  onDeleteMonth?: (monthId: string) => Promise<void>
 }
 defineProps<Props>()
 </script>

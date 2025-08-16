@@ -11,6 +11,7 @@
       :on-get-next-month="budget.getNextMonth"
       :on-get-previous-month="budget.getPreviousMonth"
       :on-update-currency="budget.updateCurrency"
+      :on-delete-month="budget.deleteMonth"
     />
   </div>
 </template>

@@ -32,7 +32,7 @@ export const calculateTotalBalance = (
   }, 0)
 }
 
-export const getBalanceChangeClass = (balanceChange: number): string => {
+export const getTextColorByNumber = (balanceChange: number): string => {
   if (balanceChange > 0) return 'text-success'
   if (balanceChange < 0) return 'text-error'
   return 'text-base-content'

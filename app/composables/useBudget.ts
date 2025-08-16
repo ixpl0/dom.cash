@@ -47,6 +47,7 @@ export interface BudgetMethods {
     }
   ) => Promise<void>
   deleteEntry: (entryId: string) => Promise<void>
+  deleteMonth: (monthId: string) => Promise<void>
   updateCurrency: (currency: string) => Promise<void>
   getNextMonth: () => { year: number, month: number }
   getPreviousMonth: () => { year: number, month: number }
@@ -272,6 +273,33 @@ export const useBudget = (targetUsername?: string) => {
     }
   }
 
+  const deleteMonth = async (monthId: string): Promise<void> => {
+    if (!budgetState.value.canEdit || !budgetState.value.data) {
+      throw new Error('No permission to delete month')
+    }
+
+    const oldMonths = [...budgetState.value.data.months]
+
+    budgetState.value.data = {
+      ...budgetState.value.data,
+      months: budgetState.value.data.months.filter(month => month.id !== monthId),
+    }
+
+    try {
+      await $fetch(`/api/budget/months/${monthId}`, {
+        method: 'DELETE',
+      })
+    }
+    catch (error) {
+      budgetState.value.data = {
+        ...budgetState.value.data,
+        months: oldMonths,
+      }
+      console.error('Error deleting month:', error)
+      throw error
+    }
+  }
+
   const getNextMonthFromData = (): { year: number, month: number } => {
     const months = budgetState.value.data?.months || []
     return getNextMonth(months)
@@ -341,6 +369,7 @@ export const useBudget = (targetUsername?: string) => {
     addEntry,
     updateEntry,
     deleteEntry,
+    deleteMonth,
     updateCurrency,
     getNextMonth: getNextMonthFromData,
     getPreviousMonth: getPreviousMonthFromData,
