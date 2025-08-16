@@ -4,13 +4,27 @@ A modern budget tracking application built with Nuxt 4, featuring comprehensive 
 
 ## Architecture Overview
 
-### Backend Testing Strategy
+### "Thin Handlers" Architecture
 
-The application implements **Complete Unit Testing with Full Isolation** - a testing approach where every backend function is tested in complete isolation using comprehensive mocks. This ensures:
+The application implements **Thin Handlers with Clean Services** pattern:
 
-- **Full dependency mocking** - database, external APIs, and framework functions
-- **Pure function testing** - each function tested independently without side effects
-- **Fast test execution** - no real database or network calls during testing
+- **Thin API handlers** - minimal adapters that handle HTTP concerns (auth, validation, error formatting)
+- **Pure business logic services** - all domain logic in `server/services/` directory
+- **Complete separation of concerns** - HTTP layer separate from business logic
+- **Framework independence** - services are pure functions, easily testable and portable
+
+### Testing Strategy
+
+#### Unit Testing (Backend Services)
+- **Pure function testing** - services tested in Node.js environment with full mocks
+- **Complete isolation** - database, crypto, and external dependencies mocked
+- **Fast execution** - no real database or network calls
+
+#### Integration Testing (API Endpoints)
+- **End-to-end API testing** - using `@nuxt/test-utils/e2e` with real Nuxt runtime
+- **Authentication testing** - real session management with HTTP-only cookies
+- **Database integration** - tests use isolated test database with cleanup
+- **50 integration tests** covering all API endpoints and user flows
 
 ### Frontend Architecture Principles
 
@@ -69,11 +83,17 @@ Visit `http://localhost:3000`
 ### Running Tests
 
 ```bash
-# Run all unit tests
+# Run all unit tests (services only)
 pnpm run test:unit:run
 
-# Run tests with coverage
+# Run unit tests with coverage
 pnpm run test:unit:cov
+
+# Run integration tests (API endpoints)
+pnpm run test:nuxt
+
+# Run all tests
+pnpm run test
 
 # Run TypeScript checks
 pnpm run typecheck
@@ -84,16 +104,26 @@ pnpm run lint
 
 ### Test Architecture
 
-- **Unit Tests**: `tests/unit/` - Complete isolation testing for backend logic
-- **Nuxt Tests**: `tests/nuxt/` - Integration tests for frontend components (when needed)
-- **Coverage Focus**: Backend-only coverage (excludes frontend from unit test metrics)
+#### Unit Tests (`tests/unit/`)
+- **Services testing** - all `server/services/` functions with complete mocks
+- **Utilities testing** - `server/utils/` and `shared/utils/` functions
+- **Schema testing** - Zod validation schemas
+- **Node.js environment** - fast execution without Nuxt overhead
+
+#### Integration Tests (`tests/nuxt/`)
+- **API endpoint testing** - real HTTP requests to Nuxt runtime
+- **Authentication flows** - login, logout, session management
+- **CRUD operations** - budget months, entries, sharing
+- **Permission testing** - read/write access validation
+- **Error handling** - 400/401/403/404 responses
 
 ### Test Categories
 
-1. **Server Utils** - Business logic, authentication, validation
-2. **API Endpoints** - Auth and currency endpoints (budget endpoints excluded due to Nuxt dependencies)
-3. **Database Schemas** - Type safety and structure validation
-4. **Shared Utils** - Cross-platform business logic functions
+1. **Services** (`server/services/`) - Business logic functions (100% coverage goal)
+2. **Authentication** - Session management, password hashing, JWT handling
+3. **Database Operations** - CRUD with proper error handling
+4. **API Integration** - Full request/response cycle testing
+5. **Shared Utilities** - Cross-platform business logic functions
 
 ## Development Commands
 
@@ -121,21 +151,50 @@ pnpm run test:ui        # Open Vitest UI
 │   ├── pages/          # Nuxt pages
 │   └── utils/          # Frontend utilities
 ├── server/
-│   ├── api/            # API endpoints
+│   ├── api/            # Thin API handlers (HTTP adapters)
+│   ├── services/       # Pure business logic (fully tested)
 │   ├── db/             # Database schema and connection
-│   ├── utils/          # Backend utilities (100% tested)
-│   └── schemas/        # Validation schemas
+│   ├── utils/          # Backend utilities (auth, validation)
+│   └── schemas/        # Zod validation schemas
 ├── shared/
 │   ├── types/          # Shared TypeScript types
-│   └── utils/          # Shared business logic (98.4% tested)
+│   └── utils/          # Shared business logic
 └── tests/
-    └── unit/           # Unit tests (backend-only)
+    ├── unit/           # Unit tests (services + utils)
+    └── nuxt/           # Integration tests (API endpoints)
+        └── helpers/    # Test utilities (auth, database)
 ```
 
 ## Contributing
 
-1. All backend functions must have unit tests
-2. Maintain 85%+ code coverage
-3. Follow TypeScript strict mode
-4. Use conventional commit messages
-5. Ensure all tests pass before submitting PR
+### Development Guidelines
+
+1. **Services** - All business logic goes in `server/services/` as pure functions
+2. **Handlers** - Keep API handlers thin, only handle HTTP concerns
+3. **Testing** - Write unit tests for services, integration tests for APIs
+4. **Coverage** - Maintain 80%+ backend coverage (services + utils)
+5. **TypeScript** - Follow strict mode, no `any` types
+6. **Code Style** - Use ESLint, follow existing patterns
+
+### Testing Requirements
+
+- **Unit tests** for all new services functions
+- **Integration tests** for new API endpoints
+- **Authentication tests** for protected routes
+- **Error handling tests** for all failure scenarios
+
+### Before Submitting PR
+
+```bash
+# Ensure all tests pass
+pnpm run test
+
+# Check TypeScript
+pnpm run typecheck
+
+# Fix linting issues
+pnpm run lint --fix
+
+# Verify coverage
+pnpm run test:unit:cov
+```
