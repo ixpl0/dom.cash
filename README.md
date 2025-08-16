@@ -114,7 +114,8 @@ pnpm run db:migrate
 | `pnpm run db:generate` | Create migration from schema changes | After modifying `schema.ts` |
 | `pnpm run db:migrate` | Apply pending migrations | After generating new migrations |
 | `pnpm run db:update` | Generate + apply migrations in one step | Full development workflow |
-| `pnpm run db:reset` | **⚠️ Destroys all data** - recreate DB | For development/testing only |
+| `pnpm run db:backup` | Create database backup | Before risky operations |
+| `pnpm run db:reset` | **⚠️ Destroys all data** - auto-backup + recreate DB | For development/testing only |
 | `pnpm run db:studio` | Open visual database browser | Inspect data and schema |
 
 ### Example: Adding a New Column
@@ -141,10 +142,24 @@ The project currently has these migrations:
 - `0000_initial.sql` - Initial database schema (tables, indexes)
 - `0001_initial_data.sql` - Initial currency rates data
 
+### Database Backups
+
+The project includes automatic SQLite backup using `VACUUM INTO`:
+
+```bash
+# Manual backup
+pnpm run db:backup
+
+# Automatic backup (before db:reset)
+pnpm run db:reset
+```
+
+Backups are stored in `./backups/db-YYYY-MM-DDTHH-MM-SS.sqlite`
+
 ### Important Notes
 
 - **Never edit migration files** manually - always use `db:generate`
-- **Always backup production data** before running migrations
+- **Backups are created automatically** before `db:reset`
 - **Test migrations on development data** first
 - **Commit migration files** to version control
 - **Migrations are applied automatically** by `db:migrate` in correct order
@@ -203,7 +218,8 @@ pnpm run lint
 pnpm run db:generate    # Generate migration from schema changes
 pnpm run db:migrate     # Apply migrations to database
 pnpm run db:update      # Generate + apply migrations in one step
-pnpm run db:reset       # Delete database and recreate with migrations
+pnpm run db:backup      # Create database backup
+pnpm run db:reset       # Auto-backup + delete database and recreate
 pnpm run db:studio      # Open Drizzle Studio
 
 # Code quality
