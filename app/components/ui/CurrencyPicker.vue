@@ -27,9 +27,9 @@
           <svg
             class="h-4 w-4 text-gray-400"
             viewBox="0 0 16 16"
-            fill="currentColor"
           >
             <path
+              fill="currentColor"
               d="M8 10.586L4.707 7.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414L8 10.586z"
             />
           </svg>
@@ -58,7 +58,10 @@
           >
             <span class="font-medium shrink-0">
               {{ option.code }}
-              <span v-if="option.code === props.modelValue" class="ml-1">✓</span>
+              <span
+                v-if="option.code === props.modelValue"
+                class="ml-1"
+              >✓</span>
             </span>
             <span class="text-sm opacity-70 text-right ml-2">{{ option.name }}</span>
           </a>

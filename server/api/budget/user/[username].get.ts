@@ -103,14 +103,14 @@ export default defineEventHandler(async (event) => {
 
   const monthsWithEntries = await Promise.all(months.map(async (monthData) => {
     const monthEntries = entries.filter(e => e.monthId === monthData.id)
-    
+
     const balanceSources = monthEntries.filter(e => e.kind === 'balance').map(e => ({
       id: e.id,
       description: e.description,
       amount: e.amount,
       currency: e.currency,
     }))
-    
+
     const incomeEntries = monthEntries.filter(e => e.kind === 'income').map(e => ({
       id: e.id,
       description: e.description,
@@ -118,7 +118,7 @@ export default defineEventHandler(async (event) => {
       currency: e.currency,
       date: e.date,
     }))
-    
+
     const expenseEntries = monthEntries.filter(e => e.kind === 'expense').map(e => ({
       id: e.id,
       description: e.description,

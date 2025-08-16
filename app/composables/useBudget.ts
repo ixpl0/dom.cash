@@ -314,7 +314,7 @@ export const useBudget = (targetUsername?: string) => {
     try {
       await $fetch('/api/user/currency', {
         method: 'PUT',
-        body: { 
+        body: {
           currency,
           targetUsername: targetUsername,
         },
