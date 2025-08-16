@@ -67,6 +67,13 @@ pnpm install
 ### Database Setup
 
 ```bash
+# For new projects or clean setup
+pnpm run db:migrate
+
+# Or reset database completely (deletes all data!)
+pnpm run db:reset
+
+# Generate migrations from schema changes + apply them
 pnpm run db:update
 ```
 
@@ -77,6 +84,70 @@ pnpm run dev
 ```
 
 Visit `http://localhost:3000`
+
+## Database Migrations
+
+This project uses **Drizzle migrations** to manage database schema changes safely without losing data.
+
+### How Migrations Work
+
+- **Schema changes** are tracked in `server/db/schema.ts`
+- **Migration files** are generated in `drizzle/` directory
+- **Applied migrations** are tracked in database to prevent re-running
+
+### Migration Workflow
+
+```bash
+# 1. Make changes to server/db/schema.ts
+# 2. Generate migration file
+pnpm run db:generate
+
+# 3. Review generated SQL in drizzle/ folder
+# 4. Apply migration to database
+pnpm run db:migrate
+```
+
+### Commands
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `pnpm run db:generate` | Create migration from schema changes | After modifying `schema.ts` |
+| `pnpm run db:migrate` | Apply pending migrations | After generating new migrations |
+| `pnpm run db:update` | Generate + apply migrations in one step | Full development workflow |
+| `pnpm run db:reset` | **⚠️ Destroys all data** - recreate DB | For development/testing only |
+| `pnpm run db:studio` | Open visual database browser | Inspect data and schema |
+
+### Example: Adding a New Column
+
+```typescript
+// 1. Edit server/db/schema.ts
+export const user = sqliteTable('user', {
+  id: text('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  email: text('email').notNull().unique(), // ← New column
+  // ... other fields
+})
+
+// 2. Generate migration
+// pnpm run db:generate
+
+// 3. Apply migration  
+// pnpm run db:migrate
+```
+
+### Migration Files
+
+The project currently has these migrations:
+- `0000_initial.sql` - Initial database schema (tables, indexes)
+- `0001_initial_data.sql` - Initial currency rates data
+
+### Important Notes
+
+- **Never edit migration files** manually - always use `db:generate`
+- **Always backup production data** before running migrations
+- **Test migrations on development data** first
+- **Commit migration files** to version control
+- **Migrations are applied automatically** by `db:migrate` in correct order
 
 ## Testing
 
@@ -129,8 +200,10 @@ pnpm run lint
 
 ```bash
 # Database operations
-pnpm run db:generate    # Generate migrations
-pnpm run db:migrate     # Run migrations
+pnpm run db:generate    # Generate migration from schema changes
+pnpm run db:migrate     # Apply migrations to database
+pnpm run db:update      # Generate + apply migrations in one step
+pnpm run db:reset       # Delete database and recreate with migrations
 pnpm run db:studio      # Open Drizzle Studio
 
 # Code quality

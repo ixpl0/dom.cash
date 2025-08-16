@@ -15,10 +15,14 @@
       "WebFetch(domain:daisyui.com)",
       "WebFetch(domain:nuxt.com)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pnpm db:migrate:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm run db:studio)",
+      "Bash(pnpm db:studio)",
       "Read(./.env)"
     ],
     "defaultMode": "acceptEdits"
