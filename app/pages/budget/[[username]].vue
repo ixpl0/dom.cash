@@ -23,9 +23,4 @@ const targetUsername = Array.isArray(route.params.username)
 const budget = useBudget(targetUsername)
 
 await budget.refresh()
-
-definePageMeta({
-  middleware: 'auth',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any)
 </script>
