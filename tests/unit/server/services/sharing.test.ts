@@ -130,7 +130,10 @@ describe('server/services/sharing', () => {
 
       const result = await getUserShares('user-1')
 
-      expect(result).toEqual(shares)
+      expect(result).toEqual({
+        myShares: shares,
+        sharedWithMe: shares,
+      })
     })
   })
 

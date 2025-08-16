@@ -21,10 +21,17 @@ vi.mock('~~/server/db/schema', () => ({
   month: {
     userId: 'month.userId',
   },
+  entry: 'entry_table',
+}))
+
+vi.mock('~~/server/services/months', () => ({
+  getUserMonths: vi.fn(),
 }))
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
+  and: vi.fn(),
+  desc: vi.fn(),
 }))
 
 let mockDb: any
@@ -32,6 +39,8 @@ let mockDb: any
 const {
   findUserByUsername,
   checkReadPermission,
+  getUserBudgetData,
+  updateUserCurrency,
 } = await import('~~/server/services/users')
 
 describe('server/services/users', () => {
@@ -99,6 +108,99 @@ describe('server/services/users', () => {
       const result = await checkReadPermission('user-1', 'user-2')
 
       expect(result).toBe(false)
+    })
+  })
+
+  describe('getUserBudgetData', () => {
+    it('should return budget data for user with permission', async () => {
+      const user = { id: 'user-1', username: 'testuser' }
+      const budgetData = [{
+        id: 'month-1',
+        year: 2024,
+        month: 0,
+        userMonthId: 'user-month-1',
+        balanceSources: [],
+        incomeEntries: [],
+        expenseEntries: [],
+        balanceChange: 0,
+        pocketExpenses: 0,
+        income: 0,
+      }]
+
+      const { getUserMonths } = await import('~~/server/services/months')
+      vi.mocked(getUserMonths).mockResolvedValue(budgetData)
+
+      let callCount = 0
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => {
+              callCount++
+              if (callCount === 1) {
+                return Promise.resolve([user])
+              }
+              else {
+                return Promise.resolve([{ access: 'read' }])
+              }
+            }),
+          })),
+        })),
+      })
+
+      const result = await getUserBudgetData('testuser', 'user-1')
+
+      expect(result).toEqual(budgetData)
+    })
+
+    it('should throw error if user not found', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      })
+
+      await expect(getUserBudgetData('nonexistent', 'user-1')).rejects.toThrow('User not found')
+    })
+
+    it('should throw error if insufficient permissions', async () => {
+      const user = { id: 'user-1', username: 'testuser' }
+
+      let callCount = 0
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => {
+              callCount++
+              if (callCount === 1) {
+                return Promise.resolve([user])
+              }
+              else {
+                return Promise.resolve([])
+              }
+            }),
+          })),
+        })),
+      })
+
+      await expect(getUserBudgetData('testuser', 'user-2')).rejects.toThrow('Insufficient permissions to view budget')
+    })
+  })
+
+  describe('updateUserCurrency', () => {
+    it('should update user currency', async () => {
+      const mockUpdate = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve()),
+        })),
+      }))
+
+      mockDb.update = mockUpdate
+
+      await updateUserCurrency('user-1', 'EUR')
+
+      expect(mockUpdate).toHaveBeenCalled()
     })
   })
 })

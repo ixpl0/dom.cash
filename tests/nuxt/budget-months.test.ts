@@ -198,4 +198,55 @@ describe('Budget Months API Integration', async () => {
       })).rejects.toThrow()
     })
   })
+
+  describe('DELETE /api/budget/months/[id]', () => {
+    it('should delete month and its entries', async () => {
+      const authContext = await createAuthenticatedUser()
+      const testMonth = await createTestMonth(authContext.user.id, 2024, 0)
+
+      await createTestEntry(testMonth.id, {
+        kind: 'income',
+        description: 'Test Income',
+        amount: 1000,
+        currency: 'USD',
+        date: '2024-01-15',
+      })
+
+      const response = await makeAuthenticatedRequest(`/api/budget/months/${testMonth.id}`, authContext, {
+        method: 'DELETE',
+      })
+
+      expect(response).toMatchObject({ success: true })
+
+      const monthsResponse = await makeAuthenticatedRequest('/api/budget/months', authContext) as any
+      expect(monthsResponse).toHaveLength(0)
+    })
+
+    it('should reject deletion of non-existent month', async () => {
+      const authContext = await createAuthenticatedUser()
+
+      await expect(makeAuthenticatedRequest('/api/budget/months/nonexistent-id', authContext, {
+        method: 'DELETE',
+      })).rejects.toThrow()
+    })
+
+    it('should reject deletion by non-owner', async () => {
+      const authContext1 = await createAuthenticatedUser({ username: 'owner' })
+      const authContext2 = await createAuthenticatedUser({ username: 'other' })
+      const testMonth = await createTestMonth(authContext1.user.id, 2024, 0)
+
+      await expect(makeAuthenticatedRequest(`/api/budget/months/${testMonth.id}`, authContext2, {
+        method: 'DELETE',
+      })).rejects.toThrow()
+    })
+
+    it('should reject unauthenticated deletion', async () => {
+      const authContext = await createAuthenticatedUser()
+      const testMonth = await createTestMonth(authContext.user.id, 2024, 0)
+
+      await expect($fetch(`/api/budget/months/${testMonth.id}`, {
+        method: 'DELETE',
+      })).rejects.toThrow()
+    })
+  })
 })

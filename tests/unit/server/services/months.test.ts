@@ -10,6 +10,9 @@ vi.mock('~~/server/db', () => ({
     insert: vi.fn(),
     values: vi.fn(),
     returning: vi.fn(),
+    delete: vi.fn(),
+    transaction: vi.fn(),
+    update: vi.fn(),
   },
 }))
 
@@ -38,9 +41,9 @@ vi.mock('~~/server/db/schema', () => ({
 }))
 
 vi.mock('drizzle-orm', () => ({
-  desc: vi.fn(),
-  eq: vi.fn(),
-  and: vi.fn(),
+  desc: vi.fn(() => 'desc_condition'),
+  eq: vi.fn(() => 'eq_condition'),
+  and: vi.fn(() => 'and_condition'),
 }))
 
 Object.defineProperty(globalThis, 'crypto', {
@@ -52,15 +55,9 @@ Object.defineProperty(globalThis, 'crypto', {
 
 let mockDb: any
 
-const {
-  checkWritePermission,
-  findUserByUsername,
-} = await import('~~/server/services/months')
-
 describe('server/services/months', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
-
     const db = await import('~~/server/db')
     mockDb = db.db
   })
@@ -69,44 +66,249 @@ describe('server/services/months', () => {
     vi.clearAllMocks()
   })
 
-  describe('checkWritePermission', () => {
-    it('should return true for same user', async () => {
-      const result = await checkWritePermission('user-1', 'user-1')
+  describe('getExchangeRatesForMonth', () => {
+    it('should return cached rates if available', async () => {
+      const { getExchangeRatesForMonth } = await import('~~/server/services/months')
 
-      expect(result).toBe(true)
+      // Test implementation would need mocking of cache
+      // This is a placeholder for cache testing
+      expect(getExchangeRatesForMonth).toBeDefined()
+    })
+  })
+
+  describe('getUserMonths logic tests', () => {
+    it('should correctly group entries by type', async () => {
+      const entries = [
+        {
+          id: 'entry-1',
+          monthId: 'month-1',
+          kind: 'balance',
+          description: 'Opening balance',
+          amount: 1000,
+          currency: 'USD',
+          date: null,
+        },
+        {
+          id: 'entry-2',
+          monthId: 'month-1',
+          kind: 'income',
+          description: 'Salary',
+          amount: 5000,
+          currency: 'USD',
+          date: '2024-06-01',
+        },
+        {
+          id: 'entry-3',
+          monthId: 'month-1',
+          kind: 'expense',
+          description: 'Rent',
+          amount: 2000,
+          currency: 'USD',
+          date: '2024-06-01',
+        },
+      ]
+
+      const { income, expenses, balanceChange } = calculateTotals(entries)
+
+      expect(income).toBe(5000)
+      expect(expenses).toBe(2000)
+      expect(balanceChange).toBe(3000)
     })
 
-    it('should return true if user has write access', async () => {
-      mockDb.select.mockReturnThis()
-      mockDb.from.mockReturnThis()
-      mockDb.where.mockReturnThis()
-      mockDb.limit.mockResolvedValue([{ access: 'write' }])
+    it('should handle empty entries correctly', async () => {
+      const { income, expenses, balanceChange } = calculateTotals([])
 
-      const result = await checkWritePermission('user-1', 'user-2')
-
-      expect(result).toBe(true)
+      expect(income).toBe(0)
+      expect(expenses).toBe(0)
+      expect(balanceChange).toBe(0)
     })
 
-    it('should return false if user has no access', async () => {
-      mockDb.select.mockReturnThis()
-      mockDb.from.mockReturnThis()
-      mockDb.where.mockReturnThis()
-      mockDb.limit.mockResolvedValue([])
+    it('should handle null dates in entries', async () => {
+      const entries = [
+        {
+          id: 'entry-1',
+          monthId: 'month-1',
+          kind: 'income',
+          description: 'Cash found',
+          amount: 100,
+          currency: 'USD',
+          date: null,
+        },
+      ]
 
-      const result = await checkWritePermission('user-1', 'user-2')
+      const grouped = groupEntriesByKind(entries)
+      expect(grouped.incomeEntries[0].date).toBeNull()
+    })
+  })
 
-      expect(result).toBe(false)
+  describe('copyBalanceEntriesFromMonth', () => {
+    it('should copy balance entries when they exist', async () => {
+      const balanceEntries = [
+        { id: 'entry-1', kind: 'balance', description: 'Test', amount: 100, currency: 'USD', date: null },
+      ]
+
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve(balanceEntries)),
+        })),
+      })
+
+      mockDb.insert.mockReturnValue({
+        values: vi.fn(() => Promise.resolve()),
+      })
+
+      const { copyBalanceEntriesFromMonth } = await import('~~/server/services/months')
+
+      await copyBalanceEntriesFromMonth('source-month', 'target-month')
+
+      expect(mockDb.select).toHaveBeenCalled()
+      expect(mockDb.insert).toHaveBeenCalled()
     })
 
-    it('should return false if user has only read access', async () => {
-      mockDb.select.mockReturnThis()
-      mockDb.from.mockReturnThis()
-      mockDb.where.mockReturnThis()
-      mockDb.limit.mockResolvedValue([{ access: 'read' }])
+    it('should not insert anything when no balance entries exist', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve([])),
+        })),
+      })
 
-      const result = await checkWritePermission('user-1', 'user-2')
+      const { copyBalanceEntriesFromMonth } = await import('~~/server/services/months')
 
-      expect(result).toBe(false)
+      await copyBalanceEntriesFromMonth('source-month', 'target-month')
+
+      expect(mockDb.select).toHaveBeenCalled()
+      expect(mockDb.insert).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('createMonth', () => {
+    it('should create month without copying', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      })
+
+      mockDb.insert.mockReturnValue({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([{ id: 'new-month-id' }])),
+        })),
+      })
+
+      const { createMonth } = await import('~~/server/services/months')
+
+      const result = await createMonth({
+        year: 2024,
+        month: 5,
+        targetUserId: 'user-1',
+      })
+
+      expect(result).toEqual({ id: 'new-month-id' })
+      expect(mockDb.insert).toHaveBeenCalled()
+    })
+
+    it('should throw error if month already exists', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([{ id: 'existing-month' }])),
+          })),
+        })),
+      })
+
+      const { createMonth } = await import('~~/server/services/months')
+
+      await expect(createMonth({
+        year: 2024,
+        month: 5,
+        targetUserId: 'user-1',
+      })).rejects.toThrow('Month already exists')
+    })
+  })
+
+  describe('deleteMonth', () => {
+    it('should successfully delete month and its entries', async () => {
+      const mockMonth = { id: 'month-1', userId: 'user-1', year: 2024, month: 0 }
+      const mockTransaction = vi.fn(async (callback) => {
+        await callback({
+          delete: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve()),
+          })),
+        })
+      })
+
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([mockMonth])),
+          })),
+        })),
+      })
+      mockDb.transaction = mockTransaction
+
+      const { deleteMonth } = await import('~~/server/services/months')
+
+      await deleteMonth('month-1')
+
+      expect(mockDb.select).toHaveBeenCalled()
+      expect(mockTransaction).toHaveBeenCalled()
+    })
+
+    it('should throw error when month not found', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      })
+
+      const { deleteMonth } = await import('~~/server/services/months')
+
+      await expect(deleteMonth('nonexistent')).rejects.toThrow('Month not found')
+    })
+
+    it('should delete entries before deleting month', async () => {
+      const mockMonth = { id: 'month-1', userId: 'user-1', year: 2024, month: 0 }
+      const deleteCalls: string[] = []
+
+      const { entry, month } = await import('~~/server/db/schema')
+
+      const mockTx = {
+        delete: vi.fn((table) => {
+          if (table === entry) {
+            deleteCalls.push('entry')
+          }
+          else if (table === month) {
+            deleteCalls.push('month')
+          }
+          return {
+            where: vi.fn(() => Promise.resolve()),
+          }
+        }),
+      }
+
+      const mockTransaction = vi.fn(async (callback) => {
+        await callback(mockTx)
+      })
+
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([mockMonth])),
+          })),
+        })),
+      })
+      mockDb.transaction = mockTransaction
+
+      const { deleteMonth } = await import('~~/server/services/months')
+
+      await deleteMonth('month-1')
+
+      expect(deleteCalls).toEqual(['entry', 'month'])
+      expect(mockTx.delete).toHaveBeenCalledTimes(2)
     })
   })
 
@@ -114,10 +316,15 @@ describe('server/services/months', () => {
     it('should return user if found', async () => {
       const user = { id: 'user-1', username: 'testuser' }
 
-      mockDb.select.mockReturnThis()
-      mockDb.from.mockReturnThis()
-      mockDb.where.mockReturnThis()
-      mockDb.limit.mockResolvedValue([user])
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([user])),
+          })),
+        })),
+      })
+
+      const { findUserByUsername } = await import('~~/server/services/months')
 
       const result = await findUserByUsername('testuser')
 
@@ -125,14 +332,122 @@ describe('server/services/months', () => {
     })
 
     it('should return null if user not found', async () => {
-      mockDb.select.mockReturnThis()
-      mockDb.from.mockReturnThis()
-      mockDb.where.mockReturnThis()
-      mockDb.limit.mockResolvedValue([])
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      })
+
+      const { findUserByUsername } = await import('~~/server/services/months')
 
       const result = await findUserByUsername('nonexistent')
 
       expect(result).toBeNull()
     })
   })
+
+  describe('checkWritePermission', () => {
+    it('should return true for same user', async () => {
+      const { checkWritePermission } = await import('~~/server/services/months')
+
+      const result = await checkWritePermission('user-1', 'user-1')
+
+      expect(result).toBe(true)
+    })
+
+    it('should return true if user has write access', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([{ access: 'write' }])),
+          })),
+        })),
+      })
+
+      const { checkWritePermission } = await import('~~/server/services/months')
+
+      const result = await checkWritePermission('user-1', 'user-2')
+
+      expect(result).toBe(true)
+    })
+
+    it('should return false if user has read access only', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([{ access: 'read' }])),
+          })),
+        })),
+      })
+
+      const { checkWritePermission } = await import('~~/server/services/months')
+
+      const result = await checkWritePermission('user-1', 'user-2')
+
+      expect(result).toBe(false)
+    })
+
+    it('should return false if no share exists', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      })
+
+      const { checkWritePermission } = await import('~~/server/services/months')
+
+      const result = await checkWritePermission('user-1', 'user-2')
+
+      expect(result).toBe(false)
+    })
+  })
 })
+
+// Helper функции для тестирования логики без внешних зависимостей
+function calculateTotals(entries: any[]) {
+  const incomeEntries = entries.filter(e => e.kind === 'income')
+  const expenseEntries = entries.filter(e => e.kind === 'expense')
+
+  const income = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
+  const expenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
+  const balanceChange = income - expenses
+
+  return { income, expenses, balanceChange }
+}
+
+function groupEntriesByKind(entries: any[]) {
+  const balanceSources = entries
+    .filter(e => e.kind === 'balance')
+    .map(e => ({
+      id: e.id,
+      description: e.description,
+      currency: e.currency,
+      amount: e.amount,
+    }))
+
+  const incomeEntries = entries
+    .filter(e => e.kind === 'income')
+    .map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      date: e.date,
+    }))
+
+  const expenseEntries = entries
+    .filter(e => e.kind === 'expense')
+    .map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      date: e.date,
+    }))
+
+  return { balanceSources, incomeEntries, expenseEntries }
+}

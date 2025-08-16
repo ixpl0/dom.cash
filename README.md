@@ -272,6 +272,15 @@ pnpm run test:ui        # Open Vitest UI
 - **Authentication tests** for protected routes
 - **Error handling tests** for all failure scenarios
 
+#### Test Structure Rules
+
+- **Mirror structure** - tests must follow the same directory structure as source code
+- **Naming convention** - test files should be named `{original-name}.test.ts`
+- **Examples**:
+  - `server/services/months.ts` → `tests/unit/server/services/months.test.ts`
+  - `server/api/auth/me.get.ts` → `tests/unit/server/api/auth/me.get.test.ts`
+  - Special logic tests can have descriptive suffixes: `months-logic.test.ts`
+
 ### Before Submitting PR
 
 ```bash

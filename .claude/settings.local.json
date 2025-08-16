@@ -17,7 +17,8 @@
       "WebFetch(domain:www.npmjs.com)",
       "Bash(grep:*)",
       "Bash(pnpm db:migrate:*)",
-      "Bash(pnpm db:backup:*)"
+      "Bash(pnpm db:backup:*)",
+      "Bash(mv:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

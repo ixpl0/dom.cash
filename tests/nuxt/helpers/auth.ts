@@ -14,16 +14,19 @@ export interface TestAuthContext {
   token: string
 }
 
-export const createAuthenticatedUser = async (userData = {
-  username: 'testuser',
-  password: 'testpassword123',
-}): Promise<TestAuthContext> => {
+export const createAuthenticatedUser = async (userData: {
+  username?: string
+  password?: string
+} = {}): Promise<TestAuthContext> => {
+  const username = userData.username || 'testuser'
+  const password = userData.password || 'testpassword123'
+
   const userId = crypto.randomUUID()
-  const passwordHash = await hashPassword(userData.password)
+  const passwordHash = await hashPassword(password)
 
   await db.insert(user).values({
     id: userId,
-    username: userData.username,
+    username,
     passwordHash,
     mainCurrency: 'USD',
     createdAt: new Date(),
@@ -45,8 +48,8 @@ export const createAuthenticatedUser = async (userData = {
   return {
     user: {
       id: userId,
-      username: userData.username,
-      password: userData.password,
+      username,
+      password,
       mainCurrency: 'USD',
     },
     token,

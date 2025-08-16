@@ -99,7 +99,8 @@ export const findClosestMonthForCopy = (
 }
 
 export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
-  if (allMonths.length <= 1) return false
+  if (allMonths.length === 0) return false
+  if (allMonths.length === 1) return true
 
   const sortedMonths = [...allMonths].sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year
