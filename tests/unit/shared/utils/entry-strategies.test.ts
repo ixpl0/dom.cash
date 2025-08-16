@@ -305,6 +305,25 @@ describe('shared/utils/entry-strategies', () => {
 
       expect(result.incomeEntries[0]?.date).toBe(null)
     })
+
+    it('should only update target entry and preserve others unchanged', () => {
+      const month = createMockMonth()
+      month.incomeEntries.push({
+        id: 'income-2',
+        description: 'Bonus',
+        amount: 1000,
+        currency: 'USD',
+        date: '2025-02-15',
+      })
+
+      const updateData = { description: 'Updated salary' }
+
+      const result = updateMonthWithUpdatedEntry(month, 'income', 'income-1', updateData)
+
+      expect(result.incomeEntries[0]?.description).toBe('Updated salary')
+      expect(result.incomeEntries[1]?.description).toBe('Bonus')
+      expect(result.incomeEntries[1]).toBe(month.incomeEntries[1])
+    })
   })
 
   describe('updateMonthWithDeletedEntry', () => {

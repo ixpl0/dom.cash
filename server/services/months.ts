@@ -1,0 +1,219 @@
+import { desc, eq, and } from 'drizzle-orm'
+import { db } from '~~/server/db'
+import { entry, month, currency, budgetShare, user } from '~~/server/db/schema'
+import type { MonthData } from '~~/shared/types/budget'
+
+const ratesCache = new Map<string, Record<string, number>>()
+
+export const getExchangeRatesForMonth = async (year: number, monthNumber: number): Promise<{ rates: Record<string, number>, source: string } | undefined> => {
+  const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
+
+  if (ratesCache.has(rateDate)) {
+    return { rates: ratesCache.get(rateDate)!, source: rateDate }
+  }
+
+  const currencyData = await db
+    .select()
+    .from(currency)
+    .where(eq(currency.date, rateDate))
+    .limit(1)
+
+  if (currencyData.length > 0) {
+    const rates = currencyData[0]?.rates
+    if (rates) {
+      ratesCache.set(rateDate, rates)
+      return { rates, source: rateDate }
+    }
+  }
+
+  const allCurrencyData = await db
+    .select()
+    .from(currency)
+    .orderBy(currency.date)
+
+  if (allCurrencyData.length === 0) {
+    return undefined
+  }
+
+  const targetDate = new Date(rateDate)
+  let closestData = allCurrencyData[0]
+  let minDiff = Math.abs(new Date(allCurrencyData[0]!.date).getTime() - targetDate.getTime())
+
+  for (const data of allCurrencyData) {
+    const diff = Math.abs(new Date(data.date).getTime() - targetDate.getTime())
+    if (diff < minDiff) {
+      minDiff = diff
+      closestData = data
+    }
+  }
+
+  if (closestData?.rates) {
+    ratesCache.set(rateDate, closestData.rates)
+    return { rates: closestData.rates, source: closestData.date }
+  }
+
+  return undefined
+}
+
+export const getUserMonths = async (userId: string): Promise<MonthData[]> => {
+  const monthsData = await db
+    .select()
+    .from(month)
+    .where(eq(month.userId, userId))
+    .orderBy(desc(month.year), desc(month.month))
+
+  return await Promise.all(
+    monthsData.map(async (monthData) => {
+      const entries = await db
+        .select()
+        .from(entry)
+        .where(eq(entry.monthId, monthData.id))
+
+      const balanceSources = entries
+        .filter(e => e.kind === 'balance')
+        .map(e => ({
+          id: e.id,
+          description: e.description,
+          currency: e.currency,
+          amount: e.amount,
+        }))
+
+      const incomeEntries = entries
+        .filter(e => e.kind === 'income')
+        .map(e => ({
+          id: e.id,
+          description: e.description,
+          amount: e.amount,
+          currency: e.currency,
+          date: e.date,
+        }))
+
+      const expenseEntries = entries
+        .filter(e => e.kind === 'expense')
+        .map(e => ({
+          id: e.id,
+          description: e.description,
+          amount: e.amount,
+          currency: e.currency,
+          date: e.date,
+        }))
+
+      const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
+      const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
+      const balanceChange = totalIncome - totalExpenses
+
+      const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month)
+
+      return {
+        id: monthData.id,
+        year: monthData.year,
+        month: monthData.month,
+        userMonthId: monthData.id,
+        balanceSources,
+        incomeEntries,
+        expenseEntries,
+        balanceChange,
+        pocketExpenses: 0,
+        income: totalIncome,
+        exchangeRates: exchangeRatesData?.rates,
+        exchangeRatesSource: exchangeRatesData?.source,
+      }
+    }),
+  )
+}
+
+export interface CreateMonthParams {
+  year: number
+  month: number
+  copyFromMonthId?: string
+  targetUserId: string
+}
+
+export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string): Promise<void> => {
+  const balanceEntriesToCopy = await db
+    .select()
+    .from(entry)
+    .where(and(
+      eq(entry.monthId, sourceMonthId),
+      eq(entry.kind, 'balance'),
+    ))
+
+  if (balanceEntriesToCopy.length > 0) {
+    const copiedEntries = balanceEntriesToCopy.map(sourceEntry => ({
+      id: crypto.randomUUID(),
+      monthId: targetMonthId,
+      kind: sourceEntry.kind,
+      description: sourceEntry.description,
+      amount: sourceEntry.amount,
+      currency: sourceEntry.currency,
+      date: sourceEntry.date,
+    }))
+
+    await db.insert(entry).values(copiedEntries)
+  }
+}
+
+export const createMonth = async (params: CreateMonthParams) => {
+  const { year, month: monthNumber, copyFromMonthId, targetUserId } = params
+
+  const existingMonth = await db
+    .select()
+    .from(month)
+    .where(and(
+      eq(month.userId, targetUserId),
+      eq(month.year, year),
+      eq(month.month, monthNumber),
+    ))
+    .limit(1)
+
+  if (existingMonth.length > 0) {
+    throw new Error('Month already exists')
+  }
+
+  const [createdMonth] = await db
+    .insert(month)
+    .values({
+      id: crypto.randomUUID(),
+      userId: targetUserId,
+      year,
+      month: monthNumber,
+    })
+    .returning()
+
+  if (!createdMonth) {
+    throw new Error('Failed to create month')
+  }
+
+  if (copyFromMonthId) {
+    await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id)
+  }
+
+  return createdMonth
+}
+
+export const findUserByUsername = async (username: string) => {
+  const users = await db
+    .select()
+    .from(user)
+    .where(eq(user.username, username))
+    .limit(1)
+
+  return users[0] || null
+}
+
+export const checkWritePermission = async (ownerId: string, requesterId: string): Promise<boolean> => {
+  if (ownerId === requesterId) {
+    return true
+  }
+
+  const shareRecord = await db
+    .select({ access: budgetShare.access })
+    .from(budgetShare)
+    .where(and(
+      eq(budgetShare.ownerId, ownerId),
+      eq(budgetShare.sharedWithId, requesterId),
+    ))
+    .limit(1)
+
+  return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
+}

@@ -1,7 +1,5 @@
-import { eq, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
-import { entry, month, budgetShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
+import { getEntryWithMonth, checkWritePermissionForMonth, deleteEntry } from '~~/server/services/entries'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -14,52 +12,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const entryData = await db
-    .select({
-      entry,
-      month,
-    })
-    .from(entry)
-    .leftJoin(month, eq(entry.monthId, month.id))
-    .where(eq(entry.id, entryId))
-    .limit(1)
-
-  if (entryData.length === 0) {
+  const entryRecord = await getEntryWithMonth(entryId)
+  if (!entryRecord || !entryRecord.month) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Entry not found',
     })
   }
 
-  const entryRecord = entryData[0]
-  if (!entryRecord?.month) {
+  const hasPermission = await checkWritePermissionForMonth(entryRecord.month.userId, user.id)
+  if (!hasPermission) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Entry not found',
+      statusCode: 403,
+      statusMessage: 'Insufficient permissions to delete entries',
     })
   }
 
-  if (entryRecord.month.userId !== user.id) {
-    const shareRecord = await db
-      .select({ access: budgetShare.access })
-      .from(budgetShare)
-      .where(and(
-        eq(budgetShare.ownerId, entryRecord.month.userId),
-        eq(budgetShare.sharedWithId, user.id),
-      ))
-      .limit(1)
-
-    if (shareRecord.length === 0 || shareRecord[0]?.access !== 'write') {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Insufficient permissions to delete entries',
-      })
-    }
-  }
-
-  await db
-    .delete(entry)
-    .where(eq(entry.id, entryId))
-
+  await deleteEntry(entryId)
   return { success: true }
 })

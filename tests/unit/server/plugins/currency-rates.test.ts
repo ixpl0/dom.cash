@@ -185,5 +185,44 @@ describe('server/plugins/currency-rates', () => {
         }
       }
     })
+
+    it('should not start scheduler twice if already started', async () => {
+      const mockCronJobInstance = {
+        start: vi.fn(),
+        stop: vi.fn(),
+      }
+
+      mockCronJob.mockImplementation(() => mockCronJobInstance)
+
+      const mockNitroApp = {
+        hooks: {
+          hook: vi.fn(),
+        },
+      }
+
+      const originalEnv = process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE
+      process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = '1'
+
+      try {
+        vi.resetModules()
+        const plugin = await import('~~/server/plugins/currency-rates?t=' + Date.now())
+
+        plugin.default(mockNitroApp as Parameters<typeof plugin.default>[0])
+        const firstCallCount = mockCronJob.mock.calls.length
+
+        plugin.default(mockNitroApp as Parameters<typeof plugin.default>[0])
+        const secondCallCount = mockCronJob.mock.calls.length
+
+        expect(secondCallCount).toBe(firstCallCount)
+      }
+      finally {
+        if (originalEnv !== undefined) {
+          process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE = originalEnv
+        }
+        else {
+          delete process.env.ENABLE_CURRENCY_RATES_AUTO_UPDATE
+        }
+      }
+    })
   })
 })

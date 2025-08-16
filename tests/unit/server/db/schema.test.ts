@@ -297,4 +297,60 @@ describe('Database Schema Types', () => {
       expect(writeShare.access).toBe('write')
     })
   })
+
+  describe('Database schema exports', () => {
+    it('should export user table schema', async () => {
+      const { user } = await import('~~/server/db/schema')
+
+      expect(user).toBeDefined()
+      expect(typeof user).toBe('object')
+    })
+
+    it('should export session table schema', async () => {
+      const { session } = await import('~~/server/db/schema')
+
+      expect(session).toBeDefined()
+      expect(typeof session).toBe('object')
+    })
+
+    it('should export currency table schema', async () => {
+      const { currency } = await import('~~/server/db/schema')
+
+      expect(currency).toBeDefined()
+      expect(typeof currency).toBe('object')
+    })
+
+    it('should export month table schema', async () => {
+      const { month } = await import('~~/server/db/schema')
+
+      expect(month).toBeDefined()
+      expect(typeof month).toBe('object')
+    })
+
+    it('should export entry table schema', async () => {
+      const { entry } = await import('~~/server/db/schema')
+
+      expect(entry).toBeDefined()
+      expect(typeof entry).toBe('object')
+    })
+
+    it('should export budgetShare table schema', async () => {
+      const { budgetShare } = await import('~~/server/db/schema')
+
+      expect(budgetShare).toBeDefined()
+      expect(typeof budgetShare).toBe('object')
+    })
+
+    it('should export all type definitions', async () => {
+      const schemaModule = await import('~~/server/db/schema')
+      const exports = Object.keys(schemaModule)
+
+      expect(exports).toContain('user')
+      expect(exports).toContain('session')
+      expect(exports).toContain('currency')
+      expect(exports).toContain('month')
+      expect(exports).toContain('entry')
+      expect(exports).toContain('budgetShare')
+    })
+  })
 })

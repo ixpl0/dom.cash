@@ -140,6 +140,18 @@ describe('server/utils/rates/database', () => {
         saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES),
       ).rejects.toThrow('Database connection failed')
     })
+
+    it('should handle non-Error database exceptions', async () => {
+      const nonErrorException = 'String error'
+      const mockValues = vi.fn().mockReturnValue({
+        onConflictDoUpdate: vi.fn().mockRejectedValue(nonErrorException),
+      })
+      mockInsert.mockReturnValue({ values: mockValues })
+
+      await expect(
+        saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES),
+      ).rejects.toBe(nonErrorException)
+    })
   })
 
   describe('getCurrencyRates', () => {

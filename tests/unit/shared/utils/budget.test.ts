@@ -149,6 +149,20 @@ describe('shared/utils/budget', () => {
       expect(result).toBe(300)
     })
 
+    it('should handle missing base currency exchange rate with default rate 1', () => {
+      const entries: BudgetEntry[] = [
+        { id: '1', amount: 100, currency: 'EUR', description: 'Test 1' },
+      ]
+
+      const exchangeRates = {
+        EUR: 0.85,
+      }
+
+      const result = calculateTotalBalance(entries, 'UNKNOWN_BASE', exchangeRates)
+
+      expect(result).toBeCloseTo(117.65, 2)
+    })
+
     it('should handle missing base currency rate with default rate 1', () => {
       const entries: BudgetEntry[] = [
         { id: '1', amount: 100, currency: 'USD', description: 'Test 1' },

@@ -1,7 +1,7 @@
 import { requireAuth } from '~~/server/utils/session'
-import { getUserMonths } from '~~/server/services/months'
+import { getUserShares } from '~~/server/services/sharing'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
-  return await getUserMonths(user.id)
+  return await getUserShares(user.id)
 })

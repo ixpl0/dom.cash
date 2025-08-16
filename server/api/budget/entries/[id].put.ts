@@ -1,9 +1,7 @@
-import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/db'
-import { entry, month, budgetShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
+import { getEntryWithMonth, checkWritePermissionForMonth, updateEntry } from '~~/server/services/entries'
 
 const updateEntrySchema = z.object({
   description: z.string().min(1).max(255),
@@ -24,57 +22,26 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const entryData = await db
-    .select({
-      entry,
-      month,
-    })
-    .from(entry)
-    .leftJoin(month, eq(entry.monthId, month.id))
-    .where(eq(entry.id, entryId))
-    .limit(1)
-
-  if (entryData.length === 0) {
+  const entryRecord = await getEntryWithMonth(entryId)
+  if (!entryRecord || !entryRecord.month) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Entry not found',
     })
   }
 
-  const entryRecord = entryData[0]
-  if (!entryRecord?.month) {
+  const hasPermission = await checkWritePermissionForMonth(entryRecord.month.userId, user.id)
+  if (!hasPermission) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Entry not found',
+      statusCode: 403,
+      statusMessage: 'Insufficient permissions to update entries',
     })
   }
 
-  if (entryRecord.month.userId !== user.id) {
-    const shareRecord = await db
-      .select({ access: budgetShare.access })
-      .from(budgetShare)
-      .where(and(
-        eq(budgetShare.ownerId, entryRecord.month.userId),
-        eq(budgetShare.sharedWithId, user.id),
-      ))
-      .limit(1)
-
-    if (shareRecord.length === 0 || shareRecord[0]?.access !== 'write') {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Insufficient permissions to update entries',
-      })
-    }
-  }
-
-  const updatedEntry = await db
-    .update(entry)
-    .set({
-      ...data,
-      date: data.date || null,
-    })
-    .where(eq(entry.id, entryId))
-    .returning()
-
-  return updatedEntry[0]
+  return await updateEntry(entryId, {
+    description: data.description,
+    amount: data.amount,
+    currency: data.currency,
+    date: data.date,
+  })
 })

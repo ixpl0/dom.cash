@@ -21,7 +21,14 @@ export default defineConfig({
         'app/**/*',
       ],
       include: [
-        'server/**/*',
+        'server/db/**/*',
+        'server/utils/**/*',
+        'server/schemas/**/*',
+        'server/plugins/**/*',
+        'server/api/auth/**/*',
+        'server/api/currency/**/*',
+        'server/services/**/*',
+        'shared/**/*',
       ],
     },
     projects: [
@@ -47,6 +54,12 @@ export default defineConfig({
           include: ['test/nuxt/**/*.{test,spec}.ts', 'tests/nuxt/**/*.{test,spec}.ts'],
           environment: 'nuxt',
           environmentOptions: { nuxt: { domEnvironment: 'happy-dom' } },
+          pool: 'forks',
+          poolOptions: {
+            forks: {
+              singleFork: true,
+            },
+          },
         },
       }),
     ],

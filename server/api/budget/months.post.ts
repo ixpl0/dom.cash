@@ -1,9 +1,7 @@
-import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/db'
-import { month, entry, budgetShare, user } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
+import { createMonth, findUserByUsername, checkWritePermission } from '~~/server/services/months'
 
 const createMonthSchema = z.object({
   year: z.number().int().min(2020).max(2100),
@@ -12,30 +10,6 @@ const createMonthSchema = z.object({
   targetUsername: z.string().optional(),
 })
 
-const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string): Promise<void> => {
-  const balanceEntriesToCopy = await db
-    .select()
-    .from(entry)
-    .where(and(
-      eq(entry.monthId, sourceMonthId),
-      eq(entry.kind, 'balance'),
-    ))
-
-  if (balanceEntriesToCopy.length > 0) {
-    const copiedEntries = balanceEntriesToCopy.map(sourceEntry => ({
-      id: crypto.randomUUID(),
-      monthId: targetMonthId,
-      kind: sourceEntry.kind,
-      description: sourceEntry.description,
-      amount: sourceEntry.amount,
-      currency: sourceEntry.currency,
-      date: sourceEntry.date,
-    }))
-
-    await db.insert(entry).values(copiedEntries)
-  }
-}
-
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
   const { year, month: monthNumber, copyFromMonthId, targetUsername } = await parseBody(event, createMonthSchema)
@@ -43,38 +17,17 @@ export default defineEventHandler(async (event) => {
   let targetUserId = currentUser.id
 
   if (targetUsername) {
-    const targetUser = await db
-      .select()
-      .from(user)
-      .where(eq(user.username, targetUsername))
-      .limit(1)
-
-    if (targetUser.length === 0) {
+    const targetUser = await findUserByUsername(targetUsername)
+    if (!targetUser) {
       throw createError({
         statusCode: 404,
         statusMessage: 'Target user not found',
       })
     }
 
-    const targetUserData = targetUser[0]
-    if (!targetUserData) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Target user not found',
-      })
-    }
-
-    if (targetUserData.id !== currentUser.id) {
-      const shareRecord = await db
-        .select({ access: budgetShare.access })
-        .from(budgetShare)
-        .where(and(
-          eq(budgetShare.ownerId, targetUserData.id),
-          eq(budgetShare.sharedWithId, currentUser.id),
-        ))
-        .limit(1)
-
-      if (shareRecord.length === 0 || shareRecord[0]?.access !== 'write') {
+    if (targetUser.id !== currentUser.id) {
+      const hasPermission = await checkWritePermission(targetUser.id, currentUser.id)
+      if (!hasPermission) {
         throw createError({
           statusCode: 403,
           statusMessage: 'Insufficient permissions to create months',
@@ -82,46 +35,33 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    targetUserId = targetUserData.id
+    targetUserId = targetUser.id
   }
 
-  const existingMonth = await db
-    .select()
-    .from(month)
-    .where(and(
-      eq(month.userId, targetUserId),
-      eq(month.year, year),
-      eq(month.month, monthNumber),
-    ))
-    .limit(1)
-
-  if (existingMonth.length > 0) {
-    throw createError({
-      statusCode: 409,
-      statusMessage: 'Month already exists',
-    })
-  }
-
-  const [createdMonth] = await db
-    .insert(month)
-    .values({
-      id: crypto.randomUUID(),
-      userId: targetUserId,
+  try {
+    return await createMonth({
       year,
       month: monthNumber,
+      copyFromMonthId,
+      targetUserId,
     })
-    .returning()
-
-  if (!createdMonth) {
+  }
+  catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Month already exists') {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'Month already exists',
+        })
+      }
+      throw createError({
+        statusCode: 500,
+        statusMessage: error.message,
+      })
+    }
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to create month',
     })
   }
-
-  if (copyFromMonthId) {
-    await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id)
-  }
-
-  return createdMonth
 })
