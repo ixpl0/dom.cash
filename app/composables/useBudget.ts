@@ -47,6 +47,7 @@ export interface BudgetMethods {
     }
   ) => Promise<void>
   deleteEntry: (entryId: string) => Promise<void>
+  updateCurrency: (currency: string) => Promise<void>
   getNextMonth: () => { year: number, month: number }
   getPreviousMonth: () => { year: number, month: number }
 }
@@ -295,6 +296,43 @@ export const useBudget = (targetUsername?: string) => {
     await createMonth(prevMonth.year, prevMonth.month, copyFromMonthId)
   }
 
+  const updateCurrency = async (currency: string): Promise<void> => {
+    if (!budgetState.value.canEdit || !budgetState.value.data) {
+      throw new Error('No permission to update currency')
+    }
+
+    const oldCurrency = budgetState.value.data.user.mainCurrency
+
+    budgetState.value.data = {
+      ...budgetState.value.data,
+      user: {
+        ...budgetState.value.data.user,
+        mainCurrency: currency,
+      },
+    }
+
+    try {
+      await $fetch('/api/user/currency', {
+        method: 'PUT',
+        body: { 
+          currency,
+          targetUsername: targetUsername,
+        },
+      })
+    }
+    catch (error) {
+      budgetState.value.data = {
+        ...budgetState.value.data,
+        user: {
+          ...budgetState.value.data.user,
+          mainCurrency: oldCurrency,
+        },
+      }
+      console.error('Error updating currency:', error)
+      throw error
+    }
+  }
+
   const methods: BudgetMethods = {
     refresh: loadBudgetData,
     createMonth,
@@ -303,6 +341,7 @@ export const useBudget = (targetUsername?: string) => {
     addEntry,
     updateEntry,
     deleteEntry,
+    updateCurrency,
     getNextMonth: getNextMonthFromData,
     getPreviousMonth: getPreviousMonthFromData,
   }

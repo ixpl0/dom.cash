@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-base-100 p-6">
+  <div class="bg-base-100 p-6">
     <BudgetScreen
       :budget="budget.data.value"
       :can-edit="budget.canEdit.value"
@@ -10,6 +10,7 @@
       :on-create-previous-month="budget.createPreviousMonth"
       :on-get-next-month="budget.getNextMonth"
       :on-get-previous-month="budget.getPreviousMonth"
+      :on-update-currency="budget.updateCurrency"
     />
   </div>
 </template>

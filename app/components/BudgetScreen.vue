@@ -74,8 +74,18 @@
             <span class="badge badge-primary">
               {{ getAccessText(budget.access) }}
             </span>
-            <span class="text-sm opacity-70">
-              Основная валюта: {{ budget.user.mainCurrency }}
+            <UiCurrencyPicker
+              v-if="canEdit"
+              :model-value="budget.user.mainCurrency"
+              placeholder="Основная валюта"
+              class="w-70"
+              @change="saveCurrency"
+            />
+            <span
+              v-else
+              class="opacity-70 text-sm"
+            >
+              Основная валюта: {{ getCurrencyDisplayText(budget.user.mainCurrency) }}
             </span>
           </div>
         </div>
@@ -123,6 +133,7 @@
 
 <script setup lang="ts">
 import type { BudgetData } from '~/composables/useBudget'
+import { getCurrencyName } from '~~/shared/utils/currencies'
 
 interface Props {
   budget: BudgetData | null
@@ -134,6 +145,7 @@ interface Props {
   onCreatePreviousMonth?: () => Promise<void>
   onGetNextMonth?: () => { year: number, month: number }
   onGetPreviousMonth?: () => { year: number, month: number }
+  onUpdateCurrency?: (currency: string) => Promise<void>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -145,6 +157,7 @@ const props = withDefaults(defineProps<Props>(), {
   onCreatePreviousMonth: undefined,
   onGetNextMonth: undefined,
   onGetPreviousMonth: undefined,
+  onUpdateCurrency: undefined,
 })
 
 const monthNames = [
@@ -246,6 +259,26 @@ const createCurrentMonth = async (): Promise<void> => {
   }
   finally {
     isCreatingCurrentMonth.value = false
+  }
+}
+
+const getCurrencyDisplayText = (currencyCode: string): string => {
+  const currencyName = getCurrencyName(currencyCode)
+  return `${currencyCode} - ${currencyName}`
+}
+
+const saveCurrency = async (newCurrency: string): Promise<void> => {
+  if (!props.onUpdateCurrency) {
+    console.warn('onUpdateCurrency handler not provided')
+    return
+  }
+
+  try {
+    await props.onUpdateCurrency(newCurrency)
+  }
+  catch (error) {
+    console.error('Failed to update currency:', error)
+    alert('Не удалось обновить валюту. Попробуйте ещё раз.')
   }
 }
 

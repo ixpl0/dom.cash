@@ -43,3 +43,10 @@ export const getUserBudgetData = async (username: string, requesterId: string) =
 
   return await getUserMonths(targetUser.id)
 }
+
+export const updateUserCurrency = async (userId: string, currency: string): Promise<void> => {
+  await db
+    .update(user)
+    .set({ mainCurrency: currency })
+    .where(eq(user.id, userId))
+}

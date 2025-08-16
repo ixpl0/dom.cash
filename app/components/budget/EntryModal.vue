@@ -4,7 +4,7 @@
     class="modal"
     @close="handleDialogClose"
   >
-    <div class="modal-box w-11/12 max-w-5xl">
+    <div class="modal-box overflow-y-visible w-11/12 max-w-5xl">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -19,199 +19,177 @@
 
       <div class="space-y-4 mb-6">
         <div v-if="entries?.length || isAddingNewEntry">
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead>
-                <tr>
-                  <th>Описание</th>
-                  <th>Сумма</th>
-                  <th>Валюта</th>
-                  <th v-if="entryKind !== 'balance'">
-                    Дата
-                  </th>
-                  <th class="w-1">
-                    Действия
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="entry in (entries || [])"
-                  :key="entry.id"
-                >
-                  <td>
-                    <input
-                      v-if="editingEntryId === entry.id"
-                      v-model="editingEntry.description"
-                      type="text"
-                      class="input input-sm input-bordered w-full"
-                      @keyup.enter="saveEntry()"
-                      @keyup.esc="cancelEdit()"
-                    >
-                    <span v-else>{{ entry.description }}</span>
-                  </td>
-                  <td>
-                    <input
-                      v-if="editingEntryId === entry.id"
-                      v-model.number="editingEntry.amount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      class="input input-sm input-bordered w-full"
-                      @keyup.enter="saveEntry()"
-                      @keyup.esc="cancelEdit()"
-                    >
-                    <span v-else>{{ formatAmount(entry.amount, entry.currency) }}</span>
-                  </td>
-                  <td>
-                    <select
-                      v-if="editingEntryId === entry.id"
-                      v-model="editingEntry.currency"
-                      class="select select-sm select-bordered min-w-20"
-                    >
-                      <option value="RUB">
-                        RUB
-                      </option>
-                      <option value="USD">
-                        USD
-                      </option>
-                      <option value="EUR">
-                        EUR
-                      </option>
-                    </select>
-                    <span v-else>{{ entry.currency }}</span>
-                  </td>
-                  <td v-if="entryKind !== 'balance'">
-                    <input
-                      v-if="editingEntryId === entry.id"
-                      v-model="editingEntry.date"
-                      type="date"
-                      class="input input-sm input-bordered"
-                      @keyup.enter="saveEntry()"
-                      @keyup.esc="cancelEdit()"
-                    >
-                    <span v-else>{{ formatDate(getEntryDate(entry)) }}</span>
-                  </td>
-                  <td class="w-1">
-                    <div class="flex gap-2">
-                      <template v-if="editingEntryId === entry.id">
-                        <button
-                          class="btn btn-sm btn-success"
-                          :disabled="isSaving"
-                          @click="saveEntry()"
-                        >
-                          <span
-                            v-if="isSaving"
-                            class="loading loading-spinner loading-xs"
-                          />
-                          <span v-else>✓</span>
-                        </button>
-                        <button
-                          class="btn btn-sm btn-ghost"
-                          @click="cancelEdit()"
-                        >
-                          ✕
-                        </button>
-                      </template>
-                      <template v-else>
-                        <button
-                          v-if="!isReadOnly"
-                          class="btn btn-sm btn-warning"
-                          @click="startEdit(entry)"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          v-if="!isReadOnly"
-                          class="btn btn-sm btn-error"
-                          :disabled="isDeleting === entry.id"
-                          @click="deleteEntry(entry.id)"
-                        >
-                          <span
-                            v-if="isDeleting === entry.id"
-                            class="loading loading-spinner loading-xs"
-                          />
-                          <span v-else>🗑️</span>
-                        </button>
-                      </template>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="isAddingNewEntry">
-                  <td>
-                    <input
-                      v-model="newEntry.description"
-                      type="text"
-                      placeholder="Введите описание..."
-                      class="input input-sm input-bordered w-full"
-                      @keyup.enter="addEntry()"
-                      @keyup.esc="cancelAdd()"
-                    >
-                  </td>
-                  <td>
-                    <input
-                      v-model.number="newEntry.amount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      class="input input-sm input-bordered w-full"
-                      @keyup.enter="addEntry()"
-                      @keyup.esc="cancelAdd()"
-                    >
-                  </td>
-                  <td>
-                    <select
-                      v-model="newEntry.currency"
-                      class="select select-sm select-bordered min-w-20"
-                    >
-                      <option value="RUB">
-                        RUB
-                      </option>
-                      <option value="USD">
-                        USD
-                      </option>
-                      <option value="EUR">
-                        EUR
-                      </option>
-                    </select>
-                  </td>
-                  <td v-if="entryKind !== 'balance'">
-                    <input
-                      v-model="newEntry.date"
-                      type="date"
-                      class="input input-sm input-bordered"
-                      @keyup.enter="addEntry()"
-                      @keyup.esc="cancelAdd()"
-                    >
-                  </td>
-                  <td class="w-1">
-                    <div class="flex gap-2">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Описание</th>
+                <th>Сумма</th>
+                <th>Валюта</th>
+                <th v-if="entryKind !== 'balance'">
+                  Дата
+                </th>
+                <th class="w-1">
+                  Действия
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="entry in (entries || [])"
+                :key="entry.id"
+              >
+                <td>
+                  <input
+                    v-if="editingEntryId === entry.id"
+                    v-model="editingEntry.description"
+                    type="text"
+                    class="input input-sm input-bordered w-full"
+                    @keyup.enter="saveEntry()"
+                    @keyup.esc="cancelEdit()"
+                  >
+                  <span v-else>{{ entry.description }}</span>
+                </td>
+                <td>
+                  <input
+                    v-if="editingEntryId === entry.id"
+                    v-model.number="editingEntry.amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="input input-sm input-bordered w-full"
+                    @keyup.enter="saveEntry()"
+                    @keyup.esc="cancelEdit()"
+                  >
+                  <span v-else>{{ formatAmount(entry.amount, entry.currency) }}</span>
+                </td>
+                <td>
+                  <UiCurrencyPicker
+                    v-if="editingEntryId === entry.id"
+                    v-model="editingEntry.currency"
+                    class="w-full"
+                  />
+                  <span v-else>{{ entry.currency }}</span>
+                </td>
+                <td v-if="entryKind !== 'balance'">
+                  <input
+                    v-if="editingEntryId === entry.id"
+                    v-model="editingEntry.date"
+                    type="date"
+                    class="input input-sm input-bordered"
+                    @keyup.enter="saveEntry()"
+                    @keyup.esc="cancelEdit()"
+                  >
+                  <span v-else>{{ formatDate(getEntryDate(entry)) }}</span>
+                </td>
+                <td class="w-1">
+                  <div class="flex gap-2">
+                    <template v-if="editingEntryId === entry.id">
                       <button
-                        type="button"
                         class="btn btn-sm btn-success"
-                        :disabled="isAdding"
-                        @click="addEntry()"
+                        :disabled="isSaving"
+                        @click="saveEntry()"
                       >
                         <span
-                          v-if="isAdding"
+                          v-if="isSaving"
                           class="loading loading-spinner loading-xs"
                         />
                         <span v-else>✓</span>
                       </button>
                       <button
-                        type="button"
                         class="btn btn-sm btn-ghost"
-                        @click="cancelAdd()"
+                        @click="cancelEdit()"
                       >
                         ✕
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    </template>
+                    <template v-else>
+                      <button
+                        v-if="!isReadOnly"
+                        class="btn btn-sm btn-warning"
+                        @click="startEdit(entry)"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        v-if="!isReadOnly"
+                        class="btn btn-sm btn-error"
+                        :disabled="isDeleting === entry.id"
+                        @click="deleteEntry(entry.id)"
+                      >
+                        <span
+                          v-if="isDeleting === entry.id"
+                          class="loading loading-spinner loading-xs"
+                        />
+                        <span v-else>🗑️</span>
+                      </button>
+                    </template>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="isAddingNewEntry">
+                <td>
+                  <input
+                    v-model="newEntry.description"
+                    type="text"
+                    placeholder="Введите описание..."
+                    class="input input-sm input-bordered w-full"
+                    @keyup.enter="addEntry()"
+                    @keyup.esc="cancelAdd()"
+                  >
+                </td>
+                <td>
+                  <input
+                    v-model.number="newEntry.amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    class="input input-sm input-bordered w-full"
+                    @keyup.enter="addEntry()"
+                    @keyup.esc="cancelAdd()"
+                  >
+                </td>
+                <td>
+                  <UiCurrencyPicker
+                    v-model="newEntry.currency"
+                    class="w-full"
+                  />
+                </td>
+                <td v-if="entryKind !== 'balance'">
+                  <input
+                    v-model="newEntry.date"
+                    type="date"
+                    class="input input-sm input-bordered"
+                    @keyup.enter="addEntry()"
+                    @keyup.esc="cancelAdd()"
+                  >
+                </td>
+                <td class="w-1">
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-success"
+                      :disabled="isAdding"
+                      @click="addEntry()"
+                    >
+                      <span
+                        v-if="isAdding"
+                        class="loading loading-spinner loading-xs"
+                      />
+                      <span v-else>✓</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-ghost"
+                      @click="cancelAdd()"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           <div class="flex justify-center mt-4">
             <button

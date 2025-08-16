@@ -3,6 +3,7 @@ import { db } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
+import { getExchangeRatesForMonth } from '~~/server/services/months'
 
 export default defineEventHandler(async (event) => {
   const currentUser = await getUserFromRequest(event)
@@ -100,38 +101,53 @@ export default defineEventHandler(async (event) => {
       .where(or(...monthIds.map(id => eq(entry.monthId, id))))
   }
 
-  const monthsWithEntries = months.map((monthData) => {
+  const monthsWithEntries = await Promise.all(months.map(async (monthData) => {
     const monthEntries = entries.filter(e => e.monthId === monthData.id)
+    
+    const balanceSources = monthEntries.filter(e => e.kind === 'balance').map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+    }))
+    
+    const incomeEntries = monthEntries.filter(e => e.kind === 'income').map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      date: e.date,
+    }))
+    
+    const expenseEntries = monthEntries.filter(e => e.kind === 'expense').map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      date: e.date,
+    }))
+
+    const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
+    const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
+    const balanceChange = totalIncome - totalExpenses
+
+    const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month)
+
     return {
       id: monthData.id,
       year: monthData.year,
       month: monthData.month,
       userMonthId: monthData.id,
-      balanceSources: monthEntries.filter(e => e.kind === 'balance').map(e => ({
-        id: e.id,
-        description: e.description,
-        amount: e.amount,
-        currency: e.currency,
-      })),
-      incomeEntries: monthEntries.filter(e => e.kind === 'income').map(e => ({
-        id: e.id,
-        description: e.description,
-        amount: e.amount,
-        currency: e.currency,
-        date: e.date,
-      })),
-      expenseEntries: monthEntries.filter(e => e.kind === 'expense').map(e => ({
-        id: e.id,
-        description: e.description,
-        amount: e.amount,
-        currency: e.currency,
-        date: e.date,
-      })),
-      balanceChange: 0,
+      balanceSources,
+      incomeEntries,
+      expenseEntries,
+      balanceChange,
       pocketExpenses: 0,
-      income: 0,
+      income: totalIncome,
+      exchangeRates: exchangeRatesData?.rates,
+      exchangeRatesSource: exchangeRatesData?.source,
     }
-  })
+  }))
 
   return {
     user: {
