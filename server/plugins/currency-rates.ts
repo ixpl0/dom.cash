@@ -1,4 +1,5 @@
 import { CronJob } from 'cron'
+import type { NitroApp } from 'nitropack'
 import { hasRatesForCurrentMonth, saveHistoricalRatesForCurrentMonth } from '~~/server/utils/rates/database'
 
 const ENABLE_CURRENCY_RATES_UPDATE = 'ENABLE_CURRENCY_RATES_AUTO_UPDATE'
@@ -52,7 +53,7 @@ export const __testables__ = {
   updateCurrencyRates,
 }
 
-export default defineNitroPlugin(async (nitroApp: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+export default defineNitroPlugin(async (nitroApp: NitroApp) => {
   if (process.env[ENABLE_CURRENCY_RATES_UPDATE] !== '1') {
     return
   }

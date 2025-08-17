@@ -17,6 +17,9 @@ export const user = sqliteTable(
   ],
 )
 
+export type User = typeof user.$inferSelect
+export type NewUser = typeof user.$inferInsert
+
 export const session = sqliteTable(
   'session',
   {
@@ -33,6 +36,9 @@ export const session = sqliteTable(
   ],
 )
 
+export type Session = typeof session.$inferSelect
+export type NewSession = typeof session.$inferInsert
+
 export const currency = sqliteTable(
   'currency',
   {
@@ -44,6 +50,10 @@ export const currency = sqliteTable(
     check('ck_currency_rates_is_object', sql`${t.rates} GLOB '{*}'`),
   ],
 )
+
+export type Currency = typeof currency.$inferSelect
+export type NewCurrency = typeof currency.$inferInsert
+export type CurrencyRates = Currency['rates']
 
 export const month = sqliteTable(
   'month',
@@ -59,6 +69,9 @@ export const month = sqliteTable(
     check('ck_month_range', sql`${t.month} between 0 and 11`),
   ],
 )
+
+export type Month = typeof month.$inferSelect
+export type NewMonth = typeof month.$inferInsert
 
 export const entry = sqliteTable(
   'entry',
@@ -79,18 +92,9 @@ export const entry = sqliteTable(
   ],
 )
 
-export type User = typeof user.$inferSelect
-export type NewUser = typeof user.$inferInsert
-
-export type Session = typeof session.$inferSelect
-export type NewSession = typeof session.$inferInsert
-
-export type Currency = typeof currency.$inferSelect
-export type NewCurrency = typeof currency.$inferInsert
-export type CurrencyRates = Currency['rates']
-
-export type Month = typeof month.$inferSelect
-export type NewMonth = typeof month.$inferInsert
+export type Entry = typeof entry.$inferSelect
+export type NewEntry = typeof entry.$inferInsert
+export type EntryKind = Entry['kind']
 
 export const budgetShare = sqliteTable(
   'budget_share',
@@ -109,10 +113,30 @@ export const budgetShare = sqliteTable(
   ],
 )
 
-export type Entry = typeof entry.$inferSelect
-export type NewEntry = typeof entry.$inferInsert
-export type EntryKind = Entry['kind']
-
 export type BudgetShare = typeof budgetShare.$inferSelect
 export type NewBudgetShare = typeof budgetShare.$inferInsert
 export type BudgetShareAccess = BudgetShare['access']
+
+export const notification = sqliteTable(
+  'notification',
+  {
+    id: text('id').primaryKey(),
+    targetUserId: text('target_user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    sourceUserId: text('source_user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: ['budget_currency_changed', 'budget_month_added', 'budget_month_deleted', 'budget_entry_created', 'budget_entry_updated', 'budget_entry_deleted', 'budget_share_updated'] }).notNull(),
+    message: text('message').notNull(),
+    budgetOwnerId: text('budget_owner_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    isRead: integer('is_read', { mode: 'boolean' }).notNull().default(false),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  t => [
+    index('idx_notification_target_user').on(t.targetUserId),
+    index('idx_notification_budget_owner').on(t.budgetOwnerId),
+    index('idx_notification_created').on(t.createdAt),
+    check('ck_no_self_notification', sql`${t.targetUserId} <> ${t.sourceUserId}`),
+  ],
+)
+
+export type Notification = typeof notification.$inferSelect
+export type NewNotification = typeof notification.$inferInsert
+export type NotificationType = Notification['type']

@@ -39,12 +39,28 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return await createMonth({
+    const createdMonth = await createMonth({
       year,
       month: monthNumber,
       copyFromMonthId,
       targetUserId,
     })
+
+    try {
+      const { createNotification } = await import('~~/server/services/notifications')
+      const monthNames = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+      await createNotification({
+        sourceUserId: currentUser.id,
+        budgetOwnerId: targetUserId,
+        type: 'budget_month_added',
+        message: `${currentUser.username} добавил ${monthNames[monthNumber]} ${year} в бюджет`,
+      })
+    }
+    catch (error) {
+      console.error('Error creating notification:', error)
+    }
+
+    return createdMonth
   }
   catch (error) {
     if (error instanceof Error) {

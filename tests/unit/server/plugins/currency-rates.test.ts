@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi, afterEach, beforeAll, afterAll } from 'vitest'
 
-// Stub Nitro's global helper for unit tests
 (globalThis as any).defineNitroPlugin = (fn: any) => fn
 
 vi.mock('~~/server/utils/rates/database', () => ({
@@ -12,7 +11,6 @@ vi.mock('cron', () => ({
   CronJob: vi.fn(),
 }))
 
-// Mock console methods to avoid noise in tests
 const originalConsole = console
 beforeAll(() => {
   global.console = {

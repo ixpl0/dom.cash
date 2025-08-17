@@ -307,9 +307,6 @@ const deleteShare = async (id: string): Promise<void> => {
 
     shares.value = shares.value.filter(s => s.id !== id)
   }
-  catch (error) {
-    console.error('Error deleting share:', error)
-  }
   finally {
     isDeleting.value = null
   }

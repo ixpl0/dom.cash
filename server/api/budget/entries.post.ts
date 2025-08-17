@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return await createEntry({
+  const entry = await createEntry({
     monthId: data.monthId,
     kind: data.kind,
     description: data.description,
@@ -40,4 +40,20 @@ export default defineEventHandler(async (event) => {
     currency: data.currency,
     date: data.date,
   })
+
+  try {
+    const { createNotification } = await import('~~/server/services/notifications')
+    const kindNames = { balance: 'баланс', income: 'доход', expense: 'расход' }
+    await createNotification({
+      sourceUserId: user.id,
+      budgetOwnerId: monthOwner.userId,
+      type: 'budget_entry_created',
+      message: `${user.username} добавил запись "${data.description}" (${kindNames[data.kind]}: ${data.amount} ${data.currency})`,
+    })
+  }
+  catch (error) {
+    console.error('Error creating notification:', error)
+  }
+
+  return entry
 })

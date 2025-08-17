@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const monthRecord = await db
-      .select({ userId: month.userId })
+      .select({ userId: month.userId, year: month.year, month: month.month })
       .from(month)
       .where(eq(month.id, monthId))
       .limit(1)
@@ -40,6 +40,20 @@ export default defineEventHandler(async (event) => {
     }
 
     await deleteMonth(monthId)
+
+    try {
+      const { createNotification } = await import('~~/server/services/notifications')
+      const monthNames = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+      await createNotification({
+        sourceUserId: user.id,
+        budgetOwnerId: monthData.userId,
+        type: 'budget_month_deleted',
+        message: `${user.username} удалил ${monthNames[monthData.month]} ${monthData.year} из бюджета`,
+      })
+    }
+    catch (error) {
+      console.error('Error creating notification:', error)
+    }
 
     return { success: true }
   }

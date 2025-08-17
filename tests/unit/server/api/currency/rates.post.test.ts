@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { H3Event } from 'h3'
 
-// Set up global mocks for h3 functions that are auto-imported
 ;
 
 (globalThis as any).defineEventHandler = vi.fn(handler => handler)

@@ -89,6 +89,7 @@
 
     <BudgetShareModal ref="shareModal" />
     <BudgetSharedBudgetsModal ref="sharedBudgetsModal" />
+    <NotificationToast v-if="isAuthenticated" />
   </div>
 </template>
 

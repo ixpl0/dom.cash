@@ -70,8 +70,6 @@ describe('server/services/months', () => {
     it('should return cached rates if available', async () => {
       const { getExchangeRatesForMonth } = await import('~~/server/services/months')
 
-      // Test implementation would need mocking of cache
-      // This is a placeholder for cache testing
       expect(getExchangeRatesForMonth).toBeDefined()
     })
   })
@@ -407,7 +405,6 @@ describe('server/services/months', () => {
   })
 })
 
-// Helper функции для тестирования логики без внешних зависимостей
 function calculateTotals(entries: any[]) {
   const incomeEntries = entries.filter(e => e.kind === 'income')
   const expenseEntries = entries.filter(e => e.kind === 'expense')

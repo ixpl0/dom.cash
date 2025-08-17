@@ -29,5 +29,20 @@ export default defineEventHandler(async (event) => {
   }
 
   await deleteEntry(entryId)
+
+  try {
+    const { createNotification } = await import('~~/server/services/notifications')
+    const kindNames = { balance: 'баланс', income: 'доход', expense: 'расход' }
+    await createNotification({
+      sourceUserId: user.id,
+      budgetOwnerId: entryRecord.month.userId,
+      type: 'budget_entry_deleted',
+      message: `${user.username} удалил запись "${entryRecord.entry.description}" (${kindNames[entryRecord.entry.kind]}: ${entryRecord.entry.amount} ${entryRecord.entry.currency})`,
+    })
+  }
+  catch (error) {
+    console.error('Error creating notification:', error)
+  }
+
   return { success: true }
 })

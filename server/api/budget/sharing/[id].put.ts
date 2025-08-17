@@ -29,5 +29,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return await updateShare(shareId, { access: body.access })
+  const updatedShare = await updateShare(shareId, { access: body.access })
+
+  const { createNotification } = await import('~~/server/services/notifications')
+  const accessNames: Record<string, string> = { read: 'только чтение', write: 'чтение и редактирование' }
+  await createNotification({
+    sourceUserId: user.id,
+    budgetOwnerId: user.id,
+    type: 'budget_share_updated',
+    message: `${user.username} изменил права доступа к своему бюджету на "${accessNames[body.access] || body.access}"`,
+  })
+
+  return updatedShare
 })

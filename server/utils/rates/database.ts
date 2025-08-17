@@ -16,7 +16,7 @@ export const saveCurrencyRates = async (date: string, rates: Record<string, numb
     throw new Error(`Invalid date format: ${date}. Expected YYYY-MM-DD`)
   }
   const jsonSize = JSON.stringify(rates).length
-  if (jsonSize > 50000) { // 50KB лимит
+  if (jsonSize > 50000) {
     throw new Error(`Rates data too large: ${jsonSize} bytes`)
   }
 

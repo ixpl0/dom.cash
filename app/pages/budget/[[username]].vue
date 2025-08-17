@@ -23,6 +23,21 @@ const targetUsername = Array.isArray(route.params.username)
   : route.params.username
 
 const budget = useBudget(targetUsername)
+const { subscribeToBudgetByUsername, unsubscribeFromBudgetByUsername } = useNotifications()
 
 await budget.refresh()
+
+onMounted(async () => {
+  if (budget.data.value && budget.canView.value) {
+    const budgetOwnerUsername = budget.data.value.user.username
+    await subscribeToBudgetByUsername(budgetOwnerUsername)
+  }
+})
+
+onBeforeUnmount(async () => {
+  if (budget.data.value) {
+    const budgetOwnerUsername = budget.data.value.user.username
+    await unsubscribeFromBudgetByUsername(budgetOwnerUsername)
+  }
+})
 </script>

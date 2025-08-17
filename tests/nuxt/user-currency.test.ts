@@ -23,7 +23,6 @@ describe('User Currency API Integration', async () => {
 
       expect(response).toMatchObject({ success: true })
 
-      // Verify the currency was updated by checking user profile
       const meResponse = await makeAuthenticatedRequest('/api/auth/me', authContext) as any
       expect(meResponse.mainCurrency).toBe('EUR')
     })
@@ -44,7 +43,6 @@ describe('User Currency API Integration', async () => {
 
       expect(response).toMatchObject({ success: true })
 
-      // Verify the currency was updated
       const meResponse = await makeAuthenticatedRequest('/api/auth/me', authContext1) as any
       expect(meResponse.mainCurrency).toBe('GBP')
     })

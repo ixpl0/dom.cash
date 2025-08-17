@@ -36,7 +36,6 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      // Проверяем, что это либо собственный бюджет, либо есть права write
       if (targetUser.id !== user.id) {
         const share = await getExistingShare(targetUser.id, user.id)
         if (!share || share.access !== 'write') {
@@ -51,6 +50,19 @@ export default defineEventHandler(async (event) => {
     }
 
     await updateUserCurrency(targetUserId, currency)
+
+    try {
+      const { createNotification } = await import('~~/server/services/notifications')
+      await createNotification({
+        sourceUserId: user.id,
+        budgetOwnerId: targetUserId,
+        type: 'budget_currency_changed',
+        message: `${user.username} изменил основную валюту бюджета на ${currency}`,
+      })
+    }
+    catch (error) {
+      console.error('Error creating notification:', error)
+    }
 
     return { success: true }
   }

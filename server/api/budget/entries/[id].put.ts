@@ -38,10 +38,26 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return await updateEntry(entryId, {
+  const updatedEntry = await updateEntry(entryId, {
     description: data.description,
     amount: data.amount,
     currency: data.currency,
     date: data.date,
   })
+
+  try {
+    const { createNotification } = await import('~~/server/services/notifications')
+    const kindNames = { balance: 'баланс', income: 'доход', expense: 'расход' }
+    await createNotification({
+      sourceUserId: user.id,
+      budgetOwnerId: entryRecord.month.userId,
+      type: 'budget_entry_updated',
+      message: `${user.username} изменил запись "${data.description}" (${kindNames[entryRecord.entry.kind]}: ${data.amount} ${data.currency})`,
+    })
+  }
+  catch (error) {
+    console.error('Error creating notification:', error)
+  }
+
+  return updatedEntry
 })

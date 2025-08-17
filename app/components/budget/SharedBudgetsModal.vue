@@ -2,7 +2,6 @@
   <dialog
     ref="modal"
     class="modal"
-    @close="handleDialogClose"
   >
     <div class="modal-box overflow-y-visible w-11/12 max-w-xl">
       <button
@@ -144,10 +143,6 @@ const hide = (): void => {
 
 const handleBackdropClick = (): void => {
   hide()
-}
-
-const handleDialogClose = (): void => {
-  // no-op
 }
 
 defineExpose({ show, hide })
