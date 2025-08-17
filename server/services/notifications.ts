@@ -27,7 +27,6 @@ export const addConnection = (userId: string, connection: { write: (data: string
 }
 
 export const removeConnection = (userId: string) => {
-  const hadConnection = activeConnections.has(userId)
   activeConnections.delete(userId)
 
   for (const [budgetOwnerId, subscribers] of budgetSubscriptions.entries()) {
@@ -37,9 +36,6 @@ export const removeConnection = (userId: string) => {
         budgetSubscriptions.delete(budgetOwnerId)
       }
     }
-  }
-
-  if (hadConnection) {
   }
 }
 

@@ -12,6 +12,9 @@ export const useNotifications = () => {
   let currentBudgetOwner: string | null = null
   const isConnected = ref(false)
 
+  const { toast } = useToast()
+  const { showBanner } = useOutdatedBanner()
+
   const connect = () => {
     if (eventSource) {
       disconnect()
@@ -37,6 +40,14 @@ export const useNotifications = () => {
         }
 
         console.log('🔔 Получено уведомление:', data.message)
+
+        toast({
+          type: 'info',
+          message: data.message,
+          timeout: 4000,
+        })
+
+        showBanner()
       }
       catch (error) {
         console.error('Error parsing event data:', error)

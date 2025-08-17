@@ -83,20 +83,29 @@
       </div>
     </header>
 
+    <OutdatedDataBanner ref="outdatedBanner" />
+
     <main>
       <slot />
     </main>
 
     <BudgetShareModal ref="shareModal" />
     <BudgetSharedBudgetsModal ref="sharedBudgetsModal" />
+    <AppToast />
   </div>
 </template>
 
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
+const { setBannerRef } = useOutdatedBanner()
 
 const shareModal = ref()
 const sharedBudgetsModal = ref()
+const outdatedBanner = ref()
+
+onMounted(() => {
+  setBannerRef(outdatedBanner.value)
+})
 
 const openShareModal = (): void => {
   shareModal.value?.show()
