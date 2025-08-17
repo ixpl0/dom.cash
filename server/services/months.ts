@@ -5,6 +5,10 @@ import type { MonthData } from '~~/shared/types/budget'
 
 const ratesCache = new Map<string, Record<string, number>>()
 
+export const clearRatesCache = () => {
+  ratesCache.clear()
+}
+
 export const getExchangeRatesForMonth = async (year: number, monthNumber: number): Promise<{ rates: Record<string, number>, source: string } | undefined> => {
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
 

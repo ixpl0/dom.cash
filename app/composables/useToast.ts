@@ -1,3 +1,5 @@
+import { ref, readonly } from 'vue'
+
 export interface ToastMessage {
   id: string
   type?: 'info' | 'success' | 'warning' | 'error'
@@ -30,7 +32,7 @@ export const useToast = () => {
   }
 
   const removeToast = (id: string) => {
-    const index = toasts.value.findIndex(t => t.id === id)
+    const index = toasts.value.findIndex((t: ToastMessage) => t.id === id)
     if (index > -1) {
       toasts.value.splice(index, 1)
     }

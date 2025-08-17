@@ -13,7 +13,7 @@ export const useNotifications = () => {
   const isConnected = ref(false)
 
   const { toast } = useToast()
-  const { showBanner } = useOutdatedBanner()
+  const { showWarningBanner } = useOutdatedBanner()
 
   const connect = () => {
     if (eventSource) {
@@ -39,15 +39,8 @@ export const useNotifications = () => {
           return
         }
 
-        console.log('🔔 Получено уведомление:', data.message)
-
-        toast({
-          type: 'info',
-          message: data.message,
-          timeout: 4000,
-        })
-
-        showBanner()
+        toast({ message: data.message })
+        showWarningBanner()
       }
       catch (error) {
         console.error('Error parsing event data:', error)

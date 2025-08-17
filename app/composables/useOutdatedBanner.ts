@@ -1,21 +1,23 @@
+import { ref } from 'vue'
+
 const bannerRef = ref<{ show: () => void, hide: () => void } | null>(null)
 
 export const useOutdatedBanner = () => {
-  const setBannerRef = (ref: { show: () => void, hide: () => void } | null) => {
+  const setWarningBannerRef = (ref: { show: () => void, hide: () => void } | null) => {
     bannerRef.value = ref
   }
 
-  const showBanner = () => {
+  const showWarningBanner = () => {
     bannerRef.value?.show()
   }
 
-  const hideBanner = () => {
+  const hideWarningBanner = () => {
     bannerRef.value?.hide()
   }
 
   return {
-    setBannerRef,
-    showBanner,
-    hideBanner,
+    setWarningBannerRef,
+    showWarningBanner,
+    hideWarningBanner,
   }
 }

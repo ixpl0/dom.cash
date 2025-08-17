@@ -1,20 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+const mockDb = {
+  select: vi.fn(),
+  from: vi.fn(),
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  limit: vi.fn(),
+  insert: vi.fn(),
+  values: vi.fn(),
+  returning: vi.fn(),
+  delete: vi.fn(),
+  transaction: vi.fn(),
+  update: vi.fn(),
+}
+
 vi.mock('~~/server/db', () => ({
-  db: {
-    select: vi.fn(),
-    from: vi.fn(),
-    where: vi.fn(),
-    orderBy: vi.fn(),
-    limit: vi.fn(),
-    insert: vi.fn(),
-    values: vi.fn(),
-    returning: vi.fn(),
-    delete: vi.fn(),
-    transaction: vi.fn(),
-    update: vi.fn(),
-  },
+  db: mockDb,
 }))
+
+const db = mockDb
 
 vi.mock('~~/server/db/schema', () => ({
   entry: {
@@ -53,13 +57,11 @@ Object.defineProperty(globalThis, 'crypto', {
   writable: true,
 })
 
-let mockDb: any
-
 describe('server/services/months', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
-    const db = await import('~~/server/db')
-    mockDb = db.db
+    const { clearRatesCache } = await import('~~/server/services/months')
+    clearRatesCache()
   })
 
   afterEach(() => {
@@ -70,7 +72,133 @@ describe('server/services/months', () => {
     it('should return cached rates if available', async () => {
       const { getExchangeRatesForMonth } = await import('~~/server/services/months')
 
-      expect(getExchangeRatesForMonth).toBeDefined()
+      const mockRates = { EUR: 1.1, USD: 1.0, GBP: 0.9 }
+      const mockCurrency = { date: '2024-01-01', rates: mockRates }
+
+      vi.mocked(db.select).mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([mockCurrency]),
+          }),
+        }),
+      } as any)
+
+      const result = await getExchangeRatesForMonth(2024, 0)
+      expect(result).toEqual({ rates: mockRates, source: '2024-01-01' })
+    })
+
+    it('should return undefined if no rates found', async () => {
+      const { getExchangeRatesForMonth } = await import('~~/server/services/months')
+
+      vi.mocked(db.select)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([]),
+          }),
+        } as any)
+
+      const result = await getExchangeRatesForMonth(2024, 0)
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('createMonth', () => {
+    it('should create month and copy balance entries if copyFromMonthId provided', async () => {
+      const { createMonth } = await import('~~/server/services/months')
+
+      const mockMonth = { id: 'month1', userId: 'user1', year: 2024, month: 0 }
+      const mockBalanceEntries = [
+        { id: 'entry1', kind: 'balance', description: 'Test', amount: 1000, currency: 'USD' },
+      ]
+
+      vi.mocked(db.select)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(mockBalanceEntries),
+          }),
+        } as any)
+
+      vi.mocked(db.insert).mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([mockMonth]),
+        }),
+      } as any)
+
+      const result = await createMonth({
+        targetUserId: 'user1',
+        year: 2024,
+        month: 0,
+        copyFromMonthId: 'copyFromMonth1',
+      })
+      expect(result).toEqual(mockMonth)
+    })
+
+    it('should throw error if month creation fails', async () => {
+      const { createMonth } = await import('~~/server/services/months')
+
+      vi.mocked(db.select).mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      } as any)
+
+      vi.mocked(db.insert).mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([]),
+        }),
+      } as any)
+
+      await expect(createMonth({ targetUserId: 'user1', year: 2024, month: 0 })).rejects.toThrow('Failed to create month')
+    })
+  })
+
+  describe('findUserByUsername', () => {
+    it('should return user if found', async () => {
+      const { findUserByUsername } = await import('~~/server/services/months')
+
+      const mockUser = { id: 'user1', username: 'testuser', passwordHash: 'hash', mainCurrency: 'USD', createdAt: new Date() }
+
+      vi.mocked(db.select).mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([mockUser]),
+          }),
+        }),
+      } as any)
+
+      const result = await findUserByUsername('testuser')
+      expect(result).toEqual(mockUser)
+    })
+
+    it('should return null if user not found', async () => {
+      const { findUserByUsername } = await import('~~/server/services/months')
+
+      vi.mocked(db.select).mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      } as any)
+
+      const result = await findUserByUsername('nonexistent')
+      expect(result).toBeNull()
     })
   })
 
@@ -307,42 +435,6 @@ describe('server/services/months', () => {
 
       expect(deleteCalls).toEqual(['entry', 'month'])
       expect(mockTx.delete).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  describe('findUserByUsername', () => {
-    it('should return user if found', async () => {
-      const user = { id: 'user-1', username: 'testuser' }
-
-      mockDb.select.mockReturnValue({
-        from: vi.fn(() => ({
-          where: vi.fn(() => ({
-            limit: vi.fn(() => Promise.resolve([user])),
-          })),
-        })),
-      })
-
-      const { findUserByUsername } = await import('~~/server/services/months')
-
-      const result = await findUserByUsername('testuser')
-
-      expect(result).toEqual(user)
-    })
-
-    it('should return null if user not found', async () => {
-      mockDb.select.mockReturnValue({
-        from: vi.fn(() => ({
-          where: vi.fn(() => ({
-            limit: vi.fn(() => Promise.resolve([])),
-          })),
-        })),
-      })
-
-      const { findUserByUsername } = await import('~~/server/services/months')
-
-      const result = await findUserByUsername('nonexistent')
-
-      expect(result).toBeNull()
     })
   })
 

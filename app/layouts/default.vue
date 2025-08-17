@@ -97,14 +97,14 @@
 
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
-const { setBannerRef } = useOutdatedBanner()
+const { setWarningBannerRef } = useOutdatedBanner()
 
 const shareModal = ref()
 const sharedBudgetsModal = ref()
 const outdatedBanner = ref()
 
 onMounted(() => {
-  setBannerRef(outdatedBanner.value)
+  setWarningBannerRef(outdatedBanner.value)
 })
 
 const openShareModal = (): void => {
