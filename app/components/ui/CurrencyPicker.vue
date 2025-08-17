@@ -7,13 +7,14 @@
       <div
         tabindex="0"
         role="button"
+        class="currency-picker-trigger"
       >
         <input
           ref="inputRef"
           :value="displayValue"
           type="text"
           class="input input-bordered pr-10 w-full"
-          :class="{ 'truncate': !isFocused, 'cursor-pointer': !isFocused }"
+          :class="{ 'truncate': !isFocused, 'cursor-pointer': !isFocused, 'cursor-text': isFocused }"
           :placeholder="placeholder"
           :disabled="disabled"
           :title="titleText"
@@ -21,6 +22,7 @@
           @focus="onFocus"
           @blur="onBlur"
           @keydown="onKeyDown"
+          @click="onInputClick"
         >
 
         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -43,10 +45,7 @@
         <li
           v-for="(option, index) in filteredOptions"
           :key="option.code"
-          :class="{
-            'bg-primary text-primary-content': index === highlightedIndex,
-            'bg-success/20': option.code === props.modelValue && index !== highlightedIndex,
-          }"
+          :class="option.code === props.modelValue && index !== highlightedIndex && 'bg-base-content/10'"
         >
           <a
             class="flex justify-between items-start gap-2 py-1"
@@ -136,11 +135,19 @@ const onInput = (event: Event) => {
   }
 }
 
+const onInputClick = () => {
+  if (!isFocused.value) {
+    inputRef.value?.focus()
+  }
+}
+
 const onFocus = () => {
   isFocused.value = true
-  searchQuery.value = ''
-  updateFilteredOptions()
-  isDropdownOpen.value = true
+  if (!isDropdownOpen.value) {
+    searchQuery.value = ''
+    updateFilteredOptions()
+    isDropdownOpen.value = true
+  }
 }
 
 const onBlur = () => {
@@ -199,3 +206,15 @@ onMounted(() => {
   updateFilteredOptions()
 })
 </script>
+
+<style scoped>
+.dropdown.dropdown-open .currency-picker-trigger,
+.dropdown:focus-within .currency-picker-trigger {
+  pointer-events: auto !important;
+}
+
+.dropdown.dropdown-open .currency-picker-trigger input,
+.dropdown:focus-within .currency-picker-trigger input {
+  pointer-events: auto !important;
+}
+</style>
