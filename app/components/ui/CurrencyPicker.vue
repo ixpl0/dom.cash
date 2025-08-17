@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import { filterCurrencies, getCurrencyName, type CurrencyOption } from '~~/shared/utils/currencies'
+import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
 
 interface Props {
   modelValue: string
@@ -99,6 +100,9 @@ const isDropdownOpen = ref(false)
 const highlightedIndex = ref(-1)
 const filteredOptions = ref<CurrencyOption[]>([])
 const isFocused = ref(false)
+
+const { addRecentCurrency, getRecentCurrencies } = useRecentCurrencies()
+const recentCurrencies = getRecentCurrencies()
 
 const displayValue = computed(() => {
   if (isFocused.value) {
@@ -126,7 +130,7 @@ const titleText = computed(() => {
 })
 
 const updateFilteredOptions = () => {
-  filteredOptions.value = filterCurrencies(searchQuery.value)
+  filteredOptions.value = filterCurrencies(searchQuery.value, [...recentCurrencies.value])
   highlightedIndex.value = filteredOptions.value.length > 0 ? 0 : -1
 }
 
@@ -165,6 +169,7 @@ const onDropdownFocusOut = (event: FocusEvent) => {
 }
 
 const selectOption = (option: CurrencyOption) => {
+  addRecentCurrency(option.code)
   emit('update:modelValue', option.code)
   emit('change', option.code)
   isDropdownOpen.value = false

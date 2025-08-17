@@ -183,15 +183,36 @@ export const getCurrencyName = (code: string): string => {
   return CURRENCIES[code as CurrencyCode] || code
 }
 
-export const filterCurrencies = (query: string): CurrencyOption[] => {
-  if (!query.trim()) {
-    return CURRENCY_OPTIONS
-  }
-
+export const filterCurrencies = (query: string, recentCurrencies: string[] = []): CurrencyOption[] => {
   const searchQuery = query.toLowerCase().trim()
 
-  return CURRENCY_OPTIONS.filter(currency =>
-    currency.code.toLowerCase().includes(searchQuery)
-    || currency.name.toLowerCase().includes(searchQuery),
+  let filteredOptions = CURRENCY_OPTIONS
+  if (searchQuery) {
+    filteredOptions = CURRENCY_OPTIONS.filter(currency =>
+      currency.code.toLowerCase().includes(searchQuery)
+      || currency.name.toLowerCase().includes(searchQuery),
+    )
+  }
+
+  if (recentCurrencies.length === 0) {
+    return filteredOptions
+  }
+
+  const recentOptions: CurrencyOption[] = []
+  const remainingOptions: CurrencyOption[] = []
+
+  for (const option of filteredOptions) {
+    if (recentCurrencies.includes(option.code)) {
+      recentOptions.push(option)
+    }
+    else {
+      remainingOptions.push(option)
+    }
+  }
+
+  recentOptions.sort((a, b) =>
+    recentCurrencies.indexOf(a.code) - recentCurrencies.indexOf(b.code),
   )
+
+  return [...recentOptions, ...remainingOptions]
 }

@@ -57,8 +57,12 @@ describe('useToast', () => {
     expect(mockSetTimeout).toHaveBeenCalledWith(expect.any(Function), 7000)
     expect(toasts.value).toHaveLength(1)
 
-    const timeoutCallback = mockSetTimeout.mock.calls[0][0]
-    timeoutCallback()
+    expect(mockSetTimeout.mock.calls.length).toBeGreaterThan(0)
+    const calls = mockSetTimeout.mock.calls as any[][]
+    if (calls.length > 0 && calls[0].length > 0) {
+      const timeoutCallback = calls[0][0] as (() => void)
+      timeoutCallback()
+    }
     expect(toasts.value).toHaveLength(0)
   })
 
