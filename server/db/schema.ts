@@ -116,27 +116,3 @@ export const budgetShare = sqliteTable(
 export type BudgetShare = typeof budgetShare.$inferSelect
 export type NewBudgetShare = typeof budgetShare.$inferInsert
 export type BudgetShareAccess = BudgetShare['access']
-
-export const notification = sqliteTable(
-  'notification',
-  {
-    id: text('id').primaryKey(),
-    targetUserId: text('target_user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-    sourceUserId: text('source_user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-    type: text('type', { enum: ['budget_currency_changed', 'budget_month_added', 'budget_month_deleted', 'budget_entry_created', 'budget_entry_updated', 'budget_entry_deleted', 'budget_share_updated'] }).notNull(),
-    message: text('message').notNull(),
-    budgetOwnerId: text('budget_owner_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-    isRead: integer('is_read', { mode: 'boolean' }).notNull().default(false),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  },
-  t => [
-    index('idx_notification_target_user').on(t.targetUserId),
-    index('idx_notification_budget_owner').on(t.budgetOwnerId),
-    index('idx_notification_created').on(t.createdAt),
-    check('ck_no_self_notification', sql`${t.targetUserId} <> ${t.sourceUserId}`),
-  ],
-)
-
-export type Notification = typeof notification.$inferSelect
-export type NewNotification = typeof notification.$inferInsert
-export type NotificationType = Notification['type']

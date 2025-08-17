@@ -1,7 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
-import { db } from '~~/server/db';
-import type { NotificationType } from '~~/server/db/schema';
-import { budgetShare, notification, user } from '~~/server/db/schema';
+export type NotificationType = 'budget_currency_changed' | 'budget_month_added' | 'budget_month_deleted' | 'budget_entry_created' | 'budget_entry_updated' | 'budget_entry_deleted' | 'budget_share_updated'
 
 export interface CreateNotificationParams {
   sourceUserId: string
@@ -82,117 +79,30 @@ export const sendNotificationToUser = (userId: string, notification: Notificatio
   }
 }
 
-export const getUsersWithAccessToBudget = async (budgetOwnerId: string): Promise<string[]> => {
-  const sharedUsers = await db
-    .select({ sharedWithId: budgetShare.sharedWithId })
-    .from(budgetShare)
-    .where(eq(budgetShare.ownerId, budgetOwnerId))
-
-  return sharedUsers.map(share => share.sharedWithId)
-}
-
 export const createNotification = async (params: CreateNotificationParams): Promise<void> => {
   const subscribers = getBudgetSubscribers(params.budgetOwnerId)
 
-  const targetUsers = subscribers.filter(userId => userId !== params.sourceUserId)
+  let targetUsers = [...subscribers]
+  if (!targetUsers.includes(params.budgetOwnerId)) {
+    targetUsers.push(params.budgetOwnerId)
+  }
+
+  targetUsers = targetUsers.filter(userId => userId !== params.sourceUserId)
 
   if (targetUsers.length === 0) {
     return
-  }
-
-  const sourceUser = await db
-    .select({ username: user.username })
-    .from(user)
-    .where(eq(user.id, params.sourceUserId))
-    .limit(1)
-
-  const budgetOwnerUser = await db
-    .select({ username: user.username })
-    .from(user)
-    .where(eq(user.id, params.budgetOwnerId))
-    .limit(1)
-
-  if (!sourceUser[0] || !budgetOwnerUser[0]) {
-    throw new Error('User not found')
   }
 
   const notificationEvent: NotificationEvent = {
     id: crypto.randomUUID(),
     type: params.type,
     message: params.message,
-    sourceUsername: sourceUser[0].username,
-    budgetOwnerUsername: budgetOwnerUser[0].username,
+    sourceUsername: 'unknown',
+    budgetOwnerUsername: 'unknown',
     createdAt: new Date(),
   }
 
-  const now = new Date()
-  const notificationsToCreate = targetUsers.map(targetUserId => ({
-    id: crypto.randomUUID(),
-    targetUserId,
-    sourceUserId: params.sourceUserId,
-    type: params.type,
-    message: params.message,
-    budgetOwnerId: params.budgetOwnerId,
-    isRead: false,
-    createdAt: now,
-  }))
-
-  if (notificationsToCreate.length > 0) {
-    try {
-      await db.insert(notification).values(notificationsToCreate)
-
-      for (const targetUserId of targetUsers) {
-        sendNotificationToUser(targetUserId, notificationEvent)
-      }
-    }
-    catch (dbError) {
-      console.error('Error creating notifications:', dbError)
-      throw dbError
-    }
+  for (const targetUserId of targetUsers) {
+    sendNotificationToUser(targetUserId, notificationEvent)
   }
-}
-
-export const getUserNotifications = async (userId: string) => {
-  return await db
-    .select({
-      id: notification.id,
-      type: notification.type,
-      message: notification.message,
-      budgetOwnerId: notification.budgetOwnerId,
-      isRead: notification.isRead,
-      createdAt: notification.createdAt,
-      sourceUser: {
-        username: user.username,
-      },
-    })
-    .from(notification)
-    .leftJoin(user, eq(notification.sourceUserId, user.id))
-    .where(eq(notification.targetUserId, userId))
-    .orderBy(desc(notification.createdAt))
-}
-
-export const markNotificationAsRead = async (notificationId: string, userId: string): Promise<void> => {
-  await db
-    .update(notification)
-    .set({ isRead: true })
-    .where(and(
-      eq(notification.id, notificationId),
-      eq(notification.targetUserId, userId),
-    ))
-}
-
-export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
-  await db
-    .update(notification)
-    .set({ isRead: true })
-    .where(eq(notification.targetUserId, userId))
-}
-
-export const deleteOldNotifications = async (daysOld: number = 30): Promise<void> => {
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - daysOld)
-
-  await db
-    .delete(notification)
-    .where(eq(notification.createdAt, cutoffDate))
 }

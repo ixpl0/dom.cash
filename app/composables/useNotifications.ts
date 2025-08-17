@@ -8,9 +8,9 @@ export interface NotificationEvent {
 }
 
 export const useNotifications = () => {
-  const notifications = ref<NotificationEvent[]>([])
   let eventSource: EventSource | null = null
   let currentBudgetOwner: string | null = null
+  const isConnected = ref(false)
 
   const connect = () => {
     if (eventSource) {
@@ -20,6 +20,7 @@ export const useNotifications = () => {
     eventSource = new EventSource('/api/notifications/events')
 
     eventSource.onopen = () => {
+      isConnected.value = true
     }
 
     eventSource.onmessage = (event) => {
@@ -27,6 +28,7 @@ export const useNotifications = () => {
         const data = JSON.parse(event.data)
 
         if (data.type === 'connected') {
+          isConnected.value = true
           return
         }
 
@@ -34,17 +36,7 @@ export const useNotifications = () => {
           return
         }
 
-        const notification: NotificationEvent = {
-          id: data.id,
-          type: data.type,
-          message: data.message,
-          sourceUsername: data.sourceUsername,
-          budgetOwnerUsername: data.budgetOwnerUsername,
-          createdAt: data.createdAt,
-        }
-
-        console.log('🔔 Получено уведомление:', notification.message)
-        notifications.value.unshift(notification)
+        console.log('🔔 Получено уведомление:', data.message)
       }
       catch (error) {
         console.error('Error parsing event data:', error)
@@ -53,6 +45,7 @@ export const useNotifications = () => {
 
     eventSource.onerror = (error) => {
       console.error('Error connecting to event source:', error)
+      isConnected.value = false
       eventSource?.close()
 
       setTimeout(() => {
@@ -67,15 +60,8 @@ export const useNotifications = () => {
     if (eventSource) {
       eventSource.close()
       eventSource = null
+      isConnected.value = false
     }
-  }
-
-  const dismissNotification = (notificationId: string) => {
-    notifications.value = notifications.value.filter(n => n.id !== notificationId)
-  }
-
-  const clearAllNotifications = () => {
-    notifications.value = []
   }
 
   const subscribeToBudgetByUsername = async (username: string) => {
@@ -126,11 +112,9 @@ export const useNotifications = () => {
   })
 
   return {
-    notifications: readonly(notifications),
+    isConnected,
     connect,
     disconnect,
-    dismissNotification,
-    clearAllNotifications,
     subscribeToBudget,
     unsubscribeFromBudget,
     subscribeToBudgetByUsername,
