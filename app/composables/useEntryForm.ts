@@ -28,7 +28,7 @@ export const useEntryForm = (entryKind: 'balance' | 'income' | 'expense') => {
   const createDefaultFormData = (): EntryFormData => ({
     description: '',
     amount: 0,
-    currency: 'RUB',
+    currency: '',
     date: new Date().toISOString().split('T')[0] || '',
   })
 

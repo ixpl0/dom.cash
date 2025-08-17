@@ -3,7 +3,10 @@
     class="form-control"
     :class="$attrs.class || 'w-48'"
   >
-    <div class="dropdown w-full">
+    <div
+      class="dropdown w-full"
+      @focusout="onDropdownFocusOut"
+    >
       <div
         tabindex="0"
         role="button"
@@ -20,7 +23,6 @@
           :title="titleText"
           @input="onInput"
           @focus="onFocus"
-          @blur="onBlur"
           @keydown="onKeyDown"
           @click="onInputClick"
         >
@@ -52,7 +54,9 @@
             :class="{
               'font-bold': option.code === props.modelValue,
             }"
-            @mousedown.prevent="selectOption(option)"
+            tabindex="0"
+            @click="selectOption(option)"
+            @keydown="(event) => onOptionKeydown(event, option)"
             @mouseenter="highlightedIndex = index"
           >
             <span class="font-medium shrink-0">
@@ -150,11 +154,14 @@ const onFocus = () => {
   }
 }
 
-const onBlur = () => {
-  setTimeout(() => {
+const onDropdownFocusOut = (event: FocusEvent) => {
+  const dropdown = event.currentTarget as HTMLElement
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+
+  if (relatedTarget && !dropdown.contains(relatedTarget)) {
     isFocused.value = false
     isDropdownOpen.value = false
-  }, 150)
+  }
 }
 
 const selectOption = (option: CurrencyOption) => {
@@ -164,6 +171,13 @@ const selectOption = (option: CurrencyOption) => {
   isFocused.value = false
   searchQuery.value = ''
   inputRef.value?.blur()
+}
+
+const onOptionKeydown = (event: KeyboardEvent, option: CurrencyOption) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    selectOption(option)
+  }
 }
 
 const onKeyDown = (event: KeyboardEvent) => {
