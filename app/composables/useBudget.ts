@@ -51,6 +51,7 @@ export interface BudgetMethods {
   updateCurrency: (currency: string) => Promise<void>
   getNextMonth: () => { year: number, month: number }
   getPreviousMonth: () => { year: number, month: number }
+  exportBudget: () => Promise<void>
 }
 
 export const useBudget = (targetUsername?: string) => {
@@ -361,6 +362,37 @@ export const useBudget = (targetUsername?: string) => {
     }
   }
 
+  const exportBudget = async (): Promise<void> => {
+    if (!isOwnBudget.value) {
+      throw new Error('Экспорт доступен только для собственного бюджета')
+    }
+
+    try {
+      const data = await $fetch('/api/budget/export')
+
+      const jsonString = JSON.stringify(data, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+
+      const username = budgetState.value.data?.user.username || 'unknown'
+      const date = new Date().toISOString().split('T')[0]
+      a.download = `budget-${username}-${date}.json`
+
+      document.body.appendChild(a)
+      a.click()
+
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
+    catch (error) {
+      console.error('Export failed:', error)
+      throw error
+    }
+  }
+
   const methods: BudgetMethods = {
     refresh: loadBudgetData,
     createMonth,
@@ -373,6 +405,7 @@ export const useBudget = (targetUsername?: string) => {
     updateCurrency,
     getNextMonth: getNextMonthFromData,
     getPreviousMonth: getPreviousMonthFromData,
+    exportBudget,
   }
 
   return {

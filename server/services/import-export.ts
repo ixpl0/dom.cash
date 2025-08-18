@@ -1,0 +1,147 @@
+import { eq, and } from 'drizzle-orm'
+import { db } from '~~/server/db'
+import { user, month, entry } from '~~/server/db/schema'
+import { getUserMonths, createMonth } from './months'
+import { createEntry } from './entries'
+import type {
+  BudgetExportData,
+  BudgetExportMonth,
+  BudgetExportEntry,
+  BudgetImportOptions,
+  BudgetImportResult,
+  BudgetExportSchema,
+} from '~~/shared/types/export-import'
+
+export const exportBudget = async (userId: string): Promise<BudgetExportData> => {
+  const userData = await db
+    .select({
+      username: user.username,
+      mainCurrency: user.mainCurrency,
+    })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1)
+
+  const userInfo = userData[0]
+  if (!userInfo) {
+    throw new Error('User not found')
+  }
+
+  const monthsData = await getUserMonths(userId)
+
+  const exportMonths: BudgetExportMonth[] = monthsData.map((monthData) => {
+    const entries: BudgetExportEntry[] = [
+      ...monthData.balanceSources.map(entry => ({
+        kind: 'balance' as const,
+        description: entry.description,
+        amount: entry.amount,
+        currency: entry.currency,
+      })),
+      ...monthData.incomeEntries.map(entry => ({
+        kind: 'income' as const,
+        description: entry.description,
+        amount: entry.amount,
+        currency: entry.currency,
+        date: entry.date || undefined,
+      })),
+      ...monthData.expenseEntries.map(entry => ({
+        kind: 'expense' as const,
+        description: entry.description,
+        amount: entry.amount,
+        currency: entry.currency,
+        date: entry.date || undefined,
+      })),
+    ]
+
+    return {
+      year: monthData.year,
+      month: monthData.month,
+      entries,
+    }
+  })
+
+  return {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    user: {
+      username: userInfo.username,
+      mainCurrency: userInfo.mainCurrency,
+    },
+    months: exportMonths,
+  }
+}
+
+export const importBudget = async (
+  userId: string,
+  importData: BudgetExportSchema,
+  options: BudgetImportOptions,
+): Promise<BudgetImportResult> => {
+  const result: BudgetImportResult = {
+    success: true,
+    importedMonths: 0,
+    importedEntries: 0,
+    skippedMonths: 0,
+    errors: [],
+  }
+
+  for (const importMonth of importData.months) {
+    try {
+      const existingMonth = await db
+        .select()
+        .from(month)
+        .where(and(
+          eq(month.userId, userId),
+          eq(month.year, importMonth.year),
+          eq(month.month, importMonth.month),
+        ))
+        .limit(1)
+
+      let monthId: string
+
+      if (existingMonth.length > 0) {
+        if (options.skipExisting) {
+          result.skippedMonths++
+          continue
+        }
+
+        if (!options.overwriteExisting) {
+          result.errors.push(`Month ${importMonth.year}-${importMonth.month + 1} already exists`)
+          continue
+        }
+
+        monthId = existingMonth[0]!.id
+
+        await db
+          .delete(entry)
+          .where(eq(entry.monthId, monthId))
+      }
+      else {
+        const createdMonth = await createMonth({
+          year: importMonth.year,
+          month: importMonth.month,
+          targetUserId: userId,
+        })
+        monthId = createdMonth.id
+        result.importedMonths++
+      }
+
+      for (const importEntry of importMonth.entries) {
+        await createEntry({
+          monthId,
+          kind: importEntry.kind,
+          description: importEntry.description,
+          amount: importEntry.amount,
+          currency: importEntry.currency,
+          date: importEntry.date,
+        })
+        result.importedEntries++
+      }
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      result.errors.push(`Error importing month ${importMonth.year}-${importMonth.month + 1}: ${errorMessage}`)
+    }
+  }
+
+  return result
+}

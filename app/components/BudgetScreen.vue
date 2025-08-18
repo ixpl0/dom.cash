@@ -42,23 +42,33 @@
         Пока нет данных о бюджете
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ !canEdit ? 'Этот пользователь ещё не создал месяцы бюджета' : 'Начните с создания месяца и добавления источников баланса' }}
+        {{ !canEdit ? 'Этот пользователь ещё не создал месяцы бюджета' : 'Начните с создания месяца и добавления источников баланса или импортируйте данные' }}
       </p>
-      <button
+      <div
         v-if="canEdit"
-        class="btn btn-primary btn-lg"
-        :disabled="isCreatingCurrentMonth"
-        @click="createCurrentMonth"
+        class="flex flex-col sm:flex-row gap-4 justify-center"
       >
-        <span
-          v-if="isCreatingCurrentMonth"
-          class="loading loading-spinner loading-sm"
-        />
-        <span v-if="!isCreatingCurrentMonth">
-          📅 Создать {{ monthNames[currentMonth] }} {{ currentYear }}
-        </span>
-        <span v-else>Создание месяца...</span>
-      </button>
+        <button
+          class="btn btn-primary btn-lg"
+          :disabled="isCreatingCurrentMonth"
+          @click="createCurrentMonth"
+        >
+          <span
+            v-if="isCreatingCurrentMonth"
+            class="loading loading-spinner loading-sm"
+          />
+          <span v-if="!isCreatingCurrentMonth">
+            📅 Создать {{ monthNames[currentMonth] }} {{ currentYear }}
+          </span>
+          <span v-else>Создание месяца...</span>
+        </button>
+        <button
+          class="btn btn-outline btn-lg"
+          @click="openImportModal"
+        >
+          📥 Импорт бюджета
+        </button>
+      </div>
     </div>
 
     <div
@@ -89,13 +99,32 @@
             </span>
           </div>
         </div>
-        <NuxtLink
-          v-if="!isOwnBudget"
-          to="/budget"
-          class="btn btn-outline"
-        >
-          К своему бюджету
-        </NuxtLink>
+        <div class="flex gap-2">
+          <div
+            v-if="canEdit"
+            class="flex gap-2"
+          >
+            <button
+              class="btn btn-outline btn-sm"
+              @click="handleExport"
+            >
+              📤 Экспорт
+            </button>
+            <button
+              class="btn btn-outline btn-sm"
+              @click="openImportModal"
+            >
+              📥 Импорт
+            </button>
+          </div>
+          <NuxtLink
+            v-if="!isOwnBudget"
+            to="/budget"
+            class="btn btn-outline"
+          >
+            К своему бюджету
+          </NuxtLink>
+        </div>
       </div>
 
       <ul class="timeline timeline-vertical [--timeline-col-start:20ch]">
@@ -129,6 +158,12 @@
         />
       </ul>
     </div>
+
+    <BudgetImportModal
+      :is-open="isImportModalOpen"
+      @close="closeImportModal"
+      @imported="handleImported"
+    />
   </div>
 </template>
 
@@ -148,6 +183,8 @@ interface Props {
   onGetPreviousMonth?: () => { year: number, month: number }
   onUpdateCurrency?: (currency: string) => Promise<void>
   onDeleteMonth?: (monthId: string) => Promise<void>
+  onExport?: () => Promise<void>
+  onRefresh?: () => Promise<void>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -161,6 +198,8 @@ const props = withDefaults(defineProps<Props>(), {
   onGetPreviousMonth: undefined,
   onDeleteMonth: undefined,
   onUpdateCurrency: undefined,
+  onExport: undefined,
+  onRefresh: undefined,
 })
 
 const monthNames = [
@@ -175,6 +214,7 @@ const currentMonth = now.getMonth()
 const isCreatingCurrentMonth = ref(false)
 const isCreatingNextMonth = ref(false)
 const isCreatingPreviousMonth = ref(false)
+const isImportModalOpen = ref(false)
 
 const isOwnBudget = computed(() => props.budget?.access === 'owner')
 
@@ -295,6 +335,42 @@ const getAccessText = (access: string): string => {
       return 'Чтение и редактирование'
     default:
       return 'Неизвестно'
+  }
+}
+
+const handleExport = async (): Promise<void> => {
+  if (!props.onExport) {
+    console.warn('onExport handler not provided')
+    return
+  }
+
+  try {
+    await props.onExport()
+  }
+  catch (error) {
+    console.error('Export failed:', error)
+    alert('Не удалось экспортировать бюджет. Попробуйте ещё раз.')
+  }
+}
+
+const openImportModal = (): void => {
+  isImportModalOpen.value = true
+}
+
+const closeImportModal = (): void => {
+  isImportModalOpen.value = false
+}
+
+const handleImported = async (): Promise<void> => {
+  closeImportModal()
+
+  if (props.onRefresh) {
+    try {
+      await props.onRefresh()
+    }
+    catch (error) {
+      console.error('Failed to refresh budget after import:', error)
+    }
   }
 }
 </script>

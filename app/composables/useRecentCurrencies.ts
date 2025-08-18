@@ -32,8 +32,8 @@ const saveRecentCurrencies = () => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(recentCurrencies.value))
   }
-  catch {
-    // Игнорируем ошибки сохранения
+  catch (error) {
+    console.error('Failed to save recent currencies:', error)
   }
 }
 
