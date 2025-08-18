@@ -31,9 +31,3 @@ export const calculateTotalBalance = (
     return total + (entry.amount / fromRate) * toRate
   }, 0)
 }
-
-export const getTextColorByNumber = (balanceChange: number): string => {
-  if (balanceChange > 0) return 'text-success'
-  if (balanceChange < 0) return 'text-error'
-  return 'text-base-content'
-}

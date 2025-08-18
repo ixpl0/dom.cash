@@ -31,13 +31,13 @@
             class="btn btn-outline btn-sm"
             @click="openSharedBudgetsModal"
           >
-            📋 Общие бюджеты
+            Общие бюджеты
           </button>
           <button
-            class="btn btn-primary btn-sm"
+            class="btn btn-outline btn-sm"
             @click="openShareModal"
           >
-            🔗 Общий доступ
+            🔗 Поделиться
           </button>
           <div class="dropdown dropdown-end">
             <div

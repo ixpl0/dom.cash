@@ -41,7 +41,7 @@
             :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-2xl font-extrabold"
               :disabled="isReadOnly"
               @click="openBalanceModal"
             >
@@ -65,8 +65,12 @@
             data-tip="Изменение баланса по сравнению с предыдущим месяцем"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getTextColorByNumber(balanceChange)"
+              class="btn btn-ghost text-2xl font-extrabold"
+              :class="{
+                'text-success': balanceChange > 0,
+                'text-error': balanceChange < 0,
+                'text-base-content': balanceChange === 0,
+              }"
               disabled
             >
               {{ formatAmount(balanceChange, effectiveMainCurrency) }}
@@ -78,7 +82,7 @@
             data-tip="Нужен баланс предыдущего месяца для расчета"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-2xl font-extrabold"
               disabled
             >
               —
@@ -94,13 +98,16 @@
         >
           Доходы
         </div>
-        <div class="stat-value text-success">
+        <div
+          class="stat-value"
+          :class="{ 'text-success': totalIncome !== 0, 'text-base-content': totalIncome === 0 }"
+        >
           <div
             class="tooltip font-normal"
             :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-2xl font-extrabold"
               :disabled="isReadOnly"
               @click="openIncomeModal"
             >
@@ -117,13 +124,16 @@
         >
           Крупные расходы
         </div>
-        <div class="stat-value text-error">
+        <div
+          class="stat-value"
+          :class="{ 'text-error': totalExpenses !== 0, 'text-base-content': totalExpenses === 0 }"
+        >
           <div
             class="tooltip font-normal"
             :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-2xl font-extrabold"
               :disabled="isReadOnly"
               @click="openExpenseModal"
             >
@@ -140,28 +150,39 @@
         >
           Карманные расходы
         </div>
-        <div class="stat-value">
+        <div
+          v-if="pocketExpenses !== null"
+          class="stat-value"
+        >
           <div
-            v-if="pocketExpenses !== null"
             class="tooltip font-normal"
             :data-tip="pocketExpenses < 0
               ? 'Вероятно, вы не добавили все доходы, или по ошибке добавили лишнюю запись в крупные расходы. Ещё может быть связано с неточностями при работе с валютой'
               : 'Всё, что осталось после вычета крупных расходов и валютных колебаний из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д. Может быть неточным, если вы не добавили все доходы или расходы, или валютные колебания были вычислены неточно.'"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold text-error"
+              class="btn btn-ghost text-2xl font-extrabold"
               disabled
+              :class="{
+                'text-warning': pocketExpenses < 0,
+                'text-error': pocketExpenses > 0,
+                'text-base-content': pocketExpenses === 0,
+              }"
             >
               {{ formatAmount(pocketExpenses, effectiveMainCurrency) }}
             </button>
           </div>
+        </div>
+        <div
+          v-else
+          class="stat-value"
+        >
           <div
-            v-else
             class="tooltip font-normal"
             data-tip="Будет доступно после появления баланса следующего месяца"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-2xl font-extrabold"
               disabled
             >
               —
@@ -184,8 +205,12 @@
             :data-tip="`Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
-              :class="getTextColorByNumber(currencyProfitLoss)"
+              class="btn btn-ghost text-2xl font-extrabold"
+              :class="{
+                'text-success': currencyProfitLoss > 0,
+                'text-error': currencyProfitLoss < 0,
+                'text-base-content': currencyProfitLoss === 0,
+              }"
               disabled
             >
               {{ formatAmount(currencyProfitLoss, effectiveMainCurrency) }}
@@ -197,7 +222,7 @@
             data-tip="Будет доступно после появления баланса следующего месяца"
           >
             <button
-              class="btn btn-ghost text-[2rem] font-extrabold"
+              class="btn btn-ghost text-2xl font-extrabold"
               disabled
             >
               —
@@ -274,7 +299,7 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmount, calculateTotalBalance, getTextColorByNumber } from '~~/shared/utils/budget'
+import { formatAmount, calculateTotalBalance } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
 
 interface Props {

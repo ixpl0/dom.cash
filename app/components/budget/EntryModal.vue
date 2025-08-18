@@ -60,7 +60,15 @@
                     @keyup.enter="saveEntry()"
                     @keyup.esc="cancelEdit()"
                   >
-                  <span v-else>{{ formatAmount(entry.amount, entry.currency) }}</span>
+                  <span
+                    v-else
+                    :class="{
+                      'text-base-content': entry.amount === 0,
+                      'text-success': entryKind === 'income' || (entryKind === 'balance' && entry.amount > 0) || (entryKind === undefined && entry.amount > 0),
+                      'text-error': entryKind === 'expense' || (entryKind === undefined && entry.amount < 0),
+                      'text-warning': entryKind === 'balance' && entry.amount < 0,
+                    }"
+                  >{{ formatAmount(entry.amount, entry.currency) }}</span>
                 </td>
                 <td>
                   <UiCurrencyPicker

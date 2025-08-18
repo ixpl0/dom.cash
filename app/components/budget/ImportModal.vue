@@ -9,66 +9,77 @@
         Импорт бюджета
       </h3>
 
-      <div class="form-control w-full mb-4">
-        <label class="label">
-          <span class="label-text">Выберите файл бюджета (.json)</span>
-        </label>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json,application/json"
-          class="file-input file-input-bordered w-full"
-          @change="handleFileSelect"
-        >
-      </div>
-
       <div
-        v-if="selectedFile"
+        v-if="!importResult"
         class="mb-4"
       >
-        <div class="form-control">
-          <label class="label cursor-pointer">
-            <span class="label-text">Пропустить существующие месяцы</span>
+        <div class="form-control w-full mb-4">
+          <label class="label flex flex-col items-start gap-2">
+            <span class="label-text">Выберите файл бюджета (.json)</span>
             <input
-              v-model="options.skipExisting"
-              type="checkbox"
-              class="checkbox"
+              ref="fileInput"
+              type="file"
+              accept=".json,application/json"
+              class="file-input file-input-bordered w-full"
+              @change="handleFileSelect"
             >
           </label>
         </div>
-        <div class="form-control">
-          <label class="label cursor-pointer">
-            <span class="label-text">Перезаписать существующие месяцы</span>
-            <input
-              v-model="options.overwriteExisting"
-              type="checkbox"
-            >
-          </label>
-        </div>
-      </div>
 
-      <div
-        v-if="previewData"
-        class="mb-4 p-4 bg-base-200 rounded"
-      >
-        <h4 class="font-semibold mb-2">
-          Предварительный просмотр:
-        </h4>
-        <p class="text-sm">
-          Пользователь: {{ previewData.user.username }}
-        </p>
-        <p class="text-sm">
-          Основная валюта: {{ previewData.user.mainCurrency }}
-        </p>
-        <p class="text-sm">
-          Месяцев: {{ previewData.months.length }}
-        </p>
-        <p class="text-sm">
-          Записей: {{ totalEntries }}
-        </p>
-        <p class="text-sm">
-          Дата экспорта: {{ formatDate(previewData.exportDate) }}
-        </p>
+        <div
+          v-if="selectedFile"
+          class="mb-4"
+        >
+          <div class="form-control">
+            <span class="label-text mb-2 block">Действие для существующих месяцев:</span>
+
+            <label class="label cursor-pointer">
+              <span class="label-text">Пропустить (оставить как есть)</span>
+              <input
+                v-model="importMode"
+                type="radio"
+                name="importMode"
+                value="skip"
+                class="radio"
+              >
+            </label>
+
+            <label class="label cursor-pointer">
+              <span class="label-text">Перезаписать (заменить данные)</span>
+              <input
+                v-model="importMode"
+                type="radio"
+                name="importMode"
+                value="overwrite"
+                class="radio"
+              >
+            </label>
+          </div>
+        </div>
+
+        <div
+          v-if="previewData"
+          class="mb-4 p-4 bg-base-200 rounded"
+        >
+          <h4 class="font-semibold mb-2">
+            Предварительный просмотр:
+          </h4>
+          <p class="text-sm">
+            Пользователь: {{ previewData.user.username }}
+          </p>
+          <p class="text-sm">
+            Основная валюта: {{ previewData.user.mainCurrency }}
+          </p>
+          <p class="text-sm">
+            Месяцев: {{ previewData.months.length }}
+          </p>
+          <p class="text-sm">
+            Записей: {{ totalEntries }}
+          </p>
+          <p class="text-sm">
+            Дата экспорта: {{ formatDate(previewData.exportDate) }}
+          </p>
+        </div>
       </div>
 
       <div
@@ -123,12 +134,21 @@
 
       <div class="modal-action">
         <button
+          v-if="!importResult"
           class="btn btn-ghost"
           @click="handleClose"
         >
           Отмена
         </button>
         <button
+          v-if="importResult"
+          class="btn btn-primary"
+          @click="handleClose"
+        >
+          Закрыть
+        </button>
+        <button
+          v-if="!importResult"
           class="btn btn-primary"
           :disabled="!selectedFile || isImporting"
           @click="handleImport"
@@ -166,10 +186,14 @@ const error = ref<string>('')
 const isImporting = ref(false)
 const importResult = ref<BudgetImportResult | null>(null)
 
-const options = ref<BudgetImportOptions>({
-  skipExisting: true,
-  overwriteExisting: false,
-})
+type ImportMode = 'skip' | 'overwrite'
+
+const importMode = ref<ImportMode>('skip')
+
+const options = computed<BudgetImportOptions>(() => ({
+  skipExisting: importMode.value === 'skip',
+  overwriteExisting: importMode.value === 'overwrite',
+}))
 
 const totalEntries = computed(() => {
   if (!previewData.value) return 0
@@ -237,34 +261,23 @@ const handleImport = async () => {
   }
 }
 
-const handleClose = () => {
+const startNewImport = () => {
   selectedFile.value = null
   previewData.value = null
   error.value = ''
   importResult.value = null
-  options.value = {
-    skipExisting: true,
-    overwriteExisting: false,
-  }
+  importMode.value = 'skip'
   if (fileInput.value) {
     fileInput.value.value = ''
   }
+}
+
+const handleClose = () => {
+  startNewImport()
   emit('close')
 }
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('ru-RU')
 }
-
-watch(() => options.value.overwriteExisting, (newValue) => {
-  if (newValue) {
-    options.value.skipExisting = false
-  }
-})
-
-watch(() => options.value.skipExisting, (newValue) => {
-  if (newValue) {
-    options.value.overwriteExisting = false
-  }
-})
 </script>

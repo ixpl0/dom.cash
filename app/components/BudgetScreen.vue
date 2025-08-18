@@ -105,16 +105,16 @@
             class="flex gap-2"
           >
             <button
-              class="btn btn-outline btn-sm"
+              class="btn btn-ghost btn-sm"
               @click="handleExport"
             >
-              📤 Экспорт
+              Экспорт
             </button>
             <button
-              class="btn btn-outline btn-sm"
+              class="btn btn-ghost btn-sm"
               @click="openImportModal"
             >
-              📥 Импорт
+              Импорт
             </button>
           </div>
           <NuxtLink
@@ -362,8 +362,6 @@ const closeImportModal = (): void => {
 }
 
 const handleImported = async (): Promise<void> => {
-  closeImportModal()
-
   if (props.onRefresh) {
     try {
       await props.onRefresh()
