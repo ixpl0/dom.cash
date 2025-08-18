@@ -76,28 +76,30 @@
       class="space-y-6"
     >
       <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold">
-            Бюджет {{ budget.user.username }}
-          </h1>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="badge badge-primary">
-              {{ getAccessText(budget.access) }}
-            </span>
-            <UiCurrencyPicker
-              v-if="canEdit"
-              :model-value="budget.user.mainCurrency"
-              placeholder="Основная валюта"
-              class="w-70"
-              @change="saveCurrency"
-            />
-            <span
-              v-else
-              class="opacity-70 text-sm"
-            >
-              Основная валюта: {{ getCurrencyDisplayText(budget.user.mainCurrency) }}
-            </span>
-          </div>
+        <h1 class="text-3xl font-bold">
+          Бюджет
+        </h1>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="badge badge-primary badge-outline">
+            Бюджет
+            {{ budget.user.username }}
+          </span>
+          <span class="badge badge-secondary badge-outline">
+            {{ getAccessText(budget.access) }}
+          </span>
+          <UiCurrencyPicker
+            v-if="canEdit"
+            :model-value="budget.user.mainCurrency"
+            placeholder="Основная валюта"
+            class="w-70"
+            @change="saveCurrency"
+          />
+          <span
+            v-else
+            class="opacity-70 text-sm"
+          >
+            Основная валюта: {{ getCurrencyDisplayText(budget.user.mainCurrency) }}
+          </span>
         </div>
         <div class="flex gap-2">
           <div
@@ -120,7 +122,7 @@
           <NuxtLink
             v-if="!isOwnBudget"
             to="/budget"
-            class="btn btn-outline"
+            class="btn btn-outline btn-sm"
           >
             К своему бюджету
           </NuxtLink>
@@ -329,13 +331,13 @@ const saveCurrency = async (newCurrency: string): Promise<void> => {
 const getAccessText = (access: string): string => {
   switch (access) {
     case 'owner':
-      return 'Владелец'
+      return 'Вы владелец'
     case 'read':
       return 'Только чтение'
     case 'write':
       return 'Чтение и редактирование'
     default:
-      return 'Неизвестно'
+      return 'Доступы неизвестны'
   }
 }
 

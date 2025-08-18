@@ -1,22 +1,20 @@
 <template>
   <div class="min-h-screen bg-base-100">
     <header class="navbar bg-base-200 shadow-lg">
-      <div class="navbar-start">
+      <div class="navbar-start gap-4">
         <NuxtLink
           to="/"
           class="text-xl font-bold"
         >
           🏠 Doma
         </NuxtLink>
-      </div>
-      <div class="navbar-center">
         <div
           v-if="isAuthenticated"
-          class="menu menu-horizontal px-1"
+          class="menu menu-horizontal"
         >
           <NuxtLink
             to="/budget"
-            class="btn btn-ghost"
+            class="btn btn-sm btn-outline"
           >
             Бюджет
           </NuxtLink>

@@ -32,12 +32,6 @@
         :ref="setCardRef(0)"
         class="bg-base-100 text-center"
       >
-        <div
-          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
-          data-tip="Сумма всех сбережений, конвертированных в основную валюту"
-        >
-          Баланс на начало месяца
-        </div>
         <div class="text-primary">
           <div
             class="tooltip font-normal"
@@ -58,12 +52,6 @@
         :ref="setCardRef(1)"
         class="bg-base-100 text-center"
       >
-        <div
-          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
-          data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
-        >
-          Изменение баланса
-        </div>
         <div>
           <div
             v-if="balanceChange !== null"
@@ -102,12 +90,6 @@
         class="bg-base-100 text-center"
       >
         <div
-          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
-          data-tip="Сумма всех доходов, конвертированных в основную валюту"
-        >
-          Доходы
-        </div>
-        <div
           :class="{ 'text-success': totalIncome !== 0, 'text-base-content': totalIncome === 0 }"
         >
           <div
@@ -130,12 +112,6 @@
         class="bg-base-100 text-center"
       >
         <div
-          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
-          data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
-        >
-          Крупные расходы
-        </div>
-        <div
           :class="{ 'text-error': totalExpenses !== 0, 'text-base-content': totalExpenses === 0 }"
         >
           <div
@@ -157,12 +133,6 @@
         :ref="setCardRef(4)"
         class="bg-base-100 text-center"
       >
-        <div
-          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
-          data-tip="Баланс + Доходы - Баланс следующего месяца - Крупные расходы - Валютные колебания"
-        >
-          Карманные расходы
-        </div>
         <div
           v-if="pocketExpenses !== null"
         >
@@ -206,12 +176,6 @@
         :ref="setCardRef(5)"
         class="bg-base-100 text-center"
       >
-        <div
-          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
-          data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по крусам текущего месяца"
-        >
-          Валютные колебания
-        </div>
         <div>
           <div
             v-if="currencyProfitLoss !== null"

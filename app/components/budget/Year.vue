@@ -9,6 +9,79 @@
     <div class="timeline-middle">
       <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
     </div>
+    <div class="timeline-end flex gap-4 pl-4 py-1">
+      <div
+        :ref="setHeaderRef(0)"
+        class="bg-base-100 text-center"
+      >
+        <div
+          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
+          data-tip="Сумма всех сбережений, конвертированных в основную валюту"
+        >
+          Баланс на начало месяца
+        </div>
+      </div>
+
+      <div
+        :ref="setHeaderRef(1)"
+        class="bg-base-100 text-center"
+      >
+        <div
+          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
+          data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
+        >
+          Изменение баланса
+        </div>
+      </div>
+
+      <div
+        :ref="setHeaderRef(2)"
+        class="bg-base-100 text-center"
+      >
+        <div
+          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
+          data-tip="Сумма всех доходов, конвертированных в основную валюту"
+        >
+          Доходы
+        </div>
+      </div>
+
+      <div
+        :ref="setHeaderRef(3)"
+        class="bg-base-100 text-center"
+      >
+        <div
+          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
+          data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
+        >
+          Крупные расходы
+        </div>
+      </div>
+
+      <div
+        :ref="setHeaderRef(4)"
+        class="bg-base-100 text-center"
+      >
+        <div
+          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
+          data-tip="Баланс + Доходы - Баланс следующего месяца - Крупные расходы - Валютные колебания"
+        >
+          Карманные расходы
+        </div>
+      </div>
+
+      <div
+        :ref="setHeaderRef(5)"
+        class="bg-base-100 text-center"
+      >
+        <div
+          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
+          data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по курсам текущего месяца"
+        >
+          Валютные колебания
+        </div>
+      </div>
+    </div>
     <hr>
   </li>
 
@@ -26,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
 
 interface Props {
@@ -38,5 +112,35 @@ interface Props {
   mainCurrency?: string
   onDeleteMonth?: (monthId: string) => Promise<void>
 }
+
 defineProps<Props>()
+
+const headerRefs = ref<HTMLElement[]>([])
+
+const { registerRow, unregisterRow } = inject('statSync', {
+  registerRow: () => {},
+  unregisterRow: () => {},
+})
+
+const setHeaderRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
+  if (el && el instanceof HTMLElement) {
+    headerRefs.value[index] = el
+  }
+}
+
+onMounted(() => {
+  nextTick(() => {
+    const validRefs = headerRefs.value.filter(Boolean)
+    if (validRefs.length) {
+      registerRow(validRefs)
+    }
+  })
+})
+
+onUnmounted(() => {
+  const validRefs = headerRefs.value.filter(Boolean)
+  if (validRefs.length) {
+    unregisterRow(validRefs)
+  }
+})
 </script>
