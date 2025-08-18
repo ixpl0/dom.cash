@@ -27,15 +27,18 @@
       </svg>
     </div>
 
-    <div class="timeline-end stats shadow overflow-visible">
-      <div class="stat place-items-center">
+    <div class="timeline-end flex gap-4 pl-4 py-1">
+      <div
+        :ref="setCardRef(0)"
+        class="bg-base-100 text-center"
+      >
         <div
-          class="stat-title tooltip tooltip-top"
+          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
           data-tip="Сумма всех сбережений, конвертированных в основную валюту"
         >
           Баланс на начало месяца
         </div>
-        <div class="stat-value text-primary">
+        <div class="text-primary">
           <div
             class="tooltip font-normal"
             :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
@@ -51,14 +54,17 @@
         </div>
       </div>
 
-      <div class="stat place-items-center">
+      <div
+        :ref="setCardRef(1)"
+        class="bg-base-100 text-center"
+      >
         <div
-          class="stat-title text-center tooltip tooltip-top"
+          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
           data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
         >
           Изменение баланса
         </div>
-        <div class="stat-value">
+        <div>
           <div
             v-if="balanceChange !== null"
             class="tooltip font-normal"
@@ -91,15 +97,17 @@
         </div>
       </div>
 
-      <div class="stat place-items-center">
+      <div
+        :ref="setCardRef(2)"
+        class="bg-base-100 text-center"
+      >
         <div
-          class="stat-title tooltip tooltip-top"
+          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
           data-tip="Сумма всех доходов, конвертированных в основную валюту"
         >
           Доходы
         </div>
         <div
-          class="stat-value"
           :class="{ 'text-success': totalIncome !== 0, 'text-base-content': totalIncome === 0 }"
         >
           <div
@@ -117,15 +125,17 @@
         </div>
       </div>
 
-      <div class="stat place-items-center">
+      <div
+        :ref="setCardRef(3)"
+        class="bg-base-100 text-center"
+      >
         <div
-          class="stat-title tooltip tooltip-top"
+          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
           data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
         >
           Крупные расходы
         </div>
         <div
-          class="stat-value"
           :class="{ 'text-error': totalExpenses !== 0, 'text-base-content': totalExpenses === 0 }"
         >
           <div
@@ -143,16 +153,18 @@
         </div>
       </div>
 
-      <div class="stat place-items-center">
+      <div
+        :ref="setCardRef(4)"
+        class="bg-base-100 text-center"
+      >
         <div
-          class="stat-title text-center tooltip tooltip-top"
+          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
           data-tip="Баланс + Доходы - Баланс следующего месяца - Крупные расходы - Валютные колебания"
         >
           Карманные расходы
         </div>
         <div
           v-if="pocketExpenses !== null"
-          class="stat-value"
         >
           <div
             class="tooltip font-normal"
@@ -175,7 +187,6 @@
         </div>
         <div
           v-else
-          class="stat-value"
         >
           <div
             class="tooltip font-normal"
@@ -191,14 +202,17 @@
         </div>
       </div>
 
-      <div class="stat place-items-center">
+      <div
+        :ref="setCardRef(5)"
+        class="bg-base-100 text-center"
+      >
         <div
-          class="stat-title text-center tooltip tooltip-top"
+          class="text-sm text-base-content/70 tooltip tooltip-top whitespace-nowrap"
           data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по крусам текущего месяца"
         >
           Валютные колебания
         </div>
-        <div class="stat-value">
+        <div>
           <div
             v-if="currencyProfitLoss !== null"
             class="tooltip font-normal"
@@ -233,9 +247,10 @@
 
       <div
         v-if="canDeleteMonth"
-        class="stat place-items-center border-l border-base-300"
+        :ref="setCardRef(6)"
+        class="bg-base-100 text-center"
       >
-        <div class="stat-value">
+        <div>
           <div class="flex flex-col gap-1">
             <div
               class="tooltip font-normal"
@@ -298,6 +313,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
 import { formatAmount, calculateTotalBalance } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
@@ -320,6 +336,35 @@ const effectiveMainCurrency = computed(() => props.mainCurrency || userMainCurre
 const balanceModal = ref()
 const incomeModal = ref()
 const expenseModal = ref()
+
+const cardRefs = ref<HTMLElement[]>([])
+
+const { registerRow, unregisterRow } = inject('statSync', {
+  registerRow: () => {},
+  unregisterRow: () => {},
+})
+
+const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
+  if (el && el instanceof HTMLElement) {
+    cardRefs.value[index] = el
+  }
+}
+
+onMounted(() => {
+  nextTick(() => {
+    const validRefs = cardRefs.value.filter(Boolean)
+    if (validRefs.length) {
+      registerRow(validRefs)
+    }
+  })
+})
+
+onUnmounted(() => {
+  const validRefs = cardRefs.value.filter(Boolean)
+  if (validRefs.length) {
+    unregisterRow(validRefs)
+  }
+})
 
 const currentMonthRates = computed(() => {
   return props.monthData.exchangeRates || {}

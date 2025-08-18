@@ -170,6 +170,7 @@
 <script setup lang="ts">
 import type { BudgetData } from '~/composables/useBudget'
 import { getCurrencyName } from '~~/shared/utils/currencies'
+import { useStatSync } from '~/composables/useStatSync'
 
 interface Props {
   budget: BudgetData | null
@@ -371,4 +372,8 @@ const handleImported = async (): Promise<void> => {
     }
   }
 }
+
+const statSyncInstance = useStatSync()
+
+provide('statSync', statSyncInstance)
 </script>
