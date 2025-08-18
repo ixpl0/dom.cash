@@ -50,6 +50,19 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    try {
+      const { createNotification } = await import('~~/server/services/notifications')
+      await createNotification({
+        sourceUserId: currentUser.id,
+        budgetOwnerId: targetUserId,
+        type: 'budget_imported',
+        message: `${currentUser.username} импортировал бюджет (месяцев: ${result.importedMonths}, записей: ${result.importedEntries})`,
+      })
+    }
+    catch (error) {
+      console.error('Error creating notification:', error)
+    }
+
     return result
   }
   catch (error) {

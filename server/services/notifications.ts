@@ -1,4 +1,4 @@
-export type NotificationType = 'budget_currency_changed' | 'budget_month_added' | 'budget_month_deleted' | 'budget_entry_created' | 'budget_entry_updated' | 'budget_entry_deleted' | 'budget_share_updated'
+export type NotificationType = 'budget_currency_changed' | 'budget_month_added' | 'budget_month_deleted' | 'budget_entry_created' | 'budget_entry_updated' | 'budget_entry_deleted' | 'budget_share_updated' | 'budget_imported'
 
 export interface CreateNotificationParams {
   sourceUserId: string
