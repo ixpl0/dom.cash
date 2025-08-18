@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
     .select({
       id: budgetShare.id,
       username: user.username,
+      userId: user.id,
       access: budgetShare.access,
     })
     .from(budgetShare)
@@ -72,7 +73,8 @@ export default defineEventHandler(async (event) => {
       sourceUserId: currentUser.id,
       budgetOwnerId: currentUser.id,
       type: 'budget_share_updated',
-      message: `${currentUser.username} изменил права доступа для ${shareData.username} на "${accessNames[access] || access}"`,
+      message: `${currentUser.username} изменил ваши права доступа к бюджету на "${accessNames[access] || access}"`,
+      targetUserId: shareData.userId,
     })
   }
   catch (error) {

@@ -74,8 +74,19 @@ export const getSharedWithUser = async (userId: string) => {
 
 export const getShareById = async (shareId: string) => {
   const shares = await db
-    .select()
+    .select({
+      id: budgetShare.id,
+      ownerId: budgetShare.ownerId,
+      sharedWithId: budgetShare.sharedWithId,
+      access: budgetShare.access,
+      createdAt: budgetShare.createdAt,
+      sharedWith: {
+        id: user.id,
+        username: user.username,
+      },
+    })
     .from(budgetShare)
+    .innerJoin(user, eq(budgetShare.sharedWithId, user.id))
     .where(eq(budgetShare.id, shareId))
     .limit(1)
 

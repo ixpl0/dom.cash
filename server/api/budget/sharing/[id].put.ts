@@ -38,7 +38,8 @@ export default defineEventHandler(async (event) => {
       sourceUserId: user.id,
       budgetOwnerId: user.id,
       type: 'budget_share_updated',
-      message: `${user.username} изменил права доступа для ${share.sharedWith.username} на "${accessNames[body.access] || body.access}"`,
+      message: `${user.username} изменил ваши права доступа к бюджету на "${accessNames[body.access] || body.access}"`,
+      targetUserId: share.sharedWith.id,
     })
   }
   catch (error) {

@@ -5,6 +5,7 @@ export interface CreateNotificationParams {
   budgetOwnerId: string
   type: NotificationType
   message: string
+  targetUserId?: string
 }
 
 export interface NotificationEvent {
@@ -76,14 +77,19 @@ export const sendNotificationToUser = (userId: string, notification: Notificatio
 }
 
 export const createNotification = async (params: CreateNotificationParams): Promise<void> => {
-  const subscribers = getBudgetSubscribers(params.budgetOwnerId)
+  let targetUsers: string[]
 
-  let targetUsers = [...subscribers]
-  if (!targetUsers.includes(params.budgetOwnerId)) {
-    targetUsers.push(params.budgetOwnerId)
+  if (params.targetUserId) {
+    targetUsers = [params.targetUserId]
   }
-
-  targetUsers = targetUsers.filter(userId => userId !== params.sourceUserId)
+  else {
+    const subscribers = getBudgetSubscribers(params.budgetOwnerId)
+    targetUsers = [...subscribers]
+    if (!targetUsers.includes(params.budgetOwnerId)) {
+      targetUsers.push(params.budgetOwnerId)
+    }
+    targetUsers = targetUsers.filter(userId => userId !== params.sourceUserId)
+  }
 
   if (targetUsers.length === 0) {
     return
