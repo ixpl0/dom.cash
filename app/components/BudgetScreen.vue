@@ -163,6 +163,7 @@
 
     <BudgetImportModal
       :is-open="isImportModalOpen"
+      :target-username="!isOwnBudget ? budget?.user?.username : undefined"
       @close="closeImportModal"
       @imported="handleImported"
     />

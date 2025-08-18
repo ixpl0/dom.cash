@@ -169,13 +169,14 @@ import type { BudgetExportData, BudgetImportOptions, BudgetImportResult } from '
 
 interface Props {
   isOpen: boolean
+  targetUsername?: string
 }
 
 interface Emits {
   (e: 'close' | 'imported'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const modal = ref<HTMLDialogElement>()
@@ -243,6 +244,7 @@ const handleImport = async () => {
       body: {
         data: previewData.value,
         options: options.value,
+        targetUsername: props.targetUsername,
       },
     })
 
