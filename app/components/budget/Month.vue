@@ -30,218 +30,143 @@
     <div class="timeline-end flex gap-4 pl-4 py-1">
       <div
         :ref="setCardRef(0)"
-        class="bg-base-100 text-center"
+        class="tooltip text-center"
+        :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
       >
-        <div class="text-primary">
-          <div
-            class="tooltip font-normal"
-            :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              :disabled="isReadOnly"
-              @click="openBalanceModal"
-            >
-              {{ formatAmount(startBalance, effectiveMainCurrency) }}
-            </button>
-          </div>
-        </div>
+        <button
+          class="btn btn-ghost text-2xl font-extrabold text-primary"
+          :disabled="isReadOnly"
+          @click="openBalanceModal"
+        >
+          {{ formatAmount(startBalance, effectiveMainCurrency) }}
+        </button>
       </div>
 
       <div
         :ref="setCardRef(1)"
-        class="bg-base-100 text-center"
+        class="tooltip text-center"
+        :data-tip="balanceChange !== null
+          ? 'Изменение баланса по сравнению с предыдущим месяцем'
+          : 'Нужен баланс предыдущего месяца для расчета'"
       >
-        <div>
-          <div
-            v-if="balanceChange !== null"
-            class="tooltip font-normal"
-            data-tip="Изменение баланса по сравнению с предыдущим месяцем"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              :class="{
-                'text-success': balanceChange > 0,
-                'text-error': balanceChange < 0,
-                'text-base-content': balanceChange === 0,
-              }"
-              disabled
-            >
-              {{ formatAmount(balanceChange, effectiveMainCurrency) }}
-            </button>
-          </div>
-          <div
-            v-else
-            class="tooltip font-normal"
-            data-tip="Нужен баланс предыдущего месяца для расчета"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              disabled
-            >
-              —
-            </button>
-          </div>
-        </div>
+        <button
+          class="btn btn-ghost text-2xl font-extrabold"
+          :class="{
+            'text-success': balanceChange !== null && balanceChange > 0,
+            'text-error': balanceChange !== null && balanceChange < 0,
+            'text-base-content': balanceChange === 0,
+          }"
+          disabled
+        >
+          {{ balanceChange !== null ? formatAmount(balanceChange, effectiveMainCurrency) : '—' }}
+        </button>
       </div>
 
       <div
         :ref="setCardRef(2)"
-        class="bg-base-100 text-center"
+        class="tooltip text-center"
+        :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
       >
-        <div
-          :class="{ 'text-success': totalIncome !== 0, 'text-base-content': totalIncome === 0 }"
+        <button
+          class="btn btn-ghost text-2xl font-extrabold"
+          :class="{
+            'text-success': totalIncome !== 0,
+            'text-base-content': totalIncome === 0,
+          }"
+          :disabled="isReadOnly"
+          @click="openIncomeModal"
         >
-          <div
-            class="tooltip font-normal"
-            :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              :disabled="isReadOnly"
-              @click="openIncomeModal"
-            >
-              {{ formatAmount(totalIncome, effectiveMainCurrency) }}
-            </button>
-          </div>
-        </div>
+          {{ formatAmount(totalIncome, effectiveMainCurrency) }}
+        </button>
       </div>
 
       <div
         :ref="setCardRef(3)"
-        class="bg-base-100 text-center"
+        class="tooltip text-center"
+        :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
       >
-        <div
-          :class="{ 'text-error': totalExpenses !== 0, 'text-base-content': totalExpenses === 0 }"
+        <button
+          class="btn btn-ghost text-2xl font-extrabold"
+          :class="{
+            'text-error': totalExpenses !== 0,
+            'text-base-content': totalExpenses === 0,
+          }"
+          :disabled="isReadOnly"
+          @click="openExpenseModal"
         >
-          <div
-            class="tooltip font-normal"
-            :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              :disabled="isReadOnly"
-              @click="openExpenseModal"
-            >
-              {{ formatAmount(totalExpenses, effectiveMainCurrency) }}
-            </button>
-          </div>
-        </div>
+          {{ formatAmount(totalExpenses, effectiveMainCurrency) }}
+        </button>
       </div>
 
       <div
         :ref="setCardRef(4)"
-        class="bg-base-100 text-center"
-      >
-        <div
-          v-if="pocketExpenses !== null"
-        >
-          <div
-            class="tooltip font-normal"
-            :data-tip="pocketExpenses < 0
+        class="tooltip text-center"
+        :data-tip="pocketExpenses !== null
+          ? (
+            pocketExpenses < 0
               ? 'Вероятно, вы не добавили все доходы, или по ошибке добавили лишнюю запись в крупные расходы. Ещё может быть связано с неточностями при работе с валютой'
-              : 'Всё, что осталось после вычета крупных расходов и валютных колебаний из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д. Может быть неточным, если вы не добавили все доходы или расходы, или валютные колебания были вычислены неточно.'"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              disabled
-              :class="{
-                'text-warning': pocketExpenses < 0,
-                'text-error': pocketExpenses > 0,
-                'text-base-content': pocketExpenses === 0,
-              }"
-            >
-              {{ formatAmount(pocketExpenses, effectiveMainCurrency) }}
-            </button>
-          </div>
-        </div>
-        <div
-          v-else
+              : 'Всё, что осталось после вычета крупных расходов и валютных колебаний из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д. Может быть неточным, если вы не добавили все доходы или расходы, или валютные колебания были вычислены неточно.'
+          )
+          : 'Будет доступно после появления баланса следующего месяца'"
+      >
+        <button
+          class="btn btn-ghost text-2xl font-extrabold"
+          disabled
+          :class="{
+            'text-warning': pocketExpenses !== null && pocketExpenses < 0,
+            'text-error': pocketExpenses !== null && pocketExpenses > 0,
+            'text-base-content': pocketExpenses === 0,
+          }"
         >
-          <div
-            class="tooltip font-normal"
-            data-tip="Будет доступно после появления баланса следующего месяца"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              disabled
-            >
-              —
-            </button>
-          </div>
-        </div>
+          {{ pocketExpenses !== null ? formatAmount(pocketExpenses, effectiveMainCurrency) : '—' }}
+        </button>
       </div>
 
       <div
         :ref="setCardRef(5)"
-        class="bg-base-100 text-center"
+        class="tooltip text-center"
+        :data-tip="currencyProfitLoss !== null
+          ? `Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`
+          : 'Будет доступно после появления баланса следующего месяца'"
       >
-        <div>
-          <div
-            v-if="currencyProfitLoss !== null"
-            class="tooltip font-normal"
-            :data-tip="`Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              :class="{
-                'text-success': currencyProfitLoss > 0,
-                'text-error': currencyProfitLoss < 0,
-                'text-base-content': currencyProfitLoss === 0,
-              }"
-              disabled
-            >
-              {{ formatAmount(currencyProfitLoss, effectiveMainCurrency) }}
-            </button>
-          </div>
-          <div
-            v-else
-            class="tooltip font-normal"
-            data-tip="Будет доступно после появления баланса следующего месяца"
-          >
-            <button
-              class="btn btn-ghost text-2xl font-extrabold"
-              disabled
-            >
-              —
-            </button>
-          </div>
-        </div>
+        <button
+          class="btn btn-ghost text-2xl font-extrabold"
+          :class="{
+            'text-success': currencyProfitLoss !== null && currencyProfitLoss > 0,
+            'text-error': currencyProfitLoss !== null && currencyProfitLoss < 0,
+            'text-base-content': currencyProfitLoss === 0,
+          }"
+          disabled
+        >
+          {{ currencyProfitLoss !== null ? formatAmount(currencyProfitLoss, effectiveMainCurrency) : '—' }}
+        </button>
       </div>
 
       <div
         v-if="canDeleteMonth"
         :ref="setCardRef(6)"
-        class="bg-base-100 text-center"
+        class="tooltip text-center"
+        data-tip="Удалить месяц"
       >
-        <div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip font-normal"
-              data-tip="Удалить месяц"
-            >
-              <button
-                class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
-                @click="handleDeleteMonth"
-              >
-                <svg
-                  class="w-4 h-4"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill="none"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+        <button
+          class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
+          @click="handleDeleteMonth"
+        >
+          <svg
+            class="w-4 h-4"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
       </div>
     </div>
 
