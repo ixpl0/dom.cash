@@ -1,4 +1,4 @@
-export const useStatSync = () => {
+export const useBudgetColumnsSync = () => {
   const isClient = import.meta.client
   const observer = ref<ResizeObserver | null>(null)
   const mounted = ref(false)
@@ -9,7 +9,7 @@ export const useStatSync = () => {
     registeredRows.value.push(elements)
 
     if (mounted.value) {
-      syncStatWidths()
+      syncColumnWidths()
     }
   }
 
@@ -23,7 +23,7 @@ export const useStatSync = () => {
     }
   }
 
-  const syncStatWidths = () => {
+  const syncColumnWidths = () => {
     if (!isClient || !mounted.value || isProcessing.value || !registeredRows.value.length) return
 
     isProcessing.value = true
@@ -73,7 +73,7 @@ export const useStatSync = () => {
     }
 
     observer.value = new ResizeObserver(() => {
-      syncStatWidths()
+      syncColumnWidths()
     })
 
     registeredRows.value.flat().forEach((element) => {
@@ -82,8 +82,8 @@ export const useStatSync = () => {
       }
     })
 
-    window.addEventListener('resize', syncStatWidths)
-    syncStatWidths()
+    window.addEventListener('resize', syncColumnWidths)
+    syncColumnWidths()
   }
 
   const stopObserving = () => {
@@ -93,7 +93,7 @@ export const useStatSync = () => {
     }
 
     if (isClient) {
-      window.removeEventListener('resize', syncStatWidths)
+      window.removeEventListener('resize', syncColumnWidths)
     }
   }
 
@@ -111,6 +111,6 @@ export const useStatSync = () => {
   return {
     registerRow,
     unregisterRow,
-    syncStatWidths,
+    syncColumnWidths,
   }
 }

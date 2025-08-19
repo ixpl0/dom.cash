@@ -149,6 +149,7 @@
           :main-currency="budget?.user?.mainCurrency"
           :target-username="!isOwnBudget ? budget?.user?.username : undefined"
           :on-delete-month="props.onDeleteMonth"
+          :budget-columns-sync="budgetColumnsSyncInstance"
         />
 
         <BudgetTimelineAddButton
@@ -173,7 +174,7 @@
 <script setup lang="ts">
 import type { BudgetData } from '~/composables/useBudget'
 import { getCurrencyName } from '~~/shared/utils/currencies'
-import { useStatSync } from '~/composables/useStatSync'
+import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
 
 interface Props {
   budget: BudgetData | null
@@ -376,7 +377,5 @@ const handleImported = async (): Promise<void> => {
   }
 }
 
-const statSyncInstance = useStatSync()
-
-provide('statSync', statSyncInstance)
+const budgetColumnsSyncInstance = useBudgetColumnsSync()
 </script>

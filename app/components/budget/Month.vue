@@ -216,6 +216,7 @@ interface Props {
   targetUsername?: string
   mainCurrency?: string
   onDeleteMonth?: (monthId: string) => Promise<void>
+  budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
 const props = defineProps<Props>()
@@ -228,10 +229,7 @@ const expenseModal = ref()
 
 const cardRefs = ref<HTMLElement[]>([])
 
-const { registerRow, unregisterRow } = inject('statSync', {
-  registerRow: () => {},
-  unregisterRow: () => {},
-})
+const { registerRow, unregisterRow } = props.budgetColumnsSync
 
 const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
   if (el && el instanceof HTMLElement) {

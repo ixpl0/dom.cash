@@ -95,6 +95,7 @@
     :target-username="targetUsername"
     :main-currency="mainCurrency"
     :on-delete-month="onDeleteMonth"
+    :budget-columns-sync="budgetColumnsSync"
   />
 </template>
 
@@ -111,16 +112,14 @@ interface Props {
   targetUsername?: string
   mainCurrency?: string
   onDeleteMonth?: (monthId: string) => Promise<void>
+  budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const headerRefs = ref<HTMLElement[]>([])
 
-const { registerRow, unregisterRow } = inject('statSync', {
-  registerRow: () => {},
-  unregisterRow: () => {},
-})
+const { registerRow, unregisterRow } = props.budgetColumnsSync
 
 const setHeaderRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
   if (el && el instanceof HTMLElement) {
