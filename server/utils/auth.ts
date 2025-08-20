@@ -1,35 +1,109 @@
-import * as bcrypt from 'bcrypt'
-import { randomBytes, createHash } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import { createError, setCookie, getCookie, type H3Event } from 'h3'
 import { eq, gt, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 
-const SALT_ROUNDS = 12
-
-export const hashPassword = async (password: string): Promise<string> => {
-  return bcrypt.hash(password, SALT_ROUNDS)
+const toBase64 = (data: Uint8Array): string => {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(data).toString('base64')
+  }
+  return btoa(String.fromCharCode(...data))
 }
 
-export const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
-  return bcrypt.compare(password, hash)
+const fromBase64 = (data: string): Uint8Array => {
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(data, 'base64'))
+  }
+  return new Uint8Array(atob(data).split('').map(c => c.charCodeAt(0)))
+}
+
+export const hashPassword = async (password: string): Promise<string> => {
+  const salt = crypto.getRandomValues(new Uint8Array(16))
+  const encoder = new TextEncoder()
+  const passwordData = encoder.encode(password)
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    passwordData,
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  )
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    key,
+    256
+  )
+
+  const hash = new Uint8Array(derivedBits)
+  const combined = new Uint8Array(salt.length + hash.length)
+  combined.set(salt, 0)
+  combined.set(hash, salt.length)
+
+  return toBase64(combined)
+}
+
+export const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
+  try {
+    const combined = fromBase64(hashedPassword)
+    const salt = combined.slice(0, 16)
+    const hash = combined.slice(16)
+
+    const encoder = new TextEncoder()
+    const passwordData = encoder.encode(password)
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      passwordData,
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    )
+
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt,
+        iterations: 100000,
+        hash: 'SHA-256',
+      },
+      key,
+      256
+    )
+
+    const newHash = new Uint8Array(derivedBits)
+    return hash.length === newHash.length && hash.every((byte, i) => byte === newHash[i])
+  }
+  catch {
+    return false
+  }
 }
 
 export const generateSessionToken = (): string => {
-  return randomBytes(32).toString('base64url')
+  const bytes = crypto.getRandomValues(new Uint8Array(32))
+  return toBase64(bytes).replace(/[+/]/g, c => c === '+' ? '-' : '_').replace(/=/g, '')
 }
 
-export const findUser = async (username: string) => {
-  return db.query.user.findFirst({
+export const findUser = async (username: string, event: H3Event) => {
+  const database = useDatabase(event)
+  return database.query.user.findFirst({
     where: eq(user.username, username),
     columns: { id: true, username: true, passwordHash: true, mainCurrency: true },
   })
 }
 
-export const createUser = async (username: string, password: string, mainCurrency: string, now: Date) => {
+export const createUser = async (username: string, password: string, mainCurrency: string, now: Date, event: H3Event) => {
+  const database = useDatabase(event)
   const passwordHash = await hashPassword(password)
 
-  await db.insert(user).values({
+  await database.insert(user).values({
     id: crypto.randomUUID(),
     username,
     passwordHash,
@@ -37,18 +111,18 @@ export const createUser = async (username: string, password: string, mainCurrenc
     createdAt: now,
   })
 
-  const created = await findUser(username)
+  const created = await findUser(username, event)
   if (!created) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create user' })
   }
   return created
 }
 
-export const ensureUser = async (username: string, password: string, mainCurrency: string, now: Date) => {
-  const existing = await findUser(username)
+export const ensureUser = async (username: string, password: string, mainCurrency: string, now: Date, event: H3Event) => {
+  const existing = await findUser(username, event)
 
   if (!existing) {
-    return await createUser(username, password, mainCurrency, now)
+    return await createUser(username, password, mainCurrency, now, event)
   }
 
   const isPasswordValid = await verifyPassword(password, existing.passwordHash)
@@ -60,12 +134,13 @@ export const ensureUser = async (username: string, password: string, mainCurrenc
   return existing
 }
 
-export const createSession = async (userId: string, now: Date): Promise<string> => {
+export const createSession = async (userId: string, now: Date, event: H3Event): Promise<string> => {
+  const database = useDatabase(event)
   const token = generateSessionToken()
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-  await db.insert(session).values({
+  await database.insert(session).values({
     id: crypto.randomUUID(),
     userId,
     tokenHash,
@@ -87,6 +162,7 @@ export const setAuthCookie = (event: H3Event, token: string) => {
 }
 
 export const getUserFromRequest = async (event: H3Event) => {
+  const database = useDatabase(event)
   const token = getCookie(event, 'auth-token')
   if (!token) {
     return null
@@ -95,7 +171,7 @@ export const getUserFromRequest = async (event: H3Event) => {
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const now = new Date()
 
-  const sessionData = await db
+  const sessionData = await database
     .select({
       userId: session.userId,
     })
@@ -115,7 +191,7 @@ export const getUserFromRequest = async (event: H3Event) => {
     return null
   }
 
-  const userData = await db
+  const userData = await database
     .select({
       id: user.id,
       username: user.username,

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "14e77888-07b3-420c-a97e-b7091f2e8fcd",
+  "id": "e82a6fad-4c6a-4f3b-98da-2a1d64c43213",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "budget_share": {

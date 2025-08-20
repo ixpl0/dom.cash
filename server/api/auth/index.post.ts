@@ -6,8 +6,8 @@ import { parseBody } from '~~/server/utils/validation'
 export default defineEventHandler(async (event) => {
   const { username, password, mainCurrency } = await parseBody(event, authSchema)
   const now = new Date()
-  const authenticatedUser = await ensureUser(username, password, mainCurrency, now)
-  const token = await createSession(authenticatedUser.id, now)
+  const authenticatedUser = await ensureUser(username, password, mainCurrency, now, event)
+  const token = await createSession(authenticatedUser.id, now, event)
 
   setAuthCookie(event, token)
 

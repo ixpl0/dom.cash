@@ -12,10 +12,6 @@ import {
   getUserFromRequest,
 } from '~~/server/utils/auth'
 
-vi.mock('bcrypt', () => ({
-  hash: vi.fn(),
-  compare: vi.fn(),
-}))
 
 vi.mock('node:crypto', () => ({
   randomBytes: vi.fn(),
@@ -25,6 +21,11 @@ vi.mock('node:crypto', () => ({
 Object.defineProperty(globalThis, 'crypto', {
   value: {
     randomUUID: vi.fn().mockReturnValue('mock-uuid'),
+    getRandomValues: vi.fn(),
+    subtle: {
+      importKey: vi.fn(),
+      deriveBits: vi.fn(),
+    },
   },
   writable: true,
 })
@@ -66,7 +67,6 @@ vi.mock('drizzle-orm', () => ({
   gt: vi.fn(),
 }))
 
-let mockBcrypt: any
 let mockCrypto: any
 let mockCreateHash: any
 let mockDb: any
@@ -80,13 +80,10 @@ describe('server/utils/auth', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    const bcrypt = await import('bcrypt')
     const crypto = await import('node:crypto')
     const h3 = await import('h3')
     const db = await import('~~/server/db')
     const schema = await import('~~/server/db/schema')
-
-    mockBcrypt = bcrypt
     mockCrypto = crypto
     mockCreateHash = crypto.createHash as ReturnType<typeof vi.fn>
     mockDb = db.db
@@ -102,25 +99,48 @@ describe('server/utils/auth', () => {
   })
 
   describe('hashPassword', () => {
-    it('should hash password with bcrypt and salt rounds', async () => {
+    it('should hash password with PBKDF2', async () => {
       const password = 'test-password'
-      const hashedPassword = 'hashed-password'
+      const salt = new Uint8Array(16)
+      const hash = new Uint8Array(32)
+      const mockKey = {}
 
-      mockBcrypt.hash.mockResolvedValue(hashedPassword)
+      global.crypto.getRandomValues.mockReturnValue(salt)
+      global.crypto.subtle.importKey.mockResolvedValue(mockKey)
+      global.crypto.subtle.deriveBits.mockResolvedValue(hash.buffer)
+
+      global.Buffer = {
+        from: vi.fn().mockReturnValue({
+          toString: vi.fn().mockReturnValue('mock-hash'),
+        }),
+      } as any
 
       const result = await hashPassword(password)
 
-      expect(mockBcrypt.hash).toHaveBeenCalledWith(password, 12)
-      expect(result).toBe(hashedPassword)
+      expect(global.crypto.getRandomValues).toHaveBeenCalled()
+      expect(global.crypto.subtle.importKey).toHaveBeenCalledWith('raw', expect.any(Uint8Array), 'PBKDF2', false, ['deriveBits'])
+      expect(global.crypto.subtle.deriveBits).toHaveBeenCalledWith(
+        {
+          name: 'PBKDF2',
+          salt,
+          iterations: 100000,
+          hash: 'SHA-256',
+        },
+        mockKey,
+        256
+      )
+      expect(result).toBe('mock-hash')
     })
 
-    it('should handle bcrypt errors', async () => {
+    it('should handle crypto errors', async () => {
       const password = 'test-password'
-      const error = new Error('Bcrypt error')
+      const error = new Error('Crypto error')
 
-      mockBcrypt.hash.mockRejectedValue(error)
+      global.crypto.getRandomValues.mockImplementation(() => {
+        throw error
+      })
 
-      await expect(hashPassword(password)).rejects.toThrow('Bcrypt error')
+      await expect(hashPassword(password)).rejects.toThrow('Crypto error')
     })
   })
 
@@ -128,49 +148,95 @@ describe('server/utils/auth', () => {
     it('should verify password correctly', async () => {
       const password = 'test-password'
       const hash = 'test-hash'
+      const combined = new Uint8Array(48)
+      const salt = combined.slice(0, 16)
+      const expectedHash = combined.slice(16)
+      const mockKey = {}
 
-      mockBcrypt.compare.mockResolvedValue(true)
+      global.Buffer = {
+        from: vi.fn().mockReturnValue(combined),
+      } as any
+
+      global.atob = vi.fn().mockReturnValue(String.fromCharCode(...combined))
+      global.crypto.subtle.importKey.mockResolvedValue(mockKey)
+      global.crypto.subtle.deriveBits.mockResolvedValue(expectedHash.buffer)
 
       const result = await verifyPassword(password, hash)
 
-      expect(mockBcrypt.compare).toHaveBeenCalledWith(password, hash)
+      expect(global.crypto.subtle.importKey).toHaveBeenCalledWith('raw', expect.any(Uint8Array), 'PBKDF2', false, ['deriveBits'])
+      expect(global.crypto.subtle.deriveBits).toHaveBeenCalledWith(
+        {
+          name: 'PBKDF2',
+          salt,
+          iterations: 100000,
+          hash: 'SHA-256',
+        },
+        mockKey,
+        256
+      )
       expect(result).toBe(true)
     })
 
     it('should return false for invalid password', async () => {
       const password = 'wrong-password'
       const hash = 'test-hash'
+      const combined = new Uint8Array(48)
+      const salt = combined.slice(0, 16)
+      const expectedHash = combined.slice(16)
+      const wrongHash = new Uint8Array(32)
+      wrongHash[0] = 1
+      const mockKey = {}
 
-      mockBcrypt.compare.mockResolvedValue(false)
+      global.Buffer = {
+        from: vi.fn().mockReturnValue(combined),
+      } as any
+
+      global.atob = vi.fn().mockReturnValue(String.fromCharCode(...combined))
+      global.crypto.subtle.importKey.mockResolvedValue(mockKey)
+      global.crypto.subtle.deriveBits.mockResolvedValue(wrongHash.buffer)
 
       const result = await verifyPassword(password, hash)
 
       expect(result).toBe(false)
     })
 
-    it('should handle bcrypt compare errors', async () => {
+    it('should return false on crypto errors', async () => {
       const password = 'test-password'
       const hash = 'test-hash'
-      const error = new Error('Compare error')
+      const error = new Error('Crypto error')
 
-      mockBcrypt.compare.mockRejectedValue(error)
+      global.Buffer = {
+        from: vi.fn().mockImplementation(() => {
+          throw error
+        }),
+      } as any
 
-      await expect(verifyPassword(password, hash)).rejects.toThrow('Compare error')
+      const result = await verifyPassword(password, hash)
+
+      expect(result).toBe(false)
     })
   })
 
   describe('generateSessionToken', () => {
     it('should generate random session token', () => {
-      const mockBuffer = {
-        toString: vi.fn().mockReturnValue('mock-token'),
-      }
-      mockCrypto.randomBytes.mockReturnValue(mockBuffer)
+      const mockBytes = new Uint8Array(32)
+      Object.defineProperty(globalThis, 'crypto', {
+        value: {
+          ...globalThis.crypto,
+          getRandomValues: vi.fn().mockReturnValue(mockBytes),
+        },
+        writable: true,
+      })
+
+      global.Buffer = {
+        from: vi.fn().mockReturnValue({
+          toString: vi.fn().mockReturnValue('mock-base64-token'),
+        }),
+      } as any
 
       const result = generateSessionToken()
 
-      expect(mockCrypto.randomBytes).toHaveBeenCalledWith(32)
-      expect(mockBuffer.toString).toHaveBeenCalledWith('base64url')
-      expect(result).toBe('mock-token')
+      expect(result).toBe('mock-base64-token')
     })
   })
 
@@ -219,7 +285,7 @@ describe('server/utils/auth', () => {
         mainCurrency,
       }
 
-      mockBcrypt.hash.mockResolvedValue(hashedPassword)
+      mockArgon2.hash.mockResolvedValue(hashedPassword)
       mockDb.insert.mockReturnValue({
         values: vi.fn().mockResolvedValue(undefined),
       })
@@ -227,7 +293,7 @@ describe('server/utils/auth', () => {
 
       const result = await createUser(username, password, mainCurrency, now)
 
-      expect(mockBcrypt.hash).toHaveBeenCalledWith(password, 12)
+      expect(mockArgon2.hash).toHaveBeenCalledWith(password, expect.any(Object))
       expect(mockDb.insert).toHaveBeenCalledWith(mockUser)
       expect(result).toEqual(createdUser)
     })
@@ -239,7 +305,7 @@ describe('server/utils/auth', () => {
       const now = new Date()
       const hashedPassword = 'hashed-password'
 
-      mockBcrypt.hash.mockResolvedValue(hashedPassword)
+      mockArgon2.hash.mockResolvedValue(hashedPassword)
       mockDb.insert.mockReturnValue({
         values: vi.fn().mockResolvedValue(undefined),
       })
@@ -265,7 +331,7 @@ describe('server/utils/auth', () => {
       }
 
       mockDb.query.user.findFirst.mockResolvedValue(existingUser)
-      mockBcrypt.compare.mockResolvedValue(true)
+      mockArgon2.verify.mockResolvedValue(true)
 
       const result = await ensureUser(username, password, mainCurrency, now)
 
@@ -287,7 +353,7 @@ describe('server/utils/auth', () => {
       mockDb.query.user.findFirst
         .mockResolvedValueOnce(undefined) // findUser in ensureUser
         .mockResolvedValueOnce(newUser) // findUser in createUser
-      mockBcrypt.hash.mockResolvedValue('new-hash')
+      mockArgon2.hash.mockResolvedValue('new-hash')
       mockDb.insert.mockReturnValue({
         values: vi.fn().mockResolvedValue(undefined),
       })
@@ -310,7 +376,7 @@ describe('server/utils/auth', () => {
       }
 
       mockDb.query.user.findFirst.mockResolvedValue(existingUser)
-      mockBcrypt.compare.mockResolvedValue(false)
+      mockArgon2.verify.mockResolvedValue(false)
       mockCreateError.mockReturnValue(new Error('Invalid credentials'))
 
       await expect(ensureUser(username, password, mainCurrency, now))

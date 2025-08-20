@@ -5,6 +5,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "dev:d1": "wrangler pages dev dist --d1=DB --local --port 3000",
+    "dev:d1:remote": "wrangler pages dev dist --d1=DB --port 3000",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -19,6 +21,12 @@
     "db:reset": "pnpm db:backup && del db.sqlite && pnpm db:migrate",
     "db:update": "pnpm db:generate && pnpm db:migrate",
     "db:studio": "drizzle-kit studio",
+    "d1:create": "wrangler d1 create doma-budget-db",
+    "d1:migrate": "wrangler d1 migrations apply doma-budget-db --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply doma-budget-db",
+    "d1:studio": "wrangler d1 studio doma-budget-db --local",
+    "dev:wrangler": "wrangler pages dev dist --d1=DB:doma-budget-db",
+    "dev:wrangler:local": "wrangler pages dev dist --d1=DB:doma-budget-db --local",
     "test": "vitest",
     "test:run": "vitest run",
     "test:cov": "vitest run --coverage",
@@ -33,10 +41,9 @@
     "test:nuxt:ui": "vitest --ui --project nuxt"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.10",
+    "@libsql/client": "^0.15.12",
     "@nuxt/eslint": "1.7.1",
     "@tailwindcss/vite": "^4.1.11",
-    "bcrypt": "^6.0.0",
     "cookie": "^1.0.2",
     "cron": "^4.3.3",
     "daisyui": "^5.0.50",
@@ -51,7 +58,6 @@
   },
   "devDependencies": {
     "@nuxt/test-utils": "^3.19.2",
-    "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@vitest/coverage-v8": "^3.2.4",
     "@vue/test-utils": "^2.4.6",
@@ -60,7 +66,8 @@
     "happy-dom": "^18.0.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.31.0"
   },
   "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
   "engines": {

@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1755338276507,
-      "tag": "0000_initial",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1755424017914,
-      "tag": "0001_currencies_init",
+      "when": 1755721994397,
+      "tag": "0000_sour_eddie_brock",
       "breakpoints": true
     }
   ]

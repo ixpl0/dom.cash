@@ -27,3 +27,6 @@ logs
 # DB
 *.sqlite
 backups
+
+# Wrangler
+.wrangler
