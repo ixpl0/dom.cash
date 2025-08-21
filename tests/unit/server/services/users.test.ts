@@ -6,7 +6,10 @@ vi.mock('~~/server/db', () => ({
     from: vi.fn(),
     where: vi.fn(),
     limit: vi.fn(),
+    update: vi.fn(),
+    set: vi.fn(),
   },
+  useDatabase: vi.fn(),
 }))
 
 vi.mock('~~/server/db/schema', () => ({
@@ -36,6 +39,17 @@ vi.mock('drizzle-orm', () => ({
 
 let mockDb: any
 
+// Mock event for tests
+const mockEvent = {
+  context: {
+    cloudflare: {
+      env: {
+        DB: mockDb,
+      },
+    },
+  },
+} as any
+
 const {
   findUserByUsername,
   checkReadPermission,
@@ -48,7 +62,16 @@ describe('server/services/users', () => {
     vi.clearAllMocks()
 
     const db = await import('~~/server/db')
-    mockDb = db.db
+    const mockUseDatabase = db.useDatabase as ReturnType<typeof vi.fn>
+    mockDb = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      limit: vi.fn(),
+      update: vi.fn(),
+      set: vi.fn(),
+    }
+    mockUseDatabase.mockReturnValue(mockDb)
   })
 
   afterEach(() => {
@@ -64,7 +87,7 @@ describe('server/services/users', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([user])
 
-      const result = await findUserByUsername('testuser')
+      const result = await findUserByUsername('testuser', mockEvent)
 
       expect(result).toEqual(user)
     })
@@ -75,7 +98,7 @@ describe('server/services/users', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await findUserByUsername('nonexistent')
+      const result = await findUserByUsername('nonexistent', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -83,7 +106,7 @@ describe('server/services/users', () => {
 
   describe('checkReadPermission', () => {
     it('should return true for same user', async () => {
-      const result = await checkReadPermission('user-1', 'user-1')
+      const result = await checkReadPermission('user-1', 'user-1', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -94,7 +117,7 @@ describe('server/services/users', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([{ access: 'read' }])
 
-      const result = await checkReadPermission('user-1', 'user-2')
+      const result = await checkReadPermission('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -105,7 +128,7 @@ describe('server/services/users', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await checkReadPermission('user-1', 'user-2')
+      const result = await checkReadPermission('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(false)
     })
@@ -147,7 +170,7 @@ describe('server/services/users', () => {
         })),
       })
 
-      const result = await getUserBudgetData('testuser', 'user-1')
+      const result = await getUserBudgetData('testuser', 'user-1', mockEvent)
 
       expect(result).toEqual(budgetData)
     })
@@ -161,7 +184,7 @@ describe('server/services/users', () => {
         })),
       })
 
-      await expect(getUserBudgetData('nonexistent', 'user-1')).rejects.toThrow('User not found')
+      await expect(getUserBudgetData('nonexistent', 'user-1', mockEvent)).rejects.toThrow('User not found')
     })
 
     it('should throw error if insufficient permissions', async () => {
@@ -184,7 +207,7 @@ describe('server/services/users', () => {
         })),
       })
 
-      await expect(getUserBudgetData('testuser', 'user-2')).rejects.toThrow('Insufficient permissions to view budget')
+      await expect(getUserBudgetData('testuser', 'user-2', mockEvent)).rejects.toThrow('Insufficient permissions to view budget')
     })
   })
 
@@ -198,7 +221,7 @@ describe('server/services/users', () => {
 
       mockDb.update = mockUpdate
 
-      await updateUserCurrency('user-1', 'EUR')
+      await updateUserCurrency('user-1', 'EUR', mockEvent)
 
       expect(mockUpdate).toHaveBeenCalled()
     })

@@ -1,12 +1,11 @@
 import { $fetch } from '@nuxt/test-utils/e2e'
 import { createHash } from 'node:crypto'
-// TODO: Update tests to use proper database context
-// import { db } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { hashPassword } from '~~/server/utils/auth'
+import { createMockDatabase } from '../../utils/mock-database'
 
-// Temporary test database instance - needs to be replaced with proper test setup
-const db: any = null
+// Mock database instance for tests
+const db = createMockDatabase()
 
 export interface TestAuthContext {
   user: {
@@ -28,26 +27,32 @@ export const createAuthenticatedUser = async (userData: {
   const userId = crypto.randomUUID()
   const passwordHash = await hashPassword(password)
 
-  await db.insert(user).values({
+  const testUser = {
     id: userId,
     username,
     passwordHash,
     mainCurrency: 'USD',
     createdAt: new Date(),
-  })
+  }
+
+  db.insert(user).values(testUser).mockResolvedValue([testUser])
+  await db.insert(user).values(testUser)
 
   const token = crypto.randomUUID() + crypto.randomUUID()
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const now = new Date()
   const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-  await db.insert(session).values({
+  const testSession = {
     id: crypto.randomUUID(),
     userId,
     tokenHash,
     createdAt: now,
     expiresAt,
-  })
+  }
+
+  db.insert(session).values(testSession).mockResolvedValue([testSession])
+  await db.insert(session).values(testSession)
 
   return {
     user: {

@@ -17,6 +17,10 @@ vi.mock('~~/server/db/schema', () => ({
 }))
 
 vi.mock('~~/server/db', () => ({
+  useDatabase: vi.fn(() => ({
+    insert: vi.fn(),
+    select: vi.fn(),
+  })),
   db: {
     insert: vi.fn(),
     select: vi.fn(),
@@ -31,17 +35,37 @@ let mockInsert: ReturnType<typeof vi.fn>
 let mockSelect: ReturnType<typeof vi.fn>
 let mockEq: ReturnType<typeof vi.fn>
 let mockCurrencySchema: typeof currency
+let mockDb: any
+
+// Mock event for tests
+const mockEvent = {
+  context: {
+    cloudflare: {
+      env: {
+        DB: {}, // Mock database
+      },
+    },
+  },
+} as any
 
 describe('server/utils/rates/database', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    const { db } = await import('~~/server/db')
+    const { useDatabase } = await import('~~/server/db')
     const { currency } = await import('~~/server/db/schema')
     const { eq } = await import('drizzle-orm')
 
-    mockInsert = db.insert as ReturnType<typeof vi.fn>
-    mockSelect = db.select as ReturnType<typeof vi.fn>
+    mockDb = {
+      insert: vi.fn(),
+      select: vi.fn(),
+    }
+
+    const mockUseDatabase = useDatabase as ReturnType<typeof vi.fn>
+    mockUseDatabase.mockReturnValue(mockDb)
+
+    mockInsert = mockDb.insert as ReturnType<typeof vi.fn>
+    mockSelect = mockDb.select as ReturnType<typeof vi.fn>
     mockEq = eq as ReturnType<typeof vi.fn>
     mockCurrencySchema = currency
 
@@ -70,7 +94,7 @@ describe('server/utils/rates/database', () => {
       }
       mockInsert.mockReturnValue(mockInsertChain)
 
-      await saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES)
+      await saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES, mockEvent)
 
       expect(mockInsert).toHaveBeenCalledWith(mockCurrencySchema)
       expect(mockValues).toHaveBeenCalledWith({
@@ -90,7 +114,7 @@ describe('server/utils/rates/database', () => {
       })
       mockInsert.mockReturnValue({ values: mockValues })
 
-      await saveCurrencyRates(EXPECTED_DATE_FORMATS.LAST_JANUARY, MOCK_HISTORICAL_RATES)
+      await saveCurrencyRates(EXPECTED_DATE_FORMATS.LAST_JANUARY, MOCK_HISTORICAL_RATES, mockEvent)
 
       expect(mockOnConflictDoUpdate).toHaveBeenCalledWith({
         target: mockCurrencySchema.date,
@@ -101,21 +125,21 @@ describe('server/utils/rates/database', () => {
     it('should reject empty rates object', async () => {
       const emptyRates = {}
 
-      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, emptyRates))
+      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, emptyRates, mockEvent))
         .rejects.toThrow('Invalid rates data: empty or invalid object')
     })
 
     it('should reject invalid rate values', async () => {
       const invalidRates = { USD: -1, EUR: 'invalid' as any, GEL: NaN }
 
-      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, invalidRates))
+      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, invalidRates, mockEvent))
         .rejects.toThrow('Invalid rate for currency USD: -1')
     })
 
     it('should reject invalid date format', async () => {
       const validRates = { USD: 1, EUR: 0.85 }
 
-      await expect(saveCurrencyRates('invalid-date', validRates))
+      await expect(saveCurrencyRates('invalid-date', validRates, mockEvent))
         .rejects.toThrow('Invalid date format: invalid-date. Expected YYYY-MM-DD')
     })
 
@@ -125,7 +149,7 @@ describe('server/utils/rates/database', () => {
         largeRates[`CURRENCY_${i.toString().padStart(10, '0')}`] = i + 1
       }
 
-      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, largeRates))
+      await expect(saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, largeRates, mockEvent))
         .rejects.toThrow('Rates data too large')
     })
 
@@ -137,7 +161,7 @@ describe('server/utils/rates/database', () => {
       mockInsert.mockReturnValue({ values: mockValues })
 
       await expect(
-        saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES),
+        saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES, mockEvent),
       ).rejects.toThrow('Database connection failed')
     })
 
@@ -149,7 +173,7 @@ describe('server/utils/rates/database', () => {
       mockInsert.mockReturnValue({ values: mockValues })
 
       await expect(
-        saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES),
+        saveCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, MOCK_CURRENCY_RATES, mockEvent),
       ).rejects.toBe(nonErrorException)
     })
   })
@@ -166,7 +190,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      const result = await getCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY)
+      const result = await getCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, mockEvent)
 
       expect(mockSelect).toHaveBeenCalled()
       expect(mockFrom).toHaveBeenCalledWith(mockCurrencySchema)
@@ -185,7 +209,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      const result = await getCurrencyRates('2025-01-01')
+      const result = await getCurrencyRates('2025-01-01', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -202,7 +226,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      await expect(getCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY))
+      await expect(getCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, mockEvent))
         .rejects.toThrow('Database query failed')
     })
   })
@@ -219,7 +243,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      const result = await hasCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY)
+      const result = await hasCurrencyRates(EXPECTED_DATE_FORMATS.FIRST_FEBRUARY, mockEvent)
 
       expect(result).toBe(true)
     })
@@ -235,7 +259,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      const result = await hasCurrencyRates('2025-01-01')
+      const result = await hasCurrencyRates('2025-01-01', mockEvent)
 
       expect(result).toBe(false)
     })
@@ -262,7 +286,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      const result = await hasRatesForCurrentMonth()
+      const result = await hasRatesForCurrentMonth(mockEvent)
 
       expect(result).toBe(true)
     })
@@ -278,7 +302,7 @@ describe('server/utils/rates/database', () => {
         from: mockFrom,
       })
 
-      const result = await hasRatesForCurrentMonth()
+      const result = await hasRatesForCurrentMonth(mockEvent)
 
       expect(result).toBe(false)
     })
@@ -295,9 +319,6 @@ describe('server/utils/rates/database', () => {
     })
 
     it('should fetch and save historical rates for current month', async () => {
-      const db = await import('~~/server/db')
-      const mockDbImport = db.db as any
-
       const mockApi = await import('~~/server/utils/rates/api')
       const mockFetchHistoricalRates = mockApi.fetchHistoricalRates as ReturnType<typeof vi.fn>
 
@@ -306,9 +327,9 @@ describe('server/utils/rates/database', () => {
       const mockValues = vi.fn().mockReturnValue({
         onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
       })
-      mockDbImport.insert.mockReturnValue({ values: mockValues })
+      mockInsert.mockReturnValue({ values: mockValues })
 
-      await saveHistoricalRatesForCurrentMonth()
+      await saveHistoricalRatesForCurrentMonth(mockEvent)
 
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2025-01-31')
 
@@ -329,11 +350,9 @@ describe('server/utils/rates/database', () => {
       const mockValues = vi.fn().mockReturnValue({
         onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
       })
-      const db = await import('~~/server/db')
-      const mockDbImport = db.db as any
-      mockDbImport.insert.mockReturnValue({ values: mockValues })
+      mockInsert.mockReturnValue({ values: mockValues })
 
-      await saveHistoricalRatesForCurrentMonth()
+      await saveHistoricalRatesForCurrentMonth(mockEvent)
 
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2024-12-31')
       expect(mockValues).toHaveBeenCalledWith({
@@ -353,11 +372,9 @@ describe('server/utils/rates/database', () => {
       const mockValues = vi.fn().mockReturnValue({
         onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
       })
-      const db = await import('~~/server/db')
-      const mockDbImport = db.db as any
-      mockDbImport.insert.mockReturnValue({ values: mockValues })
+      mockInsert.mockReturnValue({ values: mockValues })
 
-      await saveHistoricalRatesForCurrentMonth()
+      await saveHistoricalRatesForCurrentMonth(mockEvent)
 
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2024-02-29')
       expect(mockValues).toHaveBeenCalledWith({
@@ -373,7 +390,7 @@ describe('server/utils/rates/database', () => {
       const apiError = new Error('API request failed')
       mockFetchHistoricalRates.mockRejectedValue(apiError)
 
-      await expect(saveHistoricalRatesForCurrentMonth()).rejects.toThrow('API request failed')
+      await expect(saveHistoricalRatesForCurrentMonth(mockEvent)).rejects.toThrow('API request failed')
 
       expect(mockFetchHistoricalRates).toHaveBeenCalledWith('2025-01-31')
     })
@@ -388,11 +405,9 @@ describe('server/utils/rates/database', () => {
       const mockValues = vi.fn().mockReturnValue({
         onConflictDoUpdate: vi.fn().mockRejectedValue(dbError),
       })
-      const db = await import('~~/server/db')
-      const mockDbImport = db.db as any
-      mockDbImport.insert.mockReturnValue({ values: mockValues })
+      mockInsert.mockReturnValue({ values: mockValues })
 
-      await expect(saveHistoricalRatesForCurrentMonth()).rejects.toThrow('Database save failed')
+      await expect(saveHistoricalRatesForCurrentMonth(mockEvent)).rejects.toThrow('Database save failed')
     })
   })
 })

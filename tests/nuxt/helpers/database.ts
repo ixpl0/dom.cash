@@ -1,10 +1,9 @@
 import { beforeEach, afterEach } from 'vitest'
-// TODO: Update tests to use proper database context
-// import { db } from '~~/server/db'
 import { user, month, entry, budgetShare, currency } from '~~/server/db/schema'
+import { createMockDatabase } from '../../utils/mock-database'
 
-// Temporary test database instance - needs to be replaced with proper test setup
-const db: any = null
+// Mock database instance for tests
+const db = createMockDatabase()
 
 export const setupTestDatabase = () => {
   beforeEach(async () => {
@@ -30,24 +29,30 @@ export const cleanDatabase = async () => {
 }
 
 export const createTestUser = async (userData: { username: string, password: string }) => {
-  const [testUser] = await db.insert(user).values({
+  const testUser = {
     id: crypto.randomUUID(),
     username: userData.username,
     passwordHash: userData.password,
     mainCurrency: 'USD',
     createdAt: new Date(),
-  }).returning()
+  }
+
+  db.insert(user).values(testUser).returning.mockResolvedValue([testUser])
+  await db.insert(user).values(testUser).returning()
 
   return testUser
 }
 
 export const createTestMonth = async (userId: string, year: number, monthNumber: number) => {
-  const [testMonth] = await db.insert(month).values({
+  const testMonth = {
     id: crypto.randomUUID(),
     userId,
     year,
     month: monthNumber,
-  }).returning()
+  }
+
+  db.insert(month).values(testMonth).returning.mockResolvedValue([testMonth])
+  await db.insert(month).values(testMonth).returning()
 
   return testMonth
 }
@@ -59,7 +64,7 @@ export const createTestEntry = async (monthId: string, entryData: {
   currency: string
   date?: string | null
 }) => {
-  const [testEntry] = await db.insert(entry).values({
+  const testEntry = {
     id: crypto.randomUUID(),
     monthId,
     kind: entryData.kind,
@@ -67,19 +72,25 @@ export const createTestEntry = async (monthId: string, entryData: {
     amount: entryData.amount,
     currency: entryData.currency,
     date: entryData.date || null,
-  }).returning()
+  }
+
+  db.insert(entry).values(testEntry).returning.mockResolvedValue([testEntry])
+  await db.insert(entry).values(testEntry).returning()
 
   return testEntry
 }
 
 export const createTestShare = async (ownerId: string, sharedWithId: string, access: 'read' | 'write') => {
-  const [testShare] = await db.insert(budgetShare).values({
+  const testShare = {
     id: crypto.randomUUID(),
     ownerId,
     sharedWithId,
     access,
     createdAt: new Date(),
-  }).returning()
+  }
+
+  db.insert(budgetShare).values(testShare).returning.mockResolvedValue([testShare])
+  await db.insert(budgetShare).values(testShare).returning()
 
   return testShare
 }

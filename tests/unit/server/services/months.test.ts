@@ -16,9 +16,21 @@ const mockDb = {
 
 vi.mock('~~/server/db', () => ({
   db: mockDb,
+  useDatabase: vi.fn(),
 }))
 
 const db = mockDb
+
+// Mock event for tests
+const mockEvent = {
+  context: {
+    cloudflare: {
+      env: {
+        DB: mockDb,
+      },
+    },
+  },
+} as any
 
 vi.mock('~~/server/db/schema', () => ({
   entry: {
@@ -60,6 +72,8 @@ Object.defineProperty(globalThis, 'crypto', {
 describe('server/services/months', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
+    const dbModule = await import('~~/server/db')
+    vi.mocked(dbModule.useDatabase).mockReturnValue(mockDb)
     const { clearRatesCache } = await import('~~/server/services/months')
     clearRatesCache()
   })
@@ -83,7 +97,7 @@ describe('server/services/months', () => {
         }),
       } as any)
 
-      const result = await getExchangeRatesForMonth(2024, 0)
+      const result = await getExchangeRatesForMonth(2024, 0, mockEvent)
       expect(result).toEqual({ rates: mockRates, source: '2024-01-01' })
     })
 
@@ -104,7 +118,7 @@ describe('server/services/months', () => {
           }),
         } as any)
 
-      const result = await getExchangeRatesForMonth(2024, 0)
+      const result = await getExchangeRatesForMonth(2024, 0, mockEvent)
       expect(result).toBeUndefined()
     })
   })
@@ -143,7 +157,7 @@ describe('server/services/months', () => {
         year: 2024,
         month: 0,
         copyFromMonthId: 'copyFromMonth1',
-      })
+      }, mockEvent)
       expect(result).toEqual(mockMonth)
     })
 
@@ -164,7 +178,7 @@ describe('server/services/months', () => {
         }),
       } as any)
 
-      await expect(createMonth({ targetUserId: 'user1', year: 2024, month: 0 })).rejects.toThrow('Failed to create month')
+      await expect(createMonth({ targetUserId: 'user1', year: 2024, month: 0 }, mockEvent)).rejects.toThrow('Failed to create month')
     })
   })
 
@@ -182,7 +196,7 @@ describe('server/services/months', () => {
         }),
       } as any)
 
-      const result = await findUserByUsername('testuser')
+      const result = await findUserByUsername('testuser', mockEvent)
       expect(result).toEqual(mockUser)
     })
 
@@ -197,7 +211,7 @@ describe('server/services/months', () => {
         }),
       } as any)
 
-      const result = await findUserByUsername('nonexistent')
+      const result = await findUserByUsername('nonexistent', mockEvent)
       expect(result).toBeNull()
     })
   })
@@ -285,7 +299,7 @@ describe('server/services/months', () => {
 
       const { copyBalanceEntriesFromMonth } = await import('~~/server/services/months')
 
-      await copyBalanceEntriesFromMonth('source-month', 'target-month')
+      await copyBalanceEntriesFromMonth('source-month', 'target-month', mockEvent)
 
       expect(mockDb.select).toHaveBeenCalled()
       expect(mockDb.insert).toHaveBeenCalled()
@@ -300,7 +314,7 @@ describe('server/services/months', () => {
 
       const { copyBalanceEntriesFromMonth } = await import('~~/server/services/months')
 
-      await copyBalanceEntriesFromMonth('source-month', 'target-month')
+      await copyBalanceEntriesFromMonth('source-month', 'target-month', mockEvent)
 
       expect(mockDb.select).toHaveBeenCalled()
       expect(mockDb.insert).not.toHaveBeenCalled()
@@ -329,7 +343,7 @@ describe('server/services/months', () => {
         year: 2024,
         month: 5,
         targetUserId: 'user-1',
-      })
+      }, mockEvent)
 
       expect(result).toEqual({ id: 'new-month-id' })
       expect(mockDb.insert).toHaveBeenCalled()
@@ -350,7 +364,7 @@ describe('server/services/months', () => {
         year: 2024,
         month: 5,
         targetUserId: 'user-1',
-      })).rejects.toThrow('Month already exists')
+      }, mockEvent)).rejects.toThrow('Month already exists')
     })
   })
 
@@ -376,7 +390,7 @@ describe('server/services/months', () => {
 
       const { deleteMonth } = await import('~~/server/services/months')
 
-      await deleteMonth('month-1')
+      await deleteMonth('month-1', mockEvent)
 
       expect(mockDb.select).toHaveBeenCalled()
       expect(mockTransaction).toHaveBeenCalled()
@@ -393,7 +407,7 @@ describe('server/services/months', () => {
 
       const { deleteMonth } = await import('~~/server/services/months')
 
-      await expect(deleteMonth('nonexistent')).rejects.toThrow('Month not found')
+      await expect(deleteMonth('nonexistent', mockEvent)).rejects.toThrow('Month not found')
     })
 
     it('should delete entries before deleting month', async () => {
@@ -431,7 +445,7 @@ describe('server/services/months', () => {
 
       const { deleteMonth } = await import('~~/server/services/months')
 
-      await deleteMonth('month-1')
+      await deleteMonth('month-1', mockEvent)
 
       expect(deleteCalls).toEqual(['entry', 'month'])
       expect(mockTx.delete).toHaveBeenCalledTimes(2)
@@ -442,7 +456,7 @@ describe('server/services/months', () => {
     it('should return true for same user', async () => {
       const { checkWritePermission } = await import('~~/server/services/months')
 
-      const result = await checkWritePermission('user-1', 'user-1')
+      const result = await checkWritePermission('user-1', 'user-1', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -458,7 +472,7 @@ describe('server/services/months', () => {
 
       const { checkWritePermission } = await import('~~/server/services/months')
 
-      const result = await checkWritePermission('user-1', 'user-2')
+      const result = await checkWritePermission('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -474,7 +488,7 @@ describe('server/services/months', () => {
 
       const { checkWritePermission } = await import('~~/server/services/months')
 
-      const result = await checkWritePermission('user-1', 'user-2')
+      const result = await checkWritePermission('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(false)
     })
@@ -490,7 +504,7 @@ describe('server/services/months', () => {
 
       const { checkWritePermission } = await import('~~/server/services/months')
 
-      const result = await checkWritePermission('user-1', 'user-2')
+      const result = await checkWritePermission('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(false)
     })

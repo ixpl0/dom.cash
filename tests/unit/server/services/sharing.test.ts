@@ -12,7 +12,9 @@ vi.mock('~~/server/db', () => ({
     update: vi.fn(),
     set: vi.fn(),
     delete: vi.fn(),
+    innerJoin: vi.fn(),
   },
+  useDatabase: vi.fn(),
 }))
 
 vi.mock('~~/server/db/schema', () => ({
@@ -42,6 +44,17 @@ Object.defineProperty(globalThis, 'crypto', {
 
 let mockDb: any
 
+// Mock event for tests
+const mockEvent = {
+  context: {
+    cloudflare: {
+      env: {
+        DB: mockDb,
+      },
+    },
+  },
+} as any
+
 const {
   findUserByUsername,
   getExistingShare,
@@ -59,7 +72,21 @@ describe('server/services/sharing', () => {
     vi.clearAllMocks()
 
     const db = await import('~~/server/db')
-    mockDb = db.db
+    const mockUseDatabase = db.useDatabase as ReturnType<typeof vi.fn>
+    mockDb = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      limit: vi.fn(),
+      insert: vi.fn(),
+      values: vi.fn(),
+      returning: vi.fn(),
+      update: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      innerJoin: vi.fn(),
+    }
+    mockUseDatabase.mockReturnValue(mockDb)
   })
 
   afterEach(() => {
@@ -75,7 +102,7 @@ describe('server/services/sharing', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([user])
 
-      const result = await findUserByUsername('testuser')
+      const result = await findUserByUsername('testuser', mockEvent)
 
       expect(result).toEqual(user)
     })
@@ -86,7 +113,7 @@ describe('server/services/sharing', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await findUserByUsername('nonexistent')
+      const result = await findUserByUsername('nonexistent', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -101,7 +128,7 @@ describe('server/services/sharing', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([share])
 
-      const result = await getExistingShare('user-1', 'user-2')
+      const result = await getExistingShare('user-1', 'user-2', mockEvent)
 
       expect(result).toEqual(share)
     })
@@ -112,7 +139,7 @@ describe('server/services/sharing', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await getExistingShare('user-1', 'user-2')
+      const result = await getExistingShare('user-1', 'user-2', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -128,7 +155,7 @@ describe('server/services/sharing', () => {
       mockDb.from.mockReturnThis()
       mockDb.where.mockResolvedValue(shares)
 
-      const result = await getUserShares('user-1')
+      const result = await getUserShares('user-1', mockEvent)
 
       expect(result).toEqual({
         myShares: shares,
@@ -147,7 +174,7 @@ describe('server/services/sharing', () => {
       mockDb.from.mockReturnThis()
       mockDb.where.mockResolvedValue(shares)
 
-      const result = await getSharedWithUser('user-2')
+      const result = await getSharedWithUser('user-2', mockEvent)
 
       expect(result).toEqual(shares)
     })
@@ -159,10 +186,11 @@ describe('server/services/sharing', () => {
 
       mockDb.select.mockReturnThis()
       mockDb.from.mockReturnThis()
+      mockDb.innerJoin.mockReturnThis()
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([share])
 
-      const result = await getShareById('share-1')
+      const result = await getShareById('share-1', mockEvent)
 
       expect(result).toEqual(share)
     })
@@ -170,10 +198,11 @@ describe('server/services/sharing', () => {
     it('should return null if share not found', async () => {
       mockDb.select.mockReturnThis()
       mockDb.from.mockReturnThis()
+      mockDb.innerJoin.mockReturnThis()
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await getShareById('nonexistent')
+      const result = await getShareById('nonexistent', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -205,7 +234,7 @@ describe('server/services/sharing', () => {
         ownerId: 'user-1',
         sharedWithUsername: 'otheruser',
         access: 'write',
-      })
+      }, mockEvent)
 
       expect(result).toEqual(newShare)
       expect(globalThis.crypto.randomUUID).toHaveBeenCalled()
@@ -221,7 +250,7 @@ describe('server/services/sharing', () => {
         ownerId: 'user-1',
         sharedWithUsername: 'nonexistent',
         access: 'write',
-      })).rejects.toThrow('User not found')
+      }, mockEvent)).rejects.toThrow('User not found')
     })
 
     it('should throw error if trying to share with self', async () => {
@@ -236,7 +265,7 @@ describe('server/services/sharing', () => {
         ownerId: 'user-1',
         sharedWithUsername: 'testuser',
         access: 'write',
-      })).rejects.toThrow('Cannot share with yourself')
+      }, mockEvent)).rejects.toThrow('Cannot share with yourself')
     })
 
     it('should throw error if budget already shared', async () => {
@@ -254,7 +283,7 @@ describe('server/services/sharing', () => {
         ownerId: 'user-1',
         sharedWithUsername: 'otheruser',
         access: 'write',
-      })).rejects.toThrow('Budget already shared with this user')
+      }, mockEvent)).rejects.toThrow('Budget already shared with this user')
     })
   })
 
@@ -272,7 +301,7 @@ describe('server/services/sharing', () => {
       mockDb.where.mockReturnThis()
       mockDb.returning.mockResolvedValue([updatedShare])
 
-      const result = await updateShare('share-1', { access: 'read' })
+      const result = await updateShare('share-1', { access: 'read' }, mockEvent)
 
       expect(result).toEqual(updatedShare)
     })
@@ -291,7 +320,7 @@ describe('server/services/sharing', () => {
       mockDb.where.mockReturnThis()
       mockDb.returning.mockResolvedValue([deletedShare])
 
-      const result = await deleteShare('share-1')
+      const result = await deleteShare('share-1', mockEvent)
 
       expect(result).toEqual(deletedShare)
     })
@@ -303,10 +332,11 @@ describe('server/services/sharing', () => {
 
       mockDb.select.mockReturnThis()
       mockDb.from.mockReturnThis()
+      mockDb.innerJoin.mockReturnThis()
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([share])
 
-      const result = await checkShareOwnership('share-1', 'user-1')
+      const result = await checkShareOwnership('share-1', 'user-1', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -316,10 +346,11 @@ describe('server/services/sharing', () => {
 
       mockDb.select.mockReturnThis()
       mockDb.from.mockReturnThis()
+      mockDb.innerJoin.mockReturnThis()
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([share])
 
-      const result = await checkShareOwnership('share-1', 'user-2')
+      const result = await checkShareOwnership('share-1', 'user-2', mockEvent)
 
       expect(result).toBe(false)
     })
@@ -327,10 +358,11 @@ describe('server/services/sharing', () => {
     it('should return false if share does not exist', async () => {
       mockDb.select.mockReturnThis()
       mockDb.from.mockReturnThis()
+      mockDb.innerJoin.mockReturnThis()
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await checkShareOwnership('nonexistent', 'user-1')
+      const result = await checkShareOwnership('nonexistent', 'user-1', mockEvent)
 
       expect(result).toBe(false)
     })

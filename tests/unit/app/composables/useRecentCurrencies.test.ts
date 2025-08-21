@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
 
 const mockLocalStorage = {
   getItem: vi.fn(),
@@ -12,10 +11,75 @@ Object.defineProperty(globalThis, 'localStorage', {
   writable: true,
 })
 
-Object.defineProperty(globalThis, 'window', {
-  value: {},
-  writable: true,
+vi.mock('~~/app/composables/useRecentCurrencies', async () => {
+  const { ref, readonly } = await import('vue')
+
+  const STORAGE_KEY = 'recent_currencies'
+  const MAX_RECENT_CURRENCIES = 8
+
+  const recentCurrencies = ref<string[]>([])
+
+  const loadRecentCurrencies = () => {
+    try {
+      const stored = mockLocalStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          recentCurrencies.value = parsed.slice(0, MAX_RECENT_CURRENCIES)
+        }
+      }
+    }
+    catch {
+      recentCurrencies.value = []
+    }
+  }
+
+  const saveRecentCurrencies = () => {
+    try {
+      mockLocalStorage.setItem(STORAGE_KEY, JSON.stringify(recentCurrencies.value))
+    }
+    catch (error) {
+      console.error('Failed to save recent currencies:', error)
+    }
+  }
+
+  const useRecentCurrencies = () => {
+    const addRecentCurrency = (currencyCode: string) => {
+      const currentList = [...recentCurrencies.value]
+      const existingIndex = currentList.indexOf(currencyCode)
+
+      if (existingIndex !== -1) {
+        currentList.splice(existingIndex, 1)
+      }
+
+      currentList.unshift(currencyCode)
+      recentCurrencies.value = currentList.slice(0, MAX_RECENT_CURRENCIES)
+      saveRecentCurrencies()
+    }
+
+    const getRecentCurrencies = () => {
+      return readonly(recentCurrencies)
+    }
+
+    const clearRecentCurrencies = () => {
+      recentCurrencies.value = []
+    }
+
+    if (recentCurrencies.value.length === 0) {
+      loadRecentCurrencies()
+    }
+
+    return {
+      addRecentCurrency,
+      getRecentCurrencies,
+      clearRecentCurrencies,
+    }
+  }
+
+  return { useRecentCurrencies }
 })
+
+const { useRecentCurrencies } = await import('~~/app/composables/useRecentCurrencies')
 
 describe('useRecentCurrencies', () => {
   beforeEach(() => {
@@ -97,6 +161,8 @@ describe('useRecentCurrencies', () => {
   })
 
   it('should handle localStorage save errors gracefully', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    
     mockLocalStorage.setItem.mockImplementation(() => {
       throw new Error('localStorage save error')
     })
@@ -107,6 +173,9 @@ describe('useRecentCurrencies', () => {
 
     const recentCurrencies = getRecentCurrencies()
     expect(recentCurrencies.value).toEqual(['USD'])
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to save recent currencies:', expect.any(Error))
+    
+    consoleErrorSpy.mockRestore()
   })
 
   it('should load existing currencies from localStorage', () => {

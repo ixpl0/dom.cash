@@ -14,6 +14,7 @@ vi.mock('~~/server/db', () => ({
     delete: vi.fn(),
     leftJoin: vi.fn(),
   },
+  useDatabase: vi.fn(),
 }))
 
 vi.mock('~~/server/db/schema', () => ({
@@ -46,6 +47,17 @@ Object.defineProperty(globalThis, 'crypto', {
 
 let mockDb: any
 
+// Mock event for tests
+const mockEvent = {
+  context: {
+    cloudflare: {
+      env: {
+        DB: mockDb,
+      },
+    },
+  },
+} as any
+
 const {
   getMonthOwner,
   getEntryWithMonth,
@@ -60,7 +72,21 @@ describe('server/services/entries', () => {
     vi.clearAllMocks()
 
     const db = await import('~~/server/db')
-    mockDb = db.db
+    const mockUseDatabase = db.useDatabase as ReturnType<typeof vi.fn>
+    mockDb = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      limit: vi.fn(),
+      insert: vi.fn(),
+      values: vi.fn(),
+      returning: vi.fn(),
+      update: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      leftJoin: vi.fn(),
+    }
+    mockUseDatabase.mockReturnValue(mockDb)
   })
 
   afterEach(() => {
@@ -76,7 +102,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([monthData])
 
-      const result = await getMonthOwner('month-1')
+      const result = await getMonthOwner('month-1', mockEvent)
 
       expect(result).toEqual(monthData)
     })
@@ -87,7 +113,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await getMonthOwner('nonexistent')
+      const result = await getMonthOwner('nonexistent', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -106,7 +132,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([entryData])
 
-      const result = await getEntryWithMonth('entry-1')
+      const result = await getEntryWithMonth('entry-1', mockEvent)
 
       expect(result).toEqual(entryData)
     })
@@ -118,7 +144,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await getEntryWithMonth('nonexistent')
+      const result = await getEntryWithMonth('nonexistent', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -135,7 +161,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([entryData])
 
-      const result = await getEntryWithMonth('entry-1')
+      const result = await getEntryWithMonth('entry-1', mockEvent)
 
       expect(result).toBeNull()
     })
@@ -143,7 +169,7 @@ describe('server/services/entries', () => {
 
   describe('checkWritePermissionForMonth', () => {
     it('should return true for same user', async () => {
-      const result = await checkWritePermissionForMonth('user-1', 'user-1')
+      const result = await checkWritePermissionForMonth('user-1', 'user-1', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -154,7 +180,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([{ access: 'write' }])
 
-      const result = await checkWritePermissionForMonth('user-1', 'user-2')
+      const result = await checkWritePermissionForMonth('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(true)
     })
@@ -165,7 +191,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([])
 
-      const result = await checkWritePermissionForMonth('user-1', 'user-2')
+      const result = await checkWritePermissionForMonth('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(false)
     })
@@ -176,7 +202,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.limit.mockResolvedValue([{ access: 'read' }])
 
-      const result = await checkWritePermissionForMonth('user-1', 'user-2')
+      const result = await checkWritePermissionForMonth('user-1', 'user-2', mockEvent)
 
       expect(result).toBe(false)
     })
@@ -205,7 +231,7 @@ describe('server/services/entries', () => {
         amount: 5000,
         currency: 'USD',
         date: '2024-01-15',
-      })
+      }, mockEvent)
 
       expect(result).toEqual(newEntry)
       expect(globalThis.crypto.randomUUID).toHaveBeenCalled()
@@ -232,7 +258,7 @@ describe('server/services/entries', () => {
         description: 'Opening balance',
         amount: 1000,
         currency: 'USD',
-      })
+      }, mockEvent)
 
       expect(result).toEqual(newEntry)
     })
@@ -258,7 +284,7 @@ describe('server/services/entries', () => {
         amount: 2000,
         currency: 'EUR',
         date: '2024-01-20',
-      })
+      }, mockEvent)
 
       expect(result).toEqual(updatedEntry)
     })
@@ -281,7 +307,7 @@ describe('server/services/entries', () => {
         description: 'Updated description',
         amount: 2000,
         currency: 'EUR',
-      })
+      }, mockEvent)
 
       expect(result).toEqual(updatedEntry)
     })
@@ -300,7 +326,7 @@ describe('server/services/entries', () => {
       mockDb.where.mockReturnThis()
       mockDb.returning.mockResolvedValue([deletedEntry])
 
-      const result = await deleteEntry('entry-1')
+      const result = await deleteEntry('entry-1', mockEvent)
 
       expect(result).toEqual(deletedEntry)
     })

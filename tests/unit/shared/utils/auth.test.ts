@@ -21,6 +21,9 @@ vi.mock('drizzle-orm', () => ({
 }))
 
 vi.mock('~~/server/db', () => ({
+  useDatabase: vi.fn(() => ({
+    select: vi.fn(),
+  })),
   db: {
     select: vi.fn(),
   },
@@ -44,6 +47,7 @@ let mockCreateHash: ReturnType<typeof vi.fn>
 let mockHashUpdate: ReturnType<typeof vi.fn>
 let mockHashDigest: ReturnType<typeof vi.fn>
 let mockDb: any
+let mockUseDatabase: ReturnType<typeof vi.fn>
 
 describe('shared/utils/auth', () => {
   beforeEach(async () => {
@@ -55,7 +59,12 @@ describe('shared/utils/auth', () => {
 
     mockGetCookie = h3.getCookie as ReturnType<typeof vi.fn>
     mockCreateHash = crypto.createHash as ReturnType<typeof vi.fn>
-    mockDb = db.db
+    mockUseDatabase = db.useDatabase as ReturnType<typeof vi.fn>
+
+    mockDb = {
+      select: vi.fn(),
+    }
+    mockUseDatabase.mockReturnValue(mockDb)
 
     mockHashUpdate = vi.fn().mockReturnThis()
     mockHashDigest = vi.fn()

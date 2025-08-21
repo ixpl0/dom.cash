@@ -20,6 +20,9 @@ vi.mock('drizzle-orm', () => ({
 }))
 
 vi.mock('~~/server/db', () => ({
+  useDatabase: vi.fn(() => ({
+    delete: vi.fn(),
+  })),
   db: {
     delete: vi.fn(),
   },
@@ -64,7 +67,12 @@ describe('server/api/auth/logout.post', () => {
     mockCreateError = h3.createError as ReturnType<typeof vi.fn>
     mockCreateHash = crypto.createHash as ReturnType<typeof vi.fn>
     mockEq = drizzle.eq as ReturnType<typeof vi.fn>
-    mockDb = db.db
+
+    const mockUseDatabase = db.useDatabase as ReturnType<typeof vi.fn>
+    mockDb = {
+      delete: vi.fn(),
+    }
+    mockUseDatabase.mockReturnValue(mockDb)
     mockSession = schema.session
 
     mockHashUpdate = vi.fn().mockReturnThis()

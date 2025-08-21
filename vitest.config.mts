@@ -37,6 +37,7 @@ export default defineConfig({
           name: 'unit',
           include: ['test/unit/**/*.{test,spec}.ts', 'tests/unit/**/*.{test,spec}.ts'],
           environment: 'node',
+          setupFiles: ['tests/setup.ts'],
         },
         resolve: {
           alias: {
@@ -48,20 +49,29 @@ export default defineConfig({
           },
         },
       },
-      await defineVitestProject({
+      {
         test: {
           name: 'nuxt',
           include: ['test/nuxt/**/*.{test,spec}.ts', 'tests/nuxt/**/*.{test,spec}.ts'],
-          environment: 'nuxt',
-          environmentOptions: { nuxt: { domEnvironment: 'happy-dom' } },
+          environment: 'happy-dom',
           pool: 'forks',
           poolOptions: {
             forks: {
               singleFork: true,
+              isolate: true,
             },
           },
         },
-      }),
+        resolve: {
+          alias: {
+            '~~': root,
+            '@@': root,
+            '~': resolve(root, 'app'),
+            '@': resolve(root, 'app'),
+            '#fixtures': resolve(root, 'tests/fixtures'),
+          },
+        },
+      },
     ],
   },
 })
