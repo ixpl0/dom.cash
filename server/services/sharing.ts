@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import type { H3Event } from 'h3'
+import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 
@@ -13,7 +14,8 @@ export interface UpdateShareParams {
   access: BudgetShareAccess
 }
 
-export const findUserByUsername = async (username: string) => {
+export const findUserByUsername = async (username: string, event: H3Event) => {
+  const db = useDatabase(event)
   const users = await db
     .select()
     .from(user)
@@ -23,7 +25,8 @@ export const findUserByUsername = async (username: string) => {
   return users[0] || null
 }
 
-export const getExistingShare = async (ownerId: string, sharedWithId: string) => {
+export const getExistingShare = async (ownerId: string, sharedWithId: string, event: H3Event) => {
+  const db = useDatabase(event)
   const shares = await db
     .select()
     .from(budgetShare)
@@ -36,7 +39,8 @@ export const getExistingShare = async (ownerId: string, sharedWithId: string) =>
   return shares[0] || null
 }
 
-export const getMyShares = async (userId: string) => {
+export const getMyShares = async (userId: string, event: H3Event) => {
+  const db = useDatabase(event)
   return await db
     .select({
       id: budgetShare.id,
@@ -49,9 +53,9 @@ export const getMyShares = async (userId: string) => {
     .where(eq(budgetShare.ownerId, userId))
 }
 
-export const getUserShares = async (userId: string) => {
-  const myShares = await getMyShares(userId)
-  const sharedWithMe = await getSharedWithUser(userId)
+export const getUserShares = async (userId: string, event: H3Event) => {
+  const myShares = await getMyShares(userId, event)
+  const sharedWithMe = await getSharedWithUser(userId, event)
 
   return {
     myShares,
@@ -59,7 +63,8 @@ export const getUserShares = async (userId: string) => {
   }
 }
 
-export const getSharedWithUser = async (userId: string) => {
+export const getSharedWithUser = async (userId: string, event: H3Event) => {
+  const db = useDatabase(event)
   return await db
     .select({
       id: budgetShare.id,
@@ -72,7 +77,8 @@ export const getSharedWithUser = async (userId: string) => {
     .where(eq(budgetShare.sharedWithId, userId))
 }
 
-export const getShareById = async (shareId: string) => {
+export const getShareById = async (shareId: string, event: H3Event) => {
+  const db = useDatabase(event)
   const shares = await db
     .select({
       id: budgetShare.id,
@@ -93,8 +99,8 @@ export const getShareById = async (shareId: string) => {
   return shares[0] || null
 }
 
-export const createShare = async (params: CreateShareParams) => {
-  const sharedWithUser = await findUserByUsername(params.sharedWithUsername)
+export const createShare = async (params: CreateShareParams, event: H3Event) => {
+  const sharedWithUser = await findUserByUsername(params.sharedWithUsername, event)
   if (!sharedWithUser) {
     throw new Error('User not found')
   }
@@ -103,11 +109,12 @@ export const createShare = async (params: CreateShareParams) => {
     throw new Error('Cannot share with yourself')
   }
 
-  const existingShare = await getExistingShare(params.ownerId, sharedWithUser.id)
+  const existingShare = await getExistingShare(params.ownerId, sharedWithUser.id, event)
   if (existingShare) {
     throw new Error('Budget already shared with this user')
   }
 
+  const db = useDatabase(event)
   const newShare = await db
     .insert(budgetShare)
     .values({
@@ -122,7 +129,8 @@ export const createShare = async (params: CreateShareParams) => {
   return newShare[0]
 }
 
-export const updateShare = async (shareId: string, params: UpdateShareParams) => {
+export const updateShare = async (shareId: string, params: UpdateShareParams, event: H3Event) => {
+  const db = useDatabase(event)
   const updatedShare = await db
     .update(budgetShare)
     .set({
@@ -134,7 +142,8 @@ export const updateShare = async (shareId: string, params: UpdateShareParams) =>
   return updatedShare[0]
 }
 
-export const deleteShare = async (shareId: string) => {
+export const deleteShare = async (shareId: string, event: H3Event) => {
+  const db = useDatabase(event)
   const deletedShare = await db
     .delete(budgetShare)
     .where(eq(budgetShare.id, shareId))
@@ -143,7 +152,7 @@ export const deleteShare = async (shareId: string) => {
   return deletedShare[0]
 }
 
-export const checkShareOwnership = async (shareId: string, userId: string): Promise<boolean> => {
-  const share = await getShareById(shareId)
+export const checkShareOwnership = async (shareId: string, userId: string, event: H3Event): Promise<boolean> => {
+  const share = await getShareById(shareId, event)
   return share?.ownerId === userId
 }

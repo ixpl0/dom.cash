@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
   try {
-    const exportData = await exportBudget(user.id)
+    const exportData = await exportBudget(user.id, event)
 
     setHeader(event, 'Content-Type', 'application/json')
 

@@ -28,7 +28,7 @@ export const hashPassword = async (password: string): Promise<string> => {
     passwordData,
     'PBKDF2',
     false,
-    ['deriveBits']
+    ['deriveBits'],
   )
 
   const derivedBits = await crypto.subtle.deriveBits(
@@ -39,7 +39,7 @@ export const hashPassword = async (password: string): Promise<string> => {
       hash: 'SHA-256',
     },
     key,
-    256
+    256,
   )
 
   const hash = new Uint8Array(derivedBits)
@@ -64,7 +64,7 @@ export const verifyPassword = async (password: string, hashedPassword: string): 
       passwordData,
       'PBKDF2',
       false,
-      ['deriveBits']
+      ['deriveBits'],
     )
 
     const derivedBits = await crypto.subtle.deriveBits(
@@ -75,7 +75,7 @@ export const verifyPassword = async (password: string, hashedPassword: string): 
         hash: 'SHA-256',
       },
       key,
-      256
+      256,
     )
 
     const newHash = new Uint8Array(derivedBits)

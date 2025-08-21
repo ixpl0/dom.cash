@@ -1,9 +1,9 @@
 declare global {
   interface D1Database {
-    prepare: (query: string) => any
+    prepare: (query: string) => unknown
     dump: () => Promise<ArrayBuffer>
-    batch: (statements: any[]) => Promise<any[]>
-    exec: (query: string) => Promise<any>
+    batch: (statements: unknown[]) => Promise<unknown[]>
+    exec: (query: string) => Promise<unknown>
   }
 }
 

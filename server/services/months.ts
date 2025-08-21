@@ -1,5 +1,6 @@
 import { desc, eq, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import type { H3Event } from 'h3'
+import { useDatabase } from '~~/server/db'
 import { entry, month, currency, budgetShare, user } from '~~/server/db/schema'
 import type { MonthData } from '~~/shared/types/budget'
 
@@ -9,13 +10,14 @@ export const clearRatesCache = () => {
   ratesCache.clear()
 }
 
-export const getExchangeRatesForMonth = async (year: number, monthNumber: number): Promise<{ rates: Record<string, number>, source: string } | undefined> => {
+export const getExchangeRatesForMonth = async (year: number, monthNumber: number, event: H3Event): Promise<{ rates: Record<string, number>, source: string } | undefined> => {
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
 
   if (ratesCache.has(rateDate)) {
     return { rates: ratesCache.get(rateDate)!, source: rateDate }
   }
 
+  const db = useDatabase(event)
   const currencyData = await db
     .select()
     .from(currency)
@@ -59,7 +61,8 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
   return undefined
 }
 
-export const getUserMonths = async (userId: string): Promise<MonthData[]> => {
+export const getUserMonths = async (userId: string, event: H3Event): Promise<MonthData[]> => {
+  const db = useDatabase(event)
   const monthsData = await db
     .select()
     .from(month)
@@ -106,7 +109,7 @@ export const getUserMonths = async (userId: string): Promise<MonthData[]> => {
       const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
       const balanceChange = totalIncome - totalExpenses
 
-      const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month)
+      const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
 
       return {
         id: monthData.id,
@@ -133,7 +136,8 @@ export interface CreateMonthParams {
   targetUserId: string
 }
 
-export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string): Promise<void> => {
+export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string, event: H3Event): Promise<void> => {
+  const db = useDatabase(event)
   const balanceEntriesToCopy = await db
     .select()
     .from(entry)
@@ -157,9 +161,10 @@ export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetM
   }
 }
 
-export const createMonth = async (params: CreateMonthParams) => {
+export const createMonth = async (params: CreateMonthParams, event: H3Event) => {
   const { year, month: monthNumber, copyFromMonthId, targetUserId } = params
 
+  const db = useDatabase(event)
   const existingMonth = await db
     .select()
     .from(month)
@@ -189,13 +194,14 @@ export const createMonth = async (params: CreateMonthParams) => {
   }
 
   if (copyFromMonthId) {
-    await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id)
+    await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id, event)
   }
 
   return createdMonth
 }
 
-export const findUserByUsername = async (username: string) => {
+export const findUserByUsername = async (username: string, event: H3Event) => {
+  const db = useDatabase(event)
   const users = await db
     .select()
     .from(user)
@@ -205,11 +211,12 @@ export const findUserByUsername = async (username: string) => {
   return users[0] || null
 }
 
-export const checkWritePermission = async (ownerId: string, requesterId: string): Promise<boolean> => {
+export const checkWritePermission = async (ownerId: string, requesterId: string, event: H3Event): Promise<boolean> => {
   if (ownerId === requesterId) {
     return true
   }
 
+  const db = useDatabase(event)
   const shareRecord = await db
     .select({ access: budgetShare.access })
     .from(budgetShare)
@@ -222,7 +229,8 @@ export const checkWritePermission = async (ownerId: string, requesterId: string)
   return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
 }
 
-export const deleteMonth = async (monthId: string): Promise<void> => {
+export const deleteMonth = async (monthId: string, event: H3Event): Promise<void> => {
+  const db = useDatabase(event)
   const monthToDelete = await db
     .select()
     .from(month)

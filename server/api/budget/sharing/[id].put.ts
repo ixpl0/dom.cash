@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const share = await getShareById(shareId)
+  const share = await getShareById(shareId, event)
   if (!share) {
     throw createError({
       statusCode: 404,
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const isOwner = await checkShareOwnership(shareId, user.id)
+  const isOwner = await checkShareOwnership(shareId, user.id, event)
   if (!isOwner) {
     throw createError({
       statusCode: 403,
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const updatedShare = await updateShare(shareId, { access: body.access })
+  const updatedShare = await updateShare(shareId, { access: body.access }, event)
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')

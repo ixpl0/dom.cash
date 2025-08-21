@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
   const data = await parseBody(event, createEntrySchema)
 
-  const monthOwner = await getMonthOwner(data.monthId)
+  const monthOwner = await getMonthOwner(data.monthId, event)
   if (!monthOwner) {
     throw createError({
       statusCode: 404,
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hasPermission = await checkWritePermissionForMonth(monthOwner.userId, user.id)
+  const hasPermission = await checkWritePermissionForMonth(monthOwner.userId, user.id, event)
   if (!hasPermission) {
     throw createError({
       statusCode: 403,
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     amount: data.amount,
     currency: data.currency,
     date: data.date,
-  })
+  }, event)
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')

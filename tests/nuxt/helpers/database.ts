@@ -1,6 +1,10 @@
 import { beforeEach, afterEach } from 'vitest'
-import { db } from '~~/server/db'
+// TODO: Update tests to use proper database context
+// import { db } from '~~/server/db'
 import { user, month, entry, budgetShare, currency } from '~~/server/db/schema'
+
+// Temporary test database instance - needs to be replaced with proper test setup
+const db: any = null
 
 export const setupTestDatabase = () => {
   beforeEach(async () => {

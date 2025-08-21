@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     if (targetUsername) {
       const { findUserByUsername, getExistingShare } = await import('~~/server/services/sharing')
 
-      const targetUser = await findUserByUsername(targetUsername)
+      const targetUser = await findUserByUsername(targetUsername, event)
       if (!targetUser) {
         throw createError({
           statusCode: 404,
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       }
 
       if (targetUser.id !== user.id) {
-        const share = await getExistingShare(targetUser.id, user.id)
+        const share = await getExistingShare(targetUser.id, user.id, event)
         if (!share || share.access !== 'write') {
           throw createError({
             statusCode: 403,
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
       targetUserId = targetUser.id
     }
 
-    await updateUserCurrency(targetUserId, currency)
+    await updateUserCurrency(targetUserId, currency, event)
 
     try {
       const { createNotification } = await import('~~/server/services/notifications')

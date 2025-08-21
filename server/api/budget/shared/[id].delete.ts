@@ -1,9 +1,10 @@
 import { eq, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { budgetShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
+  const db = useDatabase(event)
   const currentUser = await getUserFromRequest(event)
   if (!currentUser) {
     throw createError({

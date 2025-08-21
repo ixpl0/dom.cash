@@ -1,20 +1,11 @@
 import { CronJob } from 'cron'
-import { hasRatesForCurrentMonth, saveHistoricalRatesForCurrentMonth } from '~~/server/utils/rates/database'
+// import { hasRatesForCurrentMonth, saveHistoricalRatesForCurrentMonth } from '~~/server/utils/rates/database'
 
 const ENABLE_CURRENCY_RATES_UPDATE = 'ENABLE_CURRENCY_RATES_AUTO_UPDATE'
 
 const updateCurrencyRates = async (): Promise<void> => {
   try {
-    const hasRates = await hasRatesForCurrentMonth()
-
-    if (hasRates) {
-      console.log('Currency rates for current month already exist, skipping update')
-      return
-    }
-
-    console.log('Updating currency rates for current month...')
-    await saveHistoricalRatesForCurrentMonth()
-    console.log('Currency rates updated successfully')
+    console.log('Currency rates auto-update is disabled in D1 plugin context')
   }
   catch (error) {
     console.error('Failed to update currency rates:', error)

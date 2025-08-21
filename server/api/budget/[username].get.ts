@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return await getUserBudgetData(username, user.id)
+    return await getUserBudgetData(username, user.id, event)
   }
   catch (error) {
     if (error instanceof Error) {

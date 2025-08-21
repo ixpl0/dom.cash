@@ -1,11 +1,12 @@
 import { eq, or, and, desc } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { getExchangeRatesForMonth } from '~~/server/services/months'
 
 export default defineEventHandler(async (event) => {
+  const db = useDatabase(event)
   const currentUser = await getUserFromRequest(event)
   if (!currentUser) {
     throw createError({
@@ -131,7 +132,7 @@ export default defineEventHandler(async (event) => {
     const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
     const balanceChange = totalIncome - totalExpenses
 
-    const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month)
+    const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
 
     return {
       id: monthData.id,

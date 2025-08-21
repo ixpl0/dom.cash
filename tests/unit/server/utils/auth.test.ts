@@ -12,7 +12,6 @@ import {
   getUserFromRequest,
 } from '~~/server/utils/auth'
 
-
 vi.mock('node:crypto', () => ({
   randomBytes: vi.fn(),
   createHash: vi.fn(),
@@ -127,7 +126,7 @@ describe('server/utils/auth', () => {
           hash: 'SHA-256',
         },
         mockKey,
-        256
+        256,
       )
       expect(result).toBe('mock-hash')
     })
@@ -149,8 +148,8 @@ describe('server/utils/auth', () => {
       const password = 'test-password'
       const hash = 'test-hash'
       const combined = new Uint8Array(48)
-      const salt = combined.slice(0, 16)
-      const expectedHash = combined.slice(16)
+      const _salt = combined.slice(0, 16)
+      const _expectedHash = combined.slice(16)
       const mockKey = {}
 
       global.Buffer = {
@@ -172,7 +171,7 @@ describe('server/utils/auth', () => {
           hash: 'SHA-256',
         },
         mockKey,
-        256
+        256,
       )
       expect(result).toBe(true)
     })
@@ -181,8 +180,8 @@ describe('server/utils/auth', () => {
       const password = 'wrong-password'
       const hash = 'test-hash'
       const combined = new Uint8Array(48)
-      const salt = combined.slice(0, 16)
-      const expectedHash = combined.slice(16)
+      const _salt = combined.slice(0, 16)
+      const _expectedHash = combined.slice(16)
       const wrongHash = new Uint8Array(32)
       wrongHash[0] = 1
       const mockKey = {}

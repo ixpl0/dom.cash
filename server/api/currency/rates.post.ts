@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event)
   const { date, rates } = updateRatesSchema.parse(body)
 
-  await saveCurrencyRates(date, rates)
+  await saveCurrencyRates(date, rates, event)
 
   return { success: true }
 })

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const entryRecord = await getEntryWithMonth(entryId)
+  const entryRecord = await getEntryWithMonth(entryId, event)
   if (!entryRecord || !entryRecord.month) {
     throw createError({
       statusCode: 404,
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hasPermission = await checkWritePermissionForMonth(entryRecord.month.userId, user.id)
+  const hasPermission = await checkWritePermissionForMonth(entryRecord.month.userId, user.id, event)
   if (!hasPermission) {
     throw createError({
       statusCode: 403,
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
     amount: data.amount,
     currency: data.currency,
     date: data.date,
-  })
+  }, event)
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')

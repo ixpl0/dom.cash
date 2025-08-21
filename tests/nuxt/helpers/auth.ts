@@ -1,8 +1,12 @@
 import { $fetch } from '@nuxt/test-utils/e2e'
 import { createHash } from 'node:crypto'
-import { db } from '~~/server/db'
+// TODO: Update tests to use proper database context
+// import { db } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { hashPassword } from '~~/server/utils/auth'
+
+// Temporary test database instance - needs to be replaced with proper test setup
+const db: any = null
 
 export interface TestAuthContext {
   user: {

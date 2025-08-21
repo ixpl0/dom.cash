@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { getCookie } from 'h3'
 import { createHash } from 'node:crypto'
 import { eq, and, gt } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 
 import type { User } from '~~/shared/types'
@@ -23,6 +23,7 @@ export const validateAuthToken = async (event: H3Event): Promise<ValidateTokenRe
     const tokenHash = createHash('sha256').update(token).digest('hex')
     const now = new Date()
 
+    const db = useDatabase(event)
     const [userRecord] = await db
       .select({
         id: user.id,

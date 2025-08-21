@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   let targetUserId = currentUser.id
 
   if (targetUsername) {
-    const targetUser = await findUserByUsername(targetUsername)
+    const targetUser = await findUserByUsername(targetUsername, event)
     if (!targetUser) {
       throw createError({
         statusCode: 404,
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (targetUser.id !== currentUser.id) {
-      const hasPermission = await checkWritePermission(targetUser.id, currentUser.id)
+      const hasPermission = await checkWritePermission(targetUser.id, currentUser.id, event)
       if (!hasPermission) {
         throw createError({
           statusCode: 403,
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
       month: monthNumber,
       copyFromMonthId,
       targetUserId,
-    })
+    }, event)
 
     try {
       const { createNotification } = await import('~~/server/services/notifications')

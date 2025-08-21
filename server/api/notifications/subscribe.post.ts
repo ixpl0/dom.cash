@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hasAccess = await checkReadPermission(budgetOwnerId, user.id)
+  const hasAccess = await checkReadPermission(budgetOwnerId, user.id, event)
   if (!hasAccess) {
     throw createError({
       statusCode: 403,

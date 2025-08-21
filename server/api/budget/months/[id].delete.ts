@@ -1,10 +1,11 @@
 import { requireAuth } from '~~/server/utils/session'
 import { deleteMonth, checkWritePermission } from '~~/server/services/months'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const db = useDatabase(event)
   try {
     const user = await requireAuth(event)
     const monthId = getRouterParam(event, 'id')
@@ -30,7 +31,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const monthData = monthRecord[0]!
-    const hasPermission = await checkWritePermission(monthData.userId, user.id)
+    const hasPermission = await checkWritePermission(monthData.userId, user.id, event)
 
     if (!hasPermission) {
       throw createError({
@@ -39,7 +40,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    await deleteMonth(monthId)
+    await deleteMonth(monthId, event)
 
     try {
       const { createNotification } = await import('~~/server/services/notifications')

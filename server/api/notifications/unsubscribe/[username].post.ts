@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const targetUser = await findUserByUsername(username)
+  const targetUser = await findUserByUsername(username, event)
   if (!targetUser) {
     throw createError({
       statusCode: 404,

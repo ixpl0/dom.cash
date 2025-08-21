@@ -10,11 +10,3 @@ export const useDatabase = (event: H3Event) => {
   }
   return drizzle(db, { schema })
 }
-
-// Временный экспорт для обратной совместимости
-// TODO: Обновить все файлы для использования useDatabase(event)
-export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get() {
-    throw new Error('Direct db access is deprecated. Use useDatabase(event) instead.')
-  },
-})

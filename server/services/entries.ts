@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import type { H3Event } from 'h3'
+import { useDatabase } from '~~/server/db'
 import { entry, month, budgetShare } from '~~/server/db/schema'
 import type { EntryKind } from '~~/server/db/schema'
 
@@ -19,7 +20,8 @@ export interface UpdateEntryParams {
   date?: string
 }
 
-export const getMonthOwner = async (monthId: string) => {
+export const getMonthOwner = async (monthId: string, event: H3Event) => {
+  const db = useDatabase(event)
   const monthData = await db
     .select()
     .from(month)
@@ -29,7 +31,8 @@ export const getMonthOwner = async (monthId: string) => {
   return monthData[0] || null
 }
 
-export const getEntryWithMonth = async (entryId: string) => {
+export const getEntryWithMonth = async (entryId: string, event: H3Event) => {
+  const db = useDatabase(event)
   const entryData = await db
     .select({
       entry,
@@ -44,11 +47,12 @@ export const getEntryWithMonth = async (entryId: string) => {
   return result?.month ? result : null
 }
 
-export const checkWritePermissionForMonth = async (monthOwnerId: string, userId: string): Promise<boolean> => {
+export const checkWritePermissionForMonth = async (monthOwnerId: string, userId: string, event: H3Event): Promise<boolean> => {
   if (monthOwnerId === userId) {
     return true
   }
 
+  const db = useDatabase(event)
   const shareRecord = await db
     .select({ access: budgetShare.access })
     .from(budgetShare)
@@ -61,7 +65,8 @@ export const checkWritePermissionForMonth = async (monthOwnerId: string, userId:
   return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
 }
 
-export const createEntry = async (params: CreateEntryParams) => {
+export const createEntry = async (params: CreateEntryParams, event: H3Event) => {
+  const db = useDatabase(event)
   const newEntry = await db
     .insert(entry)
     .values({
@@ -78,7 +83,8 @@ export const createEntry = async (params: CreateEntryParams) => {
   return newEntry[0]
 }
 
-export const updateEntry = async (entryId: string, params: UpdateEntryParams) => {
+export const updateEntry = async (entryId: string, params: UpdateEntryParams, event: H3Event) => {
+  const db = useDatabase(event)
   const updatedEntry = await db
     .update(entry)
     .set({
@@ -91,7 +97,8 @@ export const updateEntry = async (entryId: string, params: UpdateEntryParams) =>
   return updatedEntry[0]
 }
 
-export const deleteEntry = async (entryId: string) => {
+export const deleteEntry = async (entryId: string, event: H3Event) => {
+  const db = useDatabase(event)
   const deletedEntry = await db
     .delete(entry)
     .where(eq(entry.id, entryId))

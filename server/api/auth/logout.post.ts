@@ -1,7 +1,7 @@
 import { defineEventHandler, getCookie, deleteCookie, createError } from 'h3'
 import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
 
 export default defineEventHandler(async (event) => {
@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
   if (token) {
     try {
       const tokenHash = createHash('sha256').update(token).digest('hex')
+      const db = useDatabase(event)
       await db.delete(session).where(eq(session.tokenHash, tokenHash))
     }
     catch (error) {

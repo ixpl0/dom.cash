@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
       ownerId: user.id,
       sharedWithUsername: body.sharedWithUsername,
       access: body.access,
-    })
+    }, event)
   }
   catch (error) {
     if (error instanceof Error) {

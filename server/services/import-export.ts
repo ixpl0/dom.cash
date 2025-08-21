@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { db } from '~~/server/db'
+import type { H3Event } from 'h3'
+import { useDatabase } from '~~/server/db'
 import { user, month, entry } from '~~/server/db/schema'
 import { getUserMonths, createMonth } from './months'
 import { createEntry } from './entries'
@@ -12,7 +13,8 @@ import type {
   BudgetExportSchema,
 } from '~~/shared/types/export-import'
 
-export const exportBudget = async (userId: string): Promise<BudgetExportData> => {
+export const exportBudget = async (userId: string, event: H3Event): Promise<BudgetExportData> => {
+  const db = useDatabase(event)
   const userData = await db
     .select({
       username: user.username,
@@ -27,7 +29,7 @@ export const exportBudget = async (userId: string): Promise<BudgetExportData> =>
     throw new Error('User not found')
   }
 
-  const monthsData = await getUserMonths(userId)
+  const monthsData = await getUserMonths(userId, event)
 
   const exportMonths: BudgetExportMonth[] = monthsData.map((monthData) => {
     const entries: BudgetExportEntry[] = [
@@ -75,6 +77,7 @@ export const importBudget = async (
   userId: string,
   importData: BudgetExportSchema,
   options: BudgetImportOptions,
+  event: H3Event,
 ): Promise<BudgetImportResult> => {
   const result: BudgetImportResult = {
     success: true,
@@ -86,6 +89,7 @@ export const importBudget = async (
 
   for (const importMonth of importData.months) {
     try {
+      const db = useDatabase(event)
       const existingMonth = await db
         .select()
         .from(month)
@@ -120,7 +124,7 @@ export const importBudget = async (
           year: importMonth.year,
           month: importMonth.month,
           targetUserId: userId,
-        })
+        }, event)
         monthId = createdMonth.id
         result.importedMonths++
       }
@@ -133,7 +137,7 @@ export const importBudget = async (
           amount: importEntry.amount,
           currency: importEntry.currency,
           date: importEntry.date,
-        })
+        }, event)
         result.importedEntries++
       }
     }

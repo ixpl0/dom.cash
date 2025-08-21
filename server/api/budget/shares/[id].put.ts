@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/db'
+import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 
@@ -9,6 +9,7 @@ const updateShareSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  const db = useDatabase(event)
   const currentUser = await getUserFromRequest(event)
   if (!currentUser) {
     throw createError({

@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const targetUser = await findUserByUsername(username)
+  const targetUser = await findUserByUsername(username, event)
   if (!targetUser) {
     throw createError({
       statusCode: 404,
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hasAccess = await checkReadPermission(targetUser.id, user.id)
+  const hasAccess = await checkReadPermission(targetUser.id, user.id, event)
   if (!hasAccess) {
     throw createError({
       statusCode: 403,
