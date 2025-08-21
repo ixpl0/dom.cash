@@ -44,6 +44,7 @@ export const currency = sqliteTable(
   {
     date: text('date').primaryKey(),
     rates: text('rates', { mode: 'json' }).$type<Rates>().notNull(),
+    lastUpdateAttempt: integer('last_update_attempt', { mode: 'timestamp' }),
   },
   t => [
     check('ck_currency_date_format', sql`${t.date} GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'`),

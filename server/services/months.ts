@@ -10,6 +10,63 @@ export const clearRatesCache = () => {
   ratesCache.clear()
 }
 
+const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Event): Promise<boolean> => {
+  const now = new Date()
+  const currentYear = now.getUTCFullYear()
+  const currentMonth = now.getUTCMonth()
+  const currentHour = now.getUTCHours()
+  const currentMinute = now.getUTCMinutes()
+  
+  const isCurrentMonth = year === currentYear && monthNumber === currentMonth
+  const isAfter0005UTC = currentHour > 0 || (currentHour === 0 && currentMinute >= 5)
+  
+  if (!isCurrentMonth || !isAfter0005UTC) {
+    return false
+  }
+
+  const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
+  const db = useDatabase(event)
+  
+  const currencyRecord = await db
+    .select({ lastUpdateAttempt: currency.lastUpdateAttempt })
+    .from(currency)
+    .where(eq(currency.date, rateDate))
+    .limit(1)
+
+  if (currencyRecord.length === 0) {
+    return true
+  }
+
+  const lastAttempt = currencyRecord[0]?.lastUpdateAttempt
+  if (!lastAttempt) {
+    return true
+  }
+
+  const oneHourInMs = 60 * 60 * 1000
+  const canRetry = Date.now() - lastAttempt.getTime() >= oneHourInMs
+  
+  return canRetry
+}
+
+const markUpdateAttempt = async (year: number, monthNumber: number, event: H3Event): Promise<void> => {
+  const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
+  const db = useDatabase(event)
+  
+  await db
+    .insert(currency)
+    .values({
+      date: rateDate,
+      rates: {},
+      lastUpdateAttempt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: currency.date,
+      set: {
+        lastUpdateAttempt: new Date(),
+      },
+    })
+}
+
 export const getExchangeRatesForMonth = async (year: number, monthNumber: number, event: H3Event): Promise<{ rates: Record<string, number>, source: string } | undefined> => {
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
 
@@ -29,6 +86,33 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     if (rates) {
       ratesCache.set(rateDate, rates)
       return { rates, source: rateDate }
+    }
+  }
+
+  const shouldUpdate = await canAttemptUpdate(year, monthNumber, event)
+  if (shouldUpdate) {
+    await markUpdateAttempt(year, monthNumber, event)
+    
+    try {
+      const { saveHistoricalRatesForCurrentMonth } = await import('~~/server/utils/rates/database')
+      await saveHistoricalRatesForCurrentMonth(event)
+      
+      const updatedCurrencyData = await db
+        .select()
+        .from(currency)
+        .where(eq(currency.date, rateDate))
+        .limit(1)
+
+      if (updatedCurrencyData.length > 0) {
+        const rates = updatedCurrencyData[0]?.rates
+        if (rates && Object.keys(rates).length > 0) {
+          ratesCache.set(rateDate, rates)
+          return { rates, source: rateDate }
+        }
+      }
+    }
+    catch (error) {
+      console.error(`Failed to auto-update currency rates for ${rateDate}:`, error)
     }
   }
 

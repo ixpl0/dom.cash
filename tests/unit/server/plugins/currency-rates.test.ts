@@ -48,33 +48,35 @@ describe('server/plugins/currency-rates', () => {
     vi.clearAllMocks()
   })
 
-  it('should skip update if rates for current month already exist', async () => {
-    hasRatesForCurrentMonth.mockResolvedValue(true)
+  it('should log that update is disabled', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await updateCurrencyRates()
 
-    expect(hasRatesForCurrentMonth).toHaveBeenCalledOnce()
-    expect(saveHistoricalRatesForCurrentMonth).not.toHaveBeenCalled()
+    expect(consoleSpy).toHaveBeenCalledWith('Currency rates auto-update is disabled in D1 plugin context')
+    consoleSpy.mockRestore()
   })
 
-  it('should update rates if rates for current month do not exist', async () => {
-    hasRatesForCurrentMonth.mockResolvedValue(false)
-    saveHistoricalRatesForCurrentMonth.mockResolvedValue(undefined)
-
+  it('should not call database functions', async () => {
     await updateCurrencyRates()
 
-    expect(hasRatesForCurrentMonth).toHaveBeenCalledOnce()
-    expect(saveHistoricalRatesForCurrentMonth).toHaveBeenCalledOnce()
+    expect(hasRatesForCurrentMonth).not.toHaveBeenCalled()
+    expect(saveHistoricalRatesForCurrentMonth).not.toHaveBeenCalled()
   })
 
   it('should handle errors gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    hasRatesForCurrentMonth.mockRejectedValue(new Error('Database error'))
+    
+    const originalLog = console.log
+    console.log = vi.fn(() => {
+      throw new Error('Logging error')
+    })
 
     await updateCurrencyRates()
 
     expect(consoleSpy).toHaveBeenCalledWith('Failed to update currency rates:', expect.any(Error))
     consoleSpy.mockRestore()
+    console.log = originalLog
   })
 
   describe('plugin integration', () => {
