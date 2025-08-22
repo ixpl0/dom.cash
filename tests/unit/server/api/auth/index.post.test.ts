@@ -66,8 +66,9 @@ describe('server/api/auth/index.post', () => {
       'password123',
       'USD',
       expect.any(Date),
+      mockEvent,
     )
-    expect(mockCreateSession).toHaveBeenCalledWith('user-123', expect.any(Date))
+    expect(mockCreateSession).toHaveBeenCalledWith('user-123', expect.any(Date), mockEvent)
     expect(mockSetAuthCookie).toHaveBeenCalledWith(mockEvent, mockToken)
 
     expect(result).toEqual({
@@ -186,6 +187,7 @@ describe('server/api/auth/index.post', () => {
       'secure_password',
       'EUR',
       expect.any(Date),
+      mockEvent,
     )
   })
 })

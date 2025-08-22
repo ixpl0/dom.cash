@@ -37,7 +37,7 @@ describe('server/api/currency/rates.post', () => {
     const result = await handler.default(mockEvent)
 
     expect(mockReadBody).toHaveBeenCalledWith(mockEvent)
-    expect(mockSaveCurrencyRates).toHaveBeenCalledWith('2025-02-01', { USD: 1, EUR: 0.85, GBP: 0.73 })
+    expect(mockSaveCurrencyRates).toHaveBeenCalledWith('2025-02-01', { USD: 1, EUR: 0.85, GBP: 0.73 }, mockEvent)
     expect(result).toEqual({ success: true })
   })
 
@@ -94,7 +94,7 @@ describe('server/api/currency/rates.post', () => {
     const handler = await import('~~/server/api/currency/rates.post')
 
     await expect(handler.default(mockEvent)).rejects.toThrow('Database save failed')
-    expect(mockSaveCurrencyRates).toHaveBeenCalledWith('2025-02-01', { USD: 1, EUR: 0.85 })
+    expect(mockSaveCurrencyRates).toHaveBeenCalledWith('2025-02-01', { USD: 1, EUR: 0.85 }, mockEvent)
   })
 
   it('should handle empty rates object', async () => {
@@ -110,7 +110,7 @@ describe('server/api/currency/rates.post', () => {
     const handler = await import('~~/server/api/currency/rates.post')
     const result = await handler.default(mockEvent)
 
-    expect(mockSaveCurrencyRates).toHaveBeenCalledWith('2025-02-01', {})
+    expect(mockSaveCurrencyRates).toHaveBeenCalledWith('2025-02-01', {}, mockEvent)
     expect(result).toEqual({ success: true })
   })
 
