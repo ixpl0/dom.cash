@@ -16,17 +16,17 @@ const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Even
   const currentMonth = now.getUTCMonth()
   const currentHour = now.getUTCHours()
   const currentMinute = now.getUTCMinutes()
-  
+
   const isCurrentMonth = year === currentYear && monthNumber === currentMonth
   const isAfter0005UTC = currentHour > 0 || (currentHour === 0 && currentMinute >= 5)
-  
+
   if (!isCurrentMonth || !isAfter0005UTC) {
     return false
   }
 
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
   const db = useDatabase(event)
-  
+
   const currencyRecord = await db
     .select({ lastUpdateAttempt: currency.lastUpdateAttempt })
     .from(currency)
@@ -44,14 +44,14 @@ const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Even
 
   const oneHourInMs = 60 * 60 * 1000
   const canRetry = Date.now() - lastAttempt.getTime() >= oneHourInMs
-  
+
   return canRetry
 }
 
 const markUpdateAttempt = async (year: number, monthNumber: number, event: H3Event): Promise<void> => {
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
   const db = useDatabase(event)
-  
+
   await db
     .insert(currency)
     .values({
@@ -92,11 +92,11 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
   const shouldUpdate = await canAttemptUpdate(year, monthNumber, event)
   if (shouldUpdate) {
     await markUpdateAttempt(year, monthNumber, event)
-    
+
     try {
       const { saveHistoricalRatesForCurrentMonth } = await import('~~/server/utils/rates/database')
       await saveHistoricalRatesForCurrentMonth(event)
-      
+
       const updatedCurrencyData = await db
         .select()
         .from(currency)

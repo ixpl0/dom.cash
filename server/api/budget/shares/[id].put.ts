@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Unauthorized',
     })
   }
 
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   if (!shareId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Share ID is required',
+      message: 'Share ID is required',
     })
   }
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
   if (existingShare.length === 0) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Share not found',
+      message: 'Share not found',
     })
   }
 
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
   if (!shareData) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Share not found',
+      message: 'Share not found',
     })
   }
 

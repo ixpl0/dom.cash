@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
       console.error('Database error during logout:', error)
       throw createError({
         statusCode: 500,
-        statusMessage: 'Internal server error during logout',
+        message: 'Internal server error during logout',
       })
     }
   }

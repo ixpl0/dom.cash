@@ -8,7 +8,7 @@ export const parseBody = async <T extends ZodType>(event: H3Event, schema: T): P
   if (!validationResult.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: validationResult.error.issues.map(issue => issue.message).join('; '),
+      message: validationResult.error.issues.map(issue => issue.message).join('; '),
     })
   }
 

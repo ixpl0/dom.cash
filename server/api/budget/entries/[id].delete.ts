@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (!entryId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Entry ID is required',
+      message: 'Entry ID is required',
     })
   }
 
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!entryRecord || !entryRecord.month) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Entry not found',
+      message: 'Entry not found',
     })
   }
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (!hasPermission) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Insufficient permissions to delete entries',
+      message: 'Insufficient permissions to delete entries',
     })
   }
 

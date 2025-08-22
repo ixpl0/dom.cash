@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   if (!monthOwner) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Month not found',
+      message: 'Month not found',
     })
   }
 
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
   if (!hasPermission) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Insufficient permissions to add entries',
+      message: 'Insufficient permissions to add entries',
     })
   }
 

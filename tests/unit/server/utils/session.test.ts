@@ -63,7 +63,7 @@ describe('server/utils/session', () => {
       expect(mockValidateAuthToken).toHaveBeenCalledWith(mockEvent)
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 401,
-        statusMessage: authError,
+        message: authError,
       })
     })
 
@@ -81,7 +81,7 @@ describe('server/utils/session', () => {
 
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 401,
-        statusMessage: 'Authentication required',
+        message: 'Authentication required',
       })
     })
 
@@ -112,7 +112,7 @@ describe('server/utils/session', () => {
 
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 401,
-        statusMessage: 'Token expired',
+        message: 'Token expired',
       })
     })
   })

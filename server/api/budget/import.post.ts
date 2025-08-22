@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     if (!targetUser) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Target user not found',
+        message: 'Target user not found',
       })
     }
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
       if (!hasPermission) {
         throw createError({
           statusCode: 403,
-          statusMessage: 'Insufficient permissions to import budget',
+          message: 'Insufficient permissions to import budget',
         })
       }
     }
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     if (!result.success) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Import failed',
+        message: 'Import failed',
         data: result,
       })
     }
@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to import budget',
+      message: 'Failed to import budget',
     })
   }
 })

@@ -22,7 +22,7 @@ describe('server/db/index', () => {
     expect(typeof dbModule.useDatabase).toBe('function')
   })
 
-  it('should handle D1 database context', () => {
+  it('should handle D1 database context', async () => {
     const mockD1 = { select: vi.fn() }
     const mockDb = { select: vi.fn() }
     const mockEvent = {
@@ -36,8 +36,21 @@ describe('server/db/index', () => {
     }
 
     mockDrizzle.mockReturnValue(mockDb)
-    
-    // Не импортируем модуль в тесте, так как это вызывает проблемы с моками
-    expect(mockDrizzle).toHaveBeenCalledTimes(0)
+
+    const { useDatabase } = await import('~~/server/db/index')
+    const result = useDatabase(mockEvent as any)
+
+    expect(mockDrizzle).toHaveBeenCalledWith(mockD1, expect.any(Object))
+    expect(result).toBe(mockDb)
+  })
+
+  it('should throw error when D1 database not found', async () => {
+    const mockEvent = {
+      context: {},
+    }
+
+    const { useDatabase } = await import('~~/server/db/index')
+
+    expect(() => useDatabase(mockEvent as any)).toThrow('D1 database not found. Make sure to run with wrangler dev.')
   })
 })

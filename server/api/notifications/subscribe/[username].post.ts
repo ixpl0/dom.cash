@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Unauthorized',
     })
   }
 
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!username) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username is required',
+      message: 'Username is required',
     })
   }
 
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (!targetUser) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'User not found',
+      message: 'User not found',
     })
   }
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   if (!hasAccess) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'No access to this budget',
+      message: 'No access to this budget',
     })
   }
 

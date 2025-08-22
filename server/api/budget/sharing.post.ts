@@ -17,19 +17,19 @@ export default defineEventHandler(async (event) => {
       if (error.message === 'User not found') {
         throw createError({
           statusCode: 404,
-          statusMessage: 'User not found',
+          message: 'User not found',
         })
       }
       if (error.message === 'Cannot share with yourself') {
         throw createError({
           statusCode: 400,
-          statusMessage: 'Cannot share with yourself',
+          message: 'Cannot share with yourself',
         })
       }
       if (error.message === 'Budget already shared with this user') {
         throw createError({
           statusCode: 409,
-          statusMessage: 'Budget already shared with this user',
+          message: 'Budget already shared with this user',
         })
       }
     }

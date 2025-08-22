@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Unauthorized',
     })
   }
 
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   if (!username) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username is required',
+      message: 'Username is required',
     })
   }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   if (targetUser.length === 0) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'User not found',
+      message: 'User not found',
     })
   }
 
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   if (!targetUserData) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'User not found',
+      message: 'User not found',
     })
   }
 
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
     if (shareRecord.length === 0) {
       throw createError({
         statusCode: 403,
-        statusMessage: 'Access denied',
+        message: 'Access denied',
       })
     }
 
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
     if (!shareData) {
       throw createError({
         statusCode: 403,
-        statusMessage: 'Access denied',
+        message: 'Access denied',
       })
     }
     access = shareData.access

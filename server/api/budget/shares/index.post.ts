@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Unauthorized',
     })
   }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   if (targetUser.length === 0) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'User not found',
+      message: 'User not found',
     })
   }
 
@@ -40,14 +40,14 @@ export default defineEventHandler(async (event) => {
   if (!targetUserData) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'User not found',
+      message: 'User not found',
     })
   }
 
   if (targetUserData.id === currentUser.id) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Cannot share with yourself',
+      message: 'Cannot share with yourself',
     })
   }
 
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
   if (existingShare.length > 0) {
     throw createError({
       statusCode: 409,
-      statusMessage: 'Budget is already shared with this user',
+      message: 'Budget is already shared with this user',
     })
   }
 

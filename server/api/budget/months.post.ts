@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     if (!targetUser) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Target user not found',
+        message: 'Target user not found',
       })
     }
 
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
       if (!hasPermission) {
         throw createError({
           statusCode: 403,
-          statusMessage: 'Insufficient permissions to create months',
+          message: 'Insufficient permissions to create months',
         })
       }
     }
@@ -67,17 +67,17 @@ export default defineEventHandler(async (event) => {
       if (error.message === 'Month already exists') {
         throw createError({
           statusCode: 409,
-          statusMessage: 'Month already exists',
+          message: 'Month already exists',
         })
       }
       throw createError({
         statusCode: 500,
-        statusMessage: error.message,
+        message: error.message,
       })
     }
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to create month',
+      message: 'Failed to create month',
     })
   }
 })

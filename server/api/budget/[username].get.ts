@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (!username) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username is required',
+      message: 'Username is required',
     })
   }
 
@@ -20,13 +20,13 @@ export default defineEventHandler(async (event) => {
       if (error.message === 'User not found') {
         throw createError({
           statusCode: 404,
-          statusMessage: 'User not found',
+          message: 'User not found',
         })
       }
       if (error.message === 'Insufficient permissions to view budget') {
         throw createError({
           statusCode: 403,
-          statusMessage: 'Insufficient permissions to view budget',
+          message: 'Insufficient permissions to view budget',
         })
       }
     }

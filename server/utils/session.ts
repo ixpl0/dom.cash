@@ -9,7 +9,7 @@ export const requireAuth = async (event: H3Event): Promise<User> => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: error || 'Authentication required',
+      message: error || 'Authentication required',
     })
   }
 

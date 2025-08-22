@@ -12,12 +12,13 @@ export default defineEventHandler(async (event) => {
     if (error instanceof Error) {
       throw createError({
         statusCode: 500,
-        statusMessage: `Failed to update currency rates: ${error.message}`,
+        message: `Failed to update currency rates: ${error.message}`,
       })
     }
+
     throw createError({
       statusCode: 500,
-      statusMessage: 'Unknown error occurred while updating currency rates',
+      message: 'Unknown error occurred while updating currency rates',
     })
   }
 })

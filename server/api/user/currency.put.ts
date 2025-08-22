@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     if (!validation.success) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid currency format',
+        message: 'Invalid currency format',
       })
     }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
       if (!targetUser) {
         throw createError({
           statusCode: 404,
-          statusMessage: 'Target user not found',
+          message: 'Target user not found',
         })
       }
 
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
         if (!share || share.access !== 'write') {
           throw createError({
             statusCode: 403,
-            statusMessage: 'No permission to update this user currency',
+            message: 'No permission to update this user currency',
           })
         }
       }
@@ -72,13 +72,13 @@ export default defineEventHandler(async (event) => {
     if (error instanceof Error && error.message.includes('User not found')) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'User not found',
+        message: 'User not found',
       })
     }
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to update currency',
+      message: 'Failed to update currency',
     })
   }
 })

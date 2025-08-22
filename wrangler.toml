@@ -1,14 +1,19 @@
-name = "doma-budget"
-compatibility_date = "2025-01-15"
+name = "dom-cash-test"
+main = "./.output/server/index.mjs"
+compatibility_date = "2025-08-23"
 compatibility_flags = ["nodejs_compat"]
 
+# test
 [[d1_databases]]
 binding = "DB"
-database_name = "doma-budget-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "dom-test"
+database_id = "49fe35ce-d40a-4d38-8f8d-32bd57bb5588"
 
+# production
 [env.production]
+name = "dom-cash"
+
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "doma-budget-db-prod"
-database_id = "11111111-1111-1111-1111-111111111111"
+database_name = "dom-prod"
+database_id = "5c1aab4d-72d5-4919-a800-274f6e11ed26"

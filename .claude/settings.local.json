@@ -29,5 +29,6 @@
     ],
     "defaultMode": "acceptEdits"
   },
-  "defaultMode": "acceptEdits"
+  "defaultMode": "acceptEdits",
+  "outputStyle": "default"
 }

@@ -162,7 +162,7 @@ describe('useRecentCurrencies', () => {
 
   it('should handle localStorage save errors gracefully', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    
+
     mockLocalStorage.setItem.mockImplementation(() => {
       throw new Error('localStorage save error')
     })
@@ -174,7 +174,7 @@ describe('useRecentCurrencies', () => {
     const recentCurrencies = getRecentCurrencies()
     expect(recentCurrencies.value).toEqual(['USD'])
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to save recent currencies:', expect.any(Error))
-    
+
     consoleErrorSpy.mockRestore()
   })
 

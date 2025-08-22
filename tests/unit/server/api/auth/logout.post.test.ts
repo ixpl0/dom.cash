@@ -157,7 +157,7 @@ describe('server/api/auth/logout.post', () => {
     const mockWhere = vi.fn().mockRejectedValue(dbError)
     mockDb.delete.mockReturnValue({ where: mockWhere })
 
-    const mockErrorResponse = { statusCode: 500, statusMessage: 'Internal server error during logout' }
+    const mockErrorResponse = { statusCode: 500, message: 'Internal server error during logout' }
     mockCreateError.mockReturnValue(mockErrorResponse)
 
     const handler = await import('~~/server/api/auth/logout.post')
@@ -167,7 +167,7 @@ describe('server/api/auth/logout.post', () => {
     expect(consoleSpy).toHaveBeenCalledWith('Database error during logout:', dbError)
     expect(mockCreateError).toHaveBeenCalledWith({
       statusCode: 500,
-      statusMessage: 'Internal server error during logout',
+      message: 'Internal server error during logout',
     })
   })
 
@@ -219,7 +219,7 @@ describe('server/api/auth/logout.post', () => {
     const mockWhere = vi.fn().mockRejectedValue(dbError)
     mockDb.delete.mockReturnValue({ where: mockWhere })
 
-    const mockErrorResponse = { statusCode: 500, statusMessage: 'Internal server error during logout' }
+    const mockErrorResponse = { statusCode: 500, message: 'Internal server error during logout' }
     mockCreateError.mockReturnValue(mockErrorResponse)
 
     const handler = await import('~~/server/api/auth/logout.post')

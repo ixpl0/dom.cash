@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Unauthorized',
     })
   }
 
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!budgetOwnerId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'budgetOwnerId is required',
+      message: 'budgetOwnerId is required',
     })
   }
 

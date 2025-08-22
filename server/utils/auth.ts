@@ -113,7 +113,7 @@ export const createUser = async (username: string, password: string, mainCurrenc
 
   const created = await findUser(username, event)
   if (!created) {
-    throw createError({ statusCode: 500, statusMessage: 'Failed to create user' })
+    throw createError({ statusCode: 500, message: 'Failed to create user' })
   }
   return created
 }
@@ -128,7 +128,7 @@ export const ensureUser = async (username: string, password: string, mainCurrenc
   const isPasswordValid = await verifyPassword(password, existing.passwordHash)
 
   if (!isPasswordValid) {
-    throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
+    throw createError({ statusCode: 401, message: 'Invalid credentials' })
   }
 
   return existing

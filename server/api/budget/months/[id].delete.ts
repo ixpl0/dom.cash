@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     if (!monthId) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Month ID is required',
+        message: 'Month ID is required',
       })
     }
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     if (monthRecord.length === 0) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Month not found',
+        message: 'Month not found',
       })
     }
 
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     if (!hasPermission) {
       throw createError({
         statusCode: 403,
-        statusMessage: 'No permission to delete this month',
+        message: 'No permission to delete this month',
       })
     }
 
@@ -64,13 +64,13 @@ export default defineEventHandler(async (event) => {
     if (error instanceof Error && error.message === 'Month not found') {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Month not found',
+        message: 'Month not found',
       })
     }
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to delete month',
+      message: 'Failed to delete month',
     })
   }
 })

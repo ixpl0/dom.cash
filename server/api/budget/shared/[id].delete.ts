@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Unauthorized',
     })
   }
 
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   if (!shareId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Share ID is required',
+      message: 'Share ID is required',
     })
   }
 

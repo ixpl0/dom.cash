@@ -112,7 +112,7 @@ describe('notifications service', () => {
 
     it('should handle write error by removing connection', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      
+
       const mockConnection = {
         write: vi.fn().mockImplementation(() => {
           throw new Error('Connection error')
@@ -135,7 +135,7 @@ describe('notifications service', () => {
 
       expect(getActiveConnections().has('user1')).toBe(false)
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error sending notification to user:', expect.any(Error))
-      
+
       consoleErrorSpy.mockRestore()
     })
 

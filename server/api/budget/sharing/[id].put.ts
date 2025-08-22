@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!shareId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Share ID is required',
+      message: 'Share ID is required',
     })
   }
 
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   if (!share) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Share not found',
+      message: 'Share not found',
     })
   }
 
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   if (!isOwner) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Insufficient permissions to update share',
+      message: 'Insufficient permissions to update share',
     })
   }
 

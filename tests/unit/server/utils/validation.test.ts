@@ -57,7 +57,7 @@ describe('server/utils/validation', () => {
       expect(mockReadBody).toHaveBeenCalledWith(mockEvent)
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 400,
-        statusMessage: expect.stringContaining('expected number, received string'),
+        message: expect.stringContaining('expected number, received string'),
       })
     })
 
@@ -77,7 +77,7 @@ describe('server/utils/validation', () => {
 
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 400,
-        statusMessage: expect.stringContaining('expected string, received undefined'),
+        message: expect.stringContaining('expected string, received undefined'),
       })
     })
 
@@ -98,7 +98,7 @@ describe('server/utils/validation', () => {
 
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 400,
-        statusMessage: expect.stringMatching(/.*; .*; .*/), // Contains semicolons (multiple errors)
+        message: expect.stringMatching(/.*; .*; .*/), // Contains semicolons (multiple errors)
       })
     })
 
@@ -116,7 +116,7 @@ describe('server/utils/validation', () => {
 
       expect(mockCreateError).toHaveBeenCalledWith({
         statusCode: 400,
-        statusMessage: expect.stringContaining('expected string, received undefined'),
+        message: expect.stringContaining('expected string, received undefined'),
       })
     })
 

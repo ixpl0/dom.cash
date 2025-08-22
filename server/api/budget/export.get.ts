@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   catch {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to export budget',
+      message: 'Failed to export budget',
     })
   }
 })
