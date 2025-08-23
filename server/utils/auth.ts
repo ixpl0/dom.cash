@@ -95,7 +95,7 @@ export const findUser = async (username: string, event: H3Event) => {
   const database = useDatabase(event)
   return database.query.user.findFirst({
     where: eq(user.username, username),
-    columns: { id: true, username: true, passwordHash: true, mainCurrency: true },
+    columns: { id: true, username: true, passwordHash: true, googleId: true, mainCurrency: true },
   })
 }
 
@@ -118,11 +118,41 @@ export const createUser = async (username: string, password: string, mainCurrenc
   return created
 }
 
+export const createGoogleUser = async (username: string, googleId: string, mainCurrency: string, now: Date, event: H3Event) => {
+  const database = useDatabase(event)
+
+  await database.insert(user).values({
+    id: crypto.randomUUID(),
+    username,
+    googleId,
+    mainCurrency,
+    createdAt: now,
+  })
+
+  const created = await findUser(username, event)
+  if (!created) {
+    throw createError({ statusCode: 500, message: 'Failed to create user' })
+  }
+  return created
+}
+
+export const findUserByGoogleId = async (googleId: string, event: H3Event) => {
+  const database = useDatabase(event)
+  return database.query.user.findFirst({
+    where: eq(user.googleId, googleId),
+    columns: { id: true, username: true, googleId: true, mainCurrency: true },
+  })
+}
+
 export const ensureUser = async (username: string, password: string, mainCurrency: string, now: Date, event: H3Event) => {
   const existing = await findUser(username, event)
 
   if (!existing) {
     return await createUser(username, password, mainCurrency, now, event)
+  }
+
+  if (!existing.passwordHash) {
+    throw createError({ statusCode: 401, message: 'Account exists with Google OAuth. Please use Google sign-in.' })
   }
 
   const isPasswordValid = await verifyPassword(password, existing.passwordHash)

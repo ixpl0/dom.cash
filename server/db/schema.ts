@@ -8,12 +8,14 @@ export const user = sqliteTable(
   {
     id: text('id').primaryKey(),
     username: text('username').notNull().unique(),
-    passwordHash: text('password_hash').notNull(),
+    passwordHash: text('password_hash'),
+    googleId: text('google_id').unique(),
     mainCurrency: text('main_currency').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   },
   t => [
     check('ck_user_currency_3_upper', sql`${t.mainCurrency} GLOB '[A-Z][A-Z][A-Z]'`),
+    check('ck_user_has_auth', sql`${t.passwordHash} IS NOT NULL OR ${t.googleId} IS NOT NULL`),
   ],
 )
 

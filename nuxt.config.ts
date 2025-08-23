@@ -17,12 +17,15 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           ...(process.env.NODE_ENV === 'production' && {
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-            'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; font-src \'self\'; connect-src \'self\'; frame-ancestors \'none\'',
+            'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://accounts.google.com; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; font-src \'self\'; connect-src \'self\' https://accounts.google.com; frame-ancestors \'none\'',
           }),
         },
       },
     },
   },
   vite: { plugins: [tailwindcss()] },
+  typescript: {
+    typeCheck: true,
+  },
   eslint: { config: { stylistic: true } },
 })

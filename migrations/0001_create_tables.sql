@@ -10,10 +10,12 @@ DROP TABLE IF EXISTS user;
 CREATE TABLE user (
   id TEXT PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT,
+  google_id TEXT UNIQUE,
   main_currency TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  CONSTRAINT ck_user_currency_3_upper CHECK (main_currency GLOB '[A-Z][A-Z][A-Z]')
+  CONSTRAINT ck_user_currency_3_upper CHECK (main_currency GLOB '[A-Z][A-Z][A-Z]'),
+  CONSTRAINT ck_user_has_auth CHECK (password_hash IS NOT NULL OR google_id IS NOT NULL)
 );
 
 -- Create session table

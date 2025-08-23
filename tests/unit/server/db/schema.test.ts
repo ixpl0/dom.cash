@@ -24,6 +24,7 @@ describe('Database Schema Types', () => {
         id: 'user-1',
         username: 'testuser',
         passwordHash: 'hash123',
+        googleId: null,
         mainCurrency: 'USD',
         createdAt: new Date(),
       }
@@ -31,6 +32,7 @@ describe('Database Schema Types', () => {
       expect(user.id).toBe('user-1')
       expect(user.username).toBe('testuser')
       expect(user.passwordHash).toBe('hash123')
+      expect(user.googleId).toBeNull()
       expect(user.mainCurrency).toBe('USD')
       expect(user.createdAt).toBeInstanceOf(Date)
     })
@@ -40,12 +42,31 @@ describe('Database Schema Types', () => {
         id: 'user-1',
         username: 'testuser',
         passwordHash: 'hash123',
+        googleId: null,
         mainCurrency: 'USD',
         createdAt: new Date(),
       }
 
       expect(newUser.id).toBe('user-1')
       expect(newUser.username).toBe('testuser')
+    })
+
+    it('should define Google User type correctly', () => {
+      const googleUser: User = {
+        id: 'user-2',
+        username: 'test@gmail.com',
+        passwordHash: null,
+        googleId: 'google-user-id',
+        mainCurrency: 'USD',
+        createdAt: new Date(),
+      }
+
+      expect(googleUser.id).toBe('user-2')
+      expect(googleUser.username).toBe('test@gmail.com')
+      expect(googleUser.passwordHash).toBeNull()
+      expect(googleUser.googleId).toBe('google-user-id')
+      expect(googleUser.mainCurrency).toBe('USD')
+      expect(googleUser.createdAt).toBeInstanceOf(Date)
     })
   })
 

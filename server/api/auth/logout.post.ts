@@ -3,10 +3,8 @@ import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
-import { authRateLimit } from '~~/server/utils/rate-limiter'
 
 export default defineEventHandler(async (event) => {
-  authRateLimit(event)
   const token = getCookie(event, 'auth-token')
 
   if (token) {
