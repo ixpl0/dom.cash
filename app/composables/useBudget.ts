@@ -2,8 +2,7 @@ import type { MonthData } from '~~/shared/types/budget'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/entry-strategies'
-
-const toMutable = <T>(data: T): T => JSON.parse(JSON.stringify(data))
+import { toMutable } from '~~/shared/utils/immutable'
 
 export interface BudgetData {
   user: {

@@ -1,14 +1,10 @@
-interface UserData {
-  id: string
-  username: string
-  mainCurrency: string
-}
+import type { User } from '~~/shared/types'
 
 export const useUser = () => {
-  const userData = useState<UserData | null>('user.data', () => null)
+  const userData = useState<User | null>('user.data', () => null)
 
   const loadUserData = async (): Promise<void> => {
-    userData.value = await $fetch<UserData>('/api/auth/me')
+    userData.value = await $fetch<User>('/api/auth/me')
   }
 
   const mainCurrency = computed(() => userData.value?.mainCurrency || 'USD')

@@ -85,6 +85,7 @@ describe('Database Schema Types', () => {
       const currency: Currency = {
         date: '2024-01-01',
         rates: { USD: 1, EUR: 0.85, GBP: 0.75 },
+        lastUpdateAttempt: null,
       }
 
       expect(currency.date).toBe('2024-01-01')

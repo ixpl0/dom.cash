@@ -1,5 +1,4 @@
 import { defineConfig } from 'vitest/config'
-import { defineVitestProject } from '@nuxt/test-utils/config'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

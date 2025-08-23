@@ -162,7 +162,6 @@ export const setAuthCookie = (event: H3Event, token: string) => {
 }
 
 export const getUserFromRequest = async (event: H3Event) => {
-  const database = useDatabase(event)
   const token = getCookie(event, 'auth-token')
   if (!token) {
     return null
@@ -171,44 +170,20 @@ export const getUserFromRequest = async (event: H3Event) => {
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const now = new Date()
 
-  const sessionData = await database
+  const db = useDatabase(event)
+  const [userRecord] = await db
     .select({
-      userId: session.userId,
+      id: user.id,
+      username: user.username,
+      mainCurrency: user.mainCurrency,
     })
     .from(session)
+    .innerJoin(user, eq(session.userId, user.id))
     .where(and(
       eq(session.tokenHash, tokenHash),
       gt(session.expiresAt, now),
     ))
     .limit(1)
 
-  if (sessionData.length === 0) {
-    return null
-  }
-
-  const sessionInfo = sessionData[0]
-  if (!sessionInfo) {
-    return null
-  }
-
-  const userData = await database
-    .select({
-      id: user.id,
-      username: user.username,
-      mainCurrency: user.mainCurrency,
-    })
-    .from(user)
-    .where(eq(user.id, sessionInfo.userId))
-    .limit(1)
-
-  if (userData.length === 0) {
-    return null
-  }
-
-  const userInfo = userData[0]
-  if (!userInfo) {
-    return null
-  }
-
-  return userInfo
+  return userRecord || null
 }

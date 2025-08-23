@@ -2,11 +2,12 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { getEntryWithMonth, checkWritePermissionForMonth, updateEntry } from '~~/server/services/entries'
+import { currencySchema, descriptionSchema, amountSchema } from '~~/shared/schemas/common'
 
 const updateEntrySchema = z.object({
-  description: z.string().min(1).max(255),
-  amount: z.number().positive(),
-  currency: z.string().length(3).regex(/^[A-Z]{3}$/),
+  description: descriptionSchema,
+  amount: amountSchema,
+  currency: currencySchema,
   date: z.string().optional(),
 })
 

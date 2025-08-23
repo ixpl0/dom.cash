@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { validateAuthToken } from '~~/shared/utils/auth'
+import { validateAuthToken } from '~~/server/utils/auth-validation'
 import type { User } from '~~/shared/types'
 
 export const requireAuth = async (event: H3Event): Promise<User> => {

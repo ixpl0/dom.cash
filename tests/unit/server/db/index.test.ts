@@ -25,5 +25,4 @@ describe('server/db/index', () => {
     expect(result).toBeDefined()
     expect(typeof result).toBe('object')
   })
-
 })

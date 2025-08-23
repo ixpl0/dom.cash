@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { validateAuthToken } from '~~/shared/utils/auth'
+import { validateAuthToken } from '~~/server/utils/auth-validation'
 import type { H3Event } from 'h3'
 
 vi.mock('h3', () => ({

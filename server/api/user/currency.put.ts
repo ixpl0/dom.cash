@@ -1,9 +1,10 @@
 import { updateUserCurrency } from '~~/server/services/users'
 import { requireAuth } from '~~/server/utils/session'
 import { z } from 'zod'
+import { currencySchema } from '~~/shared/schemas/common'
 
 const UpdateCurrencySchema = z.object({
-  currency: z.string().length(3).regex(/^[A-Z]{3}$/, 'Currency must be 3 uppercase letters'),
+  currency: currencySchema,
   targetUsername: z.string().optional(),
 })
 

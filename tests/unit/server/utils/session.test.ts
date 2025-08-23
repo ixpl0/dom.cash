@@ -7,7 +7,7 @@ vi.mock('h3', () => ({
   createError: vi.fn(),
 }))
 
-vi.mock('~~/shared/utils/auth', () => ({
+vi.mock('~~/server/utils/auth-validation', () => ({
   validateAuthToken: vi.fn(),
 }))
 
@@ -19,7 +19,7 @@ describe('server/utils/session', () => {
     vi.clearAllMocks()
 
     const h3 = await import('h3')
-    const auth = await import('~~/shared/utils/auth')
+    const auth = await import('~~/server/utils/auth-validation')
 
     mockCreateError = h3.createError as ReturnType<typeof vi.fn>
     mockValidateAuthToken = auth.validateAuthToken as ReturnType<typeof vi.fn>

@@ -2,13 +2,14 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { getMonthOwner, checkWritePermissionForMonth, createEntry } from '~~/server/services/entries'
+import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
 
 const createEntrySchema = z.object({
   monthId: z.uuid(),
-  kind: z.enum(['balance', 'income', 'expense']),
-  description: z.string().min(1).max(255),
-  amount: z.number().positive(),
-  currency: z.string().length(3).regex(/^[A-Z]{3}$/),
+  kind: entryKindSchema,
+  description: descriptionSchema,
+  amount: amountSchema,
+  currency: currencySchema,
   date: z.string().optional(),
 })
 

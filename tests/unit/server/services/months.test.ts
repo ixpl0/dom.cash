@@ -73,7 +73,7 @@ describe('server/services/months', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     const dbModule = await import('~~/server/db')
-    vi.mocked(dbModule.useDatabase).mockReturnValue(mockDb)
+    vi.mocked(dbModule.useDatabase).mockReturnValue(mockDb as any)
     const { clearRatesCache } = await import('~~/server/services/months')
     clearRatesCache()
   })

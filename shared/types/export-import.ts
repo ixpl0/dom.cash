@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { currencySchema, usernameSchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
 
 export interface BudgetExportData {
   version: '1.0'
@@ -38,10 +39,10 @@ export interface BudgetImportResult {
 }
 
 export const budgetExportEntrySchema = z.object({
-  kind: z.enum(['balance', 'income', 'expense']),
-  description: z.string().min(1).max(255),
-  amount: z.number().positive(),
-  currency: z.string().length(3).regex(/^[A-Z]{3}$/),
+  kind: entryKindSchema,
+  description: descriptionSchema,
+  amount: amountSchema,
+  currency: currencySchema,
   date: z.string().optional(),
 })
 
@@ -55,8 +56,8 @@ export const budgetExportSchema = z.object({
   version: z.literal('1.0'),
   exportDate: z.string(),
   user: z.object({
-    username: z.string().min(1),
-    mainCurrency: z.string().length(3).regex(/^[A-Z]{3}$/),
+    username: usernameSchema,
+    mainCurrency: currencySchema,
   }),
   months: z.array(budgetExportMonthSchema),
 })
