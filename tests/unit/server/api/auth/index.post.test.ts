@@ -3,6 +3,7 @@ import type { H3Event } from 'h3'
 
 vi.mock('h3', () => ({
   defineEventHandler: vi.fn(handler => handler),
+  getHeader: vi.fn(() => '127.0.0.1'),
 }))
 
 vi.mock('~~/server/schemas/auth', () => ({

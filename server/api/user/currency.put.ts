@@ -62,13 +62,15 @@ export default defineEventHandler(async (event) => {
       })
     }
     catch (error) {
-      console.error('Error creating notification:', error)
+      const { secureLog } = await import('~~/server/utils/secure-logger')
+      secureLog.error('Error creating notification:', error)
     }
 
     return { success: true }
   }
   catch (error) {
-    console.error('Update currency error:', error)
+    const { secureLog } = await import('~~/server/utils/secure-logger')
+    secureLog.error('Update currency error:', error)
 
     if (error instanceof Error && error.message.includes('User not found')) {
       throw createError({

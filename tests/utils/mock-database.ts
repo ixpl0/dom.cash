@@ -1,7 +1,6 @@
 import { vi } from 'vitest'
 import type { H3Event } from 'h3'
 
-// Mock для H3Event в тестах
 export const createMockEvent = (): H3Event => ({
   context: {
     cloudflare: {
@@ -12,7 +11,6 @@ export const createMockEvent = (): H3Event => ({
   },
 } as unknown as H3Event)
 
-// Mock для Drizzle database
 export const createMockDatabase = () => {
   const mockDb = {
     select: vi.fn().mockReturnThis(),
@@ -31,15 +29,12 @@ export const createMockDatabase = () => {
     onConflictDoUpdate: vi.fn().mockReturnThis(),
   }
 
-  // Добавляем методы которые возвращают Promise
   mockDb.limit.mockResolvedValue([])
   mockDb.returning.mockResolvedValue([])
 
   return mockDb
 }
 
-// Mock для useDatabase
 export const mockUseDatabase = vi.fn()
 
-// Экспортируем также db mock для обратной совместимости
 export const db = createMockDatabase()

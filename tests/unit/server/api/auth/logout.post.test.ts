@@ -6,6 +6,7 @@ vi.mock('h3', () => ({
   getCookie: vi.fn(),
   deleteCookie: vi.fn(),
   createError: vi.fn(),
+  getHeader: vi.fn(() => '127.0.0.1'),
 }))
 
 vi.mock('node:crypto', () => ({
@@ -164,7 +165,11 @@ describe('server/api/auth/logout.post', () => {
 
     await expect(handler.default(mockEvent)).rejects.toEqual(mockErrorResponse)
 
-    expect(consoleSpy).toHaveBeenCalledWith('Database error during logout:', dbError)
+    expect(consoleSpy).toHaveBeenCalledWith('Database error during logout:', {
+      name: 'Error',
+      message: 'Database connection failed',
+      stack: expect.any(String),
+    })
     expect(mockCreateError).toHaveBeenCalledWith({
       statusCode: 500,
       message: 'Internal server error during logout',

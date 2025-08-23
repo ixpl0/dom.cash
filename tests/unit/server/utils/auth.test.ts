@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest'
 import { generateSessionToken, findUser } from '~~/server/utils/auth'
 import { createMockEvent } from '~~/tests/utils/mock-database'
 
-// Mock database для тестов
 const mockDb = {
   query: {
     user: {

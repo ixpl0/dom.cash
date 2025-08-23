@@ -57,7 +57,7 @@ describe('server/utils/rates/api', () => {
       delete process.env.OPENEXCHANGERATES_APP_ID
 
       await expect(fetchLatestRates()).rejects.toThrow(
-        'OPENEXCHANGERATES_APP_ID environment variable is required',
+        'API key not configured',
       )
       expect(mockFetch).not.toHaveBeenCalled()
     })
@@ -66,7 +66,7 @@ describe('server/utils/rates/api', () => {
       process.env.OPENEXCHANGERATES_APP_ID = ''
 
       await expect(fetchLatestRates()).rejects.toThrow(
-        'OPENEXCHANGERATES_APP_ID environment variable is required',
+        'API key not configured',
       )
       expect(mockFetch).not.toHaveBeenCalled()
     })
@@ -149,7 +149,7 @@ describe('server/utils/rates/api', () => {
       delete process.env.OPENEXCHANGERATES_APP_ID
 
       await expect(fetchHistoricalRates('2025-01-31')).rejects.toThrow(
-        'OPENEXCHANGERATES_APP_ID environment variable is required',
+        'API key not configured',
       )
       expect(mockFetch).not.toHaveBeenCalled()
     })
