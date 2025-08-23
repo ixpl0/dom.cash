@@ -14,6 +14,7 @@ interface RateLimitEntry {
 }
 
 const ipCounts = new Map<string, RateLimitEntry>()
+let requestCounter = 0
 
 const cleanupExpiredEntries = () => {
   const now = Date.now()
@@ -23,8 +24,6 @@ const cleanupExpiredEntries = () => {
     }
   }
 }
-
-setInterval(cleanupExpiredEntries, 60000)
 
 const getClientIP = (event: H3Event): string => {
   const forwarded = getHeader(event, 'x-forwarded-for')
@@ -49,6 +48,11 @@ export const rateLimit = (config: RateLimitConfig) => {
   return (event: H3Event) => {
     const ip = getClientIP(event)
     const now = Date.now()
+
+    requestCounter++
+    if (requestCounter % 1000 === 0) {
+      cleanupExpiredEntries()
+    }
 
     const entry = ipCounts.get(ip)
 
