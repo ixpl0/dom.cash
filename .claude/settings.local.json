@@ -18,7 +18,8 @@
       "Bash(grep:*)",
       "Bash(pnpm db:migrate:*)",
       "Bash(pnpm db:backup:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "WebFetch(domain:developers.cloudflare.com)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
@@ -29,6 +30,6 @@
     ],
     "defaultMode": "acceptEdits"
   },
-  "defaultMode": "acceptEdits",
-  "outputStyle": "default"
+  "outputStyle": "default",
+  "defaultMode": "acceptEdits"
 }

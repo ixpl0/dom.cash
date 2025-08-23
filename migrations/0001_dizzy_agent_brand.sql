@@ -1,1 +1,0 @@
-ALTER TABLE `currency` ADD `last_update_attempt` integer;

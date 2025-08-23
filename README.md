@@ -1,6 +1,7 @@
-# Budget Management Application
+# Dom Cash - Budget Tracker
 
-A modern budget tracking application built with Nuxt 4, featuring comprehensive backend testing and optimized frontend architecture.
+Приложение для учёта личных финансов с поддержкой множественных валют.
+Deployed on Cloudflare Workers with D1 database.
 
 ## Architecture Overview
 
@@ -44,12 +45,14 @@ The application uses **Optimistic UI** pattern for modal interactions:
 
 ## Tech Stack
 
-- **Framework**: Nuxt 4
-- **Database**: SQLite with Drizzle ORM
+- **Framework**: Nuxt 4, Vue 3
+- **Backend**: Nitro, Cloudflare Workers
+- **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
 - **Authentication**: JWT with secure HTTP-only cookies
 - **Styling**: Tailwind CSS + DaisyUI
 - **Testing**: Vitest with comprehensive unit test suite
 - **Type Safety**: TypeScript with strict mode
+- **Deployment**: Cloudflare Workers
 
 ## Getting Started
 
@@ -57,6 +60,7 @@ The application uses **Optimistic UI** pattern for modal interactions:
 
 - Node.js 20.16.0 (pinned in package.json)
 - pnpm 10+
+- Wrangler CLI (for Cloudflare deployment)
 
 ### Installation
 
@@ -67,14 +71,11 @@ pnpm install
 ### Database Setup
 
 ```bash
-# For new projects or clean setup
+# Apply migrations to local database
 pnpm run db:migrate
 
 # Or reset database completely (deletes all data!)
 pnpm run db:reset
-
-# Generate migrations from schema changes + apply them
-pnpm run db:update
 ```
 
 ### Development
@@ -87,82 +88,59 @@ Visit `http://localhost:3000`
 
 ## Database Migrations
 
-This project uses **Drizzle migrations** to manage database schema changes safely without losing data.
+This project uses **Wrangler D1 migrations** for Cloudflare deployment (NOT Drizzle migrations).
 
 ### How Migrations Work
 
-- **Schema changes** are tracked in `server/db/schema.ts`
-- **Migration files** are generated in `drizzle/` directory
-- **Applied migrations** are tracked in database to prevent re-running
+- **Schema** is defined in `server/db/schema.ts` (Drizzle ORM)
+- **Migration files** are in `migrations/` directory (plain SQL)
+- **Wrangler** tracks which migrations have been applied
 
-### Migration Workflow
+### Creating New Migrations
 
 ```bash
-# 1. Make changes to server/db/schema.ts
-# 2. Generate migration file
-pnpm run db:generate
+# Create a new migration file
+wrangler d1 migrations create DB migration_name
+```
 
-# 3. Review generated SQL in drizzle/ folder
-# 4. Apply migration to database
+This creates a file like `migrations/0003_migration_name.sql`
+
+### Applying Migrations
+
+```bash
+# Local development
 pnpm run db:migrate
+
+# Test environment (remote)
+pnpm run db:migrate:test
+
+# Production environment (remote)
+pnpm run db:migrate:prod
 ```
 
-### Commands
+### Current Migrations
 
-| Command | Purpose | When to Use |
+- `0001_create_tables.sql` - All database tables
+- `0002_seed_currency_rates.sql` - Initial currency rates data
+
+### Database Commands
+
+| Command | Purpose | Environment |
 |---------|---------|-------------|
-| `pnpm run db:generate` | Create migration from schema changes | After modifying `schema.ts` |
-| `pnpm run db:migrate` | Apply pending migrations | After generating new migrations |
-| `pnpm run db:update` | Generate + apply migrations in one step | Full development workflow |
-| `pnpm run db:backup` | Create database backup | Before risky operations |
-| `pnpm run db:reset` | **⚠️ Destroys all data** - auto-backup + recreate DB | For development/testing only |
-| `pnpm run db:studio` | Open visual database browser | Inspect data and schema |
-
-### Example: Adding a New Column
-
-```typescript
-// 1. Edit server/db/schema.ts
-export const user = sqliteTable('user', {
-  id: text('id').primaryKey(),
-  username: text('username').notNull().unique(),
-  email: text('email').notNull().unique(), // ← New column
-  // ... other fields
-})
-
-// 2. Generate migration
-// pnpm run db:generate
-
-// 3. Apply migration  
-// pnpm run db:migrate
-```
-
-### Migration Files
-
-The project currently has these migrations:
-- `0000_initial.sql` - Initial database schema (tables, indexes)
-- `0001_initial_data.sql` - Initial currency rates data
-
-### Database Backups
-
-The project includes automatic SQLite backup using `VACUUM INTO`:
-
-```bash
-# Manual backup
-pnpm run db:backup
-
-# Automatic backup (before db:reset)
-pnpm run db:reset
-```
-
-Backups are stored in `./backups/db-YYYY-MM-DDTHH-MM-SS.sqlite`
+| `pnpm run db:migrate` | Apply migrations | Local |
+| `pnpm run db:migrate:test` | Apply migrations | Test (remote) |
+| `pnpm run db:migrate:prod` | Apply migrations | Production (remote) |
+| `pnpm run db:backup` | Create backup | Local |
+| `pnpm run db:backup:test` | Create backup | Test (remote) |
+| `pnpm run db:backup:prod` | Create backup | Production (remote) |
+| `pnpm run db:reset` | Reset database | Local only |
 
 ### Important Notes
 
-- **Never edit migration files** manually - always use `db:generate`
-- **Backups are created automatically** before `db:reset`
-- **Test migrations on development data** first
-- **Commit migration files** to version control
-- **Migrations are applied automatically** by `db:migrate` in correct order
+- **NO Drizzle-kit generate** - we use Wrangler D1 migrations
+- **Manual SQL** - write migrations manually in SQL
+- **Test first** - always test migrations locally before deploying
+- **Commit migrations** to version control
 
 ## Testing
 
@@ -211,16 +189,61 @@ pnpm run lint
 4. **API Integration** - Full request/response cycle testing
 5. **Shared Utilities** - Cross-platform business logic functions
 
+## Cloudflare Deployment
+
+### Initial Setup
+
+1. **Login to Cloudflare**
+```bash
+wrangler login
+```
+
+2. **Create D1 databases** in Cloudflare Dashboard:
+- `dom-test` - for testing
+- `dom-prod` - for production
+
+3. **Update database IDs** in `wrangler.toml`
+
+4. **Set secrets**
+```bash
+# Test environment
+wrangler secret put JWT_SECRET --env=""
+
+# Production environment
+wrangler secret put JWT_SECRET --env production
+```
+
+### Deploy Commands
+
+```bash
+# Deploy to test
+pnpm run deploy:test
+
+# Deploy to production
+pnpm run deploy:prod
+```
+
+After deployment:
+- Test: `https://dom-cash-test.{account}.workers.dev`
+- Production: `https://dom-cash.{account}.workers.dev`
+
 ## Development Commands
 
 ```bash
+# Development
+pnpm run dev            # Start dev server
+pnpm run build          # Build for production
+
 # Database operations
-pnpm run db:generate    # Generate migration from schema changes
-pnpm run db:migrate     # Apply migrations to database
-pnpm run db:update      # Generate + apply migrations in one step
-pnpm run db:backup      # Create database backup
-pnpm run db:reset       # Auto-backup + delete database and recreate
-pnpm run db:studio      # Open Drizzle Studio
+pnpm run db:migrate     # Apply migrations locally
+pnpm run db:migrate:test # Apply to test DB
+pnpm run db:migrate:prod # Apply to production DB
+pnpm run db:backup      # Backup local DB
+pnpm run db:reset       # Reset local DB
+
+# Deployment
+pnpm run deploy:test    # Deploy to test environment
+pnpm run deploy:prod    # Deploy to production
 
 # Code quality
 pnpm run lint:fix       # Auto-fix ESLint issues
