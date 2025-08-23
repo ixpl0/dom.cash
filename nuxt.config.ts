@@ -10,14 +10,13 @@ export default defineNuxtConfig({
     routeRules: {
       '/**': {
         headers: {
-          'X-Frame-Options': 'DENY',
           'X-Content-Type-Options': 'nosniff',
           'X-XSS-Protection': '1; mode=block',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           ...(process.env.NODE_ENV === 'production' && {
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-            'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://accounts.google.com; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; font-src \'self\'; connect-src \'self\' https://accounts.google.com; frame-ancestors \'none\'',
+            'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://accounts.google.com https://gsi.gstatic.com; style-src \'self\' \'unsafe-inline\' https://accounts.google.com; img-src \'self\' data: https://accounts.google.com https://ssl.gstatic.com https://lh3.googleusercontent.com; font-src \'self\'; connect-src \'self\' https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors \'none\'',
           }),
         },
       },

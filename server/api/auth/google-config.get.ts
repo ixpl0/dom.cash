@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, createError } from 'h3'
 import { getGoogleClientId } from '~~/server/utils/google-oauth'
 
 export default defineEventHandler(async () => {

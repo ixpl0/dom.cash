@@ -15,11 +15,11 @@ export default defineEventHandler(async (event) => {
     const noBodyEndpoints = [
       '/api/auth/logout',
     ]
-    
+
     // Endpoints с DELETE обычно без body
     const isDeleteRequest = method === 'DELETE'
     const isNoBodyEndpoint = noBodyEndpoints.includes(url)
-    
+
     // Проверяем Content-Type только для запросов с body
     if (!isDeleteRequest && !isNoBodyEndpoint) {
       if (contentLength && parseInt(contentLength) > 0) {

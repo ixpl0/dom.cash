@@ -24,6 +24,7 @@
               minlength="3"
               maxlength="64"
               :disabled="isLoading"
+              autocomplete="username"
             >
             <label
               v-if="errors.username"
@@ -47,6 +48,7 @@
               minlength="8"
               maxlength="100"
               :disabled="isLoading"
+              autocomplete="current-password"
             >
             <label
               v-if="errors.password"

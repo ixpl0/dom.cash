@@ -1,6 +1,3 @@
-import { OAuth2Client } from 'google-auth-library'
-import type { TokenPayload } from 'google-auth-library'
-
 interface GoogleUserInfo {
   id: string
   email: string
@@ -8,34 +5,34 @@ interface GoogleUserInfo {
   picture?: string
 }
 
-const getGoogleClient = (): OAuth2Client => {
-  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
-  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET
-
-  if (!clientId || !clientSecret) {
-    throw new Error('Google OAuth credentials not configured')
-  }
-
-  return new OAuth2Client(clientId, clientSecret)
-}
-
 export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> => {
-  const client = getGoogleClient()
-
   try {
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
-    })
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)
 
-    const payload: TokenPayload | undefined = ticket.getPayload()
+    if (!response.ok) {
+      throw new Error(`Google API responded with ${response.status}`)
+    }
 
-    if (!payload) {
-      throw new Error('Invalid token payload')
+    const payload = await response.json() as {
+      sub?: string
+      email?: string
+      name?: string
+      picture?: string
+      aud?: string
+      exp?: number
+      iat?: number
     }
 
     if (!payload.sub || !payload.email) {
       throw new Error('Missing required user information')
+    }
+
+    if (payload.aud !== process.env.GOOGLE_OAUTH_CLIENT_ID) {
+      throw new Error('Token audience mismatch')
+    }
+
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      throw new Error('Token has expired')
     }
 
     return {

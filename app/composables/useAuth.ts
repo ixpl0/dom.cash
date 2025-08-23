@@ -10,8 +10,8 @@ export const useAuth = () => {
     })
 
     setUser(user)
-    
-    if (process.client) {
+
+    if (import.meta.client) {
       localStorage.setItem('hasSession', 'true')
     }
 
@@ -24,8 +24,8 @@ export const useAuth = () => {
     }).catch(() => {})
 
     clearUser()
-    
-    if (process.client) {
+
+    if (import.meta.client) {
       localStorage.removeItem('hasSession')
     }
 
@@ -34,23 +34,23 @@ export const useAuth = () => {
 
   const restoreSession = async (): Promise<void> => {
     if (user.value || import.meta.server) return
-    
-    if (process.client && !localStorage.getItem('hasSession')) {
+
+    if (import.meta.client && !localStorage.getItem('hasSession')) {
       return
     }
 
     try {
       const user = await $fetch<User>('/api/auth/me')
       setUser(user)
-      
-      if (process.client) {
+
+      if (import.meta.client) {
         localStorage.setItem('hasSession', 'true')
       }
     }
     catch {
       clearUser()
-      
-      if (process.client) {
+
+      if (import.meta.client) {
         localStorage.removeItem('hasSession')
       }
     }
@@ -85,7 +85,7 @@ export const useAuth = () => {
           const google = (window as unknown as Record<string, unknown>).google as {
             accounts: {
               id: {
-                initialize: (config: { 
+                initialize: (config: {
                   client_id: string
                   callback: (response: { credential: string }) => void
                   use_fedcm_for_prompt?: boolean
@@ -97,7 +97,7 @@ export const useAuth = () => {
           }
 
           console.log('Initializing Google OAuth with origin:', window.location.origin)
-          
+
           google.accounts.id.initialize({
             client_id: config.clientId,
             callback: async (response: { credential: string }) => {
@@ -109,11 +109,11 @@ export const useAuth = () => {
                 })
 
                 setUser(user)
-                
-                if (process.client) {
+
+                if (import.meta.client) {
                   localStorage.setItem('hasSession', 'true')
                 }
-                
+
                 await navigateTo('/')
                 resolve()
               }

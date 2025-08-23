@@ -1,4 +1,4 @@
-const publicRoutes = ['/', '/auth']
+const publicRoutes = ['/', '/auth', '/api/*']
 
 export default readonly({
   publicRoutes,
