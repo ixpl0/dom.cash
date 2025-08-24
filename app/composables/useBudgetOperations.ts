@@ -11,10 +11,6 @@ export const useBudgetOperations = (
   const budget = useBudget(targetUsername)
 
   const addEntry = async (entryData: EntryFormData): Promise<void> => {
-    if (!entryData.description.trim() || entryData.amount <= 0) {
-      return
-    }
-
     await budget.addEntry(
       monthId,
       entryKind,
@@ -30,10 +26,6 @@ export const useBudgetOperations = (
   }
 
   const updateEntry = async (entryId: string, entryData: EntryFormData): Promise<void> => {
-    if (!entryData.description.trim() || entryData.amount <= 0) {
-      return
-    }
-
     await budget.updateEntry(entryId, {
       description: entryData.description,
       amount: entryData.amount,

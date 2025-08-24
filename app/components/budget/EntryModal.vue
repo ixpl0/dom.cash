@@ -307,6 +307,12 @@ const {
 } = useBudgetOperations(props.monthId, props.entryKind, emitWrapper, props.targetUsername)
 
 const addEntry = async (): Promise<void> => {
+  if (isAdding.value) return
+
+  if (!newEntry.value.description.trim() || newEntry.value.amount <= 0) {
+    return
+  }
+
   isAdding.value = true
 
   try {
@@ -322,6 +328,8 @@ const addEntry = async (): Promise<void> => {
 }
 
 const deleteEntry = async (entryId: string): Promise<void> => {
+  if (isDeleting.value) return
+
   isDeleting.value = entryId
 
   try {
@@ -352,6 +360,8 @@ const handleBackdropClick = (): void => {
 }
 
 const saveEntry = async (): Promise<void> => {
+  if (isSaving.value) return
+
   if (!editingEntryId.value || !editingEntry.value.description.trim() || editingEntry.value.amount <= 0) {
     return
   }

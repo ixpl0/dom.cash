@@ -153,12 +153,23 @@ export const useBudget = (targetUsername?: string) => {
         requestBody.targetUsername = budgetState.value.data.user.username
       }
 
-      await $fetch<MonthData>('/api/budget/months', {
+      const response = await $fetch<MonthData>('/api/budget/months', {
         method: 'POST',
         body: requestBody,
       })
 
-      await loadBudgetData()
+      if (!response || !budgetState.value.data) return
+
+      const months = budgetState.value.data.months
+      const updatedMonths = [response, ...months].sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year
+        return b.month - a.month
+      })
+
+      budgetState.value.data = {
+        ...budgetState.value.data,
+        months: toMutable(updatedMonths),
+      }
     }
     catch (error) {
       console.error('Error creating month:', error)

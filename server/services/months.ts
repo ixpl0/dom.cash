@@ -245,7 +245,65 @@ export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetM
   }
 }
 
-export const createMonth = async (params: CreateMonthParams, event: H3Event) => {
+const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3Event): Promise<MonthData> => {
+  const db = useDatabase(event)
+  const entries = await db
+    .select()
+    .from(entry)
+    .where(eq(entry.monthId, monthRecord.id))
+
+  const balanceSources = entries
+    .filter(e => e.kind === 'balance')
+    .map(e => ({
+      id: e.id,
+      description: e.description,
+      currency: e.currency,
+      amount: e.amount,
+    }))
+
+  const incomeEntries = entries
+    .filter(e => e.kind === 'income')
+    .map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      date: e.date,
+    }))
+
+  const expenseEntries = entries
+    .filter(e => e.kind === 'expense')
+    .map(e => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      date: e.date,
+    }))
+
+  const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
+  const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
+  const balanceChange = totalIncome - totalExpenses
+
+  const exchangeRatesData = await getExchangeRatesForMonth(monthRecord.year, monthRecord.month, event)
+
+  return {
+    id: monthRecord.id,
+    year: monthRecord.year,
+    month: monthRecord.month,
+    userMonthId: monthRecord.id,
+    balanceSources,
+    incomeEntries,
+    expenseEntries,
+    balanceChange,
+    pocketExpenses: 0,
+    income: totalIncome,
+    exchangeRates: exchangeRatesData?.rates,
+    exchangeRatesSource: exchangeRatesData?.source,
+  }
+}
+
+export const createMonth = async (params: CreateMonthParams, event: H3Event): Promise<MonthData> => {
   const { year, month: monthNumber, copyFromMonthId, targetUserId } = params
 
   const db = useDatabase(event)
@@ -281,7 +339,7 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event) => 
     await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id, event)
   }
 
-  return createdMonth
+  return await buildMonthData(createdMonth, event)
 }
 
 export const findUserByUsername = async (username: string, event: H3Event) => {
@@ -325,13 +383,10 @@ export const deleteMonth = async (monthId: string, event: H3Event): Promise<void
     throw new Error('Month not found')
   }
 
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(entry)
-      .where(eq(entry.monthId, monthId))
-
-    await tx
-      .delete(month)
-      .where(eq(month.id, monthId))
-  })
+  const { executeBatch } = await import('~~/server/utils/d1-batch')
+  
+  await executeBatch(event, [
+    { sql: 'DELETE FROM entry WHERE month_id = ?', params: [monthId] },
+    { sql: 'DELETE FROM month WHERE id = ?', params: [monthId] },
+  ])
 }

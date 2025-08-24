@@ -61,10 +61,17 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     console.error('Delete month error:', error)
 
-    if (error instanceof Error && error.message === 'Month not found') {
+    if (error instanceof Error) {
+      if (error.message === 'Month not found') {
+        throw createError({
+          statusCode: 404,
+          message: 'Month not found',
+        })
+      }
+      
       throw createError({
-        statusCode: 404,
-        message: 'Month not found',
+        statusCode: 500,
+        message: `Failed to delete month: ${error.message}`,
       })
     }
 
