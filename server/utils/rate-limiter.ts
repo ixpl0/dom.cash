@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+const AUTH_RATE_LIMIT_WINDOW_MS = 60 * 1000 // 1 minute
 
 interface RateLimitConfig {
   maxRequests: number
@@ -78,8 +79,8 @@ export const rateLimit = (config: RateLimitConfig) => {
 }
 
 export const authRateLimit = rateLimit({
-  maxRequests: 10,
-  windowMs: RATE_LIMIT_WINDOW_MS,
+  maxRequests: 5,
+  windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
 })
 
 export const generalRateLimit = rateLimit({

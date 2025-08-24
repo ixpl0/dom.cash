@@ -61,91 +61,36 @@ export const useAuth = () => {
       throw new Error('Google OAuth is only available in browser')
     }
 
-    return new Promise<void>((resolve, reject) => {
-      const loadGoogleScript = () => {
-        return new Promise<void>((scriptResolve, scriptReject) => {
-          if (typeof (window as unknown as Record<string, unknown>).google !== 'undefined') {
-            scriptResolve()
-            return
-          }
+    try {
+      const config = await $fetch<{ clientId: string }>('/api/auth/google-config')
 
-          const script = document.createElement('script')
-          script.src = 'https://accounts.google.com/gsi/client'
-          script.onload = () => scriptResolve()
-          script.onerror = () => scriptReject(new Error('Failed to load Google SDK'))
-          document.head.appendChild(script)
-        })
+      const currentUrl = new URL(window.location.href)
+      const redirectUri = `${currentUrl.origin}/auth`
+
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+      authUrl.searchParams.set('client_id', config.clientId)
+      authUrl.searchParams.set('redirect_uri', redirectUri)
+      authUrl.searchParams.set('response_type', 'code')
+      authUrl.searchParams.set('scope', 'openid profile email')
+      authUrl.searchParams.set('access_type', 'online')
+      authUrl.searchParams.set('prompt', 'select_account')
+
+      if (currentUrl.searchParams.get('redirect')) {
+        authUrl.searchParams.set('state', currentUrl.searchParams.get('redirect')!)
       }
 
-      const initializeGoogle = async () => {
-        try {
-          await loadGoogleScript()
-
-          const config = await $fetch<{ clientId: string }>('/api/auth/google-config')
-          const google = (window as unknown as Record<string, unknown>).google as {
-            accounts: {
-              id: {
-                initialize: (config: {
-                  client_id: string
-                  callback: (response: { credential: string }) => void
-                  use_fedcm_for_prompt?: boolean
-                }) => void
-                prompt: (callback?: (notification: { isNotDisplayed(): boolean, isSkippedMoment(): boolean }) => void) => void
-                renderButton: (element: HTMLElement, options: { theme?: 'outline' | 'filled_blue' | 'filled_black', size?: 'large' | 'medium' | 'small' }) => void
-              }
-            }
-          }
-
-          console.log('Initializing Google OAuth with origin:', window.location.origin)
-
-          google.accounts.id.initialize({
-            client_id: config.clientId,
-            callback: async (response: { credential: string }) => {
-              try {
-                console.log('Google OAuth callback received')
-                const user = await $fetch<User>('/api/auth/google', {
-                  method: 'POST',
-                  body: { token: response.credential },
-                })
-
-                setUser(user)
-
-                if (import.meta.client) {
-                  localStorage.setItem('hasSession', 'true')
-                }
-
-                await navigateTo('/')
-                resolve()
-              }
-              catch (error) {
-                console.error('Google login error:', error)
-                reject(error instanceof Error ? error : new Error('Google login failed'))
-              }
-            },
-            use_fedcm_for_prompt: false,
-          })
-
-          console.log('Calling Google prompt...')
-          google.accounts.id.prompt((notification) => {
-            console.log('Google prompt notification:', notification)
-            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-              console.log('Google prompt not displayed or skipped')
-              resolve()
-            }
-          })
-        }
-        catch (error) {
-          reject(error instanceof Error ? error : new Error('Failed to initialize Google OAuth'))
-        }
-      }
-
-      initializeGoogle()
-    })
+      window.location.href = authUrl.toString()
+    }
+    catch (error) {
+      console.error('Failed to redirect to Google OAuth:', error)
+      throw new Error('Не удалось перенаправить на Google OAuth')
+    }
   }
 
   return {
     user,
     isAuthenticated,
+    setUser,
     login,
     logout,
     restoreSession,

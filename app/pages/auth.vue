@@ -259,5 +259,46 @@ watch(formData, () => {
   }
 }, { deep: true })
 
+onMounted(async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const code = urlParams.get('code')
+  const state = urlParams.get('state')
+
+  if (code) {
+    try {
+      isGoogleLoading.value = true
+      console.log('Processing Google OAuth redirect')
+
+      const response = await $fetch<{
+        user: User
+        redirectTo: string
+      }>(`/api/auth/google-redirect?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '')}`, {
+        method: 'POST',
+      })
+
+      const auth = useAuth()
+      auth.setUser(response.user)
+
+      if (import.meta.client) {
+        localStorage.setItem('hasSession', 'true')
+      }
+
+      await router.push(response.redirectTo)
+    }
+    catch (error) {
+      console.error('Google OAuth redirect failed:', error)
+      if (error instanceof Error) {
+        apiError.value = error.message
+      }
+      else {
+        apiError.value = 'Ошибка при обработке Google OAuth'
+      }
+    }
+    finally {
+      isGoogleLoading.value = false
+    }
+  }
+})
+
 definePageMeta({ layout: false })
 </script>

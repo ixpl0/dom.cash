@@ -11,16 +11,13 @@ export default defineEventHandler(async (event) => {
     const contentType = headers['content-type']
     const contentLength = headers['content-length']
 
-    // Список endpoints без body (не требуют Content-Type)
     const noBodyEndpoints = [
       '/api/auth/logout',
     ]
 
-    // Endpoints с DELETE обычно без body
     const isDeleteRequest = method === 'DELETE'
     const isNoBodyEndpoint = noBodyEndpoints.includes(url)
 
-    // Проверяем Content-Type только для запросов с body
     if (!isDeleteRequest && !isNoBodyEndpoint) {
       if (contentLength && parseInt(contentLength) > 0) {
         if (!contentType || !contentType.includes('application/json')) {
@@ -33,7 +30,6 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Проверяем размер для всех запросов
     if (contentLength && parseInt(contentLength) > MAX_REQUEST_SIZE) {
       throw createError({
         statusCode: 413,

@@ -15,7 +15,8 @@
       "WebFetch(domain:nuxt.com)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:developers.cloudflare.com)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:developers.google.com)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
