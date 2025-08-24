@@ -49,7 +49,6 @@ describe('Budget Months API Integration', async () => {
         year: 2024,
         month: 0,
         userMonthId: testMonth.id,
-        balanceChange: 3500,
         income: 5000,
       })
 

@@ -1,5 +1,5 @@
 <template>
-  <li>
+  <li class="hover:bg-base-300/50">
     <hr>
     <div class="timeline-start">
       <div
@@ -48,8 +48,8 @@
         :ref="setCardRef(1)"
         class="tooltip text-center"
         :data-tip="balanceChange !== null
-          ? 'Изменение баланса по сравнению с предыдущим месяцем'
-          : 'Нужен баланс предыдущего месяца для расчета'"
+          ? `Изменение баланса за ${monthNames[monthData.month]} ${monthData.year}`
+          : 'Нужен баланс следующего месяца для расчета'"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -295,32 +295,12 @@ const totalExpenses = computed(() => {
   )
 })
 
-const previousMonthData = computed(() => {
-  const prevMonth = props.monthData.month === 0 ? 11 : props.monthData.month - 1
-  const prevYear = props.monthData.month === 0 ? props.monthData.year - 1 : props.monthData.year
-
-  return props.allMonths.find(m => m.year === prevYear && m.month === prevMonth)
-})
-
-const previousMonthBalance = computed(() => {
-  if (!previousMonthData.value) {
-    return null
-  }
-
-  const prevMonthRates = previousMonthData.value.exchangeRates || {}
-  return calculateTotalBalance(
-    previousMonthData.value.balanceSources,
-    effectiveMainCurrency.value,
-    prevMonthRates,
-  )
-})
-
 const balanceChange = computed(() => {
-  if (previousMonthBalance.value === null) {
+  if (nextMonthStartBalance.value === null) {
     return null
   }
 
-  return startBalance.value - previousMonthBalance.value
+  return nextMonthStartBalance.value - startBalance.value
 })
 
 const nextMonthData = computed(() => {

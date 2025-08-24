@@ -190,8 +190,6 @@ export const getUserMonths = async (userId: string, event: H3Event): Promise<Mon
         }))
 
       const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
-      const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
-      const balanceChange = totalIncome - totalExpenses
 
       const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
 
@@ -203,7 +201,7 @@ export const getUserMonths = async (userId: string, event: H3Event): Promise<Mon
         balanceSources,
         incomeEntries,
         expenseEntries,
-        balanceChange,
+        balanceChange: 0,
         pocketExpenses: 0,
         income: totalIncome,
         exchangeRates: exchangeRatesData?.rates,
@@ -282,8 +280,6 @@ const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3E
     }))
 
   const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
-  const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
-  const balanceChange = totalIncome - totalExpenses
 
   const exchangeRatesData = await getExchangeRatesForMonth(monthRecord.year, monthRecord.month, event)
 
@@ -295,7 +291,7 @@ const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3E
     balanceSources,
     incomeEntries,
     expenseEntries,
-    balanceChange,
+    balanceChange: 0,
     pocketExpenses: 0,
     income: totalIncome,
     exchangeRates: exchangeRatesData?.rates,

@@ -58,7 +58,6 @@ describe('Budget View API Integration', async () => {
         id: testMonth.id,
         year: 2024,
         month: 0,
-        balanceChange: -200,
       })
       expect(response[0].expenseEntries).toHaveLength(1)
       expect(response[0].expenseEntries[0]).toMatchObject({
