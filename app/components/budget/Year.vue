@@ -12,73 +12,85 @@
     <div class="timeline-end flex gap-4 pl-4 py-1">
       <div
         :ref="setHeaderRef(0)"
-        class="bg-base-100 text-center"
+        class="bg-base-100"
       >
-        <div
-          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
-          data-tip="Сумма всех сбережений, конвертированных в основную валюту"
-        >
-          Баланс на начало месяца
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Сумма всех сбережений, конвертированных в основную валюту"
+          >
+            Баланс на начало месяца
+          </div>
         </div>
       </div>
 
       <div
         :ref="setHeaderRef(1)"
-        class="bg-base-100 text-center"
+        class="bg-base-100"
       >
-        <div
-          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
-          data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
-        >
-          Изменение баланса
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
+          >
+            Изменение баланса
+          </div>
         </div>
       </div>
 
       <div
         :ref="setHeaderRef(2)"
-        class="bg-base-100 text-center"
+        class="bg-base-100"
       >
-        <div
-          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
-          data-tip="Сумма всех доходов, конвертированных в основную валюту"
-        >
-          Доходы
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Сумма всех доходов, конвертированных в основную валюту"
+          >
+            Доходы
+          </div>
         </div>
       </div>
 
       <div
         :ref="setHeaderRef(3)"
-        class="bg-base-100 text-center"
+        class="bg-base-100"
       >
-        <div
-          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
-          data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
-        >
-          Крупные расходы
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
+          >
+            Крупные расходы
+          </div>
         </div>
       </div>
 
       <div
         :ref="setHeaderRef(4)"
-        class="bg-base-100 text-center"
+        class="bg-base-100"
       >
-        <div
-          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
-          data-tip="Баланс + Доходы - Баланс следующего месяца - Крупные расходы - Валютные колебания"
-        >
-          Карманные расходы
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Баланс + Доходы - Баланс следующего месяца - Крупные расходы - Валютные колебания"
+          >
+            Карманные расходы
+          </div>
         </div>
       </div>
 
       <div
         :ref="setHeaderRef(5)"
-        class="bg-base-100 text-center"
+        class="bg-base-100"
       >
-        <div
-          class="text-sm text-base-content/70 font-semibold whitespace-nowrap tooltip tooltip-top"
-          data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по курсам текущего месяца"
-        >
-          Валютные колебания
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по курсам текущего месяца"
+          >
+            Валютные колебания
+          </div>
         </div>
       </div>
     </div>

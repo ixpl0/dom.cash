@@ -48,6 +48,15 @@ The application uses **Optimistic UI** pattern for modal interactions:
 - **Graceful error handling** - rollback on failure with user notification
 - **Enhanced UX** - zero perceived latency for user interactions
 
+#### Dynamic Column Width Synchronization
+Budget timeline implements **responsive column width synchronization**:
+
+- **Content-based sizing** - columns automatically adjust to fit the widest content
+- **Cross-row synchronization** - all rows maintain uniform column widths
+- **Dynamic updates** - responds to content changes via ResizeObserver and reactive watchers
+- **Smooth animations** - animated transitions between width changes
+- **Flexible content containers** - inner elements (.column-content) with `w-fit` maintain natural sizing while parent containers receive synchronized fixed widths
+
 ## Tech Stack
 
 - **Framework**: Nuxt 4, Vue 3

@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
           message: 'Month not found',
         })
       }
-      
+
       throw createError({
         statusCode: 500,
         message: `Failed to delete month: ${error.message}`,

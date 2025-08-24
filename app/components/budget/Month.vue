@@ -33,13 +33,15 @@
         class="tooltip text-center"
         :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
       >
-        <button
-          class="btn btn-ghost text-2xl font-extrabold text-primary"
-          :disabled="isReadOnly"
-          @click="openBalanceModal"
-        >
-          {{ formatAmount(startBalance, effectiveMainCurrency) }}
-        </button>
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-2xl font-extrabold text-primary"
+            :disabled="isReadOnly"
+            @click="openBalanceModal"
+          >
+            {{ formatAmount(startBalance, effectiveMainCurrency) }}
+          </button>
+        </div>
       </div>
 
       <div
@@ -49,17 +51,19 @@
           ? 'Изменение баланса по сравнению с предыдущим месяцем'
           : 'Нужен баланс предыдущего месяца для расчета'"
       >
-        <button
-          class="btn btn-ghost text-2xl font-extrabold"
-          :class="{
-            'text-success': balanceChange !== null && balanceChange > 0,
-            'text-error': balanceChange !== null && balanceChange < 0,
-            'text-base-content': balanceChange === 0,
-          }"
-          disabled
-        >
-          {{ balanceChange !== null ? formatAmount(balanceChange, effectiveMainCurrency) : '—' }}
-        </button>
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-2xl font-extrabold"
+            :class="{
+              'text-success': balanceChange !== null && balanceChange > 0,
+              'text-error': balanceChange !== null && balanceChange < 0,
+              'text-base-content': balanceChange === 0,
+            }"
+            disabled
+          >
+            {{ balanceChange !== null ? formatAmount(balanceChange, effectiveMainCurrency) : '—' }}
+          </button>
+        </div>
       </div>
 
       <div
@@ -67,17 +71,19 @@
         class="tooltip text-center"
         :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
       >
-        <button
-          class="btn btn-ghost text-2xl font-extrabold"
-          :class="{
-            'text-success': totalIncome !== 0,
-            'text-base-content': totalIncome === 0,
-          }"
-          :disabled="isReadOnly"
-          @click="openIncomeModal"
-        >
-          {{ formatAmount(totalIncome, effectiveMainCurrency) }}
-        </button>
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-2xl font-extrabold"
+            :class="{
+              'text-success': totalIncome !== 0,
+              'text-base-content': totalIncome === 0,
+            }"
+            :disabled="isReadOnly"
+            @click="openIncomeModal"
+          >
+            {{ formatAmount(totalIncome, effectiveMainCurrency) }}
+          </button>
+        </div>
       </div>
 
       <div
@@ -85,17 +91,19 @@
         class="tooltip text-center"
         :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
       >
-        <button
-          class="btn btn-ghost text-2xl font-extrabold"
-          :class="{
-            'text-error': totalExpenses !== 0,
-            'text-base-content': totalExpenses === 0,
-          }"
-          :disabled="isReadOnly"
-          @click="openExpenseModal"
-        >
-          {{ formatAmount(totalExpenses, effectiveMainCurrency) }}
-        </button>
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-2xl font-extrabold"
+            :class="{
+              'text-error': totalExpenses !== 0,
+              'text-base-content': totalExpenses === 0,
+            }"
+            :disabled="isReadOnly"
+            @click="openExpenseModal"
+          >
+            {{ formatAmount(totalExpenses, effectiveMainCurrency) }}
+          </button>
+        </div>
       </div>
 
       <div
@@ -109,17 +117,19 @@
           )
           : 'Будет доступно после появления баланса следующего месяца'"
       >
-        <button
-          class="btn btn-ghost text-2xl font-extrabold"
-          disabled
-          :class="{
-            'text-warning': pocketExpenses !== null && pocketExpenses < 0,
-            'text-error': pocketExpenses !== null && pocketExpenses > 0,
-            'text-base-content': pocketExpenses === 0,
-          }"
-        >
-          {{ pocketExpenses !== null ? formatAmount(pocketExpenses, effectiveMainCurrency) : '—' }}
-        </button>
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-2xl font-extrabold"
+            disabled
+            :class="{
+              'text-warning': pocketExpenses !== null && pocketExpenses < 0,
+              'text-error': pocketExpenses !== null && pocketExpenses > 0,
+              'text-base-content': pocketExpenses === 0,
+            }"
+          >
+            {{ pocketExpenses !== null ? formatAmount(pocketExpenses, effectiveMainCurrency) : '—' }}
+          </button>
+        </div>
       </div>
 
       <div
@@ -129,17 +139,19 @@
           ? `Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`
           : 'Будет доступно после появления баланса следующего месяца'"
       >
-        <button
-          class="btn btn-ghost text-2xl font-extrabold"
-          :class="{
-            'text-success': currencyProfitLoss !== null && currencyProfitLoss > 0,
-            'text-error': currencyProfitLoss !== null && currencyProfitLoss < 0,
-            'text-base-content': currencyProfitLoss === 0,
-          }"
-          disabled
-        >
-          {{ currencyProfitLoss !== null ? formatAmount(currencyProfitLoss, effectiveMainCurrency) : '—' }}
-        </button>
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-2xl font-extrabold"
+            :class="{
+              'text-success': currencyProfitLoss !== null && currencyProfitLoss > 0,
+              'text-error': currencyProfitLoss !== null && currencyProfitLoss < 0,
+              'text-base-content': currencyProfitLoss === 0,
+            }"
+            disabled
+          >
+            {{ currencyProfitLoss !== null ? formatAmount(currencyProfitLoss, effectiveMainCurrency) : '—' }}
+          </button>
+        </div>
       </div>
 
       <div
@@ -148,25 +160,27 @@
         class="tooltip text-center"
         data-tip="Удалить месяц"
       >
-        <button
-          class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
-          @click="handleDeleteMonth"
-        >
-          <svg
-            class="w-4 h-4"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
+            @click="handleDeleteMonth"
           >
-            <path
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-        </button>
+            <svg
+              class="w-4 h-4"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -229,7 +243,7 @@ const expenseModal = ref()
 
 const cardRefs = ref<HTMLElement[]>([])
 
-const { registerRow, unregisterRow } = props.budgetColumnsSync
+const { registerRow, unregisterRow, forceSync } = props.budgetColumnsSync
 
 const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
   if (el && el instanceof HTMLElement) {
@@ -357,6 +371,12 @@ const pocketExpenses = computed(() => {
 
   return startBalance.value + totalIncome.value - totalExpenses.value - nextMonthBalanceAtCurrentRates.value
 })
+
+watch([startBalance, totalIncome, totalExpenses, balanceChange, pocketExpenses, currencyProfitLoss], () => {
+  nextTick(() => {
+    forceSync()
+  })
+}, { flush: 'post' })
 
 const openBalanceModal = (): void => {
   balanceModal.value?.show()

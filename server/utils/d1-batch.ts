@@ -11,7 +11,7 @@ export const executeBatch = async (event: H3Event, operations: BatchOperation[])
     throw new Error('D1 database not found')
   }
 
-  const statements: D1PreparedStatement[] = operations.map(op => {
+  const statements: D1PreparedStatement[] = operations.map((op) => {
     const stmt = cloudflareDb.prepare(op.sql)
     return op.params ? stmt.bind(...op.params) : stmt
   })

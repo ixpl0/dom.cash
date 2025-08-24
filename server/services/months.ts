@@ -384,7 +384,7 @@ export const deleteMonth = async (monthId: string, event: H3Event): Promise<void
   }
 
   const { executeBatch } = await import('~~/server/utils/d1-batch')
-  
+
   await executeBatch(event, [
     { sql: 'DELETE FROM entry WHERE month_id = ?', params: [monthId] },
     { sql: 'DELETE FROM month WHERE id = ?', params: [monthId] },

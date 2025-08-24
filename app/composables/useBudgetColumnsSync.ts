@@ -9,7 +9,7 @@ export const useBudgetColumnsSync = () => {
     registeredRows.value.push(elements)
 
     if (mounted.value) {
-      syncColumnWidths()
+      startObserving()
     }
   }
 
@@ -20,6 +20,9 @@ export const useBudgetColumnsSync = () => {
     )
     if (index !== -1) {
       registeredRows.value.splice(index, 1)
+      if (mounted.value) {
+        startObserving()
+      }
     }
   }
 
@@ -37,15 +40,20 @@ export const useBudgetColumnsSync = () => {
             return
           }
 
+          const columnContent = element.querySelector('.column-content') as HTMLElement
+          if (!columnContent) {
+            return
+          }
+
           const currentWidth = element.offsetWidth
-          element.style.width = `${currentWidth}px`
-          element.style.transition = 'width 0.1s ease-out'
-
           element.style.width = 'auto'
-          const width = element.offsetWidth
-          columnWidths[columnIndex] = Math.max(columnWidths[columnIndex] || 0, width)
+          element.style.transition = 'none'
+
+          const naturalWidth = columnContent.offsetWidth
 
           element.style.width = `${currentWidth}px`
+
+          columnWidths[columnIndex] = Math.max(columnWidths[columnIndex] || 0, naturalWidth)
         })
       })
 
@@ -54,6 +62,7 @@ export const useBudgetColumnsSync = () => {
           row.forEach((element, columnIndex) => {
             if (element && columnWidths[columnIndex]) {
               element.style.width = `${columnWidths[columnIndex]}px`
+              element.style.transition = 'width 0.1s ease-out'
             }
           })
         })
@@ -78,7 +87,13 @@ export const useBudgetColumnsSync = () => {
 
     registeredRows.value.flat().forEach((element) => {
       if (element) {
-        observer.value?.observe(element)
+        const columnContent = element.querySelector('.column-content') as HTMLElement
+        if (columnContent) {
+          observer.value?.observe(columnContent)
+        }
+        else {
+          observer.value?.observe(element)
+        }
       }
     })
 
@@ -108,9 +123,16 @@ export const useBudgetColumnsSync = () => {
     registeredRows.value = []
   })
 
+  const forceSync = () => {
+    if (mounted.value && !isProcessing.value) {
+      syncColumnWidths()
+    }
+  }
+
   return {
     registerRow,
     unregisterRow,
     syncColumnWidths,
+    forceSync,
   }
 }
