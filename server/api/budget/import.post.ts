@@ -11,23 +11,9 @@ const importRequestSchema = z.object({
   targetUsername: z.string().optional(),
 }).refine((data) => {
   const jsonSize = JSON.stringify(data).length
-  if (jsonSize > 10 * 1024 * 1024) {
-    throw new Error('Import file too large. Maximum size is 10MB.')
+  if (jsonSize > 1 * 1024 * 1024) {
+    throw new Error('Import file too large. Maximum size is 1MB.')
   }
-
-  const monthsCount = data.data.months?.length || 0
-  if (monthsCount > 100) {
-    throw new Error('Too many months in import. Maximum is 100 months.')
-  }
-
-  const totalEntries = (data.data.months || []).reduce((sum, month) => {
-    return sum + (month.entries?.length || 0)
-  }, 0)
-
-  if (totalEntries > 10000) {
-    throw new Error('Too many entries in import. Maximum is 10,000 entries.')
-  }
-
   return true
 }, {
   message: 'Import validation failed',

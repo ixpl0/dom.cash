@@ -1,6 +1,6 @@
 import { getMethod, getHeaders, createError } from 'h3'
 
-const MAX_REQUEST_SIZE = 50 * 1024 * 1024 // 50MB
+const MAX_REQUEST_SIZE = 1 * 1024 * 1024 // 1MB
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 413,
         statusMessage: 'Payload Too Large',
-        message: 'Request body too large. Maximum size is 50MB.',
+        message: 'Request body too large. Maximum size is 1MB.',
       })
     }
   }

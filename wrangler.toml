@@ -12,6 +12,9 @@ database_id = "49fe35ce-d40a-4d38-8f8d-32bd57bb5588"
 # production
 [env.production]
 name = "dom-cash"
+routes = [
+  { pattern = "dom.cash", custom_domain = true }
+]
 
 [[env.production.d1_databases]]
 binding = "DB"

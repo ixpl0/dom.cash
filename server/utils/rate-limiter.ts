@@ -66,10 +66,11 @@ export const rateLimit = (config: RateLimitConfig) => {
     }
 
     if (entry.count >= config.maxRequests) {
+      const remainingTime = Math.ceil((entry.resetTime - now) / 1000)
       throw createError({
         statusCode: 429,
         statusMessage: 'Too Many Requests',
-        message: 'Rate limit exceeded. Please try again later.',
+        message: `Rate limit exceeded. Please try again in ${remainingTime} seconds.`,
       })
     }
 
@@ -87,3 +88,9 @@ export const generalRateLimit = rateLimit({
   maxRequests: 1000,
   windowMs: RATE_LIMIT_WINDOW_MS,
 })
+
+export const clearRateLimits = () => {
+  console.log('[RATE_LIMIT] Clearing all rate limits')
+  ipCounts.clear()
+  requestCounter = 0
+}

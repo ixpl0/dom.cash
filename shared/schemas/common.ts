@@ -14,7 +14,7 @@ export const descriptionSchema = z.string()
   .max(255)
 
 export const amountSchema = z.number()
-  .positive()
+  .nonnegative()
 
 export const entryKindSchema = z.enum(['balance', 'income', 'expense'])
 

@@ -6,7 +6,7 @@
           to="/"
           class="text-xl font-bold"
         >
-          🏠 Doma
+          💰 dom.cash
         </NuxtLink>
         <div
           v-if="isAuthenticated"

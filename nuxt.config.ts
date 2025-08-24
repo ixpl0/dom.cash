@@ -3,6 +3,22 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxt/test-utils/module'],
   devtools: { enabled: true },
+  app: {
+    head: {
+      title: 'dom.cash - Budget Tracker',
+      meta: [
+        { name: 'description', content: 'Прозрачность домашних финансов. Трекинг личного бюджета с поддержкой множественных валют.' },
+        { name: 'keywords', content: 'budget, finance, tracker, домашние финансы, бюджет, трекер' },
+        { property: 'og:title', content: 'dom.cash - Budget Tracker' },
+        { property: 'og:description', content: 'Прозрачность домашних финансов. Трекинг личного бюджета с поддержкой множественных валют.' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: 'https://dom.cash' },
+      ],
+      link: [
+        { rel: 'canonical', href: 'https://dom.cash' },
+      ],
+    },
+  },
   css: ['~/assets/app.css'],
   compatibilityDate: '2025-08-22',
   nitro: {

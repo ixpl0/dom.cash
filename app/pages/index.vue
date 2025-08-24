@@ -3,7 +3,7 @@
     <main class="container mx-auto px-4 py-8">
       <div class="text-center space-y-6">
         <h2 class="text-4xl font-bold">
-          🏠 Doma
+          💰 dom.cash
         </h2>
         <p class="text-xl opacity-70">
           Прозрачность домашних финансов

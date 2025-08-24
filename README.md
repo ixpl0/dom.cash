@@ -1,4 +1,4 @@
-# Dom Cash - Budget Tracker
+# dom.cash - Budget Tracker
 
 Приложение для учёта личных финансов с поддержкой множественных валют.
 Deployed on Cloudflare Workers with D1 database.
