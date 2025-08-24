@@ -31,11 +31,11 @@
       <div
         :ref="setCardRef(0)"
         class="tooltip text-center"
-        :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / 3500)} мес`"
+        :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(startBalance / averageMonthlyExpenses)} мес`"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl font-extrabold text-primary"
+            class="btn btn-ghost text-xl text-primary"
             :disabled="isReadOnly"
             @click="openBalanceModal"
           >
@@ -53,7 +53,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl font-extrabold"
+            class="btn btn-ghost text-xl"
             :class="{
               'text-success': balanceChange !== null && balanceChange > 0,
               'text-error': balanceChange !== null && balanceChange < 0,
@@ -73,7 +73,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl font-extrabold"
+            class="btn btn-ghost text-xl"
             :class="{
               'text-success': totalIncome !== 0,
               'text-base-content': totalIncome === 0,
@@ -93,7 +93,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl font-extrabold"
+            class="btn btn-ghost text-xl"
             :class="{
               'text-error': totalExpenses !== 0,
               'text-base-content': totalExpenses === 0,
@@ -119,7 +119,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl font-extrabold"
+            class="btn btn-ghost text-xl"
             disabled
             :class="{
               'text-warning': pocketExpenses !== null && pocketExpenses < 0,
@@ -141,7 +141,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl font-extrabold"
+            class="btn btn-ghost text-xl"
             :class="{
               'text-success': currencyProfitLoss !== null && currencyProfitLoss > 0,
               'text-error': currencyProfitLoss !== null && currencyProfitLoss < 0,
@@ -301,6 +301,64 @@ const balanceChange = computed(() => {
   }
 
   return nextMonthStartBalance.value - startBalance.value
+})
+
+const findNextMonth = (month: MonthData) => {
+  return props.allMonths.find(m =>
+    (m.year === month.year + 1 && month.month === 11 && m.month === 0)
+    || (m.year === month.year && m.month === month.month + 1),
+  )
+}
+
+const calculateMonthExpenses = (month: MonthData) => {
+  return calculateTotalBalance(
+    month.expenseEntries,
+    effectiveMainCurrency.value,
+    month.exchangeRates || {},
+  )
+}
+
+const calculatePocketExpenses = (month: MonthData) => {
+  const nextMonth = findNextMonth(month)
+  if (!nextMonth) return 0
+
+  const startBalance = calculateTotalBalance(
+    month.balanceSources,
+    effectiveMainCurrency.value,
+    month.exchangeRates || {},
+  )
+
+  const income = calculateTotalBalance(
+    month.incomeEntries,
+    effectiveMainCurrency.value,
+    month.exchangeRates || {},
+  )
+
+  const nextMonthBalance = calculateTotalBalance(
+    nextMonth.balanceSources,
+    effectiveMainCurrency.value,
+    month.exchangeRates || {},
+  )
+
+  const monthExpenses = calculateMonthExpenses(month)
+
+  return Math.max(0, startBalance + income - monthExpenses - nextMonthBalance)
+}
+
+const calculateTotalMonthExpenses = (month: MonthData) => {
+  return calculateMonthExpenses(month) + calculatePocketExpenses(month)
+}
+
+const averageMonthlyExpenses = computed(() => {
+  if (props.allMonths.length === 0) {
+    return 3500
+  }
+
+  const totalExpenses = props.allMonths.reduce((sum, month) => {
+    return sum + calculateTotalMonthExpenses(month)
+  }, 0)
+
+  return Math.ceil(totalExpenses / props.allMonths.length)
 })
 
 const nextMonthData = computed(() => {
