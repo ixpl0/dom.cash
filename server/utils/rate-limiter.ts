@@ -51,7 +51,7 @@ export const rateLimit = (config: RateLimitConfig) => {
     const now = Date.now()
 
     requestCounter++
-    if (requestCounter % 1000 === 0) {
+    if (requestCounter % 100 === 0) {
       cleanupExpiredEntries()
     }
 
@@ -79,7 +79,7 @@ export const rateLimit = (config: RateLimitConfig) => {
 }
 
 export const authRateLimit = rateLimit({
-  maxRequests: 5,
+  maxRequests: 15,
   windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
 })
 

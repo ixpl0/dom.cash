@@ -72,13 +72,27 @@ export const useBudget = (targetUsername?: string) => {
     budgetState.value.error = null
 
     try {
-      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-
       if (isOwnBudget.value) {
-        const [userData, months] = await Promise.all([
-          $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/me', { headers }),
-          $fetch<MonthData[]>('/api/budget/months', { headers }),
+        const [userResponse, monthsResponse] = await Promise.all([
+          useFetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/me', {
+            key: 'auth-me',
+            server: true,
+          }),
+          useFetch<MonthData[]>('/api/budget/months', {
+            key: 'budget-months',
+            server: true,
+          }),
         ])
+
+        if (userResponse.error.value) {
+          throw new Error(userResponse.error.value.message || 'Authentication failed')
+        }
+        if (monthsResponse.error.value) {
+          throw new Error(monthsResponse.error.value.message || 'Failed to load months')
+        }
+
+        const userData = userResponse.data.value!
+        const months = monthsResponse.data.value!
 
         budgetState.value.data = {
           user: {
@@ -92,9 +106,18 @@ export const useBudget = (targetUsername?: string) => {
         budgetState.value.canView = true
       }
       else if (targetUsername) {
-        const userData = await $fetch<BudgetData>(`/api/budget/user/${targetUsername}`, { headers })
-        budgetState.value.data = userData
-        budgetState.value.canEdit = userData.access === 'write' || userData.access === 'owner'
+        const { data: userData, error } = await useFetch<BudgetData>(`/api/budget/user/${targetUsername}`, {
+          key: `budget-user-${targetUsername}`,
+          server: true,
+        })
+
+        if (error.value) {
+          throw new Error(error.value.message || 'Failed to load user budget')
+        }
+
+        const userBudget = userData.value!
+        budgetState.value.data = userBudget
+        budgetState.value.canEdit = userBudget.access === 'write' || userBudget.access === 'owner'
         budgetState.value.canView = true
       }
     }

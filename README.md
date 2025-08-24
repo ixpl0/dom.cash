@@ -35,6 +35,11 @@ The application implements **Thin Handlers with Clean Services** pattern:
 - **Optimized Time to First Byte (TTFB)** and First Contentful Paint (FCP)
 - **SEO-friendly** with complete content available for crawlers
 
+#### API Calls in SSR Context
+- **useFetch for SSR** - Use `useFetch` for GET requests that need cookie/header forwarding during SSR
+- **$fetch for client operations** - Use `$fetch` for client-only POST/PUT/DELETE operations
+- **Cloudflare Workers compatibility** - `$fetch` doesn't properly forward cookies during SSR in CF Workers
+
 #### Optimistic UI Updates
 The application uses **Optimistic UI** pattern for modal interactions:
 

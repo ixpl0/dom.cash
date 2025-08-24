@@ -4,10 +4,9 @@
       "WebSearch",
       "Bash(mkdir:*)",
       "Bash(git mv:*)",
+      "Bash(pnpm run:*)",
       "Bash(pnpm typecheck)",
-      "Bash(pnpm run typecheck)",
       "Bash(pnpm lint:*)",
-      "Bash(pnpm run lint:*)",
       "Bash(pnpm test:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm remove:*)",
@@ -21,6 +20,12 @@
     "deny": [
       "Bash(pnpm run dev)",
       "Bash(pnpm dev)",
+      "Bash(pnpm run db:migrate:*)",
+      "Bash(pnpm db:migrate:*)",
+      "Bash(pnpm run db:backup:*)",
+      "Bash(pnpm db:backup:*)",
+      "Bash(pnpm run deploy:*)",
+      "Bash(pnpm deploy:*)",
       "Read(./.env)"
     ]
   }

@@ -17,6 +17,10 @@
   * Drizzle ORM for type-safe queries
   * Zod for validation
 * **Migrations**: Use Wrangler D1 migrations (`wrangler d1 migrations create`), NOT Drizzle-kit
+* **API Calls**: 
+  * Use `useFetch` for SSR-compatible GET requests that need cookie/header forwarding
+  * Use `$fetch` for client-only operations (POST/PUT/DELETE)
+  * In Cloudflare Workers, `$fetch` doesn't properly forward cookies during SSR
 * UI:
   * DaisyUI (https://daisyui.com/). All UI components should be based on DaisyUI.
   * Tailwind CSS (https://tailwindcss.com/). Try to avoid custom styles, use Tailwind classes instead.
