@@ -47,28 +47,6 @@
       <div
         :ref="setCardRef(1)"
         class="tooltip text-center"
-        :data-tip="balanceChange !== null
-          ? `Изменение баланса за ${monthNames[monthData.month]} ${monthData.year}`
-          : 'Нужен баланс следующего месяца для расчета'"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            :class="{
-              'text-success': balanceChange !== null && balanceChange > 0,
-              'text-error': balanceChange !== null && balanceChange < 0,
-              'text-base-content': balanceChange === 0,
-            }"
-            disabled
-          >
-            {{ balanceChange !== null ? formatAmountRounded(balanceChange, effectiveMainCurrency) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(2)"
-        class="tooltip text-center"
         :data-tip="`Все доходы за ${monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
@@ -87,7 +65,7 @@
       </div>
 
       <div
-        :ref="setCardRef(3)"
+        :ref="setCardRef(2)"
         class="tooltip text-center"
         :data-tip="`Все крупные расходы за ${monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
       >
@@ -107,7 +85,7 @@
       </div>
 
       <div
-        :ref="setCardRef(4)"
+        :ref="setCardRef(3)"
         class="tooltip text-center"
         :data-tip="pocketExpenses !== null
           ? (
@@ -133,7 +111,7 @@
       </div>
 
       <div
-        :ref="setCardRef(5)"
+        :ref="setCardRef(4)"
         class="tooltip text-center"
         :data-tip="currencyProfitLoss !== null
           ? `Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`
@@ -150,6 +128,28 @@
             disabled
           >
             {{ currencyProfitLoss !== null ? formatAmountRounded(currencyProfitLoss, effectiveMainCurrency) : '—' }}
+          </button>
+        </div>
+      </div>
+
+      <div
+        :ref="setCardRef(5)"
+        class="tooltip text-center"
+        :data-tip="balanceChange !== null
+          ? `Изменение баланса за ${monthNames[monthData.month]} ${monthData.year}`
+          : 'Нужен баланс следующего месяца для расчета'"
+      >
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-xl"
+            :class="{
+              'text-success': balanceChange !== null && balanceChange > 0,
+              'text-error': balanceChange !== null && balanceChange < 0,
+              'text-base-content': balanceChange === 0,
+            }"
+            disabled
+          >
+            {{ balanceChange !== null ? formatAmountRounded(balanceChange, effectiveMainCurrency) : '—' }}
           </button>
         </div>
       </div>

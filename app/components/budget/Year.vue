@@ -31,20 +31,6 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
-          >
-            Изменение баланса
-          </div>
-        </div>
-      </div>
-
-      <div
-        :ref="setHeaderRef(2)"
-        class="bg-base-100"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
             data-tip="Сумма всех доходов, конвертированных в основную валюту"
           >
             Доходы
@@ -53,7 +39,7 @@
       </div>
 
       <div
-        :ref="setHeaderRef(3)"
+        :ref="setHeaderRef(2)"
         class="bg-base-100"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
@@ -67,7 +53,7 @@
       </div>
 
       <div
-        :ref="setHeaderRef(4)"
+        :ref="setHeaderRef(3)"
         class="bg-base-100"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
@@ -81,7 +67,7 @@
       </div>
 
       <div
-        :ref="setHeaderRef(5)"
+        :ref="setHeaderRef(4)"
         class="bg-base-100"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
@@ -90,6 +76,20 @@
             data-tip="Баланс следующего месяца минус Баланс следующего месяца, пересчитанный по курсам текущего месяца"
           >
             Валютные колебания
+          </div>
+        </div>
+      </div>
+
+      <div
+        :ref="setHeaderRef(5)"
+        class="bg-base-100"
+      >
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Баланс на начало месяца минус Баланс предыдущего месяца"
+          >
+            Изменение баланса
           </div>
         </div>
       </div>
