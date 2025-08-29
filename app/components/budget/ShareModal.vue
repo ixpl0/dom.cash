@@ -4,7 +4,7 @@
     class="modal"
     @close="handleDialogClose"
   >
-    <div class="modal-box overflow-y-visible w-11/12 max-w-3xl">
+    <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -13,11 +13,11 @@
         ✕
       </button>
 
-      <h3 class="font-bold text-lg mb-4">
+      <h3 class="font-bold text-lg mb-4 flex-shrink-0">
         Общий доступ к вашему бюджету
       </h3>
 
-      <div class="space-y-4 mb-6">
+      <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
         <div v-if="shares.length || isAddingNew">
           <table class="table table-zebra">
             <thead>
@@ -181,20 +181,10 @@
           </button>
         </div>
       </div>
-
-      <div class="modal-action">
-        <button
-          type="button"
-          class="btn"
-          @click="hide()"
-        >
-          Закрыть
-        </button>
-      </div>
     </div>
     <div
       class="modal-backdrop"
-      @click="handleBackdropClick"
+      @click="hide"
     />
   </dialog>
 </template>
@@ -341,10 +331,6 @@ const show = async (): Promise<void> => {
 
 const hide = (): void => {
   modal.value?.close()
-}
-
-const handleBackdropClick = (): void => {
-  hide()
 }
 
 const handleDialogClose = (): void => {

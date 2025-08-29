@@ -4,7 +4,7 @@
     class="modal"
     @close="handleDialogClose"
   >
-    <div class="modal-box overflow-y-visible w-11/12 max-w-5xl">
+    <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] flex flex-col">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -13,11 +13,11 @@
         ✕
       </button>
 
-      <h3 class="font-bold text-lg mb-4">
+      <h3 class="font-bold text-lg mb-4 flex-shrink-0">
         {{ modalTitle }}
       </h3>
 
-      <div class="space-y-4 mb-6">
+      <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
         <div v-if="entries?.length || isAddingNewEntry">
           <table class="table table-zebra">
             <thead>
@@ -227,20 +227,10 @@
           </button>
         </div>
       </div>
-
-      <div class="modal-action">
-        <button
-          type="button"
-          class="btn"
-          @click="hide()"
-        >
-          Закрыть
-        </button>
-      </div>
     </div>
     <div
       class="modal-backdrop"
-      @click="handleBackdropClick"
+      @click="hide"
     />
   </dialog>
 </template>
@@ -355,10 +345,6 @@ const handleDialogClose = (): void => {
   emit('close')
 }
 
-const handleBackdropClick = (): void => {
-  hide()
-}
-
 const saveEntry = async (): Promise<void> => {
   if (isSaving.value) return
 
@@ -380,8 +366,5 @@ const saveEntry = async (): Promise<void> => {
   }
 }
 
-defineExpose({
-  show,
-  hide,
-})
+defineExpose({ show, hide })
 </script>
