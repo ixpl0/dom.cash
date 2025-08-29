@@ -11,6 +11,18 @@ export const formatAmount = (amount: number, currency: string): string => {
   return formatter.format(amount)
 }
 
+export const formatAmountRounded = (amount: number, currency: string): string => {
+  const roundedAmount = Math.round(amount)
+  const formatter = new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+
+  return formatter.format(roundedAmount)
+}
+
 export const calculateTotalBalance = (
   entries: BudgetEntry[],
   baseCurrency: string,

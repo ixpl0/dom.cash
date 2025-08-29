@@ -39,7 +39,7 @@
             :disabled="isReadOnly"
             @click="openBalanceModal"
           >
-            {{ formatAmount(startBalance, effectiveMainCurrency) }}
+            {{ formatAmountRounded(startBalance, effectiveMainCurrency) }}
           </button>
         </div>
       </div>
@@ -61,7 +61,7 @@
             }"
             disabled
           >
-            {{ balanceChange !== null ? formatAmount(balanceChange, effectiveMainCurrency) : '—' }}
+            {{ balanceChange !== null ? formatAmountRounded(balanceChange, effectiveMainCurrency) : '—' }}
           </button>
         </div>
       </div>
@@ -81,7 +81,7 @@
             :disabled="isReadOnly"
             @click="openIncomeModal"
           >
-            {{ formatAmount(totalIncome, effectiveMainCurrency) }}
+            {{ formatAmountRounded(totalIncome, effectiveMainCurrency) }}
           </button>
         </div>
       </div>
@@ -101,7 +101,7 @@
             :disabled="isReadOnly"
             @click="openExpenseModal"
           >
-            {{ formatAmount(totalExpenses, effectiveMainCurrency) }}
+            {{ formatAmountRounded(totalExpenses, effectiveMainCurrency) }}
           </button>
         </div>
       </div>
@@ -127,7 +127,7 @@
               'text-base-content': pocketExpenses === 0,
             }"
           >
-            {{ pocketExpenses !== null ? formatAmount(pocketExpenses, effectiveMainCurrency) : '—' }}
+            {{ pocketExpenses !== null ? formatAmountRounded(pocketExpenses, effectiveMainCurrency) : '—' }}
           </button>
         </div>
       </div>
@@ -149,7 +149,7 @@
             }"
             disabled
           >
-            {{ currencyProfitLoss !== null ? formatAmount(currencyProfitLoss, effectiveMainCurrency) : '—' }}
+            {{ currencyProfitLoss !== null ? formatAmountRounded(currencyProfitLoss, effectiveMainCurrency) : '—' }}
           </button>
         </div>
       </div>
@@ -218,7 +218,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmount, calculateTotalBalance } from '~~/shared/utils/budget'
+import { formatAmountRounded, calculateTotalBalance } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
 
 interface Props {
