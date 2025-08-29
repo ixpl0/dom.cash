@@ -35,7 +35,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-xl text-primary"
+            class="btn btn-ghost text-2xl text-primary"
             :disabled="isReadOnly"
             @click="openBalanceModal"
           >
@@ -51,7 +51,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-xl"
+            class="btn btn-ghost text-2xl"
             :class="{
               'text-success': totalIncome !== 0,
               'text-base-content': totalIncome === 0,
@@ -71,7 +71,7 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-xl"
+            class="btn btn-ghost text-2xl"
             :class="{
               'text-error': totalExpenses !== 0,
               'text-base-content': totalExpenses === 0,
@@ -113,21 +113,20 @@
       <div
         :ref="setCardRef(4)"
         class="tooltip text-center"
-        :data-tip="currencyProfitLoss !== null
-          ? `Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`
+        :data-tip="totalAllExpenses !== null
+          ? `Сумма крупных и карманных расходов за ${monthNames[monthData.month]} ${monthData.year}`
           : 'Будет доступно после появления баланса следующего месяца'"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
             class="btn btn-ghost text-xl"
-            :class="{
-              'text-success': currencyProfitLoss !== null && currencyProfitLoss > 0,
-              'text-error': currencyProfitLoss !== null && currencyProfitLoss < 0,
-              'text-base-content': currencyProfitLoss === 0,
-            }"
             disabled
+            :class="{
+              'text-error': totalAllExpenses !== null && totalAllExpenses > 0,
+              'text-base-content': totalAllExpenses === 0,
+            }"
           >
-            {{ currencyProfitLoss !== null ? formatAmountRounded(currencyProfitLoss, effectiveMainCurrency) : '—' }}
+            {{ totalAllExpenses !== null ? formatAmountRounded(totalAllExpenses, effectiveMainCurrency) : '—' }}
           </button>
         </div>
       </div>
@@ -155,8 +154,30 @@
       </div>
 
       <div
-        v-if="canDeleteMonth"
         :ref="setCardRef(6)"
+        class="tooltip text-center"
+        :data-tip="currencyProfitLoss !== null
+          ? `Прибыль или убытки от изменения валютных курсов за ${monthNames[monthData.month]} ${monthData.year}`
+          : 'Будет доступно после появления баланса следующего месяца'"
+      >
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-xl"
+            :class="{
+              'text-success': currencyProfitLoss !== null && currencyProfitLoss > 0,
+              'text-error': currencyProfitLoss !== null && currencyProfitLoss < 0,
+              'text-base-content': currencyProfitLoss === 0,
+            }"
+            disabled
+          >
+            {{ currencyProfitLoss !== null ? formatAmountRounded(currencyProfitLoss, effectiveMainCurrency) : '—' }}
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="canDeleteMonth"
+        :ref="setCardRef(7)"
         class="tooltip text-center"
         data-tip="Удалить месяц"
       >
@@ -410,7 +431,15 @@ const pocketExpenses = computed(() => {
   return startBalance.value + totalIncome.value - totalExpenses.value - nextMonthBalanceAtCurrentRates.value
 })
 
-watch([startBalance, totalIncome, totalExpenses, balanceChange, pocketExpenses, currencyProfitLoss], () => {
+const totalAllExpenses = computed(() => {
+  if (pocketExpenses.value === null) {
+    return null
+  }
+
+  return totalExpenses.value + pocketExpenses.value
+})
+
+watch([startBalance, totalIncome, totalExpenses, balanceChange, pocketExpenses, currencyProfitLoss, totalAllExpenses], () => {
   nextTick(() => {
     forceSync()
   })

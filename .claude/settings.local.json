@@ -15,7 +15,8 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:developers.cloudflare.com)",
       "Bash(grep:*)",
-      "WebFetch(domain:developers.google.com)"
+      "WebFetch(domain:developers.google.com)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [
       "Bash(pnpm run dev)",
