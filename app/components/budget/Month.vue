@@ -4,11 +4,14 @@
     <div class="timeline-start">
       <div
         class="tooltip capitalize"
-        :data-tip="`${monthNames[monthData.month]} ${monthData.year}`"
+        :data-tip="`${monthNames[monthData.month]} ${monthData.year} - Нажмите для просмотра курсов валют`"
       >
-        <div class="badge badge-ghost badge-lg uppercase">
+        <button
+          class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+          @click="openCurrencyRatesModal"
+        >
           {{ monthNames[monthData.month] }}
-        </div>
+        </button>
       </div>
     </div>
 
@@ -232,6 +235,15 @@
       :target-username="targetUsername"
     />
 
+    <BudgetCurrencyRatesModal
+      ref="currencyRatesModal"
+      :month-id="monthData.id"
+      :month-title="monthTitle"
+      :rates="effectiveRates"
+      :is-using-other-month-rates="isUsingOtherMonthRates"
+      :source-month-title="sourceMonthTitle"
+    />
+
     <hr>
   </li>
 </template>
@@ -261,6 +273,7 @@ const effectiveMainCurrency = computed(() => props.mainCurrency || userMainCurre
 const balanceModal = ref()
 const incomeModal = ref()
 const expenseModal = ref()
+const currencyRatesModal = ref()
 
 const cardRefs = ref<HTMLElement[]>([])
 
@@ -456,6 +469,47 @@ const openIncomeModal = (): void => {
 const openExpenseModal = (): void => {
   expenseModal.value?.show()
 }
+
+const openCurrencyRatesModal = (): void => {
+  currencyRatesModal.value?.show()
+}
+
+const monthTitle = computed(() => {
+  return `${props.monthNames[props.monthData.month]} ${props.monthData.year}`
+})
+
+const effectiveRates = computed(() => {
+  return props.monthData.exchangeRates || {}
+})
+
+const isUsingOtherMonthRates = computed(() => {
+  if (!props.monthData.exchangeRatesSource) {
+    return false
+  }
+  const currentMonthDate = `${props.monthData.year}-${String(props.monthData.month + 1).padStart(2, '0')}-01`
+  return props.monthData.exchangeRatesSource !== currentMonthDate
+})
+
+const sourceMonthTitle = computed(() => {
+  if (!isUsingOtherMonthRates.value || !props.monthData.exchangeRatesSource) {
+    return ''
+  }
+
+  const parts = props.monthData.exchangeRatesSource.split('-')
+  if (parts.length < 2 || !parts[0] || !parts[1]) {
+    return ''
+  }
+
+  const year = parts[0]
+  const month = parts[1]
+  const monthIndex = parseInt(month, 10) - 1
+
+  if (isNaN(monthIndex) || monthIndex < 0 || monthIndex >= 12) {
+    return ''
+  }
+
+  return `${props.monthNames[monthIndex]} ${year}`
+})
 
 const canDeleteMonth = computed(() => {
   return !props.isReadOnly && props.onDeleteMonth && (isFirstMonth(props.monthData, props.allMonths) || isLastMonth(props.monthData, props.allMonths))

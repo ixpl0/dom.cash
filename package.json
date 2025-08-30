@@ -22,6 +22,7 @@
     "db:backup:prod": "wrangler d1 export DB --output=backup-prod.sql --remote --env=\"production\"",
     "deploy:test": "pnpm run build && wrangler deploy --assets .output/public --env=\"\"",
     "deploy:prod": "pnpm run build && wrangler deploy --assets .output/public --env=\"production\"",
+    "deploy:all": "pnpm run deploy:test && pnpm run deploy:prod",
     "test": "vitest",
     "test:run": "vitest run",
     "test:cov": "vitest run --coverage",
@@ -64,8 +65,5 @@
     "vue-tsc": "^3.0.6",
     "wrangler": "^4.32.0"
   },
-  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
-  "engines": {
-    "node": "20.16.0"
-  }
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }
