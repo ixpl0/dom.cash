@@ -15,9 +15,7 @@ const targetUsername = Array.isArray(route.params.username)
 const budgetStore = useBudgetStore()
 const { subscribeToBudgetByUsername, unsubscribeFromBudgetByUsername } = useNotifications()
 
-if (import.meta.server) {
-  await budgetStore.refresh(targetUsername)
-}
+await budgetStore.refresh(targetUsername)
 
 onMounted(async () => {
   if (budgetStore.data && budgetStore.canView) {

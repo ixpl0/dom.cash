@@ -15,7 +15,6 @@ export interface BudgetData {
 
 export interface BudgetState {
   data: BudgetData | null
-  isLoading: boolean
   error: string | null
   canEdit: boolean
   canView: boolean
@@ -24,7 +23,6 @@ export interface BudgetState {
 export const useBudgetStore = defineStore('budget', {
   state: (): BudgetState => ({
     data: null,
-    isLoading: false,
     error: null,
     canEdit: false,
     canView: false,
@@ -62,40 +60,22 @@ export const useBudgetStore = defineStore('budget', {
 
   actions: {
     async refresh(targetUsername?: string) {
-      const shouldShowLoading = !this.data
-
-      if (shouldShowLoading) {
-        this.isLoading = true
-      }
       this.error = null
 
       try {
-        if (import.meta.server) {
-          const { data, error } = await useFetch<BudgetData>(
-            targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
-            {
-              key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
-              server: true,
-            },
-          )
+        const { data, error } = await useFetch<BudgetData>(
+          targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
+          {
+            key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
+          },
+        )
 
-          if (error.value) {
-            this.error = error.value.data?.message || 'Failed to load budget'
-            this.data = null
-          }
-          else {
-            this.data = data.value || null
-          }
+        if (error.value) {
+          this.error = error.value.data?.message || 'Failed to load budget'
+          this.data = null
         }
         else {
-          if (!targetUsername) {
-            const data = await $fetch<BudgetData>('/api/budget')
-            this.data = data || null
-          }
-          else {
-            const data = await $fetch<BudgetData>(`/api/budget/user/${targetUsername}`)
-            this.data = data || null
-          }
+          this.data = data.value || null
         }
 
         if (this.data) {
@@ -108,9 +88,7 @@ export const useBudgetStore = defineStore('budget', {
         this.error = 'Failed to load budget'
       }
       finally {
-        if (shouldShowLoading) {
-          this.isLoading = false
-        }
+        // SSR handles loading state
       }
     },
 
@@ -412,7 +390,6 @@ export const useBudgetStore = defineStore('budget', {
 
     $reset() {
       this.data = null
-      this.isLoading = false
       this.error = null
       this.canEdit = false
       this.canView = false

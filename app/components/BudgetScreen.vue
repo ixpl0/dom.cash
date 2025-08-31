@@ -1,17 +1,7 @@
 <template>
   <div>
     <div
-      v-if="budgetStore.isLoading"
-      class="text-center py-12"
-    >
-      <div class="loading loading-spinner loading-lg" />
-      <p class="mt-4">
-        Загрузка бюджета...
-      </p>
-    </div>
-
-    <div
-      v-else-if="budgetStore.error"
+      v-if="budgetStore.error"
       class="text-center py-12"
     >
       <div class="text-6xl mb-4">

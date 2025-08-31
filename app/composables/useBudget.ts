@@ -52,7 +52,6 @@ export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
   const isOwnBudget = computed(() => !username.value || username.value === currentUser.value?.username)
 
   const loadBudgetData = async (): Promise<void> => {
-    budgetState.value.isLoading = true
     budgetState.value.error = null
 
     try {
@@ -112,7 +111,7 @@ export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
       budgetState.value.canView = false
     }
     finally {
-      budgetState.value.isLoading = false
+      // SSR handles loading state
     }
   }
 
@@ -427,7 +426,6 @@ export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
 
   return {
     data: computed(() => budgetState.value.data),
-    isLoading: computed(() => budgetState.value.isLoading),
     error: computed(() => budgetState.value.error),
     canEdit: computed(() => budgetState.value.canEdit),
     canView: computed(() => budgetState.value.canView),
