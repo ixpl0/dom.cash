@@ -14,11 +14,11 @@
       </button>
 
       <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-        Курсы валют за {{ monthTitle }}
+        Курсы валют за {{ currencyRatesModal.monthTitle }}
       </h3>
 
       <div
-        v-if="isUsingOtherMonthRates"
+        v-if="currencyRatesModal.isUsingOtherMonthRates"
         class="alert alert-warning mb-4 flex-shrink-0"
       >
         <svg
@@ -34,7 +34,7 @@
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           />
         </svg>
-        <span>У этого месяца нет собственных курсов валют, поэтому используются курсы из {{ sourceMonthTitle }}</span>
+        <span>У этого месяца нет собственных курсов валют, поэтому используются курсы из {{ currencyRatesModal.sourceMonthTitle }}</span>
       </div>
 
       <div class="form-control mb-4 flex-shrink-0">
@@ -81,6 +81,7 @@
 <script setup lang="ts">
 import { filterCurrencies } from '~~/shared/utils/currencies'
 import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
+import { useModalsStore } from '~/stores/modals'
 
 interface CurrencyRate {
   code: string
@@ -88,15 +89,8 @@ interface CurrencyRate {
   rate: number
 }
 
-interface Props {
-  monthId: string
-  monthTitle: string
-  rates: Record<string, number>
-  isUsingOtherMonthRates: boolean | null
-  sourceMonthTitle?: string
-}
-
-const props = defineProps<Props>()
+const modalsStore = useModalsStore()
+const currencyRatesModal = computed(() => modalsStore.currencyRatesModal)
 
 const modal = ref<HTMLDialogElement>()
 const searchQuery = ref('')
@@ -105,7 +99,7 @@ const { getRecentCurrencies } = useRecentCurrencies()
 const recentCurrencies = getRecentCurrencies()
 
 const allRates = computed((): CurrencyRate[] => {
-  if (!props.rates) {
+  if (!currencyRatesModal.value.rates) {
     return []
   }
 
@@ -115,7 +109,7 @@ const allRates = computed((): CurrencyRate[] => {
     .map(currency => ({
       code: currency.code,
       name: currency.name,
-      rate: props.rates[currency.code] || 0,
+      rate: currencyRatesModal.value.rates[currency.code] || 0,
     }))
     .filter(rate => rate.rate > 0)
 })
@@ -146,18 +140,22 @@ const formatRate = (rate: number): string => {
   return rate.toFixed(6)
 }
 
-const show = (): void => {
-  searchQuery.value = ''
-  modal.value?.showModal()
-}
-
 const hide = (): void => {
-  modal.value?.close()
+  modalsStore.closeCurrencyRatesModal()
 }
 
 const handleDialogClose = (): void => {
   searchQuery.value = ''
+  modalsStore.closeCurrencyRatesModal()
 }
 
-defineExpose({ show, hide })
+watch(() => currencyRatesModal.value.isOpen, (isOpen) => {
+  if (isOpen) {
+    searchQuery.value = ''
+    modal.value?.showModal()
+  }
+  else {
+    modal.value?.close()
+  }
+})
 </script>

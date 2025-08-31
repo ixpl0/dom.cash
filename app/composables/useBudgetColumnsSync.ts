@@ -4,6 +4,7 @@ export const useBudgetColumnsSync = () => {
   const mounted = ref(false)
   const isProcessing = ref(false)
   const registeredRows = ref<HTMLElement[][]>([])
+  const isUnmounting = ref(false)
 
   const registerRow = (elements: HTMLElement[]) => {
     registeredRows.value.push(elements)
@@ -27,7 +28,7 @@ export const useBudgetColumnsSync = () => {
   }
 
   const syncColumnWidths = () => {
-    if (!isClient || !mounted.value || isProcessing.value || !registeredRows.value.length) return
+    if (!isClient || !mounted.value || isProcessing.value || isUnmounting.value || !registeredRows.value.length) return
 
     isProcessing.value = true
 
@@ -75,14 +76,16 @@ export const useBudgetColumnsSync = () => {
   }
 
   const startObserving = () => {
-    if (!isClient) return
+    if (!isClient || isUnmounting.value) return
 
     if (observer.value) {
       observer.value.disconnect()
     }
 
     observer.value = new ResizeObserver(() => {
-      syncColumnWidths()
+      if (!isUnmounting.value) {
+        syncColumnWidths()
+      }
     })
 
     registeredRows.value.flat().forEach((element) => {
@@ -117,14 +120,24 @@ export const useBudgetColumnsSync = () => {
     startObserving()
   })
 
-  onUnmounted(() => {
+  onBeforeUnmount(() => {
+    isUnmounting.value = true
     mounted.value = false
+    isProcessing.value = false
     stopObserving()
     registeredRows.value = []
   })
 
   const forceSync = () => {
-    if (mounted.value && !isProcessing.value) {
+    if (isUnmounting.value) {
+      return
+    }
+
+    if (isProcessing.value) {
+      isProcessing.value = false
+    }
+
+    if (mounted.value) {
       syncColumnWidths()
     }
   }

@@ -1,25 +1,8 @@
 import type { MonthData } from '~~/shared/types/budget'
-import type { BudgetShareAccess } from '~~/server/db/schema'
+import type { BudgetData, BudgetState } from '~/stores/budget'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/entry-strategies'
 import { toMutable } from '~~/shared/utils/immutable'
-
-export interface BudgetData {
-  user: {
-    username: string
-    mainCurrency: string
-  }
-  access: BudgetShareAccess | 'owner'
-  months: MonthData[]
-}
-
-export interface BudgetState {
-  data: BudgetData | null
-  isLoading: boolean
-  error: string | null
-  canEdit: boolean
-  canView: boolean
-}
 
 export interface BudgetMethods {
   refresh: () => Promise<void>
@@ -53,11 +36,12 @@ export interface BudgetMethods {
   exportBudget: () => Promise<void>
 }
 
-export const useBudget = (targetUsername?: string) => {
+export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
   const { user: currentUser } = useUser()
 
-  const stateKey = targetUsername ? `budget.${targetUsername}` : 'budget.own'
-  const budgetState = useState<BudgetState>(stateKey, () => ({
+  const username = computed(() => unref(targetUsername))
+  const stateKey = computed(() => username.value ? `budget.${username.value}` : 'budget.own')
+  const budgetState = useState<BudgetState>(stateKey.value, () => ({
     data: null,
     isLoading: false,
     error: null,
@@ -65,7 +49,7 @@ export const useBudget = (targetUsername?: string) => {
     canView: false,
   }))
 
-  const isOwnBudget = computed(() => !targetUsername || targetUsername === currentUser.value?.username)
+  const isOwnBudget = computed(() => !username.value || username.value === currentUser.value?.username)
 
   const loadBudgetData = async (): Promise<void> => {
     budgetState.value.isLoading = true
@@ -105,9 +89,9 @@ export const useBudget = (targetUsername?: string) => {
         budgetState.value.canEdit = true
         budgetState.value.canView = true
       }
-      else if (targetUsername) {
-        const { data: userData, error } = await useFetch<BudgetData>(`/api/budget/user/${targetUsername}`, {
-          key: `budget-user-${targetUsername}`,
+      else if (username.value) {
+        const { data: userData, error } = await useFetch<BudgetData>(`/api/budget/user/${username.value}`, {
+          key: `budget-user-${username.value}`,
           server: true,
         })
 
@@ -378,7 +362,7 @@ export const useBudget = (targetUsername?: string) => {
         method: 'PUT',
         body: {
           currency,
-          targetUsername: targetUsername,
+          targetUsername: username.value,
         },
       })
     }

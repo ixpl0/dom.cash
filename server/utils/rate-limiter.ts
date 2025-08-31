@@ -80,7 +80,7 @@ export const rateLimit = (config: RateLimitConfig) => {
 }
 
 export const authRateLimit = rateLimit({
-  maxRequests: 15,
+  maxRequests: process.env.NODE_ENV === 'development' ? 100 : 15,
   windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
 })
 

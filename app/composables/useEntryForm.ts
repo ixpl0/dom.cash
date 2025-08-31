@@ -18,7 +18,7 @@ export interface EntryFormState {
   newEntry: Ref<EntryFormData>
 }
 
-export const useEntryForm = (entryKind: 'balance' | 'income' | 'expense') => {
+export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>) => {
   const isAdding = ref(false)
   const isDeleting = ref<string | null>(null)
   const editingEntryId = ref<string | null>(null)
@@ -69,10 +69,11 @@ export const useEntryForm = (entryKind: 'balance' | 'income' | 'expense') => {
     editingEntry.value = createDefaultFormData()
   }
 
-  const config = getEntryConfig(entryKind)
+  const kindValue = computed(() => unref(entryKind) || 'balance')
+  const config = computed(() => getEntryConfig(kindValue.value))
 
-  const getModalTitle = (): string => config.title
-  const getEmptyMessage = (): string => config.emptyMessage
+  const getModalTitle = (): string => config.value.title
+  const getEmptyMessage = (): string => config.value.emptyMessage
 
   return {
     isAdding,

@@ -18,14 +18,14 @@
       </h3>
 
       <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
-        <div v-if="entries?.length || isAddingNewEntry">
+        <div v-if="currentEntries.length || isAddingNewEntry">
           <table class="table table-zebra">
             <thead>
               <tr>
                 <th>Описание</th>
                 <th>Сумма</th>
                 <th>Валюта</th>
-                <th v-if="entryKind !== 'balance'">
+                <th v-if="entryModal.entryKind !== 'balance'">
                   Дата
                 </th>
                 <th class="w-1">
@@ -35,7 +35,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="entry in (entries || [])"
+                v-for="entry in currentEntries"
                 :key="entry.id"
               >
                 <td>
@@ -64,9 +64,9 @@
                     v-else
                     :class="{
                       'text-base-content': entry.amount === 0,
-                      'text-success': entryKind === 'income' || (entryKind === 'balance' && entry.amount > 0) || (entryKind === undefined && entry.amount > 0),
-                      'text-error': entryKind === 'expense' || (entryKind === undefined && entry.amount < 0),
-                      'text-warning': entryKind === 'balance' && entry.amount < 0,
+                      'text-success': entryModal.entryKind === 'income' || (entryModal.entryKind === 'balance' && entry.amount > 0),
+                      'text-error': entryModal.entryKind === 'expense',
+                      'text-warning': entryModal.entryKind === 'balance' && entry.amount < 0,
                     }"
                   >{{ formatAmount(entry.amount, entry.currency) }}</span>
                 </td>
@@ -78,7 +78,7 @@
                   />
                   <span v-else>{{ entry.currency }}</span>
                 </td>
-                <td v-if="entryKind !== 'balance'">
+                <td v-if="entryModal.entryKind !== 'balance'">
                   <input
                     v-if="editingEntryId === entry.id"
                     v-model="editingEntry.date"
@@ -112,14 +112,14 @@
                     </template>
                     <template v-else>
                       <button
-                        v-if="!isReadOnly"
+                        v-if="!entryModal.isReadOnly"
                         class="btn btn-sm btn-warning"
                         @click="startEdit(entry)"
                       >
                         ✏️
                       </button>
                       <button
-                        v-if="!isReadOnly"
+                        v-if="!entryModal.isReadOnly"
                         class="btn btn-sm btn-error"
                         :disabled="isDeleting === entry.id"
                         @click="deleteEntry(entry.id)"
@@ -163,7 +163,7 @@
                     class="w-full"
                   />
                 </td>
-                <td v-if="entryKind !== 'balance'">
+                <td v-if="entryModal.entryKind !== 'balance'">
                   <input
                     v-model="newEntry.date"
                     type="date"
@@ -201,7 +201,7 @@
 
           <div class="flex justify-center mt-4">
             <button
-              v-if="!isAddingNewEntry && !isReadOnly"
+              v-if="!isAddingNewEntry && !entryModal.isReadOnly"
               class="btn btn-primary btn-sm"
               @click="startAdd()"
             >
@@ -218,7 +218,7 @@
             {{ emptyMessage }}
           </div>
           <button
-            v-if="!isAddingNewEntry && !isReadOnly"
+            v-if="!isAddingNewEntry && !entryModal.isReadOnly"
             type="button"
             class="btn btn-primary btn-sm"
             @click="startAdd()"
@@ -236,23 +236,24 @@
 </template>
 
 <script setup lang="ts">
-import type { BudgetEntry } from '~~/shared/types/budget'
 import { formatAmount } from '~~/shared/utils/budget'
 import { useEntryForm } from '~/composables/useEntryForm'
-import { useBudgetOperations } from '~/composables/useBudgetOperations'
+import { useModalsStore } from '~/stores/modals'
+import { useBudgetStore } from '~/stores/budget'
 
-interface Props {
-  monthId: string
-  entryKind: 'balance' | 'income' | 'expense'
-  entries?: BudgetEntry[]
-  isReadOnly?: boolean
-  targetUsername?: string
-}
+const modalsStore = useModalsStore()
+const budgetStore = useBudgetStore()
+const entryModal = computed(() => modalsStore.entryModal)
 
-const props = defineProps<Props>()
+const currentEntries = computed(() => {
+  if (!entryModal.value.monthId || !entryModal.value.entryKind) {
+    return []
+  }
+
+  return budgetStore.getEntriesByMonthAndKind(entryModal.value.monthId, entryModal.value.entryKind)
+})
 
 const emit = defineEmits<{
-  close: []
   added: []
   deleted: [entryId: string]
   updated: [entryId: string]
@@ -276,7 +277,7 @@ const {
   cancelAdd,
   startEdit,
   cancelEdit,
-} = useEntryForm(props.entryKind)
+} = useEntryForm(computed(() => entryModal.value.entryKind))
 
 const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) => {
   if (event === 'added') {
@@ -290,11 +291,40 @@ const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) =
   }
 }
 
-const {
-  addEntry: performAddEntry,
-  updateEntry: performUpdateEntry,
-  deleteEntry: performDeleteEntry,
-} = useBudgetOperations(props.monthId, props.entryKind, emitWrapper, props.targetUsername)
+const performAddEntry = async (entryData: { description: string, amount: number, currency: string, date: string }) => {
+  if (!entryModal.value.monthId || !entryModal.value.entryKind) {
+    throw new Error('Month ID and entry kind are required')
+  }
+
+  await budgetStore.addEntry(
+    entryModal.value.monthId,
+    entryModal.value.entryKind,
+    {
+      description: entryData.description,
+      amount: entryData.amount,
+      currency: entryData.currency,
+      date: entryModal.value.entryKind !== 'balance' ? entryData.date : undefined,
+    },
+  )
+
+  emitWrapper('added')
+}
+
+const performUpdateEntry = async (entryId: string, entryData: { description: string, amount: number, currency: string, date: string }) => {
+  await budgetStore.updateEntry(entryId, {
+    description: entryData.description,
+    amount: entryData.amount,
+    currency: entryData.currency,
+    date: entryModal.value.entryKind !== 'balance' ? entryData.date : undefined,
+  })
+
+  emitWrapper('updated', entryId)
+}
+
+const performDeleteEntry = async (entryId: string) => {
+  await budgetStore.deleteEntry(entryId)
+  emitWrapper('deleted', entryId)
+}
 
 const addEntry = async (): Promise<void> => {
   if (isAdding.value) return
@@ -333,17 +363,22 @@ const deleteEntry = async (entryId: string): Promise<void> => {
   }
 }
 
-const show = (): void => {
-  modal.value?.showModal()
-}
-
 const hide = (): void => {
-  modal.value?.close()
+  modalsStore.closeEntryModal()
 }
 
 const handleDialogClose = (): void => {
-  emit('close')
+  modalsStore.closeEntryModal()
 }
+
+watch(() => entryModal.value.isOpen, (isOpen) => {
+  if (isOpen) {
+    modal.value?.showModal()
+  }
+  else {
+    modal.value?.close()
+  }
+})
 
 const saveEntry = async (): Promise<void> => {
   if (isSaving.value) return
@@ -365,6 +400,4 @@ const saveEntry = async (): Promise<void> => {
     isSaving.value = false
   }
 }
-
-defineExpose({ show, hide })
 </script>

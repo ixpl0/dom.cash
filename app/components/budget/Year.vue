@@ -223,6 +223,9 @@
     :main-currency="mainCurrency"
     :on-delete-month="onDeleteMonth"
     :budget-columns-sync="budgetColumnsSync"
+    @added="$emit('refresh')"
+    @deleted="$emit('refresh')"
+    @updated="$emit('refresh')"
   />
 </template>
 
@@ -244,6 +247,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+defineEmits<{
+  refresh: []
+}>()
 
 const { mainCurrency: userMainCurrency } = useUser()
 const mainCurrency = computed(() => props.mainCurrency || userMainCurrency.value)

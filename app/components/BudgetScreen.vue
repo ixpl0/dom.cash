@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      v-if="isLoading"
+      v-if="budgetStore.isLoading"
       class="text-center py-12"
     >
       <div class="loading loading-spinner loading-lg" />
@@ -11,7 +11,7 @@
     </div>
 
     <div
-      v-else-if="error"
+      v-else-if="budgetStore.error"
       class="text-center py-12"
     >
       <div class="text-6xl mb-4">
@@ -21,7 +21,7 @@
         Ошибка доступа
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ error || 'Не удалось загрузить бюджет' }}
+        {{ budgetStore.error || 'Не удалось загрузить бюджет' }}
       </p>
       <NuxtLink
         to="/budget"
@@ -32,7 +32,7 @@
     </div>
 
     <div
-      v-else-if="!budget || !budget.months || budget.months.length === 0"
+      v-else-if="!budgetStore.data || !budgetStore.months || budgetStore.months.length === 0"
       class="text-center py-12"
     >
       <div class="text-6xl mb-4">
@@ -42,10 +42,10 @@
         Пока нет данных о бюджете
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ !canEdit ? 'Этот пользователь ещё не создал месяцы бюджета' : 'Начните с создания месяца и добавления источников баланса или импортируйте данные' }}
+        {{ !budgetStore.canEdit ? 'Этот пользователь ещё не создал месяцы бюджета' : 'Начните с создания месяца и добавления источников баланса или импортируйте данные' }}
       </p>
       <div
-        v-if="canEdit"
+        v-if="budgetStore.canEdit"
         class="flex flex-col sm:flex-row gap-4 justify-center"
       >
         <button
@@ -82,14 +82,14 @@
         <div class="flex items-center gap-2 mt-2">
           <span class="badge badge-primary badge-outline">
             Бюджет
-            {{ budget.user.username }}
+            {{ budgetStore.data?.user.username }}
           </span>
           <span class="badge badge-secondary badge-outline">
-            {{ getAccessText(budget.access) }}
+            {{ getAccessText(budgetStore.data?.access || 'unknown') }}
           </span>
           <UiCurrencyPicker
-            v-if="canEdit"
-            :model-value="budget.user.mainCurrency"
+            v-if="budgetStore.canEdit"
+            :model-value="budgetStore.data?.user.mainCurrency"
             placeholder="Основная валюта"
             class="w-70"
             @change="saveCurrency"
@@ -98,12 +98,12 @@
             v-else
             class="opacity-70 text-sm"
           >
-            Основная валюта: {{ getCurrencyDisplayText(budget.user.mainCurrency) }}
+            Основная валюта: {{ getCurrencyDisplayText(budgetStore.data?.user.mainCurrency || '') }}
           </span>
         </div>
         <div class="flex gap-2">
           <div
-            v-if="canEdit"
+            v-if="budgetStore.canEdit"
             class="flex gap-2"
           >
             <button
@@ -131,7 +131,7 @@
 
       <ul class="timeline timeline-vertical [--timeline-col-start:20ch]">
         <BudgetTimelineAddButton
-          v-if="canEdit"
+          v-if="budgetStore.canEdit"
           direction="next"
           :month-text="getNextMonthText()"
           :is-loading="isCreatingNextMonth"
@@ -144,16 +144,16 @@
           :year="year"
           :months="groupedData[year] || []"
           :month-names="monthNames"
-          :all-months="budget.months"
-          :is-read-only="!canEdit"
-          :main-currency="budget?.user?.mainCurrency"
-          :target-username="!isOwnBudget ? budget?.user?.username : undefined"
-          :on-delete-month="props.onDeleteMonth"
+          :all-months="budgetStore.months"
+          :is-read-only="!budgetStore.canEdit"
+          :main-currency="budgetStore.data?.user?.mainCurrency"
+          :target-username="!isOwnBudget ? budgetStore.data?.user?.username : undefined"
+          :on-delete-month="budgetStore.deleteMonth"
           :budget-columns-sync="budgetColumnsSyncInstance"
         />
 
         <BudgetTimelineAddButton
-          v-if="canEdit"
+          v-if="budgetStore.canEdit"
           direction="previous"
           :month-text="getPreviousMonthText()"
           :is-loading="isCreatingPreviousMonth"
@@ -164,47 +164,30 @@
 
     <BudgetImportModal
       :is-open="isImportModalOpen"
-      :target-username="!isOwnBudget ? budget?.user?.username : undefined"
+      :target-username="!isOwnBudget ? budgetStore.data?.user?.username : undefined"
       @close="closeImportModal"
       @imported="handleImported"
     />
+
+    <BudgetEntryModal />
+
+    <BudgetCurrencyRatesModal />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { BudgetData } from '~/composables/useBudget'
 import { getCurrencyName } from '~~/shared/utils/currencies'
 import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
+import { useBudgetStore } from '~/stores/budget'
 
-interface Props {
-  budget: BudgetData | null
-  canEdit?: boolean
-  isLoading?: boolean
-  error?: string | null
-  onCreateMonth?: (year: number, month: number, copyFromMonthId?: string) => Promise<void>
-  onCreateNextMonth?: () => Promise<void>
-  onCreatePreviousMonth?: () => Promise<void>
-  onGetNextMonth?: () => { year: number, month: number }
-  onGetPreviousMonth?: () => { year: number, month: number }
-  onUpdateCurrency?: (currency: string) => Promise<void>
-  onDeleteMonth?: (monthId: string) => Promise<void>
-  onExport?: () => Promise<void>
-  onRefresh?: () => Promise<void>
-}
+const budgetStore = useBudgetStore()
+const route = useRoute()
 
-const props = withDefaults(defineProps<Props>(), {
-  canEdit: false,
-  isLoading: false,
-  error: null,
-  onCreateMonth: undefined,
-  onCreateNextMonth: undefined,
-  onCreatePreviousMonth: undefined,
-  onGetNextMonth: undefined,
-  onGetPreviousMonth: undefined,
-  onDeleteMonth: undefined,
-  onUpdateCurrency: undefined,
-  onExport: undefined,
-  onRefresh: undefined,
+const targetUsername = computed(() => {
+  const username = Array.isArray(route.params.username)
+    ? route.params.username[0]
+    : route.params.username
+  return username || undefined
 })
 
 const monthNames = [
@@ -221,10 +204,10 @@ const isCreatingNextMonth = ref(false)
 const isCreatingPreviousMonth = ref(false)
 const isImportModalOpen = ref(false)
 
-const isOwnBudget = computed(() => props.budget?.access === 'owner')
+const isOwnBudget = computed(() => budgetStore.isOwnBudget)
 
 const groupedData = computed(() => {
-  const months = props.budget?.months
+  const months = budgetStore.months
   if (!months || !Array.isArray(months)) return {}
 
   return months.reduce((acc: Record<number, typeof months>, month) => {
@@ -243,32 +226,22 @@ const years = computed(() => {
 })
 
 const getNextMonthText = (): string => {
-  if (props.onGetNextMonth) {
-    const nextMonth = props.onGetNextMonth()
-    return `${monthNames[nextMonth.month]} ${nextMonth.year}`
-  }
-  const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1
-  const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear
-  return `${monthNames[nextMonth]} ${nextYear}`
+  const nextMonth = budgetStore.getNextMonth()
+  return `${monthNames[nextMonth.month]} ${nextMonth.year}`
 }
 
 const getPreviousMonthText = (): string => {
-  if (props.onGetPreviousMonth) {
-    const prevMonth = props.onGetPreviousMonth()
-    return `${monthNames[prevMonth.month]} ${prevMonth.year}`
-  }
-  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1
-  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear
-  return `${monthNames[prevMonth]} ${prevYear}`
+  const prevMonth = budgetStore.getPreviousMonth()
+  return `${monthNames[prevMonth.month]} ${prevMonth.year}`
 }
 
 const handleCreateNextMonth = async (): Promise<void> => {
-  if (!props.canEdit || !props.onCreateNextMonth) return
+  if (!budgetStore.canEdit) return
 
   isCreatingNextMonth.value = true
 
   try {
-    await props.onCreateNextMonth()
+    await budgetStore.createNextMonth()
   }
   catch (error) {
     console.error('Error creating next month:', error)
@@ -279,12 +252,12 @@ const handleCreateNextMonth = async (): Promise<void> => {
 }
 
 const handleCreatePreviousMonth = async (): Promise<void> => {
-  if (!props.canEdit || !props.onCreatePreviousMonth) return
+  if (!budgetStore.canEdit) return
 
   isCreatingPreviousMonth.value = true
 
   try {
-    await props.onCreatePreviousMonth()
+    await budgetStore.createPreviousMonth()
   }
   catch (error) {
     console.error('Error creating previous month:', error)
@@ -295,12 +268,12 @@ const handleCreatePreviousMonth = async (): Promise<void> => {
 }
 
 const createCurrentMonth = async (): Promise<void> => {
-  if (!props.canEdit || !props.onCreateMonth) return
+  if (!budgetStore.canEdit) return
 
   isCreatingCurrentMonth.value = true
 
   try {
-    await props.onCreateMonth(currentYear, currentMonth)
+    await budgetStore.createMonth(currentYear, currentMonth)
   }
   catch (error) {
     console.error('Error creating current month:', error)
@@ -316,13 +289,8 @@ const getCurrencyDisplayText = (currencyCode: string): string => {
 }
 
 const saveCurrency = async (newCurrency: string): Promise<void> => {
-  if (!props.onUpdateCurrency) {
-    console.warn('onUpdateCurrency handler not provided')
-    return
-  }
-
   try {
-    await props.onUpdateCurrency(newCurrency)
+    await budgetStore.updateCurrency(newCurrency)
   }
   catch (error) {
     console.error('Failed to update currency:', error)
@@ -344,13 +312,8 @@ const getAccessText = (access: string): string => {
 }
 
 const handleExport = async (): Promise<void> => {
-  if (!props.onExport) {
-    console.warn('onExport handler not provided')
-    return
-  }
-
   try {
-    await props.onExport()
+    await budgetStore.exportBudget()
   }
   catch (error) {
     console.error('Export failed:', error)
@@ -367,15 +330,33 @@ const closeImportModal = (): void => {
 }
 
 const handleImported = async (): Promise<void> => {
-  if (props.onRefresh) {
-    try {
-      await props.onRefresh()
-    }
-    catch (error) {
-      console.error('Failed to refresh budget after import:', error)
-    }
+  try {
+    await budgetStore.refresh(targetUsername.value)
+  }
+  catch (error) {
+    console.error('Failed to refresh budget after import:', error)
   }
 }
 
 const budgetColumnsSyncInstance = useBudgetColumnsSync()
+
+const refreshBudget = async (username?: string) => {
+  const currentUsername = budgetStore.data?.user.username
+  const isChangingUser = (currentUsername && currentUsername !== username) || (!currentUsername && username)
+
+  if (isChangingUser) {
+    budgetStore.$reset()
+  }
+
+  await budgetStore.refresh(username)
+
+  await nextTick()
+  budgetColumnsSyncInstance.forceSync()
+}
+
+onMounted(async () => {
+  if (import.meta.client) {
+    await refreshBudget(targetUsername.value)
+  }
+})
 </script>

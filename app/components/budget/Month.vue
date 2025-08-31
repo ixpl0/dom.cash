@@ -208,42 +208,6 @@
       </div>
     </div>
 
-    <BudgetEntryModal
-      ref="balanceModal"
-      :month-id="monthData.id"
-      entry-kind="balance"
-      :entries="monthData.balanceSources || []"
-      :is-read-only="isReadOnly"
-      :target-username="targetUsername"
-    />
-
-    <BudgetEntryModal
-      ref="incomeModal"
-      :month-id="monthData.id"
-      entry-kind="income"
-      :entries="monthData.incomeEntries || []"
-      :is-read-only="isReadOnly"
-      :target-username="targetUsername"
-    />
-
-    <BudgetEntryModal
-      ref="expenseModal"
-      :month-id="monthData.id"
-      entry-kind="expense"
-      :entries="monthData.expenseEntries || []"
-      :is-read-only="isReadOnly"
-      :target-username="targetUsername"
-    />
-
-    <BudgetCurrencyRatesModal
-      ref="currencyRatesModal"
-      :month-id="monthData.id"
-      :month-title="monthTitle"
-      :rates="effectiveRates"
-      :is-using-other-month-rates="isUsingOtherMonthRates"
-      :source-month-title="sourceMonthTitle"
-    />
-
     <hr>
   </li>
 </template>
@@ -253,6 +217,7 @@ import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
 import { formatAmountRounded, calculateTotalBalance } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
+import { useModalsStore } from '~/stores/modals'
 
 interface Props {
   monthData: MonthData
@@ -270,10 +235,7 @@ const props = defineProps<Props>()
 
 const { mainCurrency: userMainCurrency } = useUser()
 const effectiveMainCurrency = computed(() => props.mainCurrency || userMainCurrency.value)
-const balanceModal = ref()
-const incomeModal = ref()
-const expenseModal = ref()
-const currencyRatesModal = ref()
+const modalsStore = useModalsStore()
 
 const cardRefs = ref<HTMLElement[]>([])
 
@@ -459,19 +421,40 @@ watch([startBalance, totalIncome, totalExpenses, balanceChange, pocketExpenses, 
 }, { flush: 'post' })
 
 const openBalanceModal = (): void => {
-  balanceModal.value?.show()
+  modalsStore.openEntryModal({
+    monthId: props.monthData.id,
+    entryKind: 'balance',
+    isReadOnly: props.isReadOnly || false,
+    targetUsername: props.targetUsername,
+  })
 }
 
 const openIncomeModal = (): void => {
-  incomeModal.value?.show()
+  modalsStore.openEntryModal({
+    monthId: props.monthData.id,
+    entryKind: 'income',
+    isReadOnly: props.isReadOnly || false,
+    targetUsername: props.targetUsername,
+  })
 }
 
 const openExpenseModal = (): void => {
-  expenseModal.value?.show()
+  modalsStore.openEntryModal({
+    monthId: props.monthData.id,
+    entryKind: 'expense',
+    isReadOnly: props.isReadOnly || false,
+    targetUsername: props.targetUsername,
+  })
 }
 
 const openCurrencyRatesModal = (): void => {
-  currencyRatesModal.value?.show()
+  modalsStore.openCurrencyRatesModal({
+    monthId: Number(props.monthData.id),
+    monthTitle: monthTitle.value,
+    rates: effectiveRates.value,
+    isUsingOtherMonthRates: isUsingOtherMonthRates.value || false,
+    sourceMonthTitle: sourceMonthTitle.value,
+  })
 }
 
 const monthTitle = computed(() => {
