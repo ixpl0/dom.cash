@@ -34,10 +34,6 @@ const fetchRatesFromApi = async (url: string): Promise<Record<string, number>> =
   return data.rates
 }
 
-export const fetchLatestRates = async (): Promise<Record<string, number>> => {
-  return fetchRatesFromApi(`${OPENEXCHANGERATES_API_URL}/latest.json`)
-}
-
 export const fetchHistoricalRates = async (date: string): Promise<Record<string, number>> => {
   return fetchRatesFromApi(`${OPENEXCHANGERATES_API_URL}/historical/${date}.json`)
 }

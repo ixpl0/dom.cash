@@ -1,10 +1,10 @@
-import { desc, eq, and } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { entry, month, currency, budgetShare, user } from '~~/server/db/schema'
+import { budgetShare, currency, entry, month, user } from '~~/server/db/schema'
 import type { MonthData } from '~~/shared/types/budget'
 
-const ratesCache = new Map<string, Record<string, number>>()
+const ratesCache = new Map<string, { rates: Record<string, number>, source: string }>()
 
 export const clearRatesCache = () => {
   ratesCache.clear()
@@ -43,9 +43,8 @@ const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Even
   }
 
   const oneHourInMs = 60 * 60 * 1000
-  const canRetry = Date.now() - lastAttempt.getTime() >= oneHourInMs
 
-  return canRetry
+  return Date.now() - lastAttempt.getTime() >= oneHourInMs
 }
 
 const markUpdateAttempt = async (year: number, monthNumber: number, event: H3Event): Promise<void> => {
@@ -71,7 +70,7 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
 
   if (ratesCache.has(rateDate)) {
-    return { rates: ratesCache.get(rateDate)!, source: rateDate }
+    return ratesCache.get(rateDate)
   }
 
   const db = useDatabase(event)
@@ -84,8 +83,9 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
   if (currencyData.length > 0) {
     const rates = currencyData[0]?.rates
     if (rates) {
-      ratesCache.set(rateDate, rates)
-      return { rates, source: rateDate }
+      const result = { rates, source: rateDate }
+      ratesCache.set(rateDate, result)
+      return result
     }
   }
 
@@ -106,8 +106,9 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
       if (updatedCurrencyData.length > 0) {
         const rates = updatedCurrencyData[0]?.rates
         if (rates && Object.keys(rates).length > 0) {
-          ratesCache.set(rateDate, rates)
-          return { rates, source: rateDate }
+          const result = { rates, source: rateDate }
+          ratesCache.set(rateDate, result)
+          return result
         }
       }
     }
@@ -127,7 +128,7 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
 
   const targetDate = new Date(rateDate)
   let closestData = allCurrencyData[0]
-  let minDiff = Math.abs(new Date(allCurrencyData[0]!.date).getTime() - targetDate.getTime())
+  let minDiff = Math.abs(new Date(allCurrencyData[0].date).getTime() - targetDate.getTime())
 
   for (const data of allCurrencyData) {
     const diff = Math.abs(new Date(data.date).getTime() - targetDate.getTime())
@@ -138,7 +139,6 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
   }
 
   if (closestData?.rates) {
-    ratesCache.set(rateDate, closestData.rates)
     return { rates: closestData.rates, source: closestData.date }
   }
 
