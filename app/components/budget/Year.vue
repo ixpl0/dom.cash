@@ -92,14 +92,14 @@
           <div class="flex flex-col gap-1">
             <div
               class="font-bold tooltip tooltip-bottom"
-              :class="yearStats.totalPocketExpenses > 0 ? 'text-error' : 'text-warning'"
+              :class="yearStats.totalPocketExpenses < 0 ? 'text-warning' : 'text-error'"
               data-tip="Общая сумма карманных расходов за год"
             >
               {{ formatAmountRounded(yearStats.totalPocketExpenses, mainCurrency) }}
             </div>
             <div
               class="text-sm tooltip tooltip-bottom"
-              :class="yearStats.averagePocketExpenses > 0 ? 'text-error/80' : 'text-warning/80'"
+              :class="yearStats.averagePocketExpenses < 0 ? 'text-warning/80' : 'text-error/80'"
               data-tip="Средние карманные расходы в месяц"
             >
               {{ formatAmountRounded(yearStats.averagePocketExpenses, mainCurrency) }}

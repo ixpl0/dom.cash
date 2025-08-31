@@ -40,36 +40,40 @@
         </div>
       </div>
 
-      <ul
-        v-if="isDropdownOpen && filteredOptions.length > 0"
-        class="dropdown-content menu bg-base-100 rounded-box z-[1] w-full max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap"
-      >
-        <li
-          v-for="(option, index) in filteredOptions"
-          :key="option.code"
-          :class="option.code === props.modelValue && index !== highlightedIndex && 'bg-base-content/10'"
+      <Teleport :to="teleportTarget">
+        <ul
+          v-if="isDropdownOpen && filteredOptions.length > 0"
+          ref="dropdownRef"
+          class="menu bg-base-100 rounded-box z-[9999] max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap fixed"
+          :style="dropdownStyle"
         >
-          <a
-            class="flex justify-between items-start gap-2 py-1"
-            :class="{
-              'font-bold': option.code === props.modelValue,
-            }"
-            tabindex="0"
-            @click="selectOption(option)"
-            @keydown="(event) => onOptionKeydown(event, option)"
-            @mouseenter="highlightedIndex = index"
+          <li
+            v-for="(option, index) in filteredOptions"
+            :key="option.code"
+            :class="option.code === props.modelValue && index !== highlightedIndex && 'bg-base-content/10'"
           >
-            <span class="font-medium shrink-0">
-              {{ option.code }}
-              <span
-                v-if="option.code === props.modelValue"
-                class="ml-1"
-              >✓</span>
-            </span>
-            <span class="text-sm opacity-70 text-right ml-2">{{ option.name }}</span>
-          </a>
-        </li>
-      </ul>
+            <a
+              class="flex justify-between items-start gap-2 py-1"
+              :class="{
+                'font-bold': option.code === props.modelValue,
+              }"
+              tabindex="0"
+              @click="selectOption(option)"
+              @keydown="(event) => onOptionKeydown(event, option)"
+              @mouseenter="highlightedIndex = index"
+            >
+              <span class="font-medium shrink-0">
+                {{ option.code }}
+                <span
+                  v-if="option.code === props.modelValue"
+                  class="ml-1"
+                >✓</span>
+              </span>
+              <span class="text-sm opacity-70 text-right ml-2">{{ option.name }}</span>
+            </a>
+          </li>
+        </ul>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -81,6 +85,7 @@ import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
 interface Props {
   modelValue: string
   disabled?: boolean
+  teleportTo?: string | HTMLElement
 }
 
 interface Emits {
@@ -95,11 +100,25 @@ defineOptions({
 })
 
 const inputRef = ref<HTMLInputElement>()
+const dropdownRef = ref<HTMLElement>()
 const searchQuery = ref('')
 const isDropdownOpen = ref(false)
 const highlightedIndex = ref(-1)
 const filteredOptions = ref<CurrencyOption[]>([])
 const isFocused = ref(false)
+const dropdownStyle = ref<Record<string, string>>({})
+
+const teleportTarget = computed(() => {
+  if (!props.teleportTo) {
+    return 'body'
+  }
+
+  if (typeof props.teleportTo === 'string') {
+    return props.teleportTo
+  }
+
+  return props.teleportTo
+})
 
 const { addRecentCurrency, getRecentCurrencies } = useRecentCurrencies()
 const recentCurrencies = getRecentCurrencies()
@@ -139,6 +158,7 @@ const onInput = (event: Event) => {
   searchQuery.value = target.value
   updateFilteredOptions()
   if (!isDropdownOpen.value) {
+    updateDropdownPosition()
     isDropdownOpen.value = true
   }
 }
@@ -149,11 +169,40 @@ const onInputClick = () => {
   }
 }
 
+const updateDropdownPosition = () => {
+  if (!inputRef.value) return
+
+  const rect = inputRef.value.getBoundingClientRect()
+  const isInModal = props.teleportTo && props.teleportTo !== 'body'
+
+  if (isInModal && typeof props.teleportTo !== 'string') {
+    const modalRect = props.teleportTo.getBoundingClientRect()
+    const relativeTop = rect.top - modalRect.top
+    const relativeLeft = rect.left - modalRect.left
+
+    dropdownStyle.value = {
+      position: 'absolute',
+      left: `${relativeLeft}px`,
+      width: `${rect.width}px`,
+      top: `${relativeTop + rect.height}px`,
+    }
+  }
+  else {
+    dropdownStyle.value = {
+      position: 'fixed',
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      top: `${rect.bottom}px`,
+    }
+  }
+}
+
 const onFocus = () => {
   isFocused.value = true
   if (!isDropdownOpen.value) {
     searchQuery.value = ''
     updateFilteredOptions()
+    updateDropdownPosition()
     isDropdownOpen.value = true
   }
 }
@@ -162,7 +211,7 @@ const onDropdownFocusOut = (event: FocusEvent) => {
   const dropdown = event.currentTarget as HTMLElement
   const relatedTarget = event.relatedTarget as HTMLElement | null
 
-  if (relatedTarget && !dropdown.contains(relatedTarget)) {
+  if (relatedTarget && !dropdown.contains(relatedTarget) && !dropdownRef.value?.contains(relatedTarget)) {
     isFocused.value = false
     isDropdownOpen.value = false
   }
@@ -223,6 +272,37 @@ const onKeyDown = (event: KeyboardEvent) => {
 
 onMounted(() => {
   updateFilteredOptions()
+
+  const handleScroll = () => {
+    if (isDropdownOpen.value) {
+      updateDropdownPosition()
+    }
+  }
+
+  const handleResize = () => {
+    if (isDropdownOpen.value) {
+      updateDropdownPosition()
+    }
+  }
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (isDropdownOpen.value
+      && !inputRef.value?.contains(event.target as Node)
+      && !dropdownRef.value?.contains(event.target as Node)) {
+      isDropdownOpen.value = false
+      isFocused.value = false
+    }
+  }
+
+  window.addEventListener('scroll', handleScroll, true)
+  window.addEventListener('resize', handleResize)
+  document.addEventListener('click', handleClickOutside)
+
+  onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll, true)
+    window.removeEventListener('resize', handleResize)
+    document.removeEventListener('click', handleClickOutside)
+  })
 })
 </script>
 

@@ -18,6 +18,7 @@ interface CurrencyRatesModalState {
 interface ModalsState {
   entryModal: EntryModalState
   currencyRatesModal: CurrencyRatesModalState
+  modalTeleportTarget: HTMLElement | null
 }
 
 export const useModalsStore = defineStore('modals', {
@@ -37,6 +38,7 @@ export const useModalsStore = defineStore('modals', {
       isUsingOtherMonthRates: false,
       sourceMonthTitle: undefined,
     },
+    modalTeleportTarget: null,
   }),
 
   actions: {
@@ -92,6 +94,10 @@ export const useModalsStore = defineStore('modals', {
           isOpen: false,
         },
       })
+    },
+
+    setModalTeleportTarget(target: HTMLElement | null) {
+      this.modalTeleportTarget = target
     },
   },
 })

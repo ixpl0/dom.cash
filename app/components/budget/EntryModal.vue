@@ -4,7 +4,10 @@
     class="modal"
     @close="handleDialogClose"
   >
-    <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] flex flex-col">
+    <div
+      ref="modalBox"
+      class="modal-box w-11/12 max-w-5xl max-h-[90vh] flex flex-col overflow-visible"
+    >
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -75,6 +78,7 @@
                     v-if="editingEntryId === entry.id"
                     v-model="editingEntry.currency"
                     class="w-full"
+                    :teleport-to="modalBox"
                   />
                   <span v-else>{{ entry.currency }}</span>
                 </td>
@@ -161,6 +165,7 @@
                   <UiCurrencyPicker
                     v-model="newEntry.currency"
                     class="w-full"
+                    :teleport-to="modalBox"
                   />
                 </td>
                 <td v-if="entryModal.entryKind !== 'balance'">
@@ -260,6 +265,7 @@ const emit = defineEmits<{
 }>()
 
 const modal = ref<HTMLDialogElement>()
+const modalBox = ref<HTMLElement>()
 
 const {
   isAdding,
@@ -374,9 +380,13 @@ const handleDialogClose = (): void => {
 watch(() => entryModal.value.isOpen, (isOpen) => {
   if (isOpen) {
     modal.value?.showModal()
+    if (modalBox.value) {
+      modalsStore.setModalTeleportTarget(modalBox.value)
+    }
   }
   else {
     modal.value?.close()
+    modalsStore.setModalTeleportTarget(null)
   }
 })
 
