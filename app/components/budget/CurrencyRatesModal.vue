@@ -19,7 +19,7 @@
 
       <div
         v-if="currencyRatesModal.isUsingOtherMonthRates"
-        class="alert alert-warning mb-4 flex-shrink-0"
+        class="alert alert-warning alert-outline mb-4 flex-shrink-0"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

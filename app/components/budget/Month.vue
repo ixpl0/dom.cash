@@ -452,8 +452,8 @@ const openCurrencyRatesModal = (): void => {
     monthId: Number(props.monthData.id),
     monthTitle: monthTitle.value,
     rates: effectiveRates.value,
-    isUsingOtherMonthRates: isUsingOtherMonthRates.value || false,
-    sourceMonthTitle: sourceMonthTitle.value,
+    isUsingOtherMonthRates: isUsingOtherMonthRates.value,
+    sourceMonthTitle: sourceMonthTitle.value || '',
   })
 }
 
