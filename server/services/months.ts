@@ -122,13 +122,14 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     .from(currency)
     .orderBy(currency.date)
 
-  if (allCurrencyData.length === 0) {
+  const firstCurrencyData = allCurrencyData[0]
+  if (!firstCurrencyData) {
     return undefined
   }
 
   const targetDate = new Date(rateDate)
-  let closestData = allCurrencyData[0]
-  let minDiff = Math.abs(new Date(allCurrencyData[0].date).getTime() - targetDate.getTime())
+  let closestData = firstCurrencyData
+  let minDiff = Math.abs(new Date(firstCurrencyData.date).getTime() - targetDate.getTime())
 
   for (const data of allCurrencyData) {
     const diff = Math.abs(new Date(data.date).getTime() - targetDate.getTime())
