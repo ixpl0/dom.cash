@@ -87,6 +87,15 @@ const isRevoking = ref<string | null>(null)
 const isLoading = ref(false)
 
 const revokeAccess = async (id: string): Promise<void> => {
+  const budget = sharedBudgets.value.find(b => b.id === id)
+  const confirmMessage = budget
+    ? `Вы уверены, что хотите отказаться от доступа к бюджету пользователя ${budget.username}?`
+    : 'Вы уверены, что хотите отказаться от этого доступа?'
+
+  if (!confirm(confirmMessage)) {
+    return
+  }
+
   isRevoking.value = id
 
   try {

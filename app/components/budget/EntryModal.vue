@@ -356,6 +356,22 @@ const addEntry = async (): Promise<void> => {
 const deleteEntry = async (entryId: string): Promise<void> => {
   if (isDeleting.value) return
 
+  const entry = currentEntries.value.find(e => e.id === entryId)
+
+  const entryType = entryModal.value.entryKind === 'balance'
+    ? 'баланса'
+    : entryModal.value.entryKind === 'income'
+      ? 'дохода'
+      : 'расхода'
+
+  const confirmMessage = entry
+    ? `Вы уверены, что хотите удалить запись ${entryType}: "${entry.description}" ${entry.amount} ${entry.currency}?`
+    : `Вы уверены, что хотите удалить эту запись ${entryType}?`
+
+  if (!confirm(confirmMessage)) {
+    return
+  }
+
   isDeleting.value = entryId
 
   try {
