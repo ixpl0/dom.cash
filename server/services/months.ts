@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, currency, entry, month, user } from '~~/server/db/schema'
@@ -385,4 +385,126 @@ export const deleteMonth = async (monthId: string, event: H3Event): Promise<void
     { sql: 'DELETE FROM entry WHERE month_id = ?', params: [monthId] },
     { sql: 'DELETE FROM month WHERE id = ?', params: [monthId] },
   ])
+}
+
+export interface YearInfo {
+  year: number
+  monthCount: number
+  months: number[]
+}
+
+export const getAvailableYears = async (userId: string, event: H3Event): Promise<YearInfo[]> => {
+  const db = useDatabase(event)
+  const monthsData = await db
+    .select({ year: month.year, month: month.month })
+    .from(month)
+    .where(eq(month.userId, userId))
+    .orderBy(desc(month.year), desc(month.month))
+
+  const yearMap = new Map<number, number[]>()
+
+  for (const monthData of monthsData) {
+    const months = yearMap.get(monthData.year) || []
+    months.push(monthData.month)
+    yearMap.set(monthData.year, months)
+  }
+
+  return Array.from(yearMap.entries())
+    .map(([year, months]) => ({
+      year,
+      monthCount: months.length,
+      months: months.sort((a, b) => a - b),
+    }))
+    .sort((a, b) => b.year - a.year)
+}
+
+export const getInitialYearsToLoad = (years: YearInfo[]): number[] => {
+  if (years.length === 0) {
+    return []
+  }
+
+  const latestYear = years[0]
+  if (!latestYear) {
+    return []
+  }
+
+  const result = [latestYear.year]
+
+  if (latestYear.monthCount < 3 && years.length > 1) {
+    const secondYear = years[1]
+    if (secondYear) {
+      result.push(secondYear.year)
+    }
+  }
+
+  return result
+}
+
+export const getUserMonthsByYears = async (userId: string, years: number[], event: H3Event): Promise<MonthData[]> => {
+  const db = useDatabase(event)
+  const monthsData = await db
+    .select()
+    .from(month)
+    .where(and(
+      eq(month.userId, userId),
+      years.length > 0 ? sql`${month.year} IN (${sql.join(years.map(year => sql`${year}`), sql`, `)})` : sql`1 = 0`,
+    ))
+    .orderBy(desc(month.year), desc(month.month))
+
+  return await Promise.all(
+    monthsData.map(async (monthData) => {
+      const entries = await db
+        .select()
+        .from(entry)
+        .where(eq(entry.monthId, monthData.id))
+
+      const balanceSources = entries
+        .filter(e => e.kind === 'balance')
+        .map(e => ({
+          id: e.id,
+          description: e.description,
+          currency: e.currency,
+          amount: e.amount,
+        }))
+
+      const incomeEntries = entries
+        .filter(e => e.kind === 'income')
+        .map(e => ({
+          id: e.id,
+          description: e.description,
+          amount: e.amount,
+          currency: e.currency,
+          date: e.date,
+        }))
+
+      const expenseEntries = entries
+        .filter(e => e.kind === 'expense')
+        .map(e => ({
+          id: e.id,
+          description: e.description,
+          amount: e.amount,
+          currency: e.currency,
+          date: e.date,
+        }))
+
+      const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
+
+      const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
+
+      return {
+        id: monthData.id,
+        year: monthData.year,
+        month: monthData.month,
+        userMonthId: monthData.id,
+        balanceSources,
+        incomeEntries,
+        expenseEntries,
+        balanceChange: 0,
+        pocketExpenses: 0,
+        income: totalIncome,
+        exchangeRates: exchangeRatesData.rates,
+        exchangeRatesSource: exchangeRatesData.source,
+      }
+    }),
+  )
 }

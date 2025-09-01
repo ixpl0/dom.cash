@@ -4,6 +4,17 @@ import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shar
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/entry-strategies'
 import { toMutable } from '~~/shared/utils/immutable'
 
+export interface YearInfo {
+  year: number
+  monthCount: number
+  months: number[]
+}
+
+export interface YearsData {
+  availableYears: YearInfo[]
+  initialYears: number[]
+}
+
 export interface BudgetData {
   user: {
     username: string
@@ -18,6 +29,9 @@ export interface BudgetState {
   error: string | null
   canEdit: boolean
   canView: boolean
+  availableYears: YearInfo[]
+  loadedYears: Set<number>
+  isLoadingYear: boolean
 }
 
 export const useBudgetStore = defineStore('budget', () => {
@@ -25,9 +39,32 @@ export const useBudgetStore = defineStore('budget', () => {
   const error = ref<string | null>(null)
   const canEdit = ref(false)
   const canView = ref(false)
+  const availableYears = ref<YearInfo[]>([])
+  const loadedYears = ref<Set<number>>(new Set())
+  const isLoadingYear = ref(false)
 
   const isOwnBudget = computed(() => data.value?.access === 'owner')
   const months = computed(() => data.value?.months || [])
+
+  const nextYearToLoad = computed(() => {
+    if (availableYears.value.length === 0) {
+      return null
+    }
+
+    const loadedYearsArray = Array.from(loadedYears.value).sort((a, b) => b - a)
+    if (loadedYearsArray.length === 0) {
+      return availableYears.value[0] || null
+    }
+
+    const oldestLoadedYear = loadedYearsArray[loadedYearsArray.length - 1]
+    if (oldestLoadedYear === undefined) {
+      return null
+    }
+
+    const nextYear = availableYears.value.find(y => y.year < oldestLoadedYear)
+
+    return nextYear || null
+  })
 
   const getMonthById = (monthId: string): MonthData | undefined => {
     return data.value?.months.find(month => month.id === monthId)
@@ -55,6 +92,13 @@ export const useBudgetStore = defineStore('budget', () => {
     error.value = null
 
     try {
+      const yearsPromise = useFetch<YearsData>(
+        targetUsername ? `/api/budget/years?username=${targetUsername}` : '/api/budget/years',
+        {
+          key: targetUsername ? `budget-years-${targetUsername}` : 'budget-years-own',
+        },
+      )
+
       const { data: fetchedData, error: fetchError } = await useFetch<BudgetData>(
         targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
         {
@@ -62,12 +106,19 @@ export const useBudgetStore = defineStore('budget', () => {
         },
       )
 
+      const { data: yearsData } = await yearsPromise
+
       if (fetchError.value) {
         error.value = fetchError.value.data?.message || 'Failed to load budget'
         data.value = null
       }
       else {
         data.value = fetchedData.value || null
+      }
+
+      if (yearsData.value) {
+        availableYears.value = yearsData.value.availableYears
+        loadedYears.value = new Set(yearsData.value.initialYears)
       }
 
       if (data.value) {
@@ -407,11 +458,65 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
+  const loadYear = async (year: number, targetUsername?: string) => {
+    if (isLoadingYear.value || loadedYears.value.has(year)) {
+      return
+    }
+
+    isLoadingYear.value = true
+    error.value = null
+
+    try {
+      const { data: fetchedData, error: fetchError } = await useFetch<BudgetData>(
+        targetUsername
+          ? `/api/budget/user/${targetUsername}?years=${year}`
+          : `/api/budget?years=${year}`,
+        {
+          key: `budget-year-${year}-${targetUsername || 'own'}`,
+        },
+      )
+
+      if (fetchError.value) {
+        error.value = fetchError.value.data?.message || 'Failed to load year data'
+        return
+      }
+
+      if (fetchedData.value && data.value) {
+        const existingMonths = data.value.months
+        const newMonths = fetchedData.value.months
+
+        const allMonths = [...existingMonths, ...newMonths].sort((a, b) => {
+          if (a.year !== b.year) {
+            return b.year - a.year
+          }
+          return b.month - a.month
+        })
+
+        data.value = {
+          ...data.value,
+          months: toMutable(allMonths),
+        }
+
+        loadedYears.value.add(year)
+      }
+    }
+    catch (err) {
+      console.error('Error loading year:', err)
+      error.value = 'Failed to load year'
+    }
+    finally {
+      isLoadingYear.value = false
+    }
+  }
+
   const $reset = () => {
     data.value = null
     error.value = null
     canEdit.value = false
     canView.value = false
+    availableYears.value = []
+    loadedYears.value = new Set()
+    isLoadingYear.value = false
   }
 
   return {
@@ -419,11 +524,16 @@ export const useBudgetStore = defineStore('budget', () => {
     error,
     canEdit,
     canView,
+    availableYears,
+    loadedYears,
+    isLoadingYear,
+    nextYearToLoad,
     isOwnBudget,
     months,
     getMonthById,
     getEntriesByMonthAndKind,
     refresh,
+    loadYear,
     createMonth,
     createNextMonth,
     createPreviousMonth,

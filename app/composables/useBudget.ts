@@ -43,10 +43,12 @@ export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
   const stateKey = computed(() => username.value ? `budget.${username.value}` : 'budget.own')
   const budgetState = useState<BudgetState>(stateKey.value, () => ({
     data: null,
-    isLoading: false,
     error: null,
     canEdit: false,
     canView: false,
+    availableYears: [],
+    loadedYears: new Set<number>(),
+    isLoadingYear: false,
   }))
 
   const isOwnBudget = computed(() => !username.value || username.value === currentUser.value?.username)

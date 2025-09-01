@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/test-utils/module', '@pinia/nuxt'],
+  modules: ['@nuxt/eslint', '@pinia/nuxt'],
   devtools: { enabled: true },
   app: {
     head: {

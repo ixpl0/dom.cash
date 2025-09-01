@@ -145,6 +145,26 @@
           @create="handleCreatePreviousMonth"
         />
       </ul>
+
+      <div
+        v-if="budgetStore.nextYearToLoad"
+        class="text-center py-8"
+      >
+        <button
+          class="btn btn-outline"
+          :disabled="budgetStore.isLoadingYear"
+          @click="handleLoadPreviousYear"
+        >
+          <span
+            v-if="budgetStore.isLoadingYear"
+            class="loading loading-spinner loading-sm"
+          />
+          <span v-if="!budgetStore.isLoadingYear">
+            Показать {{ budgetStore.nextYearToLoad.year }} год
+          </span>
+          <span v-else>Загрузка...</span>
+        </button>
+      </div>
     </div>
 
     <BudgetImportModal
@@ -293,6 +313,17 @@ const getAccessText = (access: string): string => {
       return 'Чтение и редактирование'
     default:
       return 'Доступы неизвестны'
+  }
+}
+
+const handleLoadPreviousYear = async (): Promise<void> => {
+  if (!budgetStore.nextYearToLoad) return
+
+  try {
+    await budgetStore.loadYear(budgetStore.nextYearToLoad.year, targetUsername.value)
+  }
+  catch (error) {
+    console.error('Error loading previous year:', error)
   }
 }
 

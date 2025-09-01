@@ -1,9 +1,9 @@
-import { eq, or, and, desc } from 'drizzle-orm'
+import { eq, or, and, desc, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
-import { getExchangeRatesForMonth } from '~~/server/services/months'
+import { getExchangeRatesForMonth, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/months'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -74,6 +74,26 @@ export default defineEventHandler(async (event) => {
     access = shareData.access
   }
 
+  const query = getQuery(event)
+  const yearsParam = query.years as string | undefined
+
+  let monthsWhereClause
+  if (yearsParam) {
+    const years = yearsParam.split(',').map(year => parseInt(year, 10)).filter(year => !isNaN(year))
+    monthsWhereClause = and(
+      eq(month.userId, targetUserData.id),
+      years.length > 0 ? sql`${month.year} IN (${sql.join(years.map(year => sql`${year}`), sql`, `)})` : sql`1 = 0`,
+    )
+  }
+  else {
+    const availableYears = await getAvailableYears(targetUserData.id, event)
+    const initialYears = getInitialYearsToLoad(availableYears)
+    monthsWhereClause = and(
+      eq(month.userId, targetUserData.id),
+      initialYears.length > 0 ? sql`${month.year} IN (${sql.join(initialYears.map(year => sql`${year}`), sql`, `)})` : sql`1 = 0`,
+    )
+  }
+
   const months = await db
     .select({
       id: month.id,
@@ -81,7 +101,7 @@ export default defineEventHandler(async (event) => {
       month: month.month,
     })
     .from(month)
-    .where(eq(month.userId, targetUserData.id))
+    .where(monthsWhereClause)
     .orderBy(desc(month.year), desc(month.month))
 
   const monthIds = months.map(m => m.id)
