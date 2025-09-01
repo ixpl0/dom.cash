@@ -84,7 +84,7 @@
           <!-- eslint-disable no-irregular-whitespace -->
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="(Баланс) + (Доходы) - (Баланс следующего месяца) - (Крупные расходы) - (Валютные колебания)"
+            data-tip="(Баланс) + (Доходы) + (Валютные колебания) - (Баланс следующего месяца) - (Крупные расходы)"
           >
             Карманные расходы
           </div>
