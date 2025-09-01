@@ -84,7 +84,7 @@
           <!-- eslint-disable no-irregular-whitespace -->
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="(Баланс) + (Доходы) + (Валютные колебания) - (Баланс следующего месяца) - (Крупные расходы)"
+            data-tip="(Баланс) + (Доходы) + (Валютные колебания) - (Баланс следующего месяца) - (Крупные расходы)"
           >
             Карманные расходы
           </div>
@@ -113,7 +113,7 @@
           <!-- eslint-disable no-irregular-whitespace -->
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="(Крупные расходы) + (Карманные расходы)"
+            data-tip="(Крупные расходы) + (Карманные расходы)"
           >
             Все расходы
           </div>
@@ -140,7 +140,7 @@
           <!-- eslint-disable no-irregular-whitespace -->
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="(Баланс на начало месяца) - (Баланс предыдущего месяца)"
+            data-tip="(Баланс на начало месяца) - (Баланс предыдущего месяца)"
           >
             Изменение баланса
           </div>
@@ -177,7 +177,7 @@
           <!-- eslint-disable no-irregular-whitespace -->
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="(Баланс следующего месяца) - (Баланс следующего месяца, пересчитанный по курсам текущего месяца)"
+            data-tip="(Баланс следующего месяца) - (Баланс следующего месяца, пересчитанный по курсам текущего месяца)"
           >
             Валютные колебания
           </div>
@@ -217,11 +217,6 @@
     :key="`${monthData.year}-${monthData.month}`"
     :month-data="monthData"
     :month-names="monthNames"
-    :all-months="allMonths"
-    :is-read-only="isReadOnly"
-    :target-username="targetUsername"
-    :main-currency="mainCurrency"
-    :on-delete-month="onDeleteMonth"
     :budget-columns-sync="budgetColumnsSync"
     @added="$emit('refresh')"
     @deleted="$emit('refresh')"
@@ -233,16 +228,12 @@
 import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
 import { formatAmountRounded, calculateTotalBalance } from '~~/shared/utils/budget'
+import { useBudgetStore } from '~/stores/budget'
 
 interface Props {
   year: number
   months: MonthData[]
   monthNames: string[]
-  allMonths: MonthData[]
-  isReadOnly?: boolean
-  targetUsername?: string
-  mainCurrency?: string
-  onDeleteMonth?: (monthId: string) => Promise<void>
   budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
@@ -252,14 +243,15 @@ defineEmits<{
 }>()
 
 const { mainCurrency: userMainCurrency } = useUser()
-const mainCurrency = computed(() => props.mainCurrency || userMainCurrency.value)
+const budgetStore = useBudgetStore()
+const mainCurrency = computed(() => budgetStore.data?.user?.mainCurrency || userMainCurrency.value)
 
 const headerRefs = ref<HTMLElement[]>([])
 
 const { registerRow, unregisterRow } = props.budgetColumnsSync
 
 const findNextMonth = (month: MonthData) => {
-  return props.allMonths.find(m =>
+  return budgetStore.months.find(m =>
     (m.year === month.year + 1 && month.month === 11 && m.month === 0)
     || (m.year === month.year && m.month === month.month + 1),
   )

@@ -20,379 +20,421 @@ export interface BudgetState {
   canView: boolean
 }
 
-export const useBudgetStore = defineStore('budget', {
-  state: (): BudgetState => ({
-    data: null,
-    error: null,
-    canEdit: false,
-    canView: false,
-  }),
+export const useBudgetStore = defineStore('budget', () => {
+  const data = ref<BudgetData | null>(null)
+  const error = ref<string | null>(null)
+  const canEdit = ref(false)
+  const canView = ref(false)
 
-  getters: {
-    isOwnBudget(): boolean {
-      return this.data?.access === 'owner'
-    },
+  const isOwnBudget = computed(() => data.value?.access === 'owner')
+  const months = computed(() => data.value?.months || [])
 
-    months(): MonthData[] {
-      return this.data?.months || []
-    },
+  const getMonthById = (monthId: string): MonthData | undefined => {
+    return data.value?.months.find(month => month.id === monthId)
+  }
 
-    getMonthById: state => (monthId: string): MonthData | undefined => {
-      return state.data?.months.find(month => month.id === monthId)
-    },
+  const getEntriesByMonthAndKind = (monthId: string, entryKind: 'balance' | 'income' | 'expense') => {
+    const month = data.value?.months.find(m => m.id === monthId)
+    if (!month) {
+      return []
+    }
 
-    getEntriesByMonthAndKind: state => (monthId: string, entryKind: 'balance' | 'income' | 'expense') => {
-      const month = state.data?.months.find(m => m.id === monthId)
-      if (!month) return []
+    switch (entryKind) {
+      case 'balance':
+        return month.balanceSources || []
+      case 'income':
+        return month.incomeEntries || []
+      case 'expense':
+        return month.expenseEntries || []
+      default:
+        return []
+    }
+  }
 
-      switch (entryKind) {
-        case 'balance':
-          return month.balanceSources || []
-        case 'income':
-          return month.incomeEntries || []
-        case 'expense':
-          return month.expenseEntries || []
-        default:
-          return []
+  const refresh = async (targetUsername?: string) => {
+    error.value = null
+
+    try {
+      const { data: fetchedData, error: fetchError } = await useFetch<BudgetData>(
+        targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
+        {
+          key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
+        },
+      )
+
+      if (fetchError.value) {
+        error.value = fetchError.value.data?.message || 'Failed to load budget'
+        data.value = null
       }
-    },
-  },
-
-  actions: {
-    async refresh(targetUsername?: string) {
-      this.error = null
-
-      try {
-        const { data, error } = await useFetch<BudgetData>(
-          targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
-          {
-            key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
-          },
-        )
-
-        if (error.value) {
-          this.error = error.value.data?.message || 'Failed to load budget'
-          this.data = null
-        }
-        else {
-          this.data = data.value || null
-        }
-
-        if (this.data) {
-          this.canEdit = this.data.access === 'owner' || this.data.access === 'write'
-          this.canView = true
-        }
+      else {
+        data.value = fetchedData.value || null
       }
-      catch (error) {
-        console.error('Error refreshing budget:', error)
-        this.error = 'Failed to load budget'
+
+      if (data.value) {
+        canEdit.value = data.value.access === 'owner' || data.value.access === 'write'
+        canView.value = true
       }
-      finally {
-        // SSR handles loading state
+    }
+    catch (err) {
+      console.error('Error refreshing budget:', err)
+      error.value = 'Failed to load budget'
+    }
+  }
+
+  const createMonth = async (year: number, month: number, copyFromMonthId?: string) => {
+    if (!data.value) {
+      return
+    }
+
+    try {
+      const requestBody: {
+        year: number
+        month: number
+        copyFromMonthId?: string
+        targetUsername?: string
+      } = { year, month }
+
+      if (copyFromMonthId) {
+        requestBody.copyFromMonthId = copyFromMonthId
       }
-    },
 
-    async createMonth(year: number, month: number, copyFromMonthId?: string) {
-      if (!this.data) return
+      if (data.value.user.username) {
+        requestBody.targetUsername = data.value.user.username
+      }
 
-      try {
-        const requestBody: {
-          year: number
-          month: number
-          copyFromMonthId?: string
-          targetUsername?: string
-        } = { year, month }
+      const response = await $fetch<MonthData>('/api/budget/months', {
+        method: 'POST',
+        body: requestBody,
+      })
 
-        if (copyFromMonthId) {
-          requestBody.copyFromMonthId = copyFromMonthId
+      const updatedMonths = [...data.value.months, response].sort((a, b) => {
+        if (a.year !== b.year) {
+          return b.year - a.year
         }
+        return b.month - a.month
+      })
 
-        if (this.data.user.username) {
-          requestBody.targetUsername = this.data.user.username
-        }
-
-        const response = await $fetch<MonthData>('/api/budget/months', {
-          method: 'POST',
-          body: requestBody,
-        })
-
-        const updatedMonths = [...this.data.months, response].sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year
-          return b.month - a.month
-        })
-
-        this.data = {
-          ...this.data,
-          months: toMutable(updatedMonths),
-        }
+      data.value = {
+        ...data.value,
+        months: toMutable(updatedMonths),
       }
-      catch (error) {
-        console.error('Error creating month:', error)
-        throw error
-      }
+    }
+    catch (err) {
+      console.error('Error creating month:', err)
+      throw err
+    }
+  }
+
+  const createNextMonth = async () => {
+    if (!data.value?.months.length) {
+      return
+    }
+
+    const { year, month } = getNextMonth(data.value.months)
+    const copyFromId = findClosestMonthForCopy(data.value.months, year, month, 'previous')
+
+    await createMonth(year, month, copyFromId || undefined)
+  }
+
+  const createPreviousMonth = async () => {
+    if (!data.value?.months.length) {
+      return
+    }
+
+    const { year, month } = getPreviousMonth(data.value.months)
+
+    await createMonth(year, month)
+  }
+
+  const addEntry = async (
+    monthId: string,
+    entryKind: 'balance' | 'income' | 'expense',
+    entryData: {
+      description: string
+      amount: number
+      currency: string
+      date?: string
     },
-
-    async createNextMonth() {
-      if (!this.data?.months.length) return
-
-      const { year, month } = getNextMonth(this.data.months)
-      const copyFromId = findClosestMonthForCopy(this.data.months, year, month, 'previous')
-
-      await this.createMonth(year, month, copyFromId || undefined)
-    },
-
-    async createPreviousMonth() {
-      if (!this.data?.months.length) return
-
-      const { year, month } = getPreviousMonth(this.data.months)
-
-      await this.createMonth(year, month)
-    },
-
-    async addEntry(
-      monthId: string,
-      entryKind: 'balance' | 'income' | 'expense',
-      entryData: {
+  ) => {
+    try {
+      const response = await $fetch<{
+        id: string
         description: string
         amount: number
         currency: string
-        date?: string
-      },
-    ) {
-      try {
-        const response = await $fetch<{
-          id: string
-          description: string
-          amount: number
-          currency: string
-          date?: string | null
-        }>('/api/budget/entries', {
-          method: 'POST',
-          body: {
-            monthId,
-            kind: entryKind,
-            ...entryData,
-          },
-        })
+        date?: string | null
+      }>('/api/budget/entries', {
+        method: 'POST',
+        body: {
+          monthId,
+          kind: entryKind,
+          ...entryData,
+        },
+      })
 
-        if (!response || !this.data) return
+      if (!response || !data.value) {
+        return
+      }
 
-        const months = this.data.months
-        const monthIndex = months.findIndex(m => m.id === monthId)
-        if (monthIndex === -1) return
+      const currentMonths = data.value.months
+      const monthIndex = currentMonths.findIndex(m => m.id === monthId)
+      if (monthIndex === -1) {
+        return
+      }
 
-        const config = getEntryConfig(entryKind)
-        const newEntry = config.createEntry({
-          id: response.id,
+      const config = getEntryConfig(entryKind)
+      const newEntry = config.createEntry({
+        id: response.id,
+        description: response.description,
+        amount: response.amount,
+        currency: response.currency,
+        date: response.date ?? undefined,
+      })
+
+      const month = currentMonths[monthIndex]
+      if (!month) {
+        return
+      }
+
+      const updatedMonth = updateMonthWithNewEntry(month, entryKind, newEntry) as MonthData
+      const updatedMonths = [...currentMonths]
+      updatedMonths[monthIndex] = updatedMonth
+
+      data.value = {
+        ...data.value,
+        months: toMutable(updatedMonths),
+      }
+    }
+    catch (err) {
+      console.error('Error adding entry:', err)
+      throw err
+    }
+  }
+
+  const updateEntry = async (
+    entryId: string,
+    entryData: {
+      description: string
+      amount: number
+      currency: string
+      date?: string
+    },
+  ) => {
+    try {
+      const response = await $fetch<{
+        id: string
+        description: string
+        amount: number
+        currency: string
+        date?: string | null
+      }>(`/api/budget/entries/${entryId}`, {
+        method: 'PUT',
+        body: entryData,
+      })
+
+      if (!response || !data.value) {
+        return
+      }
+
+      const currentMonths = data.value.months
+      let entryKindResult: { month: MonthData, kind: 'balance' | 'income' | 'expense' } | null = null
+
+      for (const month of currentMonths) {
+        const entryKind = findEntryKindByEntryId(month, entryId)
+        if (entryKind) {
+          entryKindResult = { month, kind: entryKind }
+          break
+        }
+      }
+
+      if (!entryKindResult) {
+        return
+      }
+
+      const updatedMonth = updateMonthWithUpdatedEntry(
+        entryKindResult.month,
+        entryKindResult.kind,
+        response.id,
+        {
           description: response.description,
           amount: response.amount,
           currency: response.currency,
           date: response.date ?? undefined,
-        })
+        },
+      ) as MonthData
 
-        const month = months[monthIndex]
-        if (!month) return
+      const monthIndex = currentMonths.findIndex(m => m.id === entryKindResult.month.id)
+      if (monthIndex === -1) {
+        return
+      }
 
-        const updatedMonth = updateMonthWithNewEntry(month, entryKind, newEntry) as MonthData
-        const updatedMonths = [...months]
-        updatedMonths[monthIndex] = updatedMonth
+      const updatedMonths = [...currentMonths]
+      updatedMonths[monthIndex] = updatedMonth
 
-        this.data = {
-          ...this.data,
-          months: toMutable(updatedMonths),
+      data.value = {
+        ...data.value,
+        months: toMutable(updatedMonths),
+      }
+    }
+    catch (err) {
+      console.error('Error updating entry:', err)
+      throw err
+    }
+  }
+
+  const deleteEntry = async (entryId: string) => {
+    try {
+      await $fetch(`/api/budget/entries/${entryId}`, {
+        method: 'DELETE',
+      })
+
+      if (!data.value) {
+        return
+      }
+
+      const currentMonths = data.value.months
+      let entryKindResult: { month: MonthData, kind: 'balance' | 'income' | 'expense' } | null = null
+
+      for (const month of currentMonths) {
+        const entryKind = findEntryKindByEntryId(month, entryId)
+        if (entryKind) {
+          entryKindResult = { month, kind: entryKind }
+          break
         }
       }
-      catch (error) {
-        console.error('Error adding entry:', error)
-        throw error
+
+      if (!entryKindResult) {
+        return
       }
-    },
 
-    async updateEntry(
-      entryId: string,
-      entryData: {
-        description: string
-        amount: number
-        currency: string
-        date?: string
-      },
-    ) {
-      try {
-        const response = await $fetch<{
-          id: string
-          description: string
-          amount: number
-          currency: string
-          date?: string | null
-        }>(`/api/budget/entries/${entryId}`, {
-          method: 'PUT',
-          body: entryData,
-        })
-
-        if (!response || !this.data) return
-
-        const months = this.data.months
-        let entryKindResult: { month: MonthData, kind: 'balance' | 'income' | 'expense' } | null = null
-
-        for (const month of months) {
-          const entryKind = findEntryKindByEntryId(month, entryId)
-          if (entryKind) {
-            entryKindResult = { month, kind: entryKind }
-            break
-          }
-        }
-
-        if (!entryKindResult) return
-
-        const updatedMonth = updateMonthWithUpdatedEntry(
-          entryKindResult.month,
-          entryKindResult.kind,
-          response.id,
-          {
-            description: response.description,
-            amount: response.amount,
-            currency: response.currency,
-            date: response.date ?? undefined,
-          },
-        ) as MonthData
-
-        const monthIndex = months.findIndex(m => m.id === entryKindResult.month.id)
-        if (monthIndex === -1) return
-
-        const updatedMonths = [...months]
-        updatedMonths[monthIndex] = updatedMonth
-
-        this.data = {
-          ...this.data,
-          months: toMutable(updatedMonths),
-        }
+      const updatedMonth = updateMonthWithDeletedEntry(entryKindResult.month, entryKindResult.kind, entryId) as MonthData
+      const monthIndex = currentMonths.findIndex(m => m.id === entryKindResult.month.id)
+      if (monthIndex === -1) {
+        return
       }
-      catch (error) {
-        console.error('Error updating entry:', error)
-        throw error
+
+      const updatedMonths = [...currentMonths]
+      updatedMonths[monthIndex] = updatedMonth
+
+      data.value = {
+        ...data.value,
+        months: toMutable(updatedMonths),
       }
-    },
+    }
+    catch (err) {
+      console.error('Error deleting entry:', err)
+      throw err
+    }
+  }
 
-    async deleteEntry(entryId: string) {
-      try {
-        await $fetch(`/api/budget/entries/${entryId}`, {
-          method: 'DELETE',
-        })
+  const deleteMonth = async (monthId: string) => {
+    try {
+      await $fetch(`/api/budget/months/${monthId}`, {
+        method: 'DELETE',
+      })
 
-        if (!this.data) return
-
-        const months = this.data.months
-        let entryKindResult: { month: MonthData, kind: 'balance' | 'income' | 'expense' } | null = null
-
-        for (const month of months) {
-          const entryKind = findEntryKindByEntryId(month, entryId)
-          if (entryKind) {
-            entryKindResult = { month, kind: entryKind }
-            break
-          }
-        }
-
-        if (!entryKindResult) return
-
-        const updatedMonth = updateMonthWithDeletedEntry(entryKindResult.month, entryKindResult.kind, entryId) as MonthData
-        const monthIndex = months.findIndex(m => m.id === entryKindResult.month.id)
-        if (monthIndex === -1) return
-
-        const updatedMonths = [...months]
-        updatedMonths[monthIndex] = updatedMonth
-
-        this.data = {
-          ...this.data,
-          months: toMutable(updatedMonths),
-        }
+      if (!data.value) {
+        return
       }
-      catch (error) {
-        console.error('Error deleting entry:', error)
-        throw error
+
+      const updatedMonths = data.value.months.filter(month => month.id !== monthId)
+      data.value = {
+        ...data.value,
+        months: toMutable(updatedMonths),
       }
-    },
+    }
+    catch (err) {
+      console.error('Error deleting month:', err)
+      throw err
+    }
+  }
 
-    async deleteMonth(monthId: string) {
-      try {
-        await $fetch(`/api/budget/months/${monthId}`, {
-          method: 'DELETE',
-        })
+  const updateCurrency = async (currency: string) => {
+    try {
+      await $fetch('/api/user/currency', {
+        method: 'PUT',
+        body: { currency },
+      })
 
-        if (!this.data) return
-
-        const updatedMonths = this.data.months.filter(month => month.id !== monthId)
-        this.data = {
-          ...this.data,
-          months: toMutable(updatedMonths),
-        }
+      if (!data.value) {
+        return
       }
-      catch (error) {
-        console.error('Error deleting month:', error)
-        throw error
+
+      data.value = {
+        ...data.value,
+        user: {
+          ...data.value.user,
+          mainCurrency: currency,
+        },
       }
-    },
+    }
+    catch (err) {
+      console.error('Error updating currency:', err)
+      throw err
+    }
+  }
 
-    async updateCurrency(currency: string) {
-      try {
-        await $fetch('/api/user/currency', {
-          method: 'PUT',
-          body: { currency },
-        })
+  const getNextMonthData = (): { year: number, month: number } => {
+    return getNextMonth(data.value?.months || [])
+  }
 
-        if (!this.data) return
+  const getPreviousMonthData = (): { year: number, month: number } => {
+    return getPreviousMonth(data.value?.months || [])
+  }
 
-        this.data = {
-          ...this.data,
-          user: {
-            ...this.data.user,
-            mainCurrency: currency,
-          },
-        }
-      }
-      catch (error) {
-        console.error('Error updating currency:', error)
-        throw error
-      }
-    },
+  const exportBudget = async () => {
+    try {
+      const response = await $fetch('/api/budget/export', {
+        method: 'GET',
+        responseType: 'blob',
+      })
 
-    getNextMonth(): { year: number, month: number } {
-      return getNextMonth(this.data?.months || [])
-    },
+      const blob = new Blob([JSON.stringify(response)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
 
-    getPreviousMonth(): { year: number, month: number } {
-      return getPreviousMonth(this.data?.months || [])
-    },
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `budget-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(link)
+      link.click()
 
-    async exportBudget() {
-      try {
-        const response = await $fetch('/api/budget/export', {
-          method: 'GET',
-          responseType: 'blob',
-        })
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }
+    catch (err) {
+      console.error('Error exporting budget:', err)
+      throw err
+    }
+  }
 
-        const blob = new Blob([JSON.stringify(response)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
+  const $reset = () => {
+    data.value = null
+    error.value = null
+    canEdit.value = false
+    canView.value = false
+  }
 
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `budget-${new Date().toISOString().split('T')[0]}.json`
-        document.body.appendChild(link)
-        link.click()
-
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      }
-      catch (error) {
-        console.error('Error exporting budget:', error)
-        throw error
-      }
-    },
-
-    $reset() {
-      this.data = null
-      this.error = null
-      this.canEdit = false
-      this.canView = false
-    },
-  },
+  return {
+    data,
+    error,
+    canEdit,
+    canView,
+    isOwnBudget,
+    months,
+    getMonthById,
+    getEntriesByMonthAndKind,
+    refresh,
+    createMonth,
+    createNextMonth,
+    createPreviousMonth,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    deleteMonth,
+    updateCurrency,
+    getNextMonth: getNextMonthData,
+    getPreviousMonth: getPreviousMonthData,
+    exportBudget,
+    $reset,
+  }
 })

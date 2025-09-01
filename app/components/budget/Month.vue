@@ -218,24 +218,24 @@ import type { MonthData } from '~~/shared/types/budget'
 import { formatAmountRounded, calculateTotalBalance } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
 import { useModalsStore } from '~/stores/modals'
+import { useBudgetStore } from '~/stores/budget'
 
 interface Props {
   monthData: MonthData
   monthNames: string[]
   nextMonthBalance?: number | null
-  allMonths: MonthData[]
-  isReadOnly?: boolean
-  targetUsername?: string
-  mainCurrency?: string
-  onDeleteMonth?: (monthId: string) => Promise<void>
   budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
 const props = defineProps<Props>()
 
 const { mainCurrency: userMainCurrency } = useUser()
-const effectiveMainCurrency = computed(() => props.mainCurrency || userMainCurrency.value)
+const budgetStore = useBudgetStore()
+const effectiveMainCurrency = computed(() => budgetStore.data?.user?.mainCurrency || userMainCurrency.value)
 const modalsStore = useModalsStore()
+
+const isReadOnly = computed(() => !budgetStore.canEdit)
+const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.data?.user?.username : undefined)
 
 const cardRefs = ref<HTMLElement[]>([])
 
@@ -300,7 +300,7 @@ const balanceChange = computed(() => {
 })
 
 const findNextMonth = (month: MonthData) => {
-  return props.allMonths.find(m =>
+  return budgetStore.months.find(m =>
     (m.year === month.year + 1 && month.month === 11 && m.month === 0)
     || (m.year === month.year && m.month === month.month + 1),
   )
@@ -346,22 +346,22 @@ const calculateTotalMonthExpenses = (month: MonthData) => {
 }
 
 const averageMonthlyExpenses = computed(() => {
-  if (props.allMonths.length === 0) {
+  if (budgetStore.months.length === 0) {
     return 3500
   }
 
-  const totalExpenses = props.allMonths.reduce((sum, month) => {
+  const totalExpenses = budgetStore.months.reduce((sum: number, month: MonthData) => {
     return sum + calculateTotalMonthExpenses(month)
   }, 0)
 
-  return Math.ceil(totalExpenses / props.allMonths.length)
+  return Math.ceil(totalExpenses / budgetStore.months.length)
 })
 
 const nextMonthData = computed(() => {
   const nextMonth = props.monthData.month === 11 ? 0 : props.monthData.month + 1
   const nextYear = props.monthData.month === 11 ? props.monthData.year + 1 : props.monthData.year
 
-  return props.allMonths.find(m => m.year === nextYear && m.month === nextMonth)
+  return budgetStore.months.find((m: MonthData) => m.year === nextYear && m.month === nextMonth)
 })
 
 const nextMonthStartBalance = computed(() => {
@@ -424,8 +424,8 @@ const openBalanceModal = (): void => {
   modalsStore.openEntryModal({
     monthId: props.monthData.id,
     entryKind: 'balance',
-    isReadOnly: props.isReadOnly || false,
-    targetUsername: props.targetUsername,
+    isReadOnly: isReadOnly.value,
+    targetUsername: targetUsername.value,
   })
 }
 
@@ -433,8 +433,8 @@ const openIncomeModal = (): void => {
   modalsStore.openEntryModal({
     monthId: props.monthData.id,
     entryKind: 'income',
-    isReadOnly: props.isReadOnly || false,
-    targetUsername: props.targetUsername,
+    isReadOnly: isReadOnly.value,
+    targetUsername: targetUsername.value,
   })
 }
 
@@ -442,8 +442,8 @@ const openExpenseModal = (): void => {
   modalsStore.openEntryModal({
     monthId: props.monthData.id,
     entryKind: 'expense',
-    isReadOnly: props.isReadOnly || false,
-    targetUsername: props.targetUsername,
+    isReadOnly: isReadOnly.value,
+    targetUsername: targetUsername.value,
   })
 }
 
@@ -495,18 +495,16 @@ const sourceMonthTitle = computed(() => {
 })
 
 const canDeleteMonth = computed(() => {
-  return !props.isReadOnly && props.onDeleteMonth && (isFirstMonth(props.monthData, props.allMonths) || isLastMonth(props.monthData, props.allMonths))
+  return !isReadOnly.value && (isFirstMonth(props.monthData, budgetStore.months) || isLastMonth(props.monthData, budgetStore.months))
 })
 
 const handleDeleteMonth = async (): Promise<void> => {
-  if (!props.onDeleteMonth) return
-
   const monthName = `${props.monthNames[props.monthData.month]} ${props.monthData.year}`
   const confirmMessage = `Вы уверены, что хотите удалить месяц ${monthName}? Все записи этого месяца будут безвозвратно удалены.`
 
   if (confirm(confirmMessage)) {
     try {
-      await props.onDeleteMonth(props.monthData.id)
+      await budgetStore.deleteMonth(props.monthData.id)
     }
     catch (error) {
       console.error('Error deleting month:', error)

@@ -134,11 +134,6 @@
           :year="year"
           :months="groupedData[year] || []"
           :month-names="monthNames"
-          :all-months="budgetStore.months"
-          :is-read-only="!budgetStore.canEdit"
-          :main-currency="budgetStore.data?.user?.mainCurrency"
-          :target-username="!isOwnBudget ? budgetStore.data?.user?.username : undefined"
-          :on-delete-month="budgetStore.deleteMonth"
           :budget-columns-sync="budgetColumnsSyncInstance"
         />
 
