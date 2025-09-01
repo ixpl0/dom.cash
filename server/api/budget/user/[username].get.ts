@@ -145,8 +145,8 @@ export default defineEventHandler(async (event) => {
       balanceChange,
       pocketExpenses: 0,
       income: totalIncome,
-      exchangeRates: exchangeRatesData?.rates,
-      exchangeRatesSource: exchangeRatesData?.source,
+      exchangeRates: exchangeRatesData.rates,
+      exchangeRatesSource: exchangeRatesData.source,
     }
   }))
 

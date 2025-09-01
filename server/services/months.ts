@@ -66,11 +66,11 @@ const markUpdateAttempt = async (year: number, monthNumber: number, event: H3Eve
     })
 }
 
-export const getExchangeRatesForMonth = async (year: number, monthNumber: number, event: H3Event): Promise<{ rates: Record<string, number>, source: string } | undefined> => {
+export const getExchangeRatesForMonth = async (year: number, monthNumber: number, event: H3Event): Promise<{ rates: Record<string, number>, source: string }> => {
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
 
   if (ratesCache.has(rateDate)) {
-    return ratesCache.get(rateDate)
+    return ratesCache.get(rateDate)!
   }
 
   const db = useDatabase(event)
@@ -124,7 +124,7 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
 
   let closestData = allCurrencyData[0]
   if (!closestData) {
-    return undefined
+    throw new Error(`No exchange rates available in database for ${rateDate}`)
   }
 
   const targetDate = new Date(rateDate)
@@ -138,11 +138,11 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     }
   }
 
-  if (closestData?.rates) {
+  if (closestData?.rates && Object.keys(closestData.rates).length > 0) {
     return { rates: closestData.rates, source: closestData.date }
   }
 
-  return undefined
+  throw new Error(`No exchange rates available for ${rateDate} or any fallback date`)
 }
 
 export const getUserMonths = async (userId: string, event: H3Event): Promise<MonthData[]> => {
@@ -193,10 +193,6 @@ export const getUserMonths = async (userId: string, event: H3Event): Promise<Mon
 
       const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
 
-      // If no exchange rates found, use default USD rate as fallback
-      const defaultRates = { USD: 1 }
-      const defaultSource = 'default'
-
       return {
         id: monthData.id,
         year: monthData.year,
@@ -208,8 +204,8 @@ export const getUserMonths = async (userId: string, event: H3Event): Promise<Mon
         balanceChange: 0,
         pocketExpenses: 0,
         income: totalIncome,
-        exchangeRates: exchangeRatesData?.rates || defaultRates,
-        exchangeRatesSource: exchangeRatesData?.source || defaultSource,
+        exchangeRates: exchangeRatesData.rates,
+        exchangeRatesSource: exchangeRatesData.source,
       }
     }),
   )
@@ -287,10 +283,6 @@ const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3E
 
   const exchangeRatesData = await getExchangeRatesForMonth(monthRecord.year, monthRecord.month, event)
 
-  // If no exchange rates found, use default USD rate as fallback
-  const defaultRates = { USD: 1 }
-  const defaultSource = 'default'
-
   return {
     id: monthRecord.id,
     year: monthRecord.year,
@@ -302,8 +294,8 @@ const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3E
     balanceChange: 0,
     pocketExpenses: 0,
     income: totalIncome,
-    exchangeRates: exchangeRatesData?.rates || defaultRates,
-    exchangeRatesSource: exchangeRatesData?.source || defaultSource,
+    exchangeRates: exchangeRatesData.rates,
+    exchangeRatesSource: exchangeRatesData.source,
   }
 }
 
