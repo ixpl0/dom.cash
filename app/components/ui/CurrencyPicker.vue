@@ -170,10 +170,17 @@ const onInputClick = () => {
 }
 
 const updateDropdownPosition = () => {
-  if (!inputRef.value) return
+  if (!inputRef.value) {
+    return
+  }
 
   const rect = inputRef.value.getBoundingClientRect()
   const isInModal = props.teleportTo && props.teleportTo !== 'body'
+  const dropdownMaxHeight = 240 // max-h-60 = 15rem = 240px
+  const windowHeight = window.innerHeight
+  const spaceBelow = windowHeight - rect.bottom
+  const spaceAbove = rect.top
+  const showAbove = spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow
 
   if (isInModal && typeof props.teleportTo !== 'string') {
     const modalRect = props.teleportTo.getBoundingClientRect()
@@ -184,7 +191,7 @@ const updateDropdownPosition = () => {
       position: 'absolute',
       left: `${relativeLeft}px`,
       width: `${rect.width}px`,
-      top: `${relativeTop + rect.height}px`,
+      top: showAbove ? `${relativeTop - dropdownMaxHeight}px` : `${relativeTop + rect.height}px`,
     }
   }
   else {
@@ -192,7 +199,7 @@ const updateDropdownPosition = () => {
       position: 'fixed',
       left: `${rect.left}px`,
       width: `${rect.width}px`,
-      top: `${rect.bottom}px`,
+      top: showAbove ? `${rect.top - dropdownMaxHeight}px` : `${rect.bottom}px`,
     }
   }
 }
