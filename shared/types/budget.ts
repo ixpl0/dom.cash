@@ -9,8 +9,8 @@ export interface MonthData {
   balanceChange: number
   pocketExpenses: number
   income: number
-  exchangeRates?: Record<string, number>
-  exchangeRatesSource?: string
+  exchangeRates: Record<string, number>
+  exchangeRatesSource: string
 }
 
 interface BaseBudgetEntry {

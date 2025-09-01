@@ -223,7 +223,6 @@ import { useBudgetStore } from '~/stores/budget'
 interface Props {
   monthData: MonthData
   monthNames: string[]
-  nextMonthBalance?: number | null
   budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
@@ -236,6 +235,7 @@ const modalsStore = useModalsStore()
 
 const isReadOnly = computed(() => !budgetStore.canEdit)
 const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.data?.user?.username : undefined)
+const currentMonthRates = computed(() => props.monthData.exchangeRates)
 
 const cardRefs = ref<HTMLElement[]>([])
 
@@ -261,10 +261,6 @@ onUnmounted(() => {
   if (validRefs.length) {
     unregisterRow(validRefs)
   }
-})
-
-const currentMonthRates = computed(() => {
-  return props.monthData.exchangeRates || {}
 })
 
 const startBalance = computed(() => {
@@ -310,7 +306,7 @@ const calculateMonthExpenses = (month: MonthData) => {
   return calculateTotalBalance(
     month.expenseEntries,
     effectiveMainCurrency.value,
-    month.exchangeRates || {},
+    month.exchangeRates,
   )
 }
 
@@ -321,19 +317,19 @@ const calculatePocketExpenses = (month: MonthData) => {
   const startBalance = calculateTotalBalance(
     month.balanceSources,
     effectiveMainCurrency.value,
-    month.exchangeRates || {},
+    month.exchangeRates,
   )
 
   const income = calculateTotalBalance(
     month.incomeEntries,
     effectiveMainCurrency.value,
-    month.exchangeRates || {},
+    month.exchangeRates,
   )
 
   const nextMonthBalance = calculateTotalBalance(
     nextMonth.balanceSources,
     effectiveMainCurrency.value,
-    month.exchangeRates || {},
+    month.exchangeRates,
   )
 
   const monthExpenses = calculateMonthExpenses(month)
@@ -369,7 +365,7 @@ const nextMonthStartBalance = computed(() => {
     return null
   }
 
-  const nextMonthRates = nextMonthData.value.exchangeRates || {}
+  const nextMonthRates = nextMonthData.value.exchangeRates
 
   return calculateTotalBalance(
     nextMonthData.value.balanceSources,
@@ -462,7 +458,7 @@ const monthTitle = computed(() => {
 })
 
 const effectiveRates = computed(() => {
-  return props.monthData.exchangeRates || {}
+  return props.monthData.exchangeRates
 })
 
 const isUsingOtherMonthRates = computed(() => {
@@ -474,8 +470,13 @@ const isUsingOtherMonthRates = computed(() => {
 })
 
 const sourceMonthTitle = computed(() => {
-  if (!isUsingOtherMonthRates.value || !props.monthData.exchangeRatesSource) {
+  if (!isUsingOtherMonthRates.value) {
     return ''
+  }
+
+  // Special case for default fallback rates
+  if (props.monthData.exchangeRatesSource === 'default') {
+    return 'Базовые курсы (USD = 1)'
   }
 
   const parts = props.monthData.exchangeRatesSource.split('-')

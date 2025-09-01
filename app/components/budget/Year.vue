@@ -271,7 +271,7 @@ const yearStats = computed(() => {
   let pocketCount = 0
 
   props.months.forEach((month) => {
-    const currentRates = month.exchangeRates || {}
+    const currentRates = month.exchangeRates
 
     const balance = calculateTotalBalance(
       month.balanceSources,
@@ -298,7 +298,7 @@ const yearStats = computed(() => {
 
     const nextMonth = findNextMonth(month)
     if (nextMonth) {
-      const nextMonthRates = nextMonth.exchangeRates || {}
+      const nextMonthRates = nextMonth.exchangeRates
       const nextMonthBalance = calculateTotalBalance(
         nextMonth.balanceSources,
         mainCurrency.value,

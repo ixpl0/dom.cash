@@ -16,16 +16,7 @@ The application implements **Thin Handlers with Clean Services** pattern:
 
 ### Testing Strategy
 
-#### Unit Testing (Backend Services)
-- **Pure function testing** - services tested in Node.js environment with full mocks
-- **Complete isolation** - database, crypto, and external dependencies mocked
-- **Fast execution** - no real database or network calls
-
-#### Integration Testing (API Endpoints)
-- **End-to-end API testing** - using `@nuxt/test-utils/e2e` with real Nuxt runtime
-- **Authentication testing** - real session management with HTTP-only cookies
-- **Database integration** - tests use isolated test database with cleanup
-- **50 integration tests** covering all API endpoints and user flows
+Тестирование будет реализовано с помощью e2e тестов в будущем.
 
 ### Frontend Architecture Principles
 
@@ -64,7 +55,6 @@ Budget timeline implements **responsive column width synchronization**:
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
 - **Authentication**: JWT with secure HTTP-only cookies
 - **Styling**: Tailwind CSS + DaisyUI
-- **Testing**: Vitest with comprehensive unit test suite
 - **Type Safety**: TypeScript with strict mode
 - **Deployment**: Cloudflare Workers
 
@@ -156,52 +146,20 @@ pnpm run db:migrate:prod
 - **Test first** - always test migrations locally before deploying
 - **Commit migrations** to version control
 
-## Testing
+## Code Quality
 
-### Running Tests
+### Проверка качества кода
 
 ```bash
-# Run all unit tests (services only)
-pnpm run test:unit:run
-
-# Run unit tests with coverage
-pnpm run test:unit:cov
-
-# Run integration tests (API endpoints)
-pnpm run test:nuxt
-
-# Run all tests
-pnpm run test
-
 # Run TypeScript checks
 pnpm run typecheck
 
 # Run linting
 pnpm run lint
+
+# Auto-fix ESLint issues
+pnpm run lint:fix
 ```
-
-### Test Architecture
-
-#### Unit Tests (`tests/unit/`)
-- **Services testing** - all `server/services/` functions with complete mocks
-- **Utilities testing** - `server/utils/` and `shared/utils/` functions
-- **Schema testing** - Zod validation schemas
-- **Node.js environment** - fast execution without Nuxt overhead
-
-#### Integration Tests (`tests/nuxt/`)
-- **API endpoint testing** - real HTTP requests to Nuxt runtime
-- **Authentication flows** - login, logout, session management
-- **CRUD operations** - budget months, entries, sharing
-- **Permission testing** - read/write access validation
-- **Error handling** - 400/401/403/404 responses
-
-### Test Categories
-
-1. **Services** (`server/services/`) - Business logic functions (100% coverage goal)
-2. **Authentication** - Session management, password hashing, JWT handling
-3. **Database Operations** - CRUD with proper error handling
-4. **API Integration** - Full request/response cycle testing
-5. **Shared Utilities** - Cross-platform business logic functions
 
 ## Cloudflare Deployment
 
@@ -262,10 +220,6 @@ pnpm run deploy:prod    # Deploy to production
 # Code quality
 pnpm run lint:fix       # Auto-fix ESLint issues
 pnpm run typecheck      # Check TypeScript errors
-
-# Testing
-pnpm run test           # Run all tests
-pnpm run test:ui        # Open Vitest UI
 ```
 
 ## Project Structure
@@ -285,10 +239,6 @@ pnpm run test:ui        # Open Vitest UI
 ├── shared/
 │   ├── types/          # Shared TypeScript types
 │   └── utils/          # Shared business logic
-└── tests/
-    ├── unit/           # Unit tests (services + utils)
-    └── nuxt/           # Integration tests (API endpoints)
-        └── helpers/    # Test utilities (auth, database)
 ```
 
 ## Contributing
@@ -297,39 +247,15 @@ pnpm run test:ui        # Open Vitest UI
 
 1. **Services** - All business logic goes in `server/services/` as pure functions
 2. **Handlers** - Keep API handlers thin, only handle HTTP concerns
-3. **Testing** - Write unit tests for services, integration tests for APIs
-4. **Coverage** - Maintain 80%+ backend coverage (services + utils)
-5. **TypeScript** - Follow strict mode, no `any` types
-6. **Code Style** - Use ESLint, follow existing patterns
-
-### Testing Requirements
-
-- **Unit tests** for all new services functions
-- **Integration tests** for new API endpoints
-- **Authentication tests** for protected routes
-- **Error handling tests** for all failure scenarios
-
-#### Test Structure Rules
-
-- **Mirror structure** - tests must follow the same directory structure as source code
-- **Naming convention** - test files should be named `{original-name}.test.ts`
-- **Examples**:
-  - `server/services/months.ts` → `tests/unit/server/services/months.test.ts`
-  - `server/api/auth/me.get.ts` → `tests/unit/server/api/auth/me.get.test.ts`
-  - Special logic tests can have descriptive suffixes: `months-logic.test.ts`
+3. **TypeScript** - Follow strict mode, no `any` types
+4. **Code Style** - Use ESLint, follow existing patterns
 
 ### Before Submitting PR
 
 ```bash
-# Ensure all tests pass
-pnpm run test
-
 # Check TypeScript
 pnpm run typecheck
 
 # Fix linting issues
-pnpm run lint --fix
-
-# Verify coverage
-pnpm run test:unit:cov
+pnpm run lint:fix
 ```
