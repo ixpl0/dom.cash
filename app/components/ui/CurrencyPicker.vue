@@ -187,19 +187,43 @@ const updateDropdownPosition = () => {
     const relativeTop = rect.top - modalRect.top
     const relativeLeft = rect.left - modalRect.left
 
-    dropdownStyle.value = {
-      position: 'absolute',
-      left: `${relativeLeft}px`,
-      width: `${rect.width}px`,
-      top: showAbove ? `${relativeTop - dropdownMaxHeight}px` : `${relativeTop + rect.height}px`,
+    if (showAbove) {
+      dropdownStyle.value = {
+        position: 'absolute',
+        left: `${relativeLeft}px`,
+        width: `${rect.width}px`,
+        bottom: `${modalRect.height - relativeTop}px`,
+        top: 'auto',
+      }
+    }
+    else {
+      dropdownStyle.value = {
+        position: 'absolute',
+        left: `${relativeLeft}px`,
+        width: `${rect.width}px`,
+        top: `${relativeTop + rect.height}px`,
+        bottom: 'auto',
+      }
     }
   }
   else {
-    dropdownStyle.value = {
-      position: 'fixed',
-      left: `${rect.left}px`,
-      width: `${rect.width}px`,
-      top: showAbove ? `${rect.top - dropdownMaxHeight}px` : `${rect.bottom}px`,
+    if (showAbove) {
+      dropdownStyle.value = {
+        position: 'fixed',
+        left: `${rect.left}px`,
+        width: `${rect.width}px`,
+        bottom: `${windowHeight - rect.top}px`,
+        top: 'auto',
+      }
+    }
+    else {
+      dropdownStyle.value = {
+        position: 'fixed',
+        left: `${rect.left}px`,
+        width: `${rect.width}px`,
+        top: `${rect.bottom}px`,
+        bottom: 'auto',
+      }
     }
   }
 }
