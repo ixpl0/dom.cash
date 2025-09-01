@@ -4,9 +4,14 @@
       <div class="navbar-start gap-4">
         <NuxtLink
           to="/"
-          class="text-xl font-bold"
+          class="text-xl font-bold flex items-center gap-2"
         >
-          💰 dom.cash
+          <img
+            src="/logo.svg"
+            alt="dom.cash"
+            class="w-6 h-6"
+          >
+          dom.cash
         </NuxtLink>
         <div
           v-if="isAuthenticated"

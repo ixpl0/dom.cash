@@ -25,8 +25,12 @@
       v-else-if="!budgetStore.data || !budgetStore.months || budgetStore.months.length === 0"
       class="text-center py-12"
     >
-      <div class="text-6xl mb-4">
-        💰
+      <div class="mb-4 flex justify-center">
+        <img
+          src="/logo.svg"
+          alt="dom.cash"
+          class="w-16 h-16"
+        >
       </div>
       <h2 class="text-2xl font-bold mb-2">
         Пока нет данных о бюджете
