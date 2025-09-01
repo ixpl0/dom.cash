@@ -25,7 +25,8 @@
           </NuxtLink>
         </div>
       </div>
-      <div class="navbar-end">
+      <div class="navbar-end gap-2">
+        <ThemePicker />
         <div
           v-if="isAuthenticated"
           class="flex items-center gap-2"
@@ -99,6 +100,8 @@
 </template>
 
 <script setup lang="ts">
+import ThemePicker from '~/components/ui/ThemePicker.vue'
+
 const { user, isAuthenticated, logout } = useAuth()
 const { setWarningBannerRef } = useOutdatedBanner()
 
