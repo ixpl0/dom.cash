@@ -403,7 +403,7 @@ const pocketExpenses = computed(() => {
     return null
   }
 
-  return startBalance.value + totalIncome.value - totalExpenses.value - nextMonthBalanceAtCurrentRates.value
+  return startBalance.value + totalIncome.value - nextMonthBalanceAtCurrentRates.value - totalExpenses.value - currencyProfitLoss.value
 })
 
 const totalAllExpenses = computed(() => {
