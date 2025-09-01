@@ -399,11 +399,11 @@ const currencyProfitLoss = computed(() => {
 })
 
 const pocketExpenses = computed(() => {
-  if (nextMonthBalanceAtCurrentRates.value === null || currencyProfitLoss.value === null) {
+  if (nextMonthStartBalance.value === null || currencyProfitLoss.value === null) {
     return null
   }
 
-  return startBalance.value + totalIncome.value - nextMonthBalanceAtCurrentRates.value - totalExpenses.value - currencyProfitLoss.value
+  return startBalance.value + totalIncome.value - nextMonthStartBalance.value - totalExpenses.value - currencyProfitLoss.value
 })
 
 const totalAllExpenses = computed(() => {
