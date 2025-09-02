@@ -45,4 +45,9 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
   eslint: { config: { stylistic: true } },
+  icon: {
+    clientBundle: {
+      scan: true,
+    },
+  },
 })
