@@ -21,6 +21,10 @@
             to="/budget"
             class="btn btn-primary btn-lg"
           >
+            <Icon
+              name="heroicons:banknotes"
+              size="24"
+            />
             Перейти к бюджету
           </NuxtLink>
         </div>

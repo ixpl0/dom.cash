@@ -74,11 +74,11 @@
           Бюджет
         </h1>
         <div class="flex items-center gap-2 mt-2">
-          <span class="badge badge-primary badge-outline">
+          <span class="badge">
             Бюджет
             {{ budgetStore.data?.user.username }}
           </span>
-          <span class="badge badge-secondary badge-outline">
+          <span class="badge">
             {{ getAccessText(budgetStore.data?.access || 'unknown') }}
           </span>
           <UiCurrencyPicker
@@ -104,12 +104,20 @@
               class="btn btn-ghost btn-sm"
               @click="handleExport"
             >
+              <Icon
+                name="heroicons:cloud-arrow-down"
+                size="20"
+              />
               Экспорт
             </button>
             <button
               class="btn btn-ghost btn-sm"
               @click="openImportModal"
             >
+              <Icon
+                name="heroicons:cloud-arrow-up"
+                size="20"
+              />
               Импорт
             </button>
           </div>

@@ -1,6 +1,10 @@
 <template>
   <label class="flex items-center gap-2">
-    <span class="label-text text-xs">Тема</span>
+    <Icon
+      name="heroicons:paint-brush"
+      size="20"
+    />
+    Тема
     <select
       id="theme-select"
       v-model="model"

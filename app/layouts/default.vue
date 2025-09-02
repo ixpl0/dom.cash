@@ -4,12 +4,12 @@
       <div class="navbar-start gap-4">
         <NuxtLink
           to="/"
-          class="text-xl font-bold flex items-center gap-2"
+          class="text-2xl font-bold flex items-center gap-2 ml-4"
         >
           <img
             src="/logo.svg"
             alt="dom.cash"
-            class="w-6 h-6"
+            class="w-9 h-9"
           >
           dom.cash
         </NuxtLink>
@@ -21,20 +21,26 @@
             to="/budget"
             class="btn btn-sm btn-outline"
           >
+            <Icon
+              name="heroicons:banknotes"
+              size="16"
+            />
             Бюджет
           </NuxtLink>
         </div>
       </div>
-      <div class="navbar-end gap-2">
+
+      <div class="navbar-center gap-2">
         <ThemePicker />
-        <div
-          v-if="isAuthenticated"
-          class="flex items-center gap-2"
-        >
+        <template v-if="isAuthenticated">
           <button
             class="btn btn-outline btn-sm"
             @click="openSharedBudgetsModal"
           >
+            <Icon
+              name="heroicons:users"
+              size="16"
+            />
             Общие бюджеты
           </button>
           <button
@@ -42,44 +48,65 @@
             @click="openShareModal"
           >
             <Icon
-              name="heroicons:link"
+              name="heroicons:share"
               size="16"
             />
             Поделиться
           </button>
-          <div class="dropdown dropdown-end">
-            <div
-              tabindex="0"
-              role="button"
-              class="btn btn-ghost"
-            >
-              {{ user?.username }}
-              <Icon
-                name="heroicons:chevron-down"
-                size="16"
-                class="ml-1"
-              />
-            </div>
-            <ul
-              tabindex="0"
-              class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
-            >
-              <li>
-                <button
-                  class="btn btn-ghost btn-sm"
-                  @click="logout"
-                >
-                  Выйти
-                </button>
-              </li>
-            </ul>
+        </template>
+      </div>
+
+      <div class="navbar-end gap-2">
+        <div
+          v-if="isAuthenticated"
+          class="dropdown dropdown-end"
+        >
+          <div
+            tabindex="0"
+            role="button"
+            class="btn btn-ghost"
+          >
+            <Icon
+              name="heroicons:user"
+              size="16"
+            />
+            {{ user?.username }}
+            <Icon
+              name="heroicons:chevron-down"
+              size="16"
+              class="ml-1"
+            />
           </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+          >
+            <li>
+              <button
+                class="btn btn-ghost btn-sm"
+                @click="logout"
+              >
+                <Icon
+                  name="heroicons:arrow-right-start-on-rectangle"
+                  size="16"
+                />
+                Выйти
+              </button>
+            </li>
+          </ul>
         </div>
+
         <NuxtLink
           v-else
           to="/auth"
           class="btn btn-primary"
-        >Войти</NuxtLink>
+        >
+          <Icon
+            name="heroicons:arrow-right-end-on-rectangle"
+            size="16"
+          />
+          Войти
+        </NuxtLink>
       </div>
     </header>
 
