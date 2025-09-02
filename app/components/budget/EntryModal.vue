@@ -131,7 +131,7 @@
                         @click="startEdit(entry)"
                       >
                         <Icon
-                          name="heroicons:pencil"
+                          name="heroicons:pencil-square"
                           size="16"
                         />
                       </button>

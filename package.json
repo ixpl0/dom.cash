@@ -14,7 +14,7 @@
     "db:migrate": "wrangler d1 migrations apply DB --local",
     "db:migrate:test": "wrangler d1 migrations apply DB --remote --env=\"\"",
     "db:migrate:prod": "wrangler d1 migrations apply DB --remote --env=\"production\"",
-    "db:reset": "rimraf .wrangler/state/v3/d1/miniflare-D1DatabaseObject && pnpm run db:migrate",
+    "db:reset": "rm -rf .wrangler/state/v3/d1/miniflare-D1DatabaseObject && pnpm run db:migrate",
     "db:backup": "wrangler d1 export DB --output=backup-local.sql --local",
     "db:backup:test": "wrangler d1 export DB --output=backup-test.sql --remote --env=\"\"",
     "db:backup:prod": "wrangler d1 export DB --output=backup-prod.sql --remote --env=\"production\"",
@@ -46,11 +46,10 @@
     "h3": "^1.15.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
-    "rimraf": "^6.0.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
     "vue-tsc": "^3.0.6",
-    "wrangler": "^4.32.0"
+    "wrangler": "^4.33.2"
   },
   "lint-staged": {
     "*.{ts,vue,js}": "eslint --fix"

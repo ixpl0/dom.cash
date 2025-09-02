@@ -478,7 +478,15 @@ const sourceMonthTitle = computed(() => {
 })
 
 const canDeleteMonth = computed(() => {
-  return !isReadOnly.value && (isFirstMonth(props.monthData, budgetStore.months) || isLastMonth(props.monthData, budgetStore.months))
+  if (isReadOnly.value) {
+    return false
+  }
+
+  const isFirstAmongLoaded = isFirstMonth(props.monthData, budgetStore.months)
+  const isLastAmongLoaded = isLastMonth(props.monthData, budgetStore.months)
+  const hasMoreYearsToLoad = Boolean(budgetStore.nextYearToLoad)
+
+  return isLastAmongLoaded || (isFirstAmongLoaded && !hasMoreYearsToLoad)
 })
 
 const handleDeleteMonth = async (): Promise<void> => {
