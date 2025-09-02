@@ -55,13 +55,13 @@ export const findClosestMonthForCopy = (
 
     for (const month of sortedMonths) {
       const monthValue = month.year * 12 + month.month
-      if (monthValue < targetMonthValue) {
+      if (monthValue > targetMonthValue) {
         if (!closestMonth) {
           closestMonth = month
         }
         else {
           const closestValue = closestMonth.year * 12 + closestMonth.month
-          if (monthValue > closestValue) {
+          if (monthValue < closestValue) {
             closestMonth = month
           }
         }
@@ -81,13 +81,13 @@ export const findClosestMonthForCopy = (
 
     for (const month of sortedMonths) {
       const monthValue = month.year * 12 + month.month
-      if (monthValue > targetMonthValue) {
+      if (monthValue < targetMonthValue) {
         if (!closestMonth) {
           closestMonth = month
         }
         else {
           const closestValue = closestMonth.year * 12 + closestMonth.month
-          if (monthValue < closestValue) {
+          if (monthValue > closestValue) {
             closestMonth = month
           }
         }

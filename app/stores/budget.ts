@@ -193,8 +193,9 @@ export const useBudgetStore = defineStore('budget', () => {
     }
 
     const { year, month } = getPreviousMonth(data.value.months)
+    const copyFromId = findClosestMonthForCopy(data.value.months, year, month, 'next')
 
-    await createMonth(year, month)
+    await createMonth(year, month, copyFromId || undefined)
   }
 
   const addEntry = async (

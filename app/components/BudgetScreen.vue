@@ -186,6 +186,7 @@
 
 <script setup lang="ts">
 import { getCurrencyName } from '~~/shared/utils/currencies'
+import { findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
 import { useBudgetStore } from '~/stores/budget'
 
@@ -282,7 +283,13 @@ const createCurrentMonth = async (): Promise<void> => {
   isCreatingCurrentMonth.value = true
 
   try {
-    await budgetStore.createMonth(currentYear, currentMonth)
+    const existingMonths = budgetStore.months || []
+    const copyFromId = existingMonths.length > 0
+      ? findClosestMonthForCopy(existingMonths, currentYear, currentMonth, 'previous')
+      || findClosestMonthForCopy(existingMonths, currentYear, currentMonth, 'next')
+      : undefined
+
+    await budgetStore.createMonth(currentYear, currentMonth, copyFromId)
   }
   catch (error) {
     console.error('Error creating current month:', error)
