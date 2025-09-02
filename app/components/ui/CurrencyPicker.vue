@@ -28,15 +28,11 @@
         >
 
         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <svg
-            class="h-4 w-4 text-gray-400"
-            viewBox="0 0 16 16"
-          >
-            <path
-              fill="currentColor"
-              d="M8 10.586L4.707 7.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414L8 10.586z"
-            />
-          </svg>
+          <Icon
+            name="heroicons:chevron-down-solid"
+            size="16"
+            class="text-gray-400"
+          />
         </div>
       </div>
 

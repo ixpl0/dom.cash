@@ -41,7 +41,11 @@
             class="btn btn-outline btn-sm"
             @click="openShareModal"
           >
-            🔗 Поделиться
+            <Icon
+              name="heroicons:link"
+              size="16"
+            />
+            Поделиться
           </button>
           <div class="dropdown dropdown-end">
             <div
@@ -50,19 +54,11 @@
               class="btn btn-ghost"
             >
               {{ user?.username }}
-              <svg
-                class="w-4 h-4 ml-1"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="none"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              <Icon
+                name="heroicons:chevron-down"
+                size="16"
+                class="ml-1"
+              />
             </div>
             <ul
               tabindex="0"

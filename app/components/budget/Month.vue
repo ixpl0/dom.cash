@@ -16,18 +16,10 @@
     </div>
 
     <div class="timeline-middle">
-      <svg
-        class="h-5 w-5"
-        viewBox="0 0 20 20"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          clip-rule="evenodd"
-          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-          fill="currentColor"
-          fill-rule="evenodd"
-        />
-      </svg>
+      <Icon
+        name="heroicons:check-circle-solid"
+        size="20"
+      />
     </div>
 
     <div class="timeline-end flex gap-4 pl-4 py-1">
@@ -189,20 +181,10 @@
             class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
             @click="handleDeleteMonth"
           >
-            <svg
-              class="w-4 h-4"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
+            <Icon
+              name="heroicons:trash"
+              size="16"
+            />
           </button>
         </div>
       </div>

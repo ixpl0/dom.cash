@@ -7,7 +7,11 @@
         :disabled="isLoading"
         @click="handleClick"
       >
-        ➕ {{ monthText }}
+        <Icon
+          name="heroicons:plus"
+          size="16"
+        />
+        {{ monthText }}
       </button>
     </div>
     <div class="timeline-middle">

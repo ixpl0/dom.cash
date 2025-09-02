@@ -23,6 +23,7 @@
     "deploy:all": "pnpm run deploy:test && pnpm run deploy:prod"
   },
   "dependencies": {
+    "@nuxt/icon": "^2.0.0",
     "cloudflare-workers-and-google-oauth": "^2.0.0",
     "cookie": "^1.0.2",
     "daisyui": "^5.0.50",

@@ -10,7 +10,10 @@
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
         @click="hide()"
       >
-        ✕
+        <Icon
+          name="heroicons:x-mark"
+          size="20"
+        />
       </button>
 
       <h3 class="font-bold text-lg mb-4 flex-shrink-0">
@@ -72,13 +75,20 @@
                           v-if="isSaving"
                           class="loading loading-spinner loading-xs"
                         />
-                        <span v-else>✓</span>
+                        <Icon
+                          v-else
+                          name="heroicons:check"
+                          size="16"
+                        />
                       </button>
                       <button
                         class="btn btn-sm btn-ghost"
                         @click="cancelEdit()"
                       >
-                        ✕
+                        <Icon
+                          name="heroicons:x-mark"
+                          size="16"
+                        />
                       </button>
                     </template>
                     <template v-else>
@@ -86,7 +96,10 @@
                         class="btn btn-sm btn-warning"
                         @click="startEdit(share)"
                       >
-                        ✏️
+                        <Icon
+                          name="heroicons:pencil"
+                          size="16"
+                        />
                       </button>
                       <button
                         class="btn btn-sm btn-error"
@@ -97,7 +110,11 @@
                           v-if="isDeleting === share.id"
                           class="loading loading-spinner loading-xs"
                         />
-                        <span v-else>🗑️</span>
+                        <Icon
+                          v-else
+                          name="heroicons:trash"
+                          size="16"
+                        />
                       </button>
                     </template>
                   </div>
@@ -139,14 +156,21 @@
                         v-if="isAdding"
                         class="loading loading-spinner loading-xs"
                       />
-                      <span v-else>✓</span>
+                      <Icon
+                        v-else
+                        name="heroicons:check"
+                        size="16"
+                      />
                     </button>
                     <button
                       type="button"
                       class="btn btn-sm btn-ghost"
                       @click="cancelAdd()"
                     >
-                      ✕
+                      <Icon
+                        name="heroicons:x-mark"
+                        size="16"
+                      />
                     </button>
                   </div>
                 </td>

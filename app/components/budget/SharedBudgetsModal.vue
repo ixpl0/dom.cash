@@ -9,7 +9,10 @@
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
         @click="hide()"
       >
-        ✕
+        <Icon
+          name="heroicons:x-mark"
+          size="20"
+        />
       </button>
 
       <h3 class="font-bold text-lg mb-4 flex-shrink-0">
