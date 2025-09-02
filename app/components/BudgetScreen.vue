@@ -123,7 +123,7 @@
         </div>
       </div>
 
-      <ul class="timeline timeline-vertical [--timeline-col-start:20ch]">
+      <ul class="timeline timeline-vertical [--timeline-col-start:23ch]">
         <BudgetTimelineAddButton
           v-if="budgetStore.canEdit"
           direction="next"

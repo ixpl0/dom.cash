@@ -1,8 +1,9 @@
-import type { MonthData } from '~~/shared/types/budget'
+import type { MonthData, ComputedMonthData, YearSummary } from '~~/shared/types/budget'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/entry-strategies'
 import { toMutable } from '~~/shared/utils/immutable'
+import { computeMonthData, computeYearSummary, createMonthId } from '~~/shared/utils/budget-calculations'
 
 export interface YearInfo {
   year: number
@@ -45,6 +46,42 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const isOwnBudget = computed(() => data.value?.access === 'owner')
   const months = computed(() => data.value?.months || [])
+  const { mainCurrency } = useUser()
+
+  const monthNames = [
+    'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+    'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
+  ]
+
+  const effectiveMainCurrency = computed(() => data.value?.user?.mainCurrency || mainCurrency.value)
+
+  const computedMonths = computed((): ComputedMonthData[] => {
+    if (!data.value?.months) {
+      return []
+    }
+
+    return data.value.months.map(month =>
+      computeMonthData(month, data.value!.months, effectiveMainCurrency.value, monthNames),
+    )
+  })
+
+  const getComputedMonthById = (monthId: string): ComputedMonthData | undefined => {
+    return computedMonths.value.find(month => month.monthId === monthId)
+  }
+
+  const getComputedMonthByYearMonth = (year: number, month: number): ComputedMonthData | undefined => {
+    const monthId = createMonthId(year, month)
+    return getComputedMonthById(monthId)
+  }
+
+  const yearsSummary = computed((): YearSummary[] => {
+    const years = [...new Set(computedMonths.value.map(m => m.year))].sort((a, b) => b - a)
+    return years.map(year => computeYearSummary(year, computedMonths.value))
+  })
+
+  const getYearSummary = (year: number): YearSummary | undefined => {
+    return yearsSummary.value.find(y => y.year === year)
+  }
 
   const nextYearToLoad = computed(() => {
     if (availableYears.value.length === 0) {
@@ -530,8 +567,15 @@ export const useBudgetStore = defineStore('budget', () => {
     nextYearToLoad,
     isOwnBudget,
     months,
+    computedMonths,
+    monthNames,
+    effectiveMainCurrency,
+    yearsSummary,
     getMonthById,
     getEntriesByMonthAndKind,
+    getComputedMonthById,
+    getComputedMonthByYearMonth,
+    getYearSummary,
     refresh,
     loadYear,
     createMonth,

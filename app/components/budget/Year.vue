@@ -7,7 +7,7 @@
       </h2>
     </div>
     <div class="timeline-middle">
-      <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
+      <div class="w-3 h-3 m-1 bg-base-content rounded-full" />
     </div>
     <div class="timeline-end flex gap-4 pl-4 py-1">
       <div :ref="setHeaderRef(0)">
@@ -215,19 +215,16 @@
   <BudgetMonth
     v-for="monthData in months"
     :key="`${monthData.year}-${monthData.month}`"
-    :month-data="monthData"
-    :month-names="monthNames"
+    :month-id="createMonthId(monthData.year, monthData.month)"
     :budget-columns-sync="budgetColumnsSync"
-    @added="$emit('refresh')"
-    @deleted="$emit('refresh')"
-    @updated="$emit('refresh')"
   />
 </template>
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmountRounded, calculateTotalBalance } from '~~/shared/utils/budget'
+import { formatAmountRounded } from '~~/shared/utils/budget'
+import { createMonthId } from '~~/shared/utils/budget-calculations'
 import { useBudgetStore } from '~/stores/budget'
 
 interface Props {
@@ -250,111 +247,40 @@ const headerRefs = ref<HTMLElement[]>([])
 
 const { registerRow, unregisterRow } = props.budgetColumnsSync
 
-const findNextMonth = (month: MonthData) => {
-  return budgetStore.months.find(m =>
-    (m.year === month.year + 1 && month.month === 11 && m.month === 0)
-    || (m.year === month.year && m.month === month.month + 1),
-  )
-}
-
 const yearStats = computed(() => {
-  let totalBalance = 0
-  let totalIncome = 0
-  let totalExpenses = 0
-  let totalPocketExpenses = 0
-  let totalBalanceChange = 0
-  let totalCurrencyProfitLoss = 0
-  let monthCount = 0
-  let balanceCount = 0
-  let balanceChangeCount = 0
-  let currencyCount = 0
-  let pocketCount = 0
-
-  props.months.forEach((month) => {
-    const currentRates = month.exchangeRates
-
-    const balance = calculateTotalBalance(
-      month.balanceSources,
-      mainCurrency.value,
-      currentRates,
-    )
-
-    if (balance > 0) {
-      totalBalance += balance
-      balanceCount++
+  const summary = budgetStore.getYearSummary(props.year)
+  if (!summary) {
+    return {
+      averageBalance: 0,
+      totalIncome: 0,
+      averageIncome: 0,
+      totalExpenses: 0,
+      averageExpenses: 0,
+      totalPocketExpenses: 0,
+      averagePocketExpenses: 0,
+      totalAllExpenses: 0,
+      averageAllExpenses: 0,
+      totalBalanceChange: 0,
+      averageBalanceChange: 0,
+      totalCurrencyProfitLoss: 0,
+      averageCurrencyProfitLoss: 0,
     }
-
-    totalIncome += calculateTotalBalance(
-      month.incomeEntries,
-      mainCurrency.value,
-      currentRates,
-    )
-
-    totalExpenses += calculateTotalBalance(
-      month.expenseEntries,
-      mainCurrency.value,
-      currentRates,
-    )
-
-    const nextMonth = findNextMonth(month)
-    if (nextMonth) {
-      const nextMonthRates = nextMonth.exchangeRates
-      const nextMonthBalance = calculateTotalBalance(
-        nextMonth.balanceSources,
-        mainCurrency.value,
-        nextMonthRates,
-      )
-
-      const nextMonthBalanceAtCurrentRates = calculateTotalBalance(
-        nextMonth.balanceSources,
-        mainCurrency.value,
-        currentRates,
-      )
-
-      const balanceChange = nextMonthBalance - balance
-      totalBalanceChange += balanceChange
-      balanceChangeCount++
-
-      const currencyProfitLoss = nextMonthBalance - nextMonthBalanceAtCurrentRates
-      totalCurrencyProfitLoss += currencyProfitLoss
-      currencyCount++
-
-      const monthIncome = calculateTotalBalance(
-        month.incomeEntries,
-        mainCurrency.value,
-        currentRates,
-      )
-
-      const monthExpenses = calculateTotalBalance(
-        month.expenseEntries,
-        mainCurrency.value,
-        currentRates,
-      )
-
-      const pocketExpenses = balance + monthIncome - monthExpenses - nextMonthBalanceAtCurrentRates
-      totalPocketExpenses += pocketExpenses
-      pocketCount++
-    }
-
-    monthCount++
-  })
-
-  const totalAllExpenses = totalExpenses + totalPocketExpenses
+  }
 
   return {
-    averageBalance: balanceCount > 0 ? totalBalance / balanceCount : 0,
-    totalIncome,
-    averageIncome: monthCount > 0 ? totalIncome / monthCount : 0,
-    totalExpenses,
-    averageExpenses: monthCount > 0 ? totalExpenses / monthCount : 0,
-    totalPocketExpenses,
-    averagePocketExpenses: pocketCount > 0 ? totalPocketExpenses / pocketCount : 0,
-    totalAllExpenses,
-    averageAllExpenses: pocketCount > 0 ? totalAllExpenses / pocketCount : 0,
-    totalBalanceChange,
-    averageBalanceChange: balanceChangeCount > 0 ? totalBalanceChange / balanceChangeCount : 0,
-    totalCurrencyProfitLoss,
-    averageCurrencyProfitLoss: currencyCount > 0 ? totalCurrencyProfitLoss / currencyCount : 0,
+    averageBalance: summary.avgStartBalance,
+    totalIncome: summary.totalIncome,
+    averageIncome: summary.avgIncome,
+    totalExpenses: summary.totalExpenses,
+    averageExpenses: summary.avgExpenses,
+    totalPocketExpenses: summary.totalPocketExpenses,
+    averagePocketExpenses: summary.avgPocketExpenses,
+    totalAllExpenses: summary.totalAllExpenses,
+    averageAllExpenses: summary.avgAllExpenses,
+    totalBalanceChange: summary.totalBalanceChange,
+    averageBalanceChange: summary.avgBalanceChange,
+    totalCurrencyProfitLoss: summary.totalCurrencyProfitLoss,
+    averageCurrencyProfitLoss: summary.avgCurrencyProfitLoss,
   }
 })
 

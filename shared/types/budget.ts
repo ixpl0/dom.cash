@@ -13,6 +13,39 @@ export interface MonthData {
   exchangeRatesSource: string
 }
 
+export interface ComputedMonthData extends MonthData {
+  monthId: string
+  startBalance: number
+  totalIncome: number
+  totalExpenses: number
+  calculatedBalanceChange: number | null
+  calculatedPocketExpenses: number | null
+  currencyProfitLoss: number | null
+  totalAllExpenses: number | null
+  nextMonthStartBalance: number | null
+  isUsingOtherMonthRates: boolean
+  sourceMonthTitle: string
+}
+
+export interface YearSummary {
+  year: number
+  monthCount: number
+  totalStartBalance: number
+  totalIncome: number
+  totalExpenses: number
+  totalBalanceChange: number
+  totalPocketExpenses: number
+  totalCurrencyProfitLoss: number
+  totalAllExpenses: number
+  avgStartBalance: number
+  avgIncome: number
+  avgExpenses: number
+  avgBalanceChange: number
+  avgPocketExpenses: number
+  avgCurrencyProfitLoss: number
+  avgAllExpenses: number
+}
+
 interface BaseBudgetEntry {
   id: string
   description: string
