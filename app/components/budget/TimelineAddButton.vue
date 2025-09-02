@@ -3,7 +3,7 @@
     <hr>
     <div class="timeline-start">
       <button
-        class="btn btn-ghost btn-sm"
+        class="btn btn-dash btn-sm"
         :disabled="isLoading"
         @click="handleClick"
       >

@@ -142,33 +142,41 @@
         />
 
         <BudgetTimelineAddButton
-          v-if="budgetStore.canEdit"
+          v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
           direction="previous"
           :month-text="getPreviousMonthText()"
           :is-loading="isCreatingPreviousMonth"
           @create="handleCreatePreviousMonth"
         />
-      </ul>
 
-      <div
-        v-if="budgetStore.nextYearToLoad"
-        class="text-center py-8"
-      >
-        <button
-          class="btn btn-outline"
-          :disabled="budgetStore.isLoadingYear"
-          @click="handleLoadPreviousYear"
-        >
-          <span
-            v-if="budgetStore.isLoadingYear"
-            class="loading loading-spinner loading-sm"
-          />
-          <span v-if="!budgetStore.isLoadingYear">
-            Показать {{ budgetStore.nextYearToLoad.year }} год
-          </span>
-          <span v-else>Загрузка...</span>
-        </button>
-      </div>
+        <li v-if="budgetStore.nextYearToLoad">
+          <hr>
+          <div class="timeline-start">
+            <button
+              class="btn btn-outline btn-sm"
+              :disabled="budgetStore.isLoadingYear"
+              @click="handleLoadPreviousYear"
+            >
+              <span
+                v-if="budgetStore.isLoadingYear"
+                class="loading loading-spinner loading-xs"
+              />
+              <template v-else>
+                <Icon
+                  name="heroicons:chevron-double-down"
+                  size="16"
+                />
+                Показать {{ budgetStore.nextYearToLoad.year }} год
+              </template>
+              <span v-if="budgetStore.isLoadingYear">Загрузка...</span>
+            </button>
+          </div>
+          <div class="timeline-middle">
+            <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
+          </div>
+          <hr>
+        </li>
+      </ul>
     </div>
 
     <BudgetImportModal
