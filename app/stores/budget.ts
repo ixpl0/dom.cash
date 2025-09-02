@@ -437,10 +437,9 @@ export const useBudgetStore = defineStore('budget', () => {
     try {
       const response = await $fetch('/api/budget/export', {
         method: 'GET',
-        responseType: 'blob',
       })
 
-      const blob = new Blob([JSON.stringify(response)], { type: 'application/json' })
+      const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
 
       const link = document.createElement('a')
