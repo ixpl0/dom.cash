@@ -11,6 +11,7 @@ const createEntrySchema = z.object({
   amount: amountSchema,
   currency: currencySchema,
   date: z.string().optional(),
+  isOptional: z.boolean().optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -40,6 +41,7 @@ export default defineEventHandler(async (event) => {
     amount: data.amount,
     currency: data.currency,
     date: data.date,
+    isOptional: data.isOptional,
   }, event)
 
   try {

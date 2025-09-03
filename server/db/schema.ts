@@ -86,6 +86,7 @@ export const entry = sqliteTable(
     amount: integer('amount').notNull(),
     currency: text('currency').notNull(),
     date: text('date'),
+    isOptional: integer('is_optional', { mode: 'boolean' }),
   },
   t => [
     index('idx_entry_month').on(t.monthId),

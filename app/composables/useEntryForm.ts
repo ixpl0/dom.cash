@@ -6,6 +6,7 @@ export interface EntryFormData {
   amount: number
   currency: string
   date: string
+  isOptional?: boolean
 }
 
 export interface EntryFormState {
@@ -30,6 +31,7 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
     amount: 0,
     currency: '',
     date: new Date().toISOString().split('T')[0] || '',
+    isOptional: false,
   })
 
   const editingEntry = ref(createDefaultFormData())
@@ -61,6 +63,7 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
       amount: entry.amount,
       currency: entry.currency,
       date: getEntryDate(entry) || '',
+      isOptional: 'isOptional' in entry ? entry.isOptional : false,
     }
   }
 

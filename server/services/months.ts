@@ -187,6 +187,7 @@ export const getUserMonths = async (userId: string, event: H3Event): Promise<Mon
           amount: e.amount,
           currency: e.currency,
           date: e.date,
+          isOptional: e.isOptional || false,
         }))
 
       const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
@@ -238,6 +239,7 @@ export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetM
       amount: sourceEntry.amount,
       currency: sourceEntry.currency,
       date: sourceEntry.date,
+      isOptional: sourceEntry.isOptional,
     }))
 
     await db.insert(entry).values(copiedEntries)
@@ -486,6 +488,7 @@ export const getUserMonthsByYears = async (userId: string, years: number[], even
           amount: e.amount,
           currency: e.currency,
           date: e.date,
+          isOptional: e.isOptional || false,
         }))
 
       const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)

@@ -5,7 +5,7 @@ interface EntryConfig {
   title: string
   emptyMessage: string
   arrayKey: keyof MonthData
-  createEntry: (data: { id: string, description: string, amount: number, currency: string, date?: string | null }) => BalanceSourceData | IncomeEntryData | ExpenseEntryData
+  createEntry: (data: { id: string, description: string, amount: number, currency: string, date?: string | null, isOptional?: boolean }) => BalanceSourceData | IncomeEntryData | ExpenseEntryData
 }
 
 export const entryStrategies: Record<EntryKind, EntryConfig> = {
@@ -42,6 +42,7 @@ export const entryStrategies: Record<EntryKind, EntryConfig> = {
       amount: data.amount,
       currency: data.currency,
       date: data.date || null,
+      isOptional: data.isOptional || false,
     } as ExpenseEntryData),
   },
 }
@@ -68,7 +69,7 @@ export const updateMonthWithUpdatedEntry = (
   month: MonthData,
   entryKind: EntryKind,
   entryId: string,
-  updateData: { description?: string, amount?: number, currency?: string, date?: string | null },
+  updateData: { description?: string, amount?: number, currency?: string, date?: string | null, isOptional?: boolean },
 ): MonthData => {
   const config = getEntryConfig(entryKind)
   const currentEntries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
@@ -85,6 +86,7 @@ export const updateMonthWithUpdatedEntry = (
     amount: updateData.amount ?? currentEntry.amount,
     currency: updateData.currency ?? currentEntry.currency,
     date: updateData.date !== undefined ? updateData.date : ('date' in currentEntry ? currentEntry.date : undefined),
+    isOptional: updateData.isOptional !== undefined ? updateData.isOptional : ('isOptional' in currentEntry ? currentEntry.isOptional : undefined),
   })
 
   const updatedEntries = currentEntries.map((entry, index) =>

@@ -11,6 +11,7 @@ export interface CreateEntryParams {
   amount: number
   currency: string
   date?: string
+  isOptional?: boolean
 }
 
 export interface UpdateEntryParams {
@@ -18,6 +19,7 @@ export interface UpdateEntryParams {
   amount: number
   currency: string
   date?: string
+  isOptional?: boolean
 }
 
 export const getMonthOwner = async (monthId: string, event: H3Event) => {
@@ -77,6 +79,7 @@ export const createEntry = async (params: CreateEntryParams, event: H3Event) => 
       amount: params.amount,
       currency: params.currency,
       date: params.date || null,
+      isOptional: params.isOptional || false,
     })
     .returning()
 
@@ -88,8 +91,11 @@ export const updateEntry = async (entryId: string, params: UpdateEntryParams, ev
   const updatedEntry = await db
     .update(entry)
     .set({
-      ...params,
+      description: params.description,
+      amount: params.amount,
+      currency: params.currency,
       date: params.date || null,
+      isOptional: params.isOptional !== undefined ? params.isOptional : undefined,
     })
     .where(eq(entry.id, entryId))
     .returning()

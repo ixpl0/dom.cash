@@ -42,7 +42,7 @@
                     v-if="editingId === share.id"
                     v-model="editingShare.username"
                     type="text"
-                    class="input input-sm input-bordered w-full"
+                    class="input input-bordered w-full"
                     @keyup.enter="saveShare()"
                     @keyup.esc="cancelEdit()"
                   >
@@ -126,7 +126,7 @@
                     v-model="newShare.username"
                     type="text"
                     placeholder="Имя пользователя"
-                    class="input input-sm input-bordered w-full"
+                    class="input input-bordered w-full"
                     @keyup.enter="addShare()"
                     @keyup.esc="cancelAdd()"
                   >

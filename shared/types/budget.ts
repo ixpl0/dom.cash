@@ -61,6 +61,7 @@ export interface IncomeEntryData extends BaseBudgetEntry {
 
 export interface ExpenseEntryData extends BaseBudgetEntry {
   date: string | null
+  isOptional?: boolean
 }
 
 export type BudgetEntry = BalanceSourceData | IncomeEntryData | ExpenseEntryData

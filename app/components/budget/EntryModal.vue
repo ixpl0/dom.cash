@@ -25,7 +25,7 @@
 
       <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
         <div v-if="currentEntries.length || isAddingNewEntry">
-          <table class="table table-zebra">
+          <table class="table table-zebra text-center">
             <thead>
               <tr>
                 <th>Описание</th>
@@ -34,97 +34,58 @@
                 <th v-if="entryModal.entryKind !== 'balance'">
                   Дата
                 </th>
+                <th v-if="entryModal.entryKind === 'expense'">
+                  Необязательное
+                </th>
                 <th class="w-1">
                   Действия
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr
+              <template
                 v-for="entry in currentEntries"
                 :key="entry.id"
               >
-                <td>
-                  <input
-                    v-if="editingEntryId === entry.id"
-                    v-model="editingEntry.description"
-                    type="text"
-                    class="input input-sm input-bordered w-full"
-                    @keyup.enter="saveEntry()"
-                    @keyup.esc="cancelEdit()"
-                  >
-                  <span v-else>{{ entry.description }}</span>
-                </td>
-                <td>
-                  <input
-                    v-if="editingEntryId === entry.id"
-                    v-model.number="editingEntry.amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="input input-sm input-bordered w-full"
-                    @keyup.enter="saveEntry()"
-                    @keyup.esc="cancelEdit()"
-                  >
-                  <span
-                    v-else
-                    :class="{
-                      'text-base-content': entry.amount === 0,
-                      'text-success': entryModal.entryKind === 'income' || (entryModal.entryKind === 'balance' && entry.amount > 0),
-                      'text-error': entryModal.entryKind === 'expense',
-                      'text-warning': entryModal.entryKind === 'balance' && entry.amount < 0,
-                    }"
-                  >{{ formatAmount(entry.amount, entry.currency) }}</span>
-                </td>
-                <td>
-                  <UiCurrencyPicker
-                    v-if="editingEntryId === entry.id"
-                    v-model="editingEntry.currency"
-                    class="w-full"
-                    :teleport-to="modalBox"
-                  />
-                  <span v-else>{{ entry.currency }}</span>
-                </td>
-                <td v-if="entryModal.entryKind !== 'balance'">
-                  <input
-                    v-if="editingEntryId === entry.id"
-                    v-model="editingEntry.date"
-                    type="date"
-                    class="input input-sm input-bordered"
-                    @keyup.enter="saveEntry()"
-                    @keyup.esc="cancelEdit()"
-                  >
-                  <span v-else>{{ formatDate(getEntryDate(entry)) }}</span>
-                </td>
-                <td class="w-1">
-                  <div class="flex gap-2">
-                    <template v-if="editingEntryId === entry.id">
-                      <button
-                        class="btn btn-sm btn-success"
-                        :disabled="isSaving"
-                        @click="saveEntry()"
-                      >
-                        <span
-                          v-if="isSaving"
-                          class="loading loading-spinner loading-xs"
-                        />
-                        <Icon
-                          v-else
-                          name="heroicons:check"
-                          size="16"
-                        />
-                      </button>
-                      <button
-                        class="btn btn-sm btn-ghost"
-                        @click="cancelEdit()"
-                      >
-                        <Icon
-                          name="heroicons:x-mark"
-                          size="16"
-                        />
-                      </button>
-                    </template>
-                    <template v-else>
+                <BudgetEntryEditRow
+                  v-if="editingEntryId === entry.id"
+                  v-model="editingEntry"
+                  :entry-kind="entryModal.entryKind || 'balance'"
+                  :is-saving="isSaving"
+                  :teleport-to="modalBox || undefined"
+                  @save="saveEntry()"
+                  @cancel="cancelEdit()"
+                />
+                <tr v-else>
+                  <td>
+                    <span>{{ entry.description }}</span>
+                  </td>
+                  <td>
+                    <span
+                      :class="{
+                        'text-base-content': entry.amount === 0,
+                        'text-success': entryModal.entryKind === 'income' || (entryModal.entryKind === 'balance' && entry.amount > 0),
+                        'text-error': entryModal.entryKind === 'expense',
+                        'text-warning': entryModal.entryKind === 'balance' && entry.amount < 0,
+                      }"
+                    >{{ formatAmount(entry.amount, entry.currency) }}</span>
+                  </td>
+                  <td>
+                    <span>{{ entry.currency }}</span>
+                  </td>
+                  <td v-if="entryModal.entryKind !== 'balance'">
+                    <span>{{ formatDate(getEntryDate(entry)) }}</span>
+                  </td>
+                  <td v-if="entryModal.entryKind === 'expense'">
+                    <Icon
+                      v-if="'isOptional' in entry && (entry as any).isOptional"
+                      name="heroicons:check"
+                      size="20"
+                      class="text-success inline-block"
+                    />
+                  </td>
+                  <td class="w-1">
+                    <div class="flex gap-2">
                       <button
                         v-if="!entryModal.isReadOnly"
                         class="btn btn-sm btn-warning"
@@ -151,80 +112,20 @@
                           size="16"
                         />
                       </button>
-                    </template>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="isAddingNewEntry">
-                <td>
-                  <input
-                    v-model="newEntry.description"
-                    type="text"
-                    placeholder="Введите описание..."
-                    class="input input-sm input-bordered w-full"
-                    @keyup.enter="addEntry()"
-                    @keyup.esc="cancelAdd()"
-                  >
-                </td>
-                <td>
-                  <input
-                    v-model.number="newEntry.amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    class="input input-sm input-bordered w-full"
-                    @keyup.enter="addEntry()"
-                    @keyup.esc="cancelAdd()"
-                  >
-                </td>
-                <td>
-                  <UiCurrencyPicker
-                    v-model="newEntry.currency"
-                    class="w-full"
-                    :teleport-to="modalBox"
-                  />
-                </td>
-                <td v-if="entryModal.entryKind !== 'balance'">
-                  <input
-                    v-model="newEntry.date"
-                    type="date"
-                    class="input input-sm input-bordered"
-                    @keyup.enter="addEntry()"
-                    @keyup.esc="cancelAdd()"
-                  >
-                </td>
-                <td class="w-1">
-                  <div class="flex gap-2">
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-success"
-                      :disabled="isAdding"
-                      @click="addEntry()"
-                    >
-                      <span
-                        v-if="isAdding"
-                        class="loading loading-spinner loading-xs"
-                      />
-                      <Icon
-                        v-else
-                        name="heroicons:check"
-                        size="16"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-ghost"
-                      @click="cancelAdd()"
-                    >
-                      <Icon
-                        name="heroicons:x-mark"
-                        size="16"
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <BudgetEntryEditRow
+                v-if="isAddingNewEntry"
+                v-model="newEntry"
+                :entry-kind="entryModal.entryKind || 'balance'"
+                :is-saving="isAdding"
+                :is-new="true"
+                :teleport-to="modalBox"
+                @save="addEntry()"
+                @cancel="cancelAdd()"
+              />
             </tbody>
           </table>
 
@@ -321,7 +222,7 @@ const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) =
   }
 }
 
-const performAddEntry = async (entryData: { description: string, amount: number, currency: string, date: string }) => {
+const performAddEntry = async (entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
   if (!entryModal.value.monthId || !entryModal.value.entryKind) {
     throw new Error('Month ID and entry kind are required')
   }
@@ -334,18 +235,20 @@ const performAddEntry = async (entryData: { description: string, amount: number,
       amount: entryData.amount,
       currency: entryData.currency,
       date: entryModal.value.entryKind !== 'balance' ? entryData.date : undefined,
+      isOptional: entryModal.value.entryKind === 'expense' ? entryData.isOptional : undefined,
     },
   )
 
   emitWrapper('added')
 }
 
-const performUpdateEntry = async (entryId: string, entryData: { description: string, amount: number, currency: string, date: string }) => {
+const performUpdateEntry = async (entryId: string, entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
   await budgetStore.updateEntry(entryId, {
     description: entryData.description,
     amount: entryData.amount,
     currency: entryData.currency,
     date: entryModal.value.entryKind !== 'balance' ? entryData.date : undefined,
+    isOptional: entryModal.value.entryKind === 'expense' ? entryData.isOptional : undefined,
   })
 
   emitWrapper('updated', entryId)

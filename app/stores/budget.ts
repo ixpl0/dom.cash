@@ -243,6 +243,7 @@ export const useBudgetStore = defineStore('budget', () => {
       amount: number
       currency: string
       date?: string
+      isOptional?: boolean
     },
   ) => {
     try {
@@ -252,6 +253,7 @@ export const useBudgetStore = defineStore('budget', () => {
         amount: number
         currency: string
         date?: string | null
+        isOptional?: boolean
       }>('/api/budget/entries', {
         method: 'POST',
         body: {
@@ -278,6 +280,7 @@ export const useBudgetStore = defineStore('budget', () => {
         amount: response.amount,
         currency: response.currency,
         date: response.date ?? undefined,
+        isOptional: response.isOptional,
       })
 
       const month = currentMonths[monthIndex]
@@ -307,6 +310,7 @@ export const useBudgetStore = defineStore('budget', () => {
       amount: number
       currency: string
       date?: string
+      isOptional?: boolean
     },
   ) => {
     try {
@@ -316,6 +320,7 @@ export const useBudgetStore = defineStore('budget', () => {
         amount: number
         currency: string
         date?: string | null
+        isOptional?: boolean
       }>(`/api/budget/entries/${entryId}`, {
         method: 'PUT',
         body: entryData,
@@ -349,6 +354,7 @@ export const useBudgetStore = defineStore('budget', () => {
           amount: response.amount,
           currency: response.currency,
           date: response.date ?? undefined,
+          isOptional: response.isOptional,
         },
       ) as MonthData
 
