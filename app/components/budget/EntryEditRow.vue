@@ -26,7 +26,6 @@
       <UiCurrencyPicker
         v-model="localEntry.currency"
         class="w-full min-w-[240px]"
-        :teleport-to="teleportTo"
       />
     </td>
     <td v-if="entryKind !== 'balance'">
@@ -86,7 +85,6 @@ const props = defineProps<{
   entryKind: 'balance' | 'income' | 'expense'
   isSaving: boolean
   isNew?: boolean
-  teleportTo?: HTMLElement
 }>()
 
 const emit = defineEmits<{

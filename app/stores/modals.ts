@@ -33,8 +33,6 @@ export const useModalsStore = defineStore('modals', () => {
     sourceMonthTitle: undefined,
   })
 
-  const modalTeleportTarget = ref<HTMLElement | null>(null)
-
   const openEntryModal = (params: {
     monthId: string
     entryKind: 'balance' | 'income' | 'expense'
@@ -81,18 +79,12 @@ export const useModalsStore = defineStore('modals', () => {
     }
   }
 
-  const setModalTeleportTarget = (target: HTMLElement | null) => {
-    modalTeleportTarget.value = target
-  }
-
   return {
     entryModal,
     currencyRatesModal,
-    modalTeleportTarget,
     openEntryModal,
     closeEntryModal,
     openCurrencyRatesModal,
     closeCurrencyRatesModal,
-    setModalTeleportTarget,
   }
 })

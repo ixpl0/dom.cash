@@ -36,40 +36,39 @@
         </div>
       </div>
 
-      <Teleport :to="teleportTarget">
-        <ul
-          v-if="isDropdownOpen && filteredOptions.length > 0"
-          ref="dropdownRef"
-          class="menu bg-base-100 rounded-box z-[9999] max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap fixed"
-          :style="dropdownStyle"
+      <ul
+        v-if="isDropdownOpen && filteredOptions.length > 0"
+        ref="dropdownRef"
+        popover="manual"
+        class="menu bg-base-100 rounded-box max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap m-0 p-2"
+        :style="dropdownStyle"
+      >
+        <li
+          v-for="(option, index) in filteredOptions"
+          :key="option.code"
+          :class="option.code === props.modelValue && index !== highlightedIndex && 'bg-base-content/10'"
         >
-          <li
-            v-for="(option, index) in filteredOptions"
-            :key="option.code"
-            :class="option.code === props.modelValue && index !== highlightedIndex && 'bg-base-content/10'"
+          <a
+            class="flex justify-between items-start gap-2 py-1"
+            :class="{
+              'font-bold': option.code === props.modelValue,
+            }"
+            tabindex="0"
+            @click="selectOption(option)"
+            @keydown="(event) => onOptionKeydown(event, option)"
+            @mouseenter="highlightedIndex = index"
           >
-            <a
-              class="flex justify-between items-start gap-2 py-1"
-              :class="{
-                'font-bold': option.code === props.modelValue,
-              }"
-              tabindex="0"
-              @click="selectOption(option)"
-              @keydown="(event) => onOptionKeydown(event, option)"
-              @mouseenter="highlightedIndex = index"
-            >
-              <span class="font-medium shrink-0">
-                {{ option.code }}
-                <span
-                  v-if="option.code === props.modelValue"
-                  class="ml-1"
-                >✓</span>
-              </span>
-              <span class="text-sm opacity-70 text-right ml-2">{{ option.name }}</span>
-            </a>
-          </li>
-        </ul>
-      </Teleport>
+            <span class="font-medium shrink-0">
+              {{ option.code }}
+              <span
+                v-if="option.code === props.modelValue"
+                class="ml-1"
+              >✓</span>
+            </span>
+            <span class="text-sm opacity-70 text-right ml-2">{{ option.name }}</span>
+          </a>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
@@ -81,7 +80,6 @@ import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
 interface Props {
   modelValue: string
   disabled?: boolean
-  teleportTo?: string | HTMLElement
 }
 
 interface Emits {
@@ -103,18 +101,6 @@ const highlightedIndex = ref(-1)
 const filteredOptions = ref<CurrencyOption[]>([])
 const isFocused = ref(false)
 const dropdownStyle = ref<Record<string, string>>({})
-
-const teleportTarget = computed(() => {
-  if (!props.teleportTo) {
-    return 'body'
-  }
-
-  if (typeof props.teleportTo === 'string') {
-    return props.teleportTo
-  }
-
-  return props.teleportTo
-})
 
 const { addRecentCurrency, getRecentCurrencies } = useRecentCurrencies()
 const recentCurrencies = getRecentCurrencies()
@@ -166,61 +152,57 @@ const onInputClick = () => {
 }
 
 const updateDropdownPosition = () => {
-  if (!inputRef.value) {
+  if (!inputRef.value || !dropdownRef.value) {
     return
   }
 
   const rect = inputRef.value.getBoundingClientRect()
-  const isInModal = props.teleportTo && props.teleportTo !== 'body'
-  const dropdownMaxHeight = 240 // max-h-60 = 15rem = 240px
+  const dropdownMaxHeight = 240
   const windowHeight = window.innerHeight
   const spaceBelow = windowHeight - rect.bottom
   const spaceAbove = rect.top
   const showAbove = spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow
 
-  if (isInModal && typeof props.teleportTo !== 'string') {
-    const modalRect = props.teleportTo.getBoundingClientRect()
-    const relativeTop = rect.top - modalRect.top
-    const relativeLeft = rect.left - modalRect.left
-
-    if (showAbove) {
-      dropdownStyle.value = {
-        position: 'absolute',
-        left: `${relativeLeft}px`,
-        width: `${rect.width}px`,
-        bottom: `${modalRect.height - relativeTop}px`,
-        top: 'auto',
-      }
-    }
-    else {
-      dropdownStyle.value = {
-        position: 'absolute',
-        left: `${relativeLeft}px`,
-        width: `${rect.width}px`,
-        top: `${relativeTop + rect.height}px`,
-        bottom: 'auto',
-      }
+  if (showAbove) {
+    dropdownStyle.value = {
+      position: 'fixed',
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      bottom: `${windowHeight - rect.top}px`,
+      top: 'auto',
     }
   }
   else {
-    if (showAbove) {
-      dropdownStyle.value = {
-        position: 'fixed',
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
-        bottom: `${windowHeight - rect.top}px`,
-        top: 'auto',
-      }
+    dropdownStyle.value = {
+      position: 'fixed',
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      top: `${rect.bottom}px`,
+      bottom: 'auto',
     }
-    else {
-      dropdownStyle.value = {
-        position: 'fixed',
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
-        top: `${rect.bottom}px`,
-        bottom: 'auto',
-      }
-    }
+  }
+}
+
+const showDropdown = () => {
+  if (!dropdownRef.value) return
+
+  try {
+    dropdownRef.value.showPopover()
+    updateDropdownPosition()
+  }
+  catch {
+    console.warn('Popover API not supported, falling back to regular display')
+  }
+}
+
+const hideDropdown = () => {
+  if (!dropdownRef.value) return
+
+  try {
+    dropdownRef.value.hidePopover()
+  }
+  catch {
+    console.warn('Popover API not supported')
   }
 }
 
@@ -229,8 +211,8 @@ const onFocus = () => {
   if (!isDropdownOpen.value) {
     searchQuery.value = ''
     updateFilteredOptions()
-    updateDropdownPosition()
     isDropdownOpen.value = true
+    nextTick(() => showDropdown())
   }
 }
 
@@ -241,6 +223,7 @@ const onDropdownFocusOut = (event: FocusEvent) => {
   if (relatedTarget && !dropdown.contains(relatedTarget) && !dropdownRef.value?.contains(relatedTarget)) {
     isFocused.value = false
     isDropdownOpen.value = false
+    hideDropdown()
   }
 }
 
@@ -249,6 +232,7 @@ const selectOption = (option: CurrencyOption) => {
   emit('update:modelValue', option.code)
   emit('change', option.code)
   isDropdownOpen.value = false
+  hideDropdown()
   isFocused.value = false
   searchQuery.value = ''
   inputRef.value?.blur()
@@ -290,12 +274,22 @@ const onKeyDown = (event: KeyboardEvent) => {
     case 'Escape':
       event.preventDefault()
       isDropdownOpen.value = false
+      hideDropdown()
       isFocused.value = false
       searchQuery.value = ''
       inputRef.value?.blur()
       break
   }
 }
+
+watch(isDropdownOpen, (open) => {
+  if (open) {
+    nextTick(() => showDropdown())
+  }
+  else {
+    hideDropdown()
+  }
+})
 
 onMounted(() => {
   updateFilteredOptions()
@@ -317,6 +311,7 @@ onMounted(() => {
       && !inputRef.value?.contains(event.target as Node)
       && !dropdownRef.value?.contains(event.target as Node)) {
       isDropdownOpen.value = false
+      hideDropdown()
       isFocused.value = false
     }
   }
