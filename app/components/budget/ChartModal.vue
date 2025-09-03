@@ -266,7 +266,7 @@ const chartOption = computed(() => ({
   yAxis: {
     type: 'value' as const,
     axisLabel: {
-      formatter: (value: number) => `${Math.round(value)}`,
+      formatter: (value: number) => `${nf.value.format(Math.round(value))} ${budgetStore.effectiveMainCurrency}`,
       color: themeUIColors.value.axis,
     },
     axisLine: {
