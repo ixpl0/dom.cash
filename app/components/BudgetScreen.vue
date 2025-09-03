@@ -96,6 +96,16 @@
           </span>
         </div>
         <div class="flex gap-2">
+          <button
+            class="btn btn-ghost btn-sm"
+            @click="openChartModal"
+          >
+            <Icon
+              name="heroicons:chart-bar"
+              size="20"
+            />
+            График
+          </button>
           <div
             v-if="budgetStore.canEdit"
             class="flex gap-2"
@@ -197,6 +207,11 @@
     <BudgetEntryModal />
 
     <BudgetCurrencyRatesModal />
+
+    <BudgetChartModal
+      ref="chartModal"
+      @close="closeChartModal"
+    />
   </div>
 </template>
 
@@ -229,6 +244,8 @@ const isCreatingCurrentMonth = ref(false)
 const isCreatingNextMonth = ref(false)
 const isCreatingPreviousMonth = ref(false)
 const isImportModalOpen = ref(false)
+const chartModal = ref<{ show: () => void, hide: () => void }>()
+const BudgetChartModal = defineAsyncComponent(() => import('~/components/budget/ChartModal.vue'))
 
 const isOwnBudget = computed(() => budgetStore.isOwnBudget)
 
@@ -370,6 +387,14 @@ const openImportModal = (): void => {
 
 const closeImportModal = (): void => {
   isImportModalOpen.value = false
+}
+
+const openChartModal = (): void => {
+  chartModal.value?.show()
+}
+
+const closeChartModal = (): void => {
+  // Модальное окно закроется автоматически
 }
 
 const handleImported = async (): Promise<void> => {
