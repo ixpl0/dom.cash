@@ -184,19 +184,25 @@ const updateDropdownPosition = () => {
 }
 
 const showDropdown = () => {
-  if (!dropdownRef.value) return
+  if (!dropdownRef.value) {
+    return
+  }
 
   try {
     dropdownRef.value.showPopover()
-    updateDropdownPosition()
   }
   catch {
     console.warn('Popover API not supported, falling back to regular display')
   }
+  finally {
+    updateDropdownPosition()
+  }
 }
 
 const hideDropdown = () => {
-  if (!dropdownRef.value) return
+  if (!dropdownRef.value) {
+    return
+  }
 
   try {
     dropdownRef.value.hidePopover()
