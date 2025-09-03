@@ -25,6 +25,7 @@
           <BudgetChartClient
             v-if="isOpen"
             :option="chartOption"
+            @legend-select-changed="handleLegendSelectChanged"
           />
           <template #fallback>
             <div class="flex items-center justify-center h-full">
@@ -113,6 +114,7 @@ const chartData = computed(() => {
     totalExpenses: sortedMonths.map(month => month.totalExpenses),
     totalOptionalExpenses: sortedMonths.map(month => month.totalOptionalExpenses),
     calculatedPocketExpenses: sortedMonths.map(month => month.calculatedPocketExpenses || 0),
+    allExpenses: sortedMonths.map(month => month.totalAllExpenses || 0),
     currencyProfitLoss: sortedMonths.map(month => month.currencyProfitLoss || 0),
   }
 
@@ -121,7 +123,99 @@ const chartData = computed(() => {
 
 const nf = computed(() => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }))
 
+const getThemeUIColors = () => {
+  if (!import.meta.client) {
+    return {
+      text: '#6b7280',
+      legend: '#374151',
+      axis: '#9ca3af',
+      grid: '#e5e7eb',
+      background: '#ffffff',
+      primary: '#3b82f6',
+      success: '#22c55e',
+      error: '#ef4444',
+      warning: '#f59e0b',
+      secondary: '#a855f7',
+      accent: '#6b7280',
+      info: '#06b6d4',
+    }
+  }
+
+  const style = getComputedStyle(document.documentElement)
+  const baseContent = style.getPropertyValue('--color-base-content').trim()
+  const base100 = style.getPropertyValue('--color-base-100').trim()
+  const primary = style.getPropertyValue('--color-primary').trim()
+  const success = style.getPropertyValue('--color-success').trim()
+  const error = style.getPropertyValue('--color-error').trim()
+  const warning = style.getPropertyValue('--color-warning').trim()
+  const secondary = style.getPropertyValue('--color-secondary').trim()
+  const accent = style.getPropertyValue('--color-accent').trim()
+  const info = style.getPropertyValue('--color-info').trim()
+
+  return {
+    text: baseContent || '#6b7280',
+    legend: baseContent || '#374151',
+    axis: `color-mix(in srgb, ${baseContent || '#9ca3af'} 70%, transparent)`,
+    grid: `color-mix(in srgb, ${baseContent || '#e5e7eb'} 10%, transparent)`,
+    background: base100 || '#ffffff',
+    primary: primary || '#3b82f6',
+    success: success || '#22c55e',
+    error: error || '#ef4444',
+    warning: warning || '#f59e0b',
+    secondary: secondary || '#a855f7',
+    accent: accent || '#6b7280',
+    info: info || '#06b6d4',
+  }
+}
+
+const themeUIColors = ref(getThemeUIColors())
+
+const LEGEND_STORAGE_KEY = 'budget-chart-legend-selected'
+
+const getDefaultSelected = () => ({
+  'Баланс': true,
+  'Доходы': true,
+  'Расходы': true,
+  'Карманные расходы': false,
+  'Крупные расходы': false,
+  'Валютные колебания': false,
+  'Необязательные расходы': false,
+})
+
+const loadLegendSelected = () => {
+  if (!import.meta.client) {
+    return getDefaultSelected()
+  }
+
+  try {
+    const saved = localStorage.getItem(LEGEND_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      return { ...getDefaultSelected(), ...parsed }
+    }
+  }
+  catch {
+    // ignore errors
+  }
+
+  return getDefaultSelected()
+}
+
+const saveLegendSelected = (selected: Record<string, boolean>) => {
+  if (!import.meta.client) return
+
+  try {
+    localStorage.setItem(LEGEND_STORAGE_KEY, JSON.stringify(selected))
+  }
+  catch {
+    // ignore errors
+  }
+}
+
+const legendSelected = ref(loadLegendSelected())
+
 const chartOption = computed(() => ({
+  backgroundColor: 'transparent',
   tooltip: {
     trigger: 'axis' as const,
     formatter: (p: TooltipParams) => {
@@ -143,13 +237,13 @@ const chartOption = computed(() => ({
   legend: {
     type: 'scroll' as const,
     top: 30,
-    selected: {
-      'Баланс на начало месяца': true,
-      'Доходы': true,
-      'Крупные расходы': true,
-      'Необязательные расходы': false,
-      'Карманные расходы': false,
-      'Валютные колебания': false,
+    textStyle: {
+      color: themeUIColors.value.legend,
+    },
+    inactiveColor: themeUIColors.value.axis,
+    selected: legendSelected.value,
+    lineStyle: {
+      inactiveColor: 'transparent',
     },
   },
   grid: {
@@ -164,12 +258,25 @@ const chartOption = computed(() => ({
     data: chartData.value.labels,
     axisLabel: {
       rotate: 45,
+      color: themeUIColors.value.axis,
+    },
+    axisLine: {
+      lineStyle: { color: themeUIColors.value.axis },
     },
   },
   yAxis: {
     type: 'value' as const,
     axisLabel: {
       formatter: (value: number) => `${Math.round(value)}`,
+      color: themeUIColors.value.axis,
+    },
+    axisLine: {
+      lineStyle: { color: themeUIColors.value.axis },
+    },
+    splitLine: {
+      lineStyle: {
+        color: themeUIColors.value.grid,
+      },
     },
   },
   dataZoom: [
@@ -178,21 +285,21 @@ const chartOption = computed(() => ({
       start: 0,
       end: 100,
     },
-    {
-      type: 'slider' as const,
-      start: 0,
-      end: 100,
-      height: 30,
-    },
   ],
   series: [
     {
-      name: 'Баланс на начало месяца',
+      name: 'Баланс',
       type: 'line' as const,
       data: chartData.value.datasets.startBalance,
       smooth: true,
-      lineStyle: { color: '#3b82f6' },
-      itemStyle: { color: '#3b82f6' },
+      lineStyle: { color: themeUIColors.value.primary },
+      itemStyle: { color: themeUIColors.value.primary },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.primary },
+        itemStyle: { color: themeUIColors.value.primary },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
       sampling: 'lttb' as const,
       connectNulls: true,
     },
@@ -201,28 +308,30 @@ const chartOption = computed(() => ({
       type: 'line' as const,
       data: chartData.value.datasets.totalIncome,
       smooth: true,
-      lineStyle: { color: '#22c55e' },
-      itemStyle: { color: '#22c55e' },
+      lineStyle: { color: themeUIColors.value.success },
+      itemStyle: { color: themeUIColors.value.success },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.success },
+        itemStyle: { color: themeUIColors.value.success },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
       sampling: 'lttb' as const,
       connectNulls: true,
     },
     {
-      name: 'Крупные расходы',
+      name: 'Расходы',
       type: 'line' as const,
-      data: chartData.value.datasets.totalExpenses,
+      data: chartData.value.datasets.allExpenses,
       smooth: true,
-      lineStyle: { color: '#ef4444' },
-      itemStyle: { color: '#ef4444' },
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: 'Необязательные расходы',
-      type: 'line' as const,
-      data: chartData.value.datasets.totalOptionalExpenses,
-      smooth: true,
-      lineStyle: { color: '#a855f7' },
-      itemStyle: { color: '#a855f7' },
+      lineStyle: { color: themeUIColors.value.error },
+      itemStyle: { color: themeUIColors.value.error },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.error },
+        itemStyle: { color: themeUIColors.value.error },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
       sampling: 'lttb' as const,
       connectNulls: true,
     },
@@ -231,8 +340,30 @@ const chartOption = computed(() => ({
       type: 'line' as const,
       data: chartData.value.datasets.calculatedPocketExpenses,
       smooth: true,
-      lineStyle: { color: '#f59e0b' },
-      itemStyle: { color: '#f59e0b' },
+      lineStyle: { color: themeUIColors.value.warning },
+      itemStyle: { color: themeUIColors.value.warning },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.warning },
+        itemStyle: { color: themeUIColors.value.warning },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
+      sampling: 'lttb' as const,
+      connectNulls: true,
+    },
+    {
+      name: 'Крупные расходы',
+      type: 'line' as const,
+      data: chartData.value.datasets.totalExpenses,
+      smooth: true,
+      lineStyle: { color: themeUIColors.value.secondary },
+      itemStyle: { color: themeUIColors.value.secondary },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.secondary },
+        itemStyle: { color: themeUIColors.value.secondary },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
       sampling: 'lttb' as const,
       connectNulls: true,
     },
@@ -241,8 +372,30 @@ const chartOption = computed(() => ({
       type: 'line' as const,
       data: chartData.value.datasets.currencyProfitLoss,
       smooth: true,
-      lineStyle: { color: '#6b7280' },
-      itemStyle: { color: '#6b7280' },
+      lineStyle: { color: themeUIColors.value.accent },
+      itemStyle: { color: themeUIColors.value.accent },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.accent },
+        itemStyle: { color: themeUIColors.value.accent },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
+      sampling: 'lttb' as const,
+      connectNulls: true,
+    },
+    {
+      name: 'Необязательные расходы',
+      type: 'line' as const,
+      data: chartData.value.datasets.totalOptionalExpenses,
+      smooth: true,
+      lineStyle: { color: themeUIColors.value.info },
+      itemStyle: { color: themeUIColors.value.info },
+      emphasis: {
+        lineStyle: { color: themeUIColors.value.info },
+        itemStyle: { color: themeUIColors.value.info },
+      },
+      symbol: 'circle',
+      symbolSize: 8,
       sampling: 'lttb' as const,
       connectNulls: true,
     },
@@ -250,8 +403,16 @@ const chartOption = computed(() => ({
 } satisfies ECOption))
 
 const show = () => {
+  if (import.meta.client) {
+    themeUIColors.value = getThemeUIColors()
+  }
   isOpen.value = true
   modal.value?.showModal()
+}
+
+const handleLegendSelectChanged = (selected: Record<string, boolean>) => {
+  legendSelected.value = selected
+  saveLegendSelected(selected)
 }
 
 const hide = () => {

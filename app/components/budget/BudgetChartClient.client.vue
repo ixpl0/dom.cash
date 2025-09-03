@@ -3,6 +3,7 @@
     :option="option"
     class="w-full h-full min-h-96"
     :autoresize="true"
+    @legend-select-changed="handleLegendSelectChanged"
   />
 </template>
 
@@ -51,5 +52,14 @@ interface Props {
   option: ECOption
 }
 
+interface Emits {
+  legendSelectChanged: [selected: Record<string, boolean>]
+}
+
 defineProps<Props>()
+const emit = defineEmits<Emits>()
+
+const handleLegendSelectChanged = (event: { selected: Record<string, boolean> }) => {
+  emit('legendSelectChanged', event.selected)
+}
 </script>
