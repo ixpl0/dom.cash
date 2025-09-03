@@ -130,7 +130,7 @@ const getThemeUIColors = () => {
       legend: '#374151',
       axis: '#9ca3af',
       grid: '#e5e7eb',
-      background: '#ffffff',
+      background: '#f3f4f6',
       primary: '#3b82f6',
       success: '#22c55e',
       error: '#ef4444',
@@ -143,7 +143,7 @@ const getThemeUIColors = () => {
 
   const style = getComputedStyle(document.documentElement)
   const baseContent = style.getPropertyValue('--color-base-content').trim()
-  const base100 = style.getPropertyValue('--color-base-100').trim()
+  const base200 = style.getPropertyValue('--color-base-200').trim()
   const primary = style.getPropertyValue('--color-primary').trim()
   const success = style.getPropertyValue('--color-success').trim()
   const error = style.getPropertyValue('--color-error').trim()
@@ -157,7 +157,7 @@ const getThemeUIColors = () => {
     legend: baseContent || '#374151',
     axis: `color-mix(in srgb, ${baseContent || '#9ca3af'} 70%, transparent)`,
     grid: `color-mix(in srgb, ${baseContent || '#e5e7eb'} 10%, transparent)`,
-    background: base100 || '#ffffff',
+    background: base200 || '#f3f4f6',
     primary: primary || '#3b82f6',
     success: success || '#22c55e',
     error: error || '#ef4444',
@@ -218,6 +218,9 @@ const chartOption = computed(() => ({
   backgroundColor: 'transparent',
   tooltip: {
     trigger: 'axis' as const,
+    backgroundColor: themeUIColors.value.background,
+    borderColor: themeUIColors.value.axis,
+    textStyle: { color: themeUIColors.value.text },
     formatter: (p: TooltipParams) => {
       const list = toList(p)
 
@@ -237,14 +240,10 @@ const chartOption = computed(() => ({
   legend: {
     type: 'scroll' as const,
     top: 30,
-    textStyle: {
-      color: themeUIColors.value.legend,
-    },
+    textStyle: { color: themeUIColors.value.legend },
     inactiveColor: themeUIColors.value.axis,
     selected: legendSelected.value,
-    lineStyle: {
-      inactiveColor: 'transparent',
-    },
+    lineStyle: { inactiveColor: 'transparent' },
   },
   grid: {
     top: 80,
@@ -274,9 +273,7 @@ const chartOption = computed(() => ({
       lineStyle: { color: themeUIColors.value.axis },
     },
     splitLine: {
-      lineStyle: {
-        color: themeUIColors.value.grid,
-      },
+      lineStyle: { color: themeUIColors.value.grid },
     },
   },
   dataZoom: [
