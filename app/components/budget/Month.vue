@@ -171,8 +171,27 @@
       </div>
 
       <div
-        v-if="canDeleteMonth"
         :ref="setCardRef(7)"
+        class="tooltip text-center"
+        :data-tip="`Сумма всех необязательных расходов за ${budgetStore.monthNames[monthData.month]} ${monthData.year}. Это расходы, от которых можно было бы отказаться.`"
+      >
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+          <button
+            class="btn btn-ghost text-xl"
+            disabled
+            :class="{
+              'text-error': monthData.totalOptionalExpenses !== 0,
+              'text-base-content': monthData.totalOptionalExpenses === 0,
+            }"
+          >
+            {{ formatAmountRounded(monthData.totalOptionalExpenses, budgetStore.effectiveMainCurrency) }}
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="canDeleteMonth"
+        :ref="setCardRef(8)"
         class="tooltip text-center"
         data-tip="Удалить месяц"
       >
@@ -260,6 +279,7 @@ watch([
   () => monthData.value.startBalance,
   () => monthData.value.totalIncome,
   () => monthData.value.totalExpenses,
+  () => monthData.value.totalOptionalExpenses,
   () => monthData.value.calculatedBalanceChange,
   () => monthData.value.calculatedPocketExpenses,
   () => monthData.value.currencyProfitLoss,

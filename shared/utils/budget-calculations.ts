@@ -47,6 +47,12 @@ export const computeMonthData = (
     currentMonthRates,
   )
 
+  const totalOptionalExpenses = calculateTotalBalance(
+    monthData.expenseEntries.filter(entry => entry.isOptional),
+    mainCurrency,
+    currentMonthRates,
+  )
+
   const nextMonth = findNextMonth(monthData, allMonths)
 
   let nextMonthStartBalance: number | null = null
@@ -112,6 +118,7 @@ export const computeMonthData = (
     startBalance,
     totalIncome,
     totalExpenses,
+    totalOptionalExpenses,
     calculatedBalanceChange,
     calculatedPocketExpenses,
     currencyProfitLoss,
@@ -136,6 +143,7 @@ export const computeYearSummary = (
       totalStartBalance: 0,
       totalIncome: 0,
       totalExpenses: 0,
+      totalOptionalExpenses: 0,
       totalBalanceChange: 0,
       totalPocketExpenses: 0,
       totalCurrencyProfitLoss: 0,
@@ -143,6 +151,7 @@ export const computeYearSummary = (
       avgStartBalance: 0,
       avgIncome: 0,
       avgExpenses: 0,
+      avgOptionalExpenses: 0,
       avgBalanceChange: 0,
       avgPocketExpenses: 0,
       avgCurrencyProfitLoss: 0,
@@ -154,6 +163,7 @@ export const computeYearSummary = (
     acc.totalStartBalance += month.startBalance
     acc.totalIncome += month.totalIncome
     acc.totalExpenses += month.totalExpenses
+    acc.totalOptionalExpenses += month.totalOptionalExpenses
 
     if (month.calculatedBalanceChange !== null) {
       acc.totalBalanceChange += month.calculatedBalanceChange
@@ -180,6 +190,7 @@ export const computeYearSummary = (
     totalStartBalance: 0,
     totalIncome: 0,
     totalExpenses: 0,
+    totalOptionalExpenses: 0,
     totalBalanceChange: 0,
     totalPocketExpenses: 0,
     totalCurrencyProfitLoss: 0,
@@ -196,6 +207,7 @@ export const computeYearSummary = (
     totalStartBalance: totals.totalStartBalance,
     totalIncome: totals.totalIncome,
     totalExpenses: totals.totalExpenses,
+    totalOptionalExpenses: totals.totalOptionalExpenses,
     totalBalanceChange: totals.totalBalanceChange,
     totalPocketExpenses: totals.totalPocketExpenses,
     totalCurrencyProfitLoss: totals.totalCurrencyProfitLoss,
@@ -203,6 +215,7 @@ export const computeYearSummary = (
     avgStartBalance: totals.totalStartBalance / monthCount,
     avgIncome: totals.totalIncome / monthCount,
     avgExpenses: totals.totalExpenses / monthCount,
+    avgOptionalExpenses: totals.totalOptionalExpenses / monthCount,
     avgBalanceChange: totals.balanceChangeCount > 0 ? totals.totalBalanceChange / totals.balanceChangeCount : 0,
     avgPocketExpenses: totals.pocketExpensesCount > 0 ? totals.totalPocketExpenses / totals.pocketExpensesCount : 0,
     avgCurrencyProfitLoss: totals.currencyProfitLossCount > 0 ? totals.totalCurrencyProfitLoss / totals.currencyProfitLossCount : 0,

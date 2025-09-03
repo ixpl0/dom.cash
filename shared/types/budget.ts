@@ -18,6 +18,7 @@ export interface ComputedMonthData extends MonthData {
   startBalance: number
   totalIncome: number
   totalExpenses: number
+  totalOptionalExpenses: number
   calculatedBalanceChange: number | null
   calculatedPocketExpenses: number | null
   currencyProfitLoss: number | null
@@ -33,6 +34,7 @@ export interface YearSummary {
   totalStartBalance: number
   totalIncome: number
   totalExpenses: number
+  totalOptionalExpenses: number
   totalBalanceChange: number
   totalPocketExpenses: number
   totalCurrencyProfitLoss: number
@@ -40,6 +42,7 @@ export interface YearSummary {
   avgStartBalance: number
   avgIncome: number
   avgExpenses: number
+  avgOptionalExpenses: number
   avgBalanceChange: number
   avgPocketExpenses: number
   avgCurrencyProfitLoss: number

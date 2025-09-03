@@ -208,6 +208,31 @@
           </div>
         </div>
       </div>
+
+      <div :ref="setHeaderRef(7)">
+        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+          <div
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            data-tip="Сумма всех необязательных расходов, конвертированных в основную валюту"
+          >
+            Необязательные расходы
+          </div>
+          <div class="flex flex-col gap-1">
+            <div
+              class="text-error font-bold tooltip tooltip-bottom"
+              data-tip="Общая сумма всех необязательных расходов за год"
+            >
+              {{ formatAmountRounded(yearStats.totalOptionalExpenses, mainCurrency) }}
+            </div>
+            <div
+              class="text-sm text-error/80 tooltip tooltip-bottom"
+              data-tip="Средние необязательные расходы в месяц"
+            >
+              {{ formatAmountRounded(yearStats.averageOptionalExpenses, mainCurrency) }}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <hr>
   </li>
@@ -256,6 +281,8 @@ const yearStats = computed(() => {
       averageIncome: 0,
       totalExpenses: 0,
       averageExpenses: 0,
+      totalOptionalExpenses: 0,
+      averageOptionalExpenses: 0,
       totalPocketExpenses: 0,
       averagePocketExpenses: 0,
       totalAllExpenses: 0,
@@ -273,6 +300,8 @@ const yearStats = computed(() => {
     averageIncome: summary.avgIncome,
     totalExpenses: summary.totalExpenses,
     averageExpenses: summary.avgExpenses,
+    totalOptionalExpenses: summary.totalOptionalExpenses,
+    averageOptionalExpenses: summary.avgOptionalExpenses,
     totalPocketExpenses: summary.totalPocketExpenses,
     averagePocketExpenses: summary.avgPocketExpenses,
     totalAllExpenses: summary.totalAllExpenses,
