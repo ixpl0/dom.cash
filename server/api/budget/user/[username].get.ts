@@ -113,6 +113,7 @@ export default defineEventHandler(async (event) => {
     amount: number
     currency: string
     date: string | null
+    isOptional: boolean | null
   }> = []
 
   if (monthIds.length > 0) {
@@ -146,6 +147,7 @@ export default defineEventHandler(async (event) => {
       amount: e.amount,
       currency: e.currency,
       date: e.date,
+      isOptional: e.isOptional || false,
     }))
 
     const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
