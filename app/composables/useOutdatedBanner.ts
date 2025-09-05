@@ -1,22 +1,18 @@
 import { ref } from 'vue'
 
-const bannerRef = ref<{ show: () => void, hide: () => void } | null>(null)
+const isOutdatedBannerVisible = ref(false)
 
 export const useOutdatedBanner = () => {
-  const setWarningBannerRef = (ref: { show: () => void, hide: () => void } | null) => {
-    bannerRef.value = ref
-  }
-
   const showWarningBanner = () => {
-    bannerRef.value?.show()
+    isOutdatedBannerVisible.value = true
   }
 
   const hideWarningBanner = () => {
-    bannerRef.value?.hide()
+    isOutdatedBannerVisible.value = false
   }
 
   return {
-    setWarningBannerRef,
+    isOutdatedBannerVisible: readonly(isOutdatedBannerVisible),
     showWarningBanner,
     hideWarningBanner,
   }

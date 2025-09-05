@@ -98,7 +98,7 @@
         <div class="flex gap-2">
           <button
             class="btn btn-ghost btn-sm"
-            @click="openChartModal"
+            @click="modalsStore.openChartModal"
           >
             <Icon
               name="heroicons:chart-bar"
@@ -208,10 +208,7 @@
 
     <BudgetCurrencyRatesModal />
 
-    <BudgetChartModal
-      ref="chartModal"
-      @close="closeChartModal"
-    />
+    <BudgetChartModal />
   </div>
 </template>
 
@@ -220,8 +217,10 @@ import { getCurrencyName } from '~~/shared/utils/currencies'
 import { findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
 import { useBudgetStore } from '~/stores/budget'
+import { useModalsStore } from '~/stores/modals'
 
 const budgetStore = useBudgetStore()
+const modalsStore = useModalsStore()
 const route = useRoute()
 
 const targetUsername = computed(() => {
@@ -244,7 +243,6 @@ const isCreatingCurrentMonth = ref(false)
 const isCreatingNextMonth = ref(false)
 const isCreatingPreviousMonth = ref(false)
 const isImportModalOpen = ref(false)
-const chartModal = ref<{ show: () => void, hide: () => void }>()
 const BudgetChartModal = defineAsyncComponent(() => import('~/components/budget/ChartModal.vue'))
 
 const isOwnBudget = computed(() => budgetStore.isOwnBudget)
@@ -387,14 +385,6 @@ const openImportModal = (): void => {
 
 const closeImportModal = (): void => {
   isImportModalOpen.value = false
-}
-
-const openChartModal = (): void => {
-  chartModal.value?.show()
-}
-
-const closeChartModal = (): void => {
-  // Модальное окно закроется автоматически
 }
 
 const handleImported = async (): Promise<void> => {

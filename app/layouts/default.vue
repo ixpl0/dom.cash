@@ -35,7 +35,7 @@
         <template v-if="isAuthenticated">
           <button
             class="btn btn-outline btn-sm"
-            @click="openSharedBudgetsModal"
+            @click="modalsStore.openSharedBudgetsModal"
           >
             <Icon
               name="heroicons:users"
@@ -45,7 +45,7 @@
           </button>
           <button
             class="btn btn-outline btn-sm"
-            @click="openShareModal"
+            @click="modalsStore.openShareModal('')"
           >
             <Icon
               name="heroicons:share"
@@ -110,37 +110,22 @@
       </div>
     </header>
 
-    <OutdatedDataBanner ref="outdatedBanner" />
+    <OutdatedDataBanner />
 
     <main>
       <slot />
     </main>
 
-    <BudgetShareModal ref="shareModal" />
-    <BudgetSharedBudgetsModal ref="sharedBudgetsModal" />
+    <BudgetShareModal />
+    <BudgetSharedBudgetsModal />
     <AppToast />
   </div>
 </template>
 
 <script setup lang="ts">
 import ThemePicker from '~/components/ui/ThemePicker.vue'
+import { useModalsStore } from '~/stores/modals'
 
 const { user, isAuthenticated, logout } = useAuth()
-const { setWarningBannerRef } = useOutdatedBanner()
-
-const shareModal = ref()
-const sharedBudgetsModal = ref()
-const outdatedBanner = ref()
-
-onMounted(() => {
-  setWarningBannerRef(outdatedBanner.value)
-})
-
-const openShareModal = (): void => {
-  shareModal.value?.show()
-}
-
-const openSharedBudgetsModal = (): void => {
-  sharedBudgetsModal.value?.show()
-}
+const modalsStore = useModalsStore()
 </script>

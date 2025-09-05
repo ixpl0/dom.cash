@@ -214,6 +214,8 @@
 </template>
 
 <script setup lang="ts">
+import { useModalsStore } from '~/stores/modals'
+
 interface ShareEntry {
   id: string
   username: string
@@ -224,6 +226,8 @@ interface ShareEntry {
 const shares = ref<ShareEntry[]>([])
 const isLoading = ref(false)
 const modal = ref<HTMLDialogElement>()
+const modalsStore = useModalsStore()
+const isOpen = computed(() => modalsStore.shareModal.isOpen)
 
 const isAddingNew = ref(false)
 const isAdding = ref(false)
@@ -348,13 +352,8 @@ const loadShares = async (): Promise<void> => {
   }
 }
 
-const show = async (): Promise<void> => {
-  modal.value?.showModal()
-  await loadShares()
-}
-
 const hide = (): void => {
-  modal.value?.close()
+  modalsStore.closeShareModal()
 }
 
 const handleDialogClose = (): void => {
@@ -362,5 +361,13 @@ const handleDialogClose = (): void => {
   cancelEdit()
 }
 
-defineExpose({ show, hide })
+watch(isOpen, async (open) => {
+  if (open) {
+    modal.value?.showModal()
+    await loadShares()
+  }
+  else {
+    modal.value?.close()
+  }
+})
 </script>

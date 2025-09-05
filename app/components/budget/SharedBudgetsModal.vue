@@ -77,6 +77,8 @@
 </template>
 
 <script setup lang="ts">
+import { useModalsStore } from '~/stores/modals'
+
 interface SharedBudget {
   id: string
   username: string
@@ -88,6 +90,8 @@ const sharedBudgets = ref<SharedBudget[]>([])
 const modal = ref<HTMLDialogElement>()
 const isRevoking = ref<string | null>(null)
 const isLoading = ref(false)
+const modalsStore = useModalsStore()
+const isOpen = computed(() => modalsStore.sharedBudgetsModal.isOpen)
 
 const revokeAccess = async (id: string): Promise<void> => {
   const budget = sharedBudgets.value.find(b => b.id === id)
@@ -134,14 +138,17 @@ const loadSharedBudgets = async (): Promise<void> => {
   }
 }
 
-const show = async (): Promise<void> => {
-  modal.value?.showModal()
-  await loadSharedBudgets()
-}
-
 const hide = (): void => {
-  modal.value?.close()
+  modalsStore.closeSharedBudgetsModal()
 }
 
-defineExpose({ show, hide })
+watch(isOpen, async (open) => {
+  if (open) {
+    modal.value?.showModal()
+    await loadSharedBudgets()
+  }
+  else {
+    modal.value?.close()
+  }
+})
 </script>

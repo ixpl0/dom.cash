@@ -44,6 +44,7 @@
 
 <script setup lang="ts">
 import { useBudgetStore } from '~/stores/budget'
+import { useModalsStore } from '~/stores/modals'
 import type { ComposeOption } from 'echarts/core'
 import type { LineSeriesOption } from 'echarts/charts'
 import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, DataZoomComponentOption } from 'echarts/components'
@@ -82,15 +83,10 @@ type ECOption = ComposeOption<
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
-interface Emits {
-  close: []
-}
-
-const emit = defineEmits<Emits>()
-
 const budgetStore = useBudgetStore()
+const modalsStore = useModalsStore()
 const modal = ref<HTMLDialogElement>()
-const isOpen = ref(false)
+const isOpen = computed(() => modalsStore.chartModal.isOpen)
 
 const chartData = computed(() => {
   const months = budgetStore.computedMonths
@@ -399,33 +395,24 @@ const chartOption = computed(() => ({
   ],
 } satisfies ECOption))
 
-const show = () => {
-  if (import.meta.client) {
-    themeUIColors.value = getThemeUIColors()
-  }
-  isOpen.value = true
-  modal.value?.showModal()
-}
-
 const handleLegendSelectChanged = (selected: Record<string, boolean>) => {
   legendSelected.value = selected
   saveLegendSelected(selected)
 }
 
 const hide = () => {
-  isOpen.value = false
-  modal.value?.close()
-  emit('close')
+  modalsStore.closeChartModal()
 }
 
 watch(isOpen, (open) => {
   if (open) {
+    if (import.meta.client) {
+      themeUIColors.value = getThemeUIColors()
+    }
     modal.value?.showModal()
   }
   else {
     modal.value?.close()
   }
 })
-
-defineExpose({ show, hide })
 </script>

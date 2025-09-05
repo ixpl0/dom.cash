@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="isVisible"
+    v-if="isOutdatedBannerVisible"
     class="alert alert-error alert-soft flex"
   >
     <div class="flex items-center justify-between max-w-7xl mx-auto gap-4">
@@ -38,22 +38,13 @@
 </template>
 
 <script setup lang="ts">
-const isVisible = ref(false)
-
-const show = () => {
-  isVisible.value = true
-}
+const { isOutdatedBannerVisible, hideWarningBanner } = useOutdatedBanner()
 
 const hide = () => {
-  isVisible.value = false
+  hideWarningBanner()
 }
 
 const refreshPage = () => {
   window.location.reload()
 }
-
-defineExpose({
-  show,
-  hide,
-})
 </script>

@@ -15,6 +15,19 @@ interface CurrencyRatesModalState {
   sourceMonthTitle?: string
 }
 
+interface ChartModalState {
+  isOpen: boolean
+}
+
+interface ShareModalState {
+  isOpen: boolean
+  monthId: string | null
+}
+
+interface SharedBudgetsModalState {
+  isOpen: boolean
+}
+
 export const useModalsStore = defineStore('modals', () => {
   const entryModal = ref<EntryModalState>({
     isOpen: false,
@@ -31,6 +44,19 @@ export const useModalsStore = defineStore('modals', () => {
     rates: {},
     isUsingOtherMonthRates: false,
     sourceMonthTitle: undefined,
+  })
+
+  const chartModal = ref<ChartModalState>({
+    isOpen: false,
+  })
+
+  const shareModal = ref<ShareModalState>({
+    isOpen: false,
+    monthId: null,
+  })
+
+  const sharedBudgetsModal = ref<SharedBudgetsModalState>({
+    isOpen: false,
   })
 
   const openEntryModal = (params: {
@@ -79,12 +105,48 @@ export const useModalsStore = defineStore('modals', () => {
     }
   }
 
+  const openChartModal = () => {
+    chartModal.value.isOpen = true
+  }
+
+  const closeChartModal = () => {
+    chartModal.value.isOpen = false
+  }
+
+  const openShareModal = (monthId: string) => {
+    shareModal.value = {
+      isOpen: true,
+      monthId,
+    }
+  }
+
+  const closeShareModal = () => {
+    shareModal.value.isOpen = false
+  }
+
+  const openSharedBudgetsModal = () => {
+    sharedBudgetsModal.value.isOpen = true
+  }
+
+  const closeSharedBudgetsModal = () => {
+    sharedBudgetsModal.value.isOpen = false
+  }
+
   return {
     entryModal,
     currencyRatesModal,
+    chartModal,
+    shareModal,
+    sharedBudgetsModal,
     openEntryModal,
     closeEntryModal,
     openCurrencyRatesModal,
     closeCurrencyRatesModal,
+    openChartModal,
+    closeChartModal,
+    openShareModal,
+    closeShareModal,
+    openSharedBudgetsModal,
+    closeSharedBudgetsModal,
   }
 })
