@@ -87,7 +87,7 @@ interface SharedBudget {
 }
 
 const sharedBudgets = ref<SharedBudget[]>([])
-const modal = ref<HTMLDialogElement>()
+const modal = ref<HTMLDialogElement | null>(null)
 const isRevoking = ref<string | null>(null)
 const isLoading = ref(false)
 const modalsStore = useModalsStore()

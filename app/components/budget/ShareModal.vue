@@ -225,7 +225,7 @@ interface ShareEntry {
 
 const shares = ref<ShareEntry[]>([])
 const isLoading = ref(false)
-const modal = ref<HTMLDialogElement>()
+const modal = ref<HTMLDialogElement | null>(null)
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.shareModal.isOpen)
 

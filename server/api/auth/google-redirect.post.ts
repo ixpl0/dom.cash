@@ -1,4 +1,5 @@
-import { getQuery } from 'h3'
+import { getQuery, getHeader, createError } from 'h3'
+import { z } from 'zod'
 import { authRateLimit } from '~~/server/utils/rate-limiter'
 import { verifyGoogleToken } from '~~/server/utils/google-oauth'
 import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, findUser } from '~~/server/utils/auth'
@@ -6,19 +7,31 @@ import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 
+type GoogleTokenResponse = {
+  access_token?: string
+  expires_in?: number
+  id_token?: string
+  scope?: string
+  token_type?: string
+  refresh_token?: string
+}
+
 export default defineEventHandler(async (event) => {
   authRateLimit(event)
 
   const query = getQuery(event)
-  const code = query.code as string
-  const state = query.state as string
-
-  if (!code) {
+  const querySchema = z.object({
+    code: z.string().min(1),
+    state: z.string().optional(),
+  })
+  const parsed = querySchema.safeParse(query)
+  if (!parsed.success) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Missing authorization code',
     })
   }
+  const { code, state } = parsed.data
 
   try {
     const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
@@ -57,7 +70,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const tokens = await tokenResponse.json()
+    const tokens: GoogleTokenResponse = await tokenResponse.json()
     const { id_token } = tokens
 
     if (!id_token) {

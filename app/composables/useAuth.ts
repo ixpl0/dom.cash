@@ -49,7 +49,10 @@ export const useAuth = () => {
         throw new Error(error.value.message || 'Authentication failed')
       }
 
-      const authenticatedUser = userData.value!
+      const authenticatedUser = userData.value
+      if (!authenticatedUser) {
+        throw new Error('Authentication failed')
+      }
       setUser(authenticatedUser)
 
       if (import.meta.client) {
@@ -84,8 +87,9 @@ export const useAuth = () => {
       authUrl.searchParams.set('access_type', 'online')
       authUrl.searchParams.set('prompt', 'select_account')
 
-      if (currentUrl.searchParams.get('redirect')) {
-        authUrl.searchParams.set('state', currentUrl.searchParams.get('redirect')!)
+      const redirect = currentUrl.searchParams.get('redirect')
+      if (redirect) {
+        authUrl.searchParams.set('state', redirect)
       }
 
       window.location.href = authUrl.toString()

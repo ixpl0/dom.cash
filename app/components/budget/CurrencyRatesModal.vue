@@ -87,7 +87,7 @@ interface CurrencyRate {
 const modalsStore = useModalsStore()
 const currencyRatesModal = computed(() => modalsStore.currencyRatesModal)
 
-const modal = ref<HTMLDialogElement>()
+const modal = ref<HTMLDialogElement | null>(null)
 const searchQuery = ref('')
 
 const { getRecentCurrencies } = useRecentCurrencies()
