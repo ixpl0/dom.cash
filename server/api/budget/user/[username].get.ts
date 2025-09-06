@@ -1,3 +1,5 @@
+import { getQuery, getRouterParam, createError } from 'h3'
+import { z } from 'zod'
 import { eq, or, and, desc, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
@@ -75,7 +77,17 @@ export default defineEventHandler(async (event) => {
   }
 
   const query = getQuery(event)
-  const yearsParam = query.years as string | undefined
+  const querySchema = z.object({
+    years: z.string().optional(),
+  })
+  const parsed = querySchema.safeParse(query)
+  if (!parsed.success) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid query parameters',
+    })
+  }
+  const yearsParam = parsed.data.years
 
   let monthsWhereClause
   if (yearsParam) {

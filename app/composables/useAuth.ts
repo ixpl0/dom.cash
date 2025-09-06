@@ -4,12 +4,12 @@ export const useAuth = () => {
   const { user, setUser, clearUser, isAuthenticated } = useAuthState()
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
-    const user = await $fetch<User>('/api/auth', {
+    const authenticatedUser = await $fetch<User>('/api/auth', {
       method: 'POST',
       body: credentials,
     })
 
-    setUser(user)
+    setUser(authenticatedUser)
 
     if (import.meta.client) {
       localStorage.setItem('hasSession', 'true')

@@ -1,4 +1,4 @@
-import { getMethod, getHeaders, createError } from 'h3'
+import { defineEventHandler, getMethod, getHeaders, createError } from 'h3'
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024 // 1MB
 
