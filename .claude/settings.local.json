@@ -22,7 +22,8 @@
       "mcp__Code_Maestro_-_Filesystem_MCP__read_file",
       "mcp__Code_Maestro_-_Filesystem_MCP__read_multiple_files",
       "mcp__Code_Maestro_-_Filesystem_MCP__edit_file",
-      "mcp__Code_Maestro_-_Filesystem_MCP__directory_tree"
+      "mcp__Code_Maestro_-_Filesystem_MCP__directory_tree",
+      "Bash(pnpm playwright test:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

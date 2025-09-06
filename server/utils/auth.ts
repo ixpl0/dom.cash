@@ -182,10 +182,13 @@ export const createSession = async (userId: string, now: Date, event: H3Event): 
 }
 
 export const setAuthCookie = (event: H3Event, token: string) => {
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isLocalhost = event.node?.req?.headers?.host?.includes('localhost')
+
   setCookie(event, 'auth-token', token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction && !isLocalhost,
     path: '/',
     maxAge: 60 * 60 * 24 * 30,
   })

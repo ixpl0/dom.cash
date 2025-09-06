@@ -32,7 +32,10 @@
           class="w-16 h-16"
         >
       </div>
-      <h2 class="text-2xl font-bold mb-2">
+      <h2
+        class="text-2xl font-bold mb-2"
+        data-testid="no-budget-message"
+      >
         Пока нет данных о бюджете
       </h2>
       <p class="text-lg opacity-70 mb-6">
@@ -45,6 +48,7 @@
         <button
           class="btn btn-primary btn-lg"
           :disabled="isCreatingCurrentMonth"
+          data-testid="create-month-btn"
           @click="createCurrentMonth"
         >
           <span
@@ -58,6 +62,7 @@
         </button>
         <button
           class="btn btn-outline btn-lg"
+          data-testid="import-budget-btn"
           @click="openImportModal"
         >
           📥 Импорт бюджета
@@ -70,7 +75,10 @@
       class="space-y-6"
     >
       <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold">
+        <h1
+          class="text-3xl font-bold"
+          data-testid="budget-title"
+        >
           Бюджет
         </h1>
         <div class="flex items-center gap-2 mt-2">

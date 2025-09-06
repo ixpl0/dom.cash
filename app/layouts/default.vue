@@ -20,6 +20,7 @@
           <NuxtLink
             to="/budget"
             class="btn btn-sm btn-outline"
+            data-testid="budget-nav-link"
           >
             <Icon
               name="heroicons:banknotes"
@@ -35,6 +36,7 @@
         <template v-if="isAuthenticated">
           <button
             class="btn btn-outline btn-sm"
+            data-testid="shared-budgets-btn"
             @click="modalsStore.openSharedBudgetsModal"
           >
             <Icon
@@ -45,6 +47,7 @@
           </button>
           <button
             class="btn btn-outline btn-sm"
+            data-testid="share-btn"
             @click="modalsStore.openShareModal('')"
           >
             <Icon
@@ -65,6 +68,7 @@
             tabindex="0"
             role="button"
             class="btn btn-ghost"
+            data-testid="user-dropdown"
           >
             <Icon
               name="heroicons:user"
@@ -84,6 +88,7 @@
             <li>
               <button
                 class="btn btn-ghost btn-sm"
+                data-testid="logout-btn"
                 @click="logout"
               >
                 <Icon

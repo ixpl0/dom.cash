@@ -2,7 +2,10 @@
   <div class="min-h-screen bg-base-100">
     <main class="container mx-auto px-4 py-8">
       <div class="text-center space-y-6">
-        <h2 class="text-4xl font-bold flex items-center justify-center gap-3">
+        <h2
+          class="text-4xl font-bold flex items-center justify-center gap-3"
+          data-testid="home-title"
+        >
           <img
             src="/logo.svg"
             alt="dom.cash"
@@ -10,7 +13,10 @@
           >
           dom.cash
         </h2>
-        <p class="text-xl opacity-70">
+        <p
+          class="text-xl opacity-70"
+          data-testid="home-subtitle"
+        >
           Прозрачность домашних финансов
         </p>
 
@@ -20,6 +26,7 @@
           <NuxtLink
             to="/budget"
             class="btn btn-primary btn-lg"
+            data-testid="go-to-budget-btn"
           >
             <Icon
               name="heroicons:banknotes"

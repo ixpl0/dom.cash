@@ -25,6 +25,7 @@
               maxlength="64"
               :disabled="isLoading"
               autocomplete="username"
+              data-testid="username-input"
             >
             <label
               v-if="errors.username"
@@ -49,6 +50,7 @@
               maxlength="100"
               :disabled="isLoading"
               autocomplete="current-password"
+              data-testid="password-input"
             >
             <label
               v-if="errors.password"
@@ -70,6 +72,7 @@
               type="submit"
               class="btn btn-primary w-full"
               :disabled="isLoading"
+              data-testid="submit-btn"
             >
               <span
                 v-if="isLoading"
