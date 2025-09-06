@@ -21,7 +21,12 @@
     "deploy:test": "pnpm run build && wrangler deploy --assets .output/public --env=\"\"",
     "deploy:prod": "pnpm run build && wrangler deploy --assets .output/public --env=\"production\"",
     "deploy:all": "pnpm run deploy:test && pnpm run deploy:prod",
-    "prepare": "husky"
+    "prepare": "husky",
+    "preview:e2e": "nuxt preview -p 3000",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@nuxt/icon": "^2.0.0",
@@ -43,6 +48,7 @@
     "@iconify-json/heroicons": "^1.2.2",
     "@nuxt/eslint": "1.7.1",
     "@pinia/nuxt": "^0.11.2",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/vite": "^4.1.11",
     "@types/jsonwebtoken": "^9.0.10",
     "eslint": "^9.32.0",

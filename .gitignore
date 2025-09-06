@@ -30,3 +30,9 @@ backups
 
 # Wrangler
 .wrangler
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+tests/.auth/
