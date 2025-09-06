@@ -7,9 +7,9 @@ test('home page renders correctly', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Перейти к бюджету' })).toBeVisible()
 })
 
-test('navigation to budget page works', async ({ page }) => {
+test('navigation to budget redirects to auth for unauthenticated user', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('link', { name: 'Перейти к бюджету' }).click()
-  await page.waitForURL('/budget')
-  await expect(page).toHaveURL('/budget')
+  await page.waitForURL('/auth?redirect=/budget')
+  await expect(page).toHaveURL('/auth?redirect=/budget')
 })
