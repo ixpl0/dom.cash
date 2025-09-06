@@ -26,6 +26,7 @@ export default defineConfig({
         storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
+      testIgnore: /.*\.teardown\.spec\.ts/,
     },
     {
       name: 'firefox',
@@ -34,6 +35,7 @@ export default defineConfig({
         storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
+      testIgnore: /.*\.teardown\.spec\.ts/,
     },
     {
       name: 'webkit',
@@ -42,6 +44,7 @@ export default defineConfig({
         storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
+      testIgnore: /.*\.teardown\.spec\.ts/,
     },
     {
       name: 'chromium-unauthenticated',
@@ -57,6 +60,12 @@ export default defineConfig({
       name: 'webkit-unauthenticated',
       testMatch: /.*\.unauth\.spec\.ts/,
       use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'teardown',
+      testMatch: /.*\.teardown\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['chromium', 'firefox', 'webkit', 'chromium-unauthenticated', 'firefox-unauthenticated', 'webkit-unauthenticated'],
     },
   ],
 })

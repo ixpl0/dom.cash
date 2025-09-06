@@ -22,8 +22,7 @@
     "deploy:prod": "pnpm run build && wrangler deploy --assets .output/public --env=\"production\"",
     "deploy:all": "pnpm run deploy:test && pnpm run deploy:prod",
     "prepare": "husky",
-    "preview:e2e": "nuxt preview",
-    "pretest:e2e": "pnpm build",
+    "preview:e2e": "nuxt dev --port 8787",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
