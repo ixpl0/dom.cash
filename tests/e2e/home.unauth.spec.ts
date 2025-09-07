@@ -29,16 +29,9 @@ test('unauthenticated header shows Login button leading to /auth', async ({ page
 test('navigation to budget redirects to auth for unauthenticated user', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('go-to-budget-btn').click()
+  await page.waitForURL(url => url.pathname === '/auth')
 
-  await page.waitForURL((url) => {
-    return url.pathname === '/budget' || url.pathname === '/auth'
-  })
-
-  const currentUrl = page.url()
-  if (currentUrl.includes('/auth')) {
-    await expect(page).toHaveURL('/auth?redirect=/budget')
-  }
-  else {
-    console.log('User was authenticated, skipping redirect check')
-  }
+  const url = new URL(page.url())
+  const redirect = url.searchParams.get('redirect')
+  expect(redirect).toBe('/budget')
 })

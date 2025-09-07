@@ -34,9 +34,6 @@
       "Bash(pnpm db:backup:*)",
       "Bash(pnpm run deploy:*)",
       "Bash(pnpm deploy:*)",
-      "Bash(rm:*)",
-      "Bash(mv:*)",
-      "Bash(cp:*)",
       "Read(./.env)"
     ]
   }
