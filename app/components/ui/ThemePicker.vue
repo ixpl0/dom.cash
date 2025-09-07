@@ -1,5 +1,8 @@
 <template>
-  <label class="flex items-center gap-2">
+  <label
+    class="flex items-center gap-2"
+    data-testid="theme-picker-label"
+  >
     <Icon
       name="heroicons:paint-brush"
       size="20"
@@ -10,6 +13,7 @@
       v-model="model"
       class="select select-bordered select-sm w-44"
       aria-label="Выбрать тему"
+      data-testid="theme-select"
     >
       <option
         v-for="t in options"
@@ -39,7 +43,6 @@ const model = computed({
 const options = computed(() => ['auto', ...themes])
 
 const formatTheme = (t: string) => {
-  if (t === 'auto') return 'Авто'
-  return t.replace(/\b\w/g, c => c.toUpperCase())
+  return t === 'auto' ? 'Auto' : t.replace(/\b\w/g, c => c.toUpperCase())
 }
 </script>

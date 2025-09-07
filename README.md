@@ -16,7 +16,41 @@ The application implements **Thin Handlers with Clean Services** pattern:
 
 ### Testing Strategy
 
-Тестирование будет реализовано с помощью e2e тестов в будущем.
+#### E2E Tests
+
+Приложение использует **Playwright** для end-to-end тестирования:
+
+- **Аутентификация** - автоматическая setup-фаза создает тестового пользователя и сохраняет состояние аутентификации
+- **Параллельное тестирование** - тесты запускаются на Chromium, Firefox и WebKit
+- **Изоляция тестов** - каждый тестовый запуск использует уникального пользователя с временной меткой
+- **Автоматическая очистка** - teardown-фаза удаляет тестовые данные после прогона
+
+##### Структура тестов
+
+- `tests/e2e/auth.setup.ts` - начальная аутентификация и сохранение состояния
+- `tests/e2e/helpers/auth.ts` - вспомогательные функции для аутентификации
+- `tests/e2e/*.spec.ts` - тестовые сценарии
+- `tests/e2e/*.unauth.spec.ts` - тесты для неаутентифицированных пользователей
+- `tests/e2e/cleanup.teardown.spec.ts` - очистка тестовых данных через API
+
+##### Запуск тестов
+
+```bash
+# Запуск всех e2e тестов
+pnpm run test:e2e
+
+# Запуск в режиме отладки с UI
+pnpm run test:e2e:ui
+
+# Запуск тестов с видимым браузером
+pnpm run test:e2e:headed
+```
+
+##### Покрытие тестами
+
+- **Главная страница** - отображение и навигация для неаутентифицированных пользователей
+- **Страница бюджета** - доступ, отображение информации пользователя, UI создания бюджета
+- **Общие компоненты** - кнопки шаринга, выпадающее меню пользователя
 
 ### Frontend Architecture Principles
 
@@ -220,6 +254,11 @@ pnpm run deploy:prod    # Deploy to production
 # Code quality
 pnpm run lint:fix       # Auto-fix ESLint issues
 pnpm run typecheck      # Check TypeScript errors
+
+# E2E testing
+pnpm run test:e2e       # Run all e2e tests
+pnpm run test:e2e:ui    # Run tests with interactive UI
+pnpm run test:e2e:headed # Run tests with visible browser
 ```
 
 ## Project Structure

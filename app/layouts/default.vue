@@ -5,6 +5,7 @@
         <NuxtLink
           to="/"
           class="text-2xl font-bold flex items-center gap-2 ml-4"
+          data-testid="logo-link"
         >
           <img
             src="/logo.svg"
@@ -105,6 +106,7 @@
           v-else
           to="/auth"
           class="btn btn-primary"
+          data-testid="login-btn"
         >
           <Icon
             name="heroicons:arrow-right-end-on-rectangle"
