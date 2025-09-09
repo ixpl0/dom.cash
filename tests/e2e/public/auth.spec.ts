@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test'
+import { INPUT_LIMITS } from '../constants'
+import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
@@ -36,8 +38,8 @@ test.describe('Authentication', () => {
     const usernameInput = page.getByTestId('username-input')
     const passwordInput = page.getByTestId('password-input')
 
-    const longUsername = 'a'.repeat(65)
-    const longPassword = 'a'.repeat(101)
+    const longUsername = 'a'.repeat(INPUT_LIMITS.USERNAME_MAX + 1)
+    const longPassword = 'a'.repeat(INPUT_LIMITS.PASSWORD_MAX + 1)
 
     await usernameInput.fill(longUsername)
     await passwordInput.fill(longPassword)
@@ -45,16 +47,14 @@ test.describe('Authentication', () => {
     const actualUsername = await usernameInput.inputValue()
     const actualPassword = await passwordInput.inputValue()
 
-    expect(actualUsername.length).toBe(64)
-    expect(actualPassword.length).toBe(100)
+    expect(actualUsername.length).toBe(INPUT_LIMITS.USERNAME_MAX)
+    expect(actualPassword.length).toBe(INPUT_LIMITS.PASSWORD_MAX)
   })
 
   test('successful login redirects to home page', async ({ page }) => {
     const testUsername = `test_${Date.now()}@example.com`
 
-    // Ждём полной загрузки страницы и Vue компонента
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000) // Даём время Vue компоненту инициализироваться
+    await waitForHydration(page)
 
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
@@ -76,9 +76,8 @@ test.describe('Authentication', () => {
 
     const testUsername = `test_${Date.now()}@example.com`
 
-    // Ждём полной загрузки страницы и Vue компонента
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000) // Даём время Vue компоненту инициализироваться
+    // Ждём гидрации Vue компонента
+    await waitForHydration(page)
 
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
@@ -146,13 +145,13 @@ test.describe('Authentication', () => {
     const usernameInput = page.getByTestId('username-input')
     const passwordInput = page.getByTestId('password-input')
 
-    await expect(usernameInput).toHaveAttribute('minlength', '3')
-    await expect(usernameInput).toHaveAttribute('maxlength', '64')
+    await expect(usernameInput).toHaveAttribute('minlength', INPUT_LIMITS.USERNAME_MIN.toString())
+    await expect(usernameInput).toHaveAttribute('maxlength', INPUT_LIMITS.USERNAME_MAX.toString())
     await expect(usernameInput).toHaveAttribute('required', '')
     await expect(usernameInput).toHaveAttribute('autocomplete', 'username')
 
-    await expect(passwordInput).toHaveAttribute('minlength', '8')
-    await expect(passwordInput).toHaveAttribute('maxlength', '100')
+    await expect(passwordInput).toHaveAttribute('minlength', INPUT_LIMITS.PASSWORD_MIN.toString())
+    await expect(passwordInput).toHaveAttribute('maxlength', INPUT_LIMITS.PASSWORD_MAX.toString())
     await expect(passwordInput).toHaveAttribute('required', '')
     await expect(passwordInput).toHaveAttribute('type', 'password')
     await expect(passwordInput).toHaveAttribute('autocomplete', 'current-password')

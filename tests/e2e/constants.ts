@@ -1,0 +1,6 @@
+export const INPUT_LIMITS = {
+  USERNAME_MIN: 3,
+  USERNAME_MAX: 64,
+  PASSWORD_MIN: 8,
+  PASSWORD_MAX: 100,
+}
