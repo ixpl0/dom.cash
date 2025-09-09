@@ -26,46 +26,18 @@ export default defineConfig({
         storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
-      testIgnore: [/.*\.teardown\.spec\.ts/, /.*\.unauth\.spec\.ts/],
-    },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        storageState: '.auth/user.json',
-      },
-      dependencies: ['setup'],
-      testIgnore: [/.*\.teardown\.spec\.ts/, /.*\.unauth\.spec\.ts/],
-    },
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        storageState: '.auth/user.json',
-      },
-      dependencies: ['setup'],
-      testIgnore: [/.*\.teardown\.spec\.ts/, /.*\.unauth\.spec\.ts/],
+      testIgnore: [/.*\.teardown\.spec\.ts/, '**/unauth/**'],
     },
     {
       name: 'chromium-unauthenticated',
-      testMatch: /.*\.unauth\.spec\.ts/,
+      testMatch: '**/unauth/**',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox-unauthenticated',
-      testMatch: /.*\.unauth\.spec\.ts/,
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit-unauthenticated',
-      testMatch: /.*\.unauth\.spec\.ts/,
-      use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'teardown',
       testMatch: /.*\.teardown\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['chromium', 'firefox', 'webkit', 'chromium-unauthenticated', 'firefox-unauthenticated', 'webkit-unauthenticated'],
+      dependencies: ['chromium', 'chromium-unauthenticated'],
     },
   ],
 })

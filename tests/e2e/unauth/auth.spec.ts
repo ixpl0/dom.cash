@@ -6,11 +6,11 @@ test.describe('Authentication', () => {
   })
 
   test('auth page displays correctly', async ({ page }) => {
-    await expect(page.getByText('Добро пожаловать')).toBeVisible()
+    await expect(page.getByTestId('welcome-text')).toBeVisible()
     await expect(page.getByTestId('username-input')).toBeVisible()
     await expect(page.getByTestId('password-input')).toBeVisible()
     await expect(page.getByTestId('submit-btn')).toBeVisible()
-    await expect(page.getByText('Войти через Google')).toBeVisible()
+    await expect(page.getByTestId('google-auth-btn')).toBeVisible()
   })
 
   test('redirects to /auth when accessing protected route', async ({ page }) => {
@@ -52,11 +52,19 @@ test.describe('Authentication', () => {
   test('successful login redirects to home page', async ({ page }) => {
     const testUsername = `test_${Date.now()}@example.com`
 
+    // Ждём полной загрузки страницы и Vue компонента
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000) // Даём время Vue компоненту инициализироваться
+
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
-    await page.getByTestId('submit-btn').click()
 
-    await page.waitForURL('/', { timeout: 10000 })
+    // Используем Promise.all для одновременного ожидания навигации и клика
+    await Promise.all([
+      page.waitForURL('/'),
+      page.getByTestId('submit-btn').click(),
+    ])
+
     await expect(page).toHaveURL('/')
 
     const userDropdown = page.getByTestId('user-dropdown')
@@ -68,16 +76,24 @@ test.describe('Authentication', () => {
 
     const testUsername = `test_${Date.now()}@example.com`
 
+    // Ждём полной загрузки страницы и Vue компонента
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000) // Даём время Vue компоненту инициализироваться
+
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
-    await page.getByTestId('submit-btn').click()
 
-    await page.waitForURL('/budget', { timeout: 10000 })
+    // Используем Promise.all для одновременного ожидания навигации и клика
+    await Promise.all([
+      page.waitForURL('/budget'),
+      page.getByTestId('submit-btn').click(),
+    ])
+
     await expect(page).toHaveURL('/budget')
   })
 
   test('Google OAuth button is visible and clickable', async ({ page }) => {
-    const googleButton = page.getByText('Войти через Google')
+    const googleButton = page.getByTestId('google-auth-btn')
     await expect(googleButton).toBeVisible()
     await expect(googleButton).toBeEnabled()
   })
@@ -86,7 +102,7 @@ test.describe('Authentication', () => {
     await page.goto('/auth?redirect=/budget')
     await expect(page).toHaveURL('/auth?redirect=/budget')
 
-    const googleButton = page.getByText('Войти через Google')
+    const googleButton = page.getByTestId('google-auth-btn')
     await expect(googleButton).toBeVisible()
   })
 
@@ -113,7 +129,7 @@ test.describe('Authentication', () => {
 
   test('both login and Google OAuth buttons are visible', async ({ page }) => {
     const submitButton = page.getByTestId('submit-btn')
-    const googleButton = page.getByText('Войти через Google')
+    const googleButton = page.getByTestId('google-auth-btn')
 
     await expect(submitButton).toBeVisible()
     await expect(googleButton).toBeVisible()
@@ -122,7 +138,7 @@ test.describe('Authentication', () => {
   })
 
   test('home button is visible', async ({ page }) => {
-    const homeButton = page.getByText('На главную')
+    const homeButton = page.getByTestId('home-btn')
     await expect(homeButton).toBeVisible()
   })
 
@@ -143,6 +159,6 @@ test.describe('Authentication', () => {
   })
 
   test('informational text about auto registration', async ({ page }) => {
-    await expect(page.getByText('Если у вас нет аккаунта, он будет создан автоматически')).toBeVisible()
+    await expect(page.getByTestId('auto-register-text')).toBeVisible()
   })
 })

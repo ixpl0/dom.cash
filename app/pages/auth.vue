@@ -2,7 +2,10 @@
   <div class="min-h-screen bg-base-100 flex items-center justify-center p-4">
     <div class="card w-full max-w-md bg-base-200 shadow-xl">
       <div class="card-body">
-        <h2 class="card-title justify-center text-3xl mb-6">
+        <h2
+          class="card-title justify-center text-3xl mb-6"
+          data-testid="welcome-text"
+        >
           Добро пожаловать
         </h2>
 
@@ -92,6 +95,7 @@
             type="button"
             class="btn btn-outline w-full"
             :disabled="isLoading || isGoogleLoading"
+            data-testid="google-auth-btn"
             @click="handleGoogleLogin"
           >
             <Icon
@@ -109,12 +113,16 @@
             <button
               type="button"
               class="btn btn-ghost btn-sm"
+              data-testid="home-btn"
               @click="goHome"
             >
               На главную
             </button>
 
-            <p class="text-sm opacity-70">
+            <p
+              class="text-sm opacity-70"
+              data-testid="auto-register-text"
+            >
               Если у вас нет аккаунта, он будет создан автоматически
             </p>
           </div>
@@ -175,6 +183,19 @@ const validateForm = (): boolean => {
   return Object.keys(newErrors).length === 0
 }
 
+const goHome = () => {
+  return router.push('/')
+}
+
+const navigateAfterLogin = async (): Promise<void> => {
+  if (redirectPath.value) {
+    await router.push(redirectPath.value)
+  }
+  else {
+    await goHome()
+  }
+}
+
 const handleSubmit = async (): Promise<void> => {
   apiError.value = ''
 
@@ -190,9 +211,7 @@ const handleSubmit = async (): Promise<void> => {
       password: formData.value.password,
     })
 
-    if (redirectPath.value) {
-      await router.push(redirectPath.value)
-    }
+    await navigateAfterLogin()
   }
   catch (error) {
     if (error instanceof Error) {
@@ -207,10 +226,6 @@ const handleSubmit = async (): Promise<void> => {
   }
 }
 
-const goHome = (): void => {
-  router.push('/')
-}
-
 const handleGoogleLogin = async (): Promise<void> => {
   try {
     isGoogleLoading.value = true
@@ -218,10 +233,7 @@ const handleGoogleLogin = async (): Promise<void> => {
 
     const { loginWithGoogle } = useAuth()
     await loginWithGoogle()
-
-    if (redirectPath.value) {
-      await router.push(redirectPath.value)
-    }
+    await navigateAfterLogin()
   }
   catch (error) {
     if (error instanceof Error) {

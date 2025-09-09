@@ -14,8 +14,6 @@ export const useAuth = () => {
     if (import.meta.client) {
       localStorage.setItem('hasSession', 'true')
     }
-
-    await navigateTo('/')
   }
 
   const logout = async (): Promise<void> => {
