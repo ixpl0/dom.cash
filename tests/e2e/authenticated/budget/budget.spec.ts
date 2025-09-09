@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect } from '@playwright/test'
 
 test.describe('Budget page', () => {
   test('should access budget page when authenticated', async ({ page }) => {
@@ -14,7 +14,6 @@ test.describe('Budget page', () => {
 
     const userDropdown = page.getByTestId('user-dropdown')
     await expect(userDropdown).toBeVisible()
-
     await userDropdown.click()
     const logoutButton = page.getByTestId('logout-btn')
     await expect(logoutButton).toBeVisible()

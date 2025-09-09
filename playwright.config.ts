@@ -26,18 +26,18 @@ export default defineConfig({
         storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
-      testIgnore: [/.*\.teardown\.spec\.ts/, '**/unauth/**'],
+      testIgnore: [/.*\.teardown\.spec\.ts/, '**/public/**'],
     },
     {
-      name: 'chromium-unauthenticated',
-      testMatch: '**/unauth/**',
+      name: 'chromium-public',
+      testMatch: '**/public/**',
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'teardown',
       testMatch: /.*\.teardown\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['chromium', 'chromium-unauthenticated'],
+      dependencies: ['chromium', 'chromium-public'],
     },
   ],
 })

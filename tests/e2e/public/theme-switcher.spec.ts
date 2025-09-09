@@ -3,10 +3,12 @@ import { test, expect } from '@playwright/test'
 test.describe('Theme Switcher', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
+
     await page.evaluate(() => {
       localStorage.removeItem('theme')
       document.cookie = 'theme=; Path=/; Max-Age=0'
     })
+
     await page.reload()
     await page.waitForLoadState('networkidle')
   })
