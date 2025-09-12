@@ -75,7 +75,10 @@
       v-else
       class="space-y-6"
     >
-      <div class="flex items-center justify-between">
+      <div
+        class="flex items-center justify-between"
+        data-testid="budget-header"
+      >
         <h1
           class="text-3xl font-bold"
           data-testid="budget-title"

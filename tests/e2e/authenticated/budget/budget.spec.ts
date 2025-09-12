@@ -19,9 +19,32 @@ const BALANCE_ENTRIES = Object.freeze([
   },
 ])
 
-let usdRate = 0
-let inrRate = 0
-let gelRate = 0
+const exchangeRates = {
+  USD: 0,
+  INR: 0,
+  GEL: 0,
+  EUR: 0,
+}
+
+const calculateTotalBalance = (baseCurrency: string): number => {
+  return BALANCE_ENTRIES.reduce((total, entry) => {
+    const amount = Number(entry.amount)
+
+    if (entry.currency === baseCurrency) {
+      return total + amount
+    }
+
+    const fromRate = exchangeRates[entry.currency as keyof typeof exchangeRates]
+    const toRate = exchangeRates[baseCurrency as keyof typeof exchangeRates]
+
+    expect(fromRate).toBeGreaterThan(0)
+    expect(toRate).toBeGreaterThan(0)
+
+    const amountInBaseCurrency = (amount / fromRate) * toRate
+
+    return total + amountInBaseCurrency
+  }, 0)
+}
 
 test.describe.serial('Budget page scenario testing', () => {
   test('should navigate from home to budget page', async ({ page }) => {
@@ -129,22 +152,27 @@ test.describe.serial('Budget page scenario testing', () => {
     const usdRateElement = currencyRatesModal.getByTestId('rate-USD')
     const inrRateElement = currencyRatesModal.getByTestId('rate-INR')
     const gelRateElement = currencyRatesModal.getByTestId('rate-GEL')
+    const eurRateElement = currencyRatesModal.getByTestId('rate-EUR')
 
     await expect(usdRateElement).toBeVisible()
     await expect(inrRateElement).toBeVisible()
     await expect(gelRateElement).toBeVisible()
+    await expect(eurRateElement).toBeVisible()
 
     const usdRateText = await usdRateElement.textContent()
     const inrRateText = await inrRateElement.textContent()
     const gelRateText = await gelRateElement.textContent()
+    const eurRateText = await eurRateElement.textContent()
 
-    usdRate = parseFloat(usdRateText?.replace(/[^\d.]/g, ''))
-    inrRate = parseFloat(inrRateText?.replace(/[^\d.]/g, ''))
-    gelRate = parseFloat(gelRateText?.replace(/[^\d.]/g, ''))
+    exchangeRates.USD = parseFloat(usdRateText?.replace(/[^\d.]/g, ''))
+    exchangeRates.INR = parseFloat(inrRateText?.replace(/[^\d.]/g, ''))
+    exchangeRates.GEL = parseFloat(gelRateText?.replace(/[^\d.]/g, ''))
+    exchangeRates.EUR = parseFloat(eurRateText?.replace(/[^\d.]/g, ''))
 
-    expect(usdRate).toBeGreaterThan(0)
-    expect(inrRate).toBeGreaterThan(0)
-    expect(gelRate).toBeGreaterThan(0)
+    expect(exchangeRates.USD).toBeGreaterThan(0)
+    expect(exchangeRates.INR).toBeGreaterThan(0)
+    expect(exchangeRates.GEL).toBeGreaterThan(0)
+    expect(exchangeRates.EUR).toBeGreaterThan(0)
 
     const closeButton = currencyRatesModal.getByTestId('modal-close-button')
     await closeButton.click()
@@ -155,41 +183,38 @@ test.describe.serial('Budget page scenario testing', () => {
     await page.goto('/budget')
     await waitForHydration(page)
 
-    const currencySelect = page.getByTestId('currency-select').first()
+    const budgetHeader = page.getByTestId('budget-header')
+    const currencySelect = budgetHeader.getByTestId('currency-select')
     const baseCurrencyValue = await currencySelect.inputValue()
     const baseCurrency = baseCurrencyValue.split(' ')[0]
 
-    const exchangeRates: Record<string, number> = {
-      USD: usdRate,
-      INR: inrRate,
-      GEL: gelRate,
-    }
+    const expectedTotal = Math.round(calculateTotalBalance(baseCurrency))
 
-    expect(usdRate).toBeGreaterThan(0)
-    expect(inrRate).toBeGreaterThan(0)
-    expect(gelRate).toBeGreaterThan(0)
+    const balanceButton = page.getByTestId('balance-button').first()
+    const balanceButtonText = await balanceButton.textContent()
+    const displayedTotal = parseInt(balanceButtonText?.replace(/[^\d]/g, ''), 10)
 
-    const calculateTotalBalance = (): number => {
-      return BALANCE_ENTRIES.reduce((total, entry) => {
-        const amount = Number(entry.amount)
+    expect(displayedTotal).toBe(expectedTotal)
+  })
 
-        if (entry.currency === baseCurrency) {
-          return total + amount
-        }
+  test('should recalculate balance when changing base currency to EUR', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
 
-        const fromRate = exchangeRates[entry.currency]
-        const toRate = exchangeRates[baseCurrency]
+    const budgetHeader = page.getByTestId('budget-header')
+    const currencySelect = budgetHeader.getByTestId('currency-select')
+    await currencySelect.click()
+    await currencySelect.fill('EUR')
+    await page.keyboard.press('Enter')
 
-        expect(fromRate).toBeGreaterThan(0)
-        expect(toRate).toBeGreaterThan(0)
+    await page.waitForTimeout(500)
 
-        const amountInBaseCurrency = (amount / fromRate) * toRate
+    const baseCurrencyValue = await currencySelect.inputValue()
+    const baseCurrency = baseCurrencyValue.split(' ')[0]
 
-        return total + amountInBaseCurrency
-      }, 0)
-    }
+    expect(baseCurrency).toBe('EUR')
 
-    const expectedTotal = Math.round(calculateTotalBalance())
+    const expectedTotal = Math.round(calculateTotalBalance(baseCurrency))
 
     const balanceButton = page.getByTestId('balance-button').first()
     const balanceButtonText = await balanceButton.textContent()
