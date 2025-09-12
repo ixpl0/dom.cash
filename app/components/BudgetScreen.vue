@@ -24,6 +24,7 @@
     <div
       v-else-if="!budgetStore.data || !budgetStore.months || budgetStore.months.length === 0"
       class="text-center py-12"
+      data-testid="budget-empty-state"
     >
       <div class="mb-4 flex justify-center">
         <img
@@ -48,7 +49,7 @@
         <button
           class="btn btn-primary btn-lg"
           :disabled="isCreatingCurrentMonth"
-          data-testid="create-month-btn"
+          data-testid="create-first-month-btn"
           @click="createCurrentMonth"
         >
           <span
@@ -149,7 +150,10 @@
         </div>
       </div>
 
-      <ul class="timeline timeline-vertical [--timeline-col-start:23ch]">
+      <ul
+        class="timeline timeline-vertical [--timeline-col-start:23ch]"
+        data-testid="budget-timeline"
+      >
         <BudgetTimelineAddButton
           v-if="budgetStore.canEdit"
           direction="next"

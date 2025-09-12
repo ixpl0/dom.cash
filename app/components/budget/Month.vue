@@ -1,5 +1,8 @@
 <template>
-  <li class="hover:bg-base-200">
+  <li
+    class="hover:bg-base-200"
+    data-testid="budget-month"
+  >
     <hr>
     <div class="timeline-start">
       <div
