@@ -2,12 +2,14 @@
   <dialog
     ref="modal"
     class="modal"
+    data-testid="currency-rates-modal"
     @close="handleDialogClose"
   >
     <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        data-testid="modal-close-button"
         @click="hide()"
       >
         <Icon
@@ -61,7 +63,12 @@
               <span class="font-semibold text-lg">{{ rate.code }}</span>
               <span class="text-sm opacity-70">{{ rate.name }}</span>
             </div>
-            <span class="font-mono text-lg">{{ formatRate(rate.rate) }}</span>
+            <span
+              class="font-mono text-lg"
+              :data-testid="`rate-${rate.code}`"
+            >
+              {{ formatRate(rate.rate) }}
+            </span>
           </div>
         </div>
       </div>

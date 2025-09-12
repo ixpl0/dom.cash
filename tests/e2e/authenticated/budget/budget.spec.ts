@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 
-const TEST_ENTRIES = [
+const BALANCE_ENTRIES = Object.freeze([
   {
     description: 'Cash',
     amount: '5000',
@@ -17,7 +17,11 @@ const TEST_ENTRIES = [
     amount: '6789',
     currency: 'GEL',
   },
-]
+])
+
+let usdRate = 0
+let inrRate = 0
+let gelRate = 0
 
 test.describe.serial('Budget page scenario testing', () => {
   test('should navigate from home to budget page', async ({ page }) => {
@@ -74,7 +78,7 @@ test.describe.serial('Budget page scenario testing', () => {
     const modal = page.getByTestId('entry-modal')
     await expect(modal).toBeVisible()
 
-    for (const entry of TEST_ENTRIES) {
+    for (const entry of BALANCE_ENTRIES) {
       const addButton = modal.getByTestId('add-entry-button')
       await addButton.click()
 
@@ -94,20 +98,103 @@ test.describe.serial('Budget page scenario testing', () => {
     }
 
     const tableRows = modal.locator('tbody tr')
-    await expect(tableRows).toHaveCount(TEST_ENTRIES.length)
+    await expect(tableRows).toHaveCount(BALANCE_ENTRIES.length)
 
-    for (let i = 0; i < TEST_ENTRIES.length; i++) {
+    for (let i = 0; i < BALANCE_ENTRIES.length; i++) {
       const row = tableRows.nth(i)
-      await expect(row).toContainText(TEST_ENTRIES[i].description)
+      await expect(row).toContainText(BALANCE_ENTRIES[i].description)
       const rowText = await row.textContent()
-      expect(rowText).toContain(TEST_ENTRIES[i].description)
-      expect(rowText?.replace(/\s/g, '')).toContain(TEST_ENTRIES[i].amount)
-      expect(rowText).toContain(TEST_ENTRIES[i].currency)
+      expect(rowText).toContain(BALANCE_ENTRIES[i].description)
+      expect(rowText?.replace(/\s/g, '')).toContain(BALANCE_ENTRIES[i].amount)
+      expect(rowText).toContain(BALANCE_ENTRIES[i].currency)
     }
 
-    const closeButton = page.getByTestId('modal-close-button')
+    const closeButton = modal.getByTestId('modal-close-button')
     await closeButton.click()
 
     await expect(modal).not.toBeVisible()
+  })
+
+  test('should read exchange rates from modal', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const monthBadge = page.getByTestId('month-badge').first()
+    await expect(monthBadge).toBeVisible()
+    await monthBadge.click()
+
+    const currencyRatesModal = page.getByTestId('currency-rates-modal')
+    await expect(currencyRatesModal).toBeVisible()
+
+    const usdRateElement = currencyRatesModal.getByTestId('rate-USD')
+    const inrRateElement = currencyRatesModal.getByTestId('rate-INR')
+    const gelRateElement = currencyRatesModal.getByTestId('rate-GEL')
+
+    await expect(usdRateElement).toBeVisible()
+    await expect(inrRateElement).toBeVisible()
+    await expect(gelRateElement).toBeVisible()
+
+    const usdRateText = await usdRateElement.textContent()
+    const inrRateText = await inrRateElement.textContent()
+    const gelRateText = await gelRateElement.textContent()
+
+    usdRate = parseFloat(usdRateText?.replace(/[^\d.]/g, ''))
+    inrRate = parseFloat(inrRateText?.replace(/[^\d.]/g, ''))
+    gelRate = parseFloat(gelRateText?.replace(/[^\d.]/g, ''))
+
+    expect(usdRate).toBeGreaterThan(0)
+    expect(inrRate).toBeGreaterThan(0)
+    expect(gelRate).toBeGreaterThan(0)
+
+    const closeButton = currencyRatesModal.getByTestId('modal-close-button')
+    await closeButton.click()
+    await expect(currencyRatesModal).not.toBeVisible()
+  })
+
+  test('should correctly calculate and display total balance in base currency', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const currencySelect = page.getByTestId('currency-select').first()
+    const baseCurrencyValue = await currencySelect.inputValue()
+    const baseCurrency = baseCurrencyValue.split(' ')[0]
+
+    const exchangeRates: Record<string, number> = {
+      USD: usdRate,
+      INR: inrRate,
+      GEL: gelRate,
+    }
+
+    expect(usdRate).toBeGreaterThan(0)
+    expect(inrRate).toBeGreaterThan(0)
+    expect(gelRate).toBeGreaterThan(0)
+
+    const calculateTotalBalance = (): number => {
+      return BALANCE_ENTRIES.reduce((total, entry) => {
+        const amount = Number(entry.amount)
+
+        if (entry.currency === baseCurrency) {
+          return total + amount
+        }
+
+        const fromRate = exchangeRates[entry.currency]
+        const toRate = exchangeRates[baseCurrency]
+
+        expect(fromRate).toBeGreaterThan(0)
+        expect(toRate).toBeGreaterThan(0)
+
+        const amountInBaseCurrency = (amount / fromRate) * toRate
+
+        return total + amountInBaseCurrency
+      }, 0)
+    }
+
+    const expectedTotal = Math.round(calculateTotalBalance())
+
+    const balanceButton = page.getByTestId('balance-button').first()
+    const balanceButtonText = await balanceButton.textContent()
+    const displayedTotal = parseInt(balanceButtonText?.replace(/[^\d]/g, ''), 10)
+
+    expect(displayedTotal).toBe(expectedTotal)
   })
 })
