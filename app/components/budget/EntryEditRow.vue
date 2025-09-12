@@ -6,6 +6,7 @@
         type="text"
         :placeholder="isNew ? 'Введите описание...' : undefined"
         class="input input-bordered w-full"
+        data-testid="entry-description-input"
         @keyup.enter="$emit('save')"
         @keyup.esc="$emit('cancel')"
       >
@@ -18,6 +19,7 @@
         step="0.01"
         :placeholder="isNew ? '0.00' : undefined"
         class="input input-bordered w-full"
+        data-testid="entry-amount-input"
         @keyup.enter="$emit('save')"
         @keyup.esc="$emit('cancel')"
       >
@@ -50,6 +52,7 @@
           type="button"
           class="btn btn-sm btn-success"
           :disabled="isSaving"
+          data-testid="entry-save-button"
           @click="$emit('save')"
         >
           <span
@@ -65,6 +68,7 @@
         <button
           type="button"
           class="btn btn-sm btn-ghost"
+          data-testid="entry-cancel-button"
           @click="$emit('cancel')"
         >
           <Icon

@@ -8,6 +8,7 @@
       >
         <button
           class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+          data-testid="month-badge"
           @click="openCurrencyRatesModal"
         >
           {{ budgetStore.monthNames[monthData.month] }}
@@ -32,6 +33,7 @@
           <button
             class="btn btn-ghost text-2xl text-primary"
             :disabled="isReadOnly"
+            data-testid="balance-button"
             @click="openBalanceModal"
           >
             {{ formatAmountRounded(monthData.startBalance, budgetStore.effectiveMainCurrency) }}
@@ -52,6 +54,7 @@
               'text-base-content': monthData.totalIncome === 0,
             }"
             :disabled="isReadOnly"
+            data-testid="income-button"
             @click="openIncomeModal"
           >
             {{ formatAmountRounded(monthData.totalIncome, budgetStore.effectiveMainCurrency) }}
@@ -72,6 +75,7 @@
               'text-base-content': monthData.totalExpenses === 0,
             }"
             :disabled="isReadOnly"
+            data-testid="expense-button"
             @click="openExpenseModal"
           >
             {{ formatAmountRounded(monthData.totalExpenses, budgetStore.effectiveMainCurrency) }}

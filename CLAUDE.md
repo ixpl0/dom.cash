@@ -29,7 +29,7 @@
 
 * Rules:
   * Always use `const` where possible. Arrow functions.
-  * Max immutability: don’t mutate objects/arrays; avoid `push`/`pop`/`splice`, etc. Use `map`, `filter`, `reduce`, `concat`, `slice` instead.
+  * Max immutability: don't mutate objects/arrays; avoid `push`/`pop`/`splice`, etc. Use `map`, `filter`, `reduce`, `concat`, `slice` instead.
   * **Never** use `any`. If needed, use `unknown` and narrow. Prefer generics when possible.
   * Destructure where appropriate. Prefer `map`/`filter`/`reduce` over `for/forEach` when suitable.
   * Every `if`/`else`/`for` must have a block (no one-liners).
@@ -39,3 +39,10 @@
   * Use Vue 3, Composition API, `<script setup lang="ts">`. Prefer `ref` over `reactive`.
   * Follow the existing ESLint and TS config.
   * Use `git mv` and `git rm` to keep git history.
+
+## Testing
+
+* **E2E Tests**: Use Playwright with TypeScript
+* **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
+  * Use `page.getByTestId('element-id')` instead of text-based selectors
+  * Never use `getByRole`, `getByText`, or other text-dependent selectors

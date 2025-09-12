@@ -2,12 +2,14 @@
   <dialog
     ref="modal"
     class="modal"
+    data-testid="entry-modal"
     @close="handleDialogClose"
   >
     <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] flex flex-col overflow-visible">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        data-testid="modal-close-button"
         @click="hide()"
       >
         <Icon
@@ -128,6 +130,7 @@
             <button
               v-if="!isAddingNewEntry && !entryModal.isReadOnly"
               class="btn btn-primary btn-sm"
+              data-testid="add-entry-button"
               @click="startAdd()"
             >
               + Добавить новую запись
@@ -146,6 +149,7 @@
             v-if="!isAddingNewEntry && !entryModal.isReadOnly"
             type="button"
             class="btn btn-primary btn-sm"
+            data-testid="add-entry-button"
             @click="startAdd()"
           >
             + Добавить новую запись

@@ -5,6 +5,7 @@
       <button
         class="btn btn-dash btn-sm"
         :disabled="isLoading"
+        :data-testid="`add-month-${direction}`"
         @click="handleClick"
       >
         <Icon
