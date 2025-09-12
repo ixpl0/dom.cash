@@ -21,6 +21,7 @@
           :placeholder="placeholder"
           :disabled="disabled"
           :title="titleText"
+          data-testid="currency-select"
           @input="onInput"
           @focus="onFocus"
           @keydown="onKeyDown"
