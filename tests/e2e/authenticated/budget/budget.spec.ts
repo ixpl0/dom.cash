@@ -138,6 +138,31 @@ test.describe.serial('Budget page scenario testing', () => {
     await expect(modal).not.toBeVisible()
   })
 
+  test('should filter currencies in currency rates modal', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const monthBadge = page.getByTestId('month-badge').first()
+    await expect(monthBadge).toBeVisible()
+    await monthBadge.click()
+
+    const currencyRatesModal = page.getByTestId('currency-rates-modal')
+    await expect(currencyRatesModal).toBeVisible()
+
+    const searchInput = currencyRatesModal.getByPlaceholder('Поиск валюты по коду или названию...')
+    await searchInput.fill('JPY')
+
+    const rateElements = currencyRatesModal.locator('[data-testid^="rate-"]')
+    await expect(rateElements).toHaveCount(1)
+
+    await searchInput.clear()
+    const countAfterClear = await rateElements.count()
+    expect(countAfterClear).toBeGreaterThan(1)
+
+    await page.keyboard.press('Escape')
+    await expect(currencyRatesModal).not.toBeVisible()
+  })
+
   test('should read exchange rates from modal', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
@@ -149,30 +174,18 @@ test.describe.serial('Budget page scenario testing', () => {
     const currencyRatesModal = page.getByTestId('currency-rates-modal')
     await expect(currencyRatesModal).toBeVisible()
 
-    const usdRateElement = currencyRatesModal.getByTestId('rate-USD')
-    const inrRateElement = currencyRatesModal.getByTestId('rate-INR')
-    const gelRateElement = currencyRatesModal.getByTestId('rate-GEL')
-    const eurRateElement = currencyRatesModal.getByTestId('rate-EUR')
+    const currencies = ['USD', 'INR', 'GEL', 'EUR'] as const
 
-    await expect(usdRateElement).toBeVisible()
-    await expect(inrRateElement).toBeVisible()
-    await expect(gelRateElement).toBeVisible()
-    await expect(eurRateElement).toBeVisible()
+    for (const currency of currencies) {
+      const rateElement = currencyRatesModal.getByTestId(`rate-${currency}`)
+      await expect(rateElement).toBeVisible()
 
-    const usdRateText = await usdRateElement.textContent()
-    const inrRateText = await inrRateElement.textContent()
-    const gelRateText = await gelRateElement.textContent()
-    const eurRateText = await eurRateElement.textContent()
+      const rateText = await rateElement.textContent()
+      const rate = parseFloat(rateText?.replace(/[^\d.]/g, '') || '0')
 
-    exchangeRates.USD = parseFloat(usdRateText?.replace(/[^\d.]/g, ''))
-    exchangeRates.INR = parseFloat(inrRateText?.replace(/[^\d.]/g, ''))
-    exchangeRates.GEL = parseFloat(gelRateText?.replace(/[^\d.]/g, ''))
-    exchangeRates.EUR = parseFloat(eurRateText?.replace(/[^\d.]/g, ''))
-
-    expect(exchangeRates.USD).toBeGreaterThan(0)
-    expect(exchangeRates.INR).toBeGreaterThan(0)
-    expect(exchangeRates.GEL).toBeGreaterThan(0)
-    expect(exchangeRates.EUR).toBeGreaterThan(0)
+      exchangeRates[currency] = rate
+      expect(rate).toBeGreaterThan(0)
+    }
 
     const closeButton = currencyRatesModal.getByTestId('modal-close-button')
     await closeButton.click()

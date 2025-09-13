@@ -18,11 +18,11 @@
       "WebFetch(domain:developers.google.com)",
       "mcp__ide__getDiagnostics",
       "WebFetch(domain:github.com)",
-      "mcp__Code_Maestro_-_Filesystem_MCP__list_directory",
-      "mcp__Code_Maestro_-_Filesystem_MCP__read_file",
-      "mcp__Code_Maestro_-_Filesystem_MCP__read_multiple_files",
-      "mcp__Code_Maestro_-_Filesystem_MCP__edit_file",
-      "mcp__Code_Maestro_-_Filesystem_MCP__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__filesystem__edit_file",
+      "mcp__filesystem__directory_tree",
       "Bash(pnpm playwright test:*)"
     ],
     "deny": [
