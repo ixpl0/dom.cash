@@ -415,9 +415,9 @@ test.describe.serial('Budget page scenario testing', () => {
     await waitForHydration(page)
 
     const editOperations = [
-      { testId: 'balance-button', entryIndex: 1, newAmount: '0' },
-      { testId: 'income-button', entryIndex: 0, newAmount: '0' },
-      { testId: 'expense-button', entryIndex: 1, newAmount: '0' },
+      { testId: 'balance-button', entryIndex: 1, newAmount: '0', entries: BALANCE_ENTRIES },
+      { testId: 'income-button', entryIndex: 0, newAmount: '0', entries: INCOME_ENTRIES },
+      { testId: 'expense-button', entryIndex: 1, newAmount: '0', entries: EXPENSE_ENTRIES },
     ] as const
 
     const updatedTotals = []
@@ -456,6 +456,84 @@ test.describe.serial('Budget page scenario testing', () => {
 
     for (let i = 0; i < editOperations.length; i++) {
       const operation = editOperations[i]
+      const button = page.getByTestId(operation.testId).first()
+      const buttonText = await button.textContent()
+      const displayedTotal = parseInt(buttonText?.replace(/[^\d]/g, ''), 10)
+
+      expect(displayedTotal).toBe(updatedTotals[i])
+    }
+
+    for (const operation of editOperations) {
+      const button = page.getByTestId(operation.testId).first()
+      await button.click()
+
+      const modal = page.getByTestId('entry-modal')
+      await expect(modal).toBeVisible()
+
+      const tableRows = modal.locator('tbody tr')
+      const targetRow = tableRows.nth(operation.entryIndex)
+
+      const editButton = targetRow.locator('.btn-warning')
+      await editButton.click()
+
+      const amountInput = modal.getByTestId('entry-amount-input')
+      await amountInput.clear()
+      await amountInput.fill(operation.entries[operation.entryIndex].amount)
+
+      const saveButton = modal.getByTestId('entry-save-button')
+      await saveButton.click()
+
+      const closeButton = modal.getByTestId('modal-close-button')
+      await closeButton.click()
+      await expect(modal).not.toBeVisible()
+    }
+  })
+
+  test('should delete entries and persist changes after page reload', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const deleteOperations = [
+      { testId: 'balance-button', entryIndex: 1, entries: BALANCE_ENTRIES },
+      { testId: 'income-button', entryIndex: 0, entries: INCOME_ENTRIES },
+      { testId: 'expense-button', entryIndex: 1, entries: EXPENSE_ENTRIES },
+    ] as const
+
+    const updatedTotals = []
+
+    for (const operation of deleteOperations) {
+      const button = page.getByTestId(operation.testId).first()
+      await button.click()
+
+      const modal = page.getByTestId('entry-modal')
+      await expect(modal).toBeVisible()
+
+      const tableRows = modal.locator('tbody tr')
+      const targetRow = tableRows.nth(operation.entryIndex)
+
+      const deleteButton = targetRow.locator('.btn-error')
+
+      page.once('dialog', (dialog) => {
+        expect(dialog.type()).toBe('confirm')
+        dialog.accept()
+      })
+
+      await deleteButton.click()
+
+      const closeButton = modal.getByTestId('modal-close-button')
+      await closeButton.click()
+      await expect(modal).not.toBeVisible()
+
+      const updatedButtonText = await button.textContent()
+      const updatedTotal = parseInt(updatedButtonText?.replace(/[^\d]/g, ''), 10)
+      updatedTotals.push(updatedTotal)
+    }
+
+    await page.reload()
+    await waitForHydration(page)
+
+    for (let i = 0; i < deleteOperations.length; i++) {
+      const operation = deleteOperations[i]
       const button = page.getByTestId(operation.testId).first()
       const buttonText = await button.textContent()
       const displayedTotal = parseInt(buttonText?.replace(/[^\d]/g, ''), 10)
