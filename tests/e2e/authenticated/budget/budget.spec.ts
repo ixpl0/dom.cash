@@ -184,7 +184,7 @@ test.describe.serial('Budget page scenario testing', () => {
     await page.goto('/budget')
     await waitForHydration(page)
 
-    const incomeButton = page.getByTestId('income-button').first()
+    const incomeButton = page.getByTestId('incomes-button').first()
     await expect(incomeButton).toBeVisible()
     await incomeButton.click()
 
@@ -232,7 +232,7 @@ test.describe.serial('Budget page scenario testing', () => {
     await page.goto('/budget')
     await waitForHydration(page)
 
-    const expenseButton = page.getByTestId('expense-button').first()
+    const expenseButton = page.getByTestId('expenses-button').first()
     await expect(expenseButton).toBeVisible()
     await expenseButton.click()
 
@@ -360,8 +360,8 @@ test.describe.serial('Budget page scenario testing', () => {
 
     const budgetTypes = [
       { testId: 'balance-button', calculate: calculateTotalBalance, name: 'balance' },
-      { testId: 'income-button', calculate: calculateTotalIncome, name: 'income' },
-      { testId: 'expense-button', calculate: calculateTotalExpenses, name: 'expenses' },
+      { testId: 'incomes-button', calculate: calculateTotalIncome, name: 'income' },
+      { testId: 'expenses-button', calculate: calculateTotalExpenses, name: 'expenses' },
     ] as const
 
     for (const budgetType of budgetTypes) {
@@ -395,8 +395,8 @@ test.describe.serial('Budget page scenario testing', () => {
 
     const budgetTypes = [
       { testId: 'balance-button', calculate: calculateTotalBalance, name: 'balance' },
-      { testId: 'income-button', calculate: calculateTotalIncome, name: 'income' },
-      { testId: 'expense-button', calculate: calculateTotalExpenses, name: 'expenses' },
+      { testId: 'incomes-button', calculate: calculateTotalIncome, name: 'income' },
+      { testId: 'expenses-button', calculate: calculateTotalExpenses, name: 'expenses' },
     ] as const
 
     for (const budgetType of budgetTypes) {
@@ -416,8 +416,8 @@ test.describe.serial('Budget page scenario testing', () => {
 
     const editOperations = [
       { testId: 'balance-button', entryIndex: 1, newAmount: '0', entries: BALANCE_ENTRIES },
-      { testId: 'income-button', entryIndex: 0, newAmount: '0', entries: INCOME_ENTRIES },
-      { testId: 'expense-button', entryIndex: 1, newAmount: '0', entries: EXPENSE_ENTRIES },
+      { testId: 'incomes-button', entryIndex: 0, newAmount: '0', entries: INCOME_ENTRIES },
+      { testId: 'expenses-button', entryIndex: 1, newAmount: '0', entries: EXPENSE_ENTRIES },
     ] as const
 
     const updatedTotals = []
@@ -495,8 +495,8 @@ test.describe.serial('Budget page scenario testing', () => {
 
     const deleteOperations = [
       { testId: 'balance-button', entryIndex: 1, entries: BALANCE_ENTRIES },
-      { testId: 'income-button', entryIndex: 0, entries: INCOME_ENTRIES },
-      { testId: 'expense-button', entryIndex: 1, entries: EXPENSE_ENTRIES },
+      { testId: 'incomes-button', entryIndex: 0, entries: INCOME_ENTRIES },
+      { testId: 'expenses-button', entryIndex: 1, entries: EXPENSE_ENTRIES },
     ] as const
 
     const updatedTotals = []
@@ -540,5 +540,23 @@ test.describe.serial('Budget page scenario testing', () => {
 
       expect(displayedTotal).toBe(updatedTotals[i])
     }
+  })
+
+  test('should display dashes for calculated fields when next month balance is missing', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const monthCard = page.getByTestId('budget-month').first()
+    await expect(monthCard).toBeVisible()
+
+    const pocketExpensesButton = monthCard.getByTestId('pocket-expenses-button')
+    const totalExpensesButton = monthCard.getByTestId('total-expenses-button')
+    const balanceChangeButton = monthCard.getByTestId('balance-change-button')
+    const currencyFluctuationButton = monthCard.getByTestId('currency-fluctuation-button')
+
+    await expect(pocketExpensesButton).toHaveText('—')
+    await expect(totalExpensesButton).toHaveText('—')
+    await expect(balanceChangeButton).toHaveText('—')
+    await expect(currencyFluctuationButton).toHaveText('—')
   })
 })

@@ -57,7 +57,7 @@
               'text-base-content': monthData.totalIncome === 0,
             }"
             :disabled="isReadOnly"
-            data-testid="income-button"
+            data-testid="incomes-button"
             @click="openIncomeModal"
           >
             {{ formatAmountRounded(monthData.totalIncome, budgetStore.effectiveMainCurrency) }}
@@ -78,7 +78,7 @@
               'text-base-content': monthData.totalExpenses === 0,
             }"
             :disabled="isReadOnly"
-            data-testid="expense-button"
+            data-testid="expenses-button"
             @click="openExpenseModal"
           >
             {{ formatAmountRounded(monthData.totalExpenses, budgetStore.effectiveMainCurrency) }}
@@ -101,6 +101,7 @@
           <button
             class="btn btn-ghost text-xl"
             disabled
+            data-testid="pocket-expenses-button"
             :class="{
               'text-warning': monthData.calculatedPocketExpenses !== null && monthData.calculatedPocketExpenses < 0,
               'text-error': monthData.calculatedPocketExpenses !== null && monthData.calculatedPocketExpenses > 0,
@@ -123,6 +124,7 @@
           <button
             class="btn btn-ghost text-xl"
             disabled
+            data-testid="total-expenses-button"
             :class="{
               'text-error': monthData.totalAllExpenses !== null && monthData.totalAllExpenses > 0,
               'text-base-content': monthData.totalAllExpenses === 0,
@@ -143,6 +145,7 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
             class="btn btn-ghost text-xl"
+            data-testid="balance-change-button"
             :class="{
               'text-success': monthData.calculatedBalanceChange !== null && monthData.calculatedBalanceChange > 0,
               'text-error': monthData.calculatedBalanceChange !== null && monthData.calculatedBalanceChange < 0,
@@ -165,6 +168,7 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
             class="btn btn-ghost text-xl"
+            data-testid="currency-fluctuation-button"
             :class="{
               'text-success': monthData.currencyProfitLoss !== null && monthData.currencyProfitLoss > 0,
               'text-error': monthData.currencyProfitLoss !== null && monthData.currencyProfitLoss < 0,
@@ -185,11 +189,12 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
             class="btn btn-ghost text-xl"
-            disabled
+            data-testid="optional-expenses-button"
             :class="{
               'text-error': monthData.totalOptionalExpenses !== 0,
               'text-base-content': monthData.totalOptionalExpenses === 0,
             }"
+            disabled
           >
             {{ formatAmountRounded(monthData.totalOptionalExpenses, budgetStore.effectiveMainCurrency) }}
           </button>
@@ -205,6 +210,7 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
             class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
+            data-testid="delete-month-button"
             @click="handleDeleteMonth"
           >
             <Icon
