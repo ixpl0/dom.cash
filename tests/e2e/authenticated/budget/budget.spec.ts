@@ -56,8 +56,8 @@ const exchangeRates = {
   AUD: 0,
 }
 
-const calculateTotalBalance = (baseCurrency: string): number => {
-  return BALANCE_ENTRIES.reduce((total, entry) => {
+const calculateTotal = (entries: readonly { amount: string, currency: string }[], baseCurrency: string): number => {
+  return entries.reduce((total, entry) => {
     const amount = Number(entry.amount)
 
     if (entry.currency === baseCurrency) {
@@ -74,6 +74,18 @@ const calculateTotalBalance = (baseCurrency: string): number => {
 
     return total + amountInBaseCurrency
   }, 0)
+}
+
+const calculateTotalBalance = (baseCurrency: string): number => {
+  return calculateTotal(BALANCE_ENTRIES, baseCurrency)
+}
+
+const calculateTotalIncome = (baseCurrency: string): number => {
+  return calculateTotal(INCOME_ENTRIES, baseCurrency)
+}
+
+const calculateTotalExpenses = (baseCurrency: string): number => {
+  return calculateTotal(EXPENSE_ENTRIES, baseCurrency)
 }
 
 test.describe.serial('Budget page scenario testing', () => {
@@ -335,7 +347,7 @@ test.describe.serial('Budget page scenario testing', () => {
     await expect(currencyRatesModal).not.toBeVisible()
   })
 
-  test('should correctly calculate and display total balance in base currency', async ({ page }) => {
+  test('should correctly calculate and display totals for balance, income and expenses in base currency', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
 
@@ -344,21 +356,32 @@ test.describe.serial('Budget page scenario testing', () => {
     const baseCurrencyValue = await currencySelect.inputValue()
     const baseCurrency = baseCurrencyValue.split(' ')[0]
 
-    const expectedTotal = Math.round(calculateTotalBalance(baseCurrency))
+    expect(baseCurrency).toBe('USD')
 
-    const balanceButton = page.getByTestId('balance-button').first()
-    const balanceButtonText = await balanceButton.textContent()
-    const displayedTotal = parseInt(balanceButtonText?.replace(/[^\d]/g, ''), 10)
+    const budgetTypes = [
+      { testId: 'balance-button', calculate: calculateTotalBalance, name: 'balance' },
+      { testId: 'income-button', calculate: calculateTotalIncome, name: 'income' },
+      { testId: 'expense-button', calculate: calculateTotalExpenses, name: 'expenses' },
+    ] as const
 
-    expect(displayedTotal).toBe(expectedTotal)
+    for (const budgetType of budgetTypes) {
+      const expected = Math.round(budgetType.calculate(baseCurrency))
+
+      const button = page.getByTestId(budgetType.testId).first()
+      const buttonText = await button.textContent()
+      const displayed = parseInt(buttonText?.replace(/[^\d]/g, ''), 10)
+
+      expect(displayed).toBe(expected)
+    }
   })
 
-  test('should recalculate balance when changing base currency to EUR', async ({ page }) => {
+  test('should recalculate all totals when changing base currency to EUR', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
 
     const budgetHeader = page.getByTestId('budget-header')
     const currencySelect = budgetHeader.getByTestId('currency-select')
+
     await currencySelect.click()
     await currencySelect.fill('EUR')
     await page.keyboard.press('Enter')
@@ -370,12 +393,20 @@ test.describe.serial('Budget page scenario testing', () => {
 
     expect(baseCurrency).toBe('EUR')
 
-    const expectedTotal = Math.round(calculateTotalBalance(baseCurrency))
+    const budgetTypes = [
+      { testId: 'balance-button', calculate: calculateTotalBalance, name: 'balance' },
+      { testId: 'income-button', calculate: calculateTotalIncome, name: 'income' },
+      { testId: 'expense-button', calculate: calculateTotalExpenses, name: 'expenses' },
+    ] as const
 
-    const balanceButton = page.getByTestId('balance-button').first()
-    const balanceButtonText = await balanceButton.textContent()
-    const displayedTotal = parseInt(balanceButtonText?.replace(/[^\d]/g, ''), 10)
+    for (const budgetType of budgetTypes) {
+      const expected = Math.round(budgetType.calculate(baseCurrency))
 
-    expect(displayedTotal).toBe(expectedTotal)
+      const button = page.getByTestId(budgetType.testId).first()
+      const buttonText = await button.textContent()
+      const displayed = parseInt(buttonText?.replace(/[^\d]/g, ''), 10)
+
+      expect(displayed).toBe(expected)
+    }
   })
 })
