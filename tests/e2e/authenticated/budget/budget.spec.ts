@@ -19,11 +19,28 @@ const BALANCE_ENTRIES = Object.freeze([
   },
 ])
 
+const INCOME_ENTRIES = Object.freeze([
+  {
+    description: 'Salary',
+    amount: '3500',
+    currency: 'JPY',
+  },
+  {
+    description: 'Freelance',
+    amount: '850',
+    currency: 'CAD',
+  },
+])
+
 const exchangeRates = {
   USD: 0,
   INR: 0,
   GEL: 0,
   EUR: 0,
+  JPY: 0,
+  CAD: 0,
+  RUB: 0,
+  AUD: 0,
 }
 
 const calculateTotalBalance = (baseCurrency: string): number => {
@@ -138,7 +155,84 @@ test.describe.serial('Budget page scenario testing', () => {
     await expect(modal).not.toBeVisible()
   })
 
-  test('should filter currencies in currency rates modal', async ({ page }) => {
+  test('should add income entries to budget through modal', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const incomeButton = page.getByTestId('income-button').first()
+    await expect(incomeButton).toBeVisible()
+    await incomeButton.click()
+
+    const modal = page.getByTestId('entry-modal')
+    await expect(modal).toBeVisible()
+
+    for (const entry of INCOME_ENTRIES) {
+      const addButton = modal.getByTestId('add-entry-button')
+      await addButton.click()
+
+      const descriptionInput = modal.getByTestId('entry-description-input')
+      await descriptionInput.fill(entry.description)
+
+      const amountInput = modal.getByTestId('entry-amount-input')
+      await amountInput.fill(entry.amount)
+
+      const currencySelect = modal.getByTestId('currency-select')
+      await currencySelect.click()
+      await currencySelect.fill(entry.currency)
+      await page.keyboard.press('Enter')
+
+      const saveRowButton = modal.getByTestId('entry-save-button')
+      await saveRowButton.click()
+    }
+
+    const tableRows = modal.locator('tbody tr')
+    await expect(tableRows).toHaveCount(INCOME_ENTRIES.length)
+
+    for (let i = 0; i < INCOME_ENTRIES.length; i++) {
+      const row = tableRows.nth(i)
+      await expect(row).toContainText(INCOME_ENTRIES[i].description)
+      const rowText = await row.textContent()
+      expect(rowText).toContain(INCOME_ENTRIES[i].description)
+      expect(rowText?.replace(/\s/g, '')).toContain(INCOME_ENTRIES[i].amount)
+      expect(rowText).toContain(INCOME_ENTRIES[i].currency)
+    }
+
+    const closeButton = modal.getByTestId('modal-close-button')
+    await closeButton.click()
+
+    await expect(modal).not.toBeVisible()
+  })
+
+  test('should read exchange rates from modal', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const monthBadge = page.getByTestId('month-badge').first()
+    await expect(monthBadge).toBeVisible()
+    await monthBadge.click()
+
+    const currencyRatesModal = page.getByTestId('currency-rates-modal')
+    await expect(currencyRatesModal).toBeVisible()
+
+    const currencies = ['USD', 'INR', 'GEL', 'EUR', 'JPY', 'CAD'] as const
+
+    for (const currency of currencies) {
+      const rateElement = currencyRatesModal.getByTestId(`rate-${currency}`)
+      await expect(rateElement).toBeVisible()
+
+      const rateText = await rateElement.textContent()
+      const rate = parseFloat(rateText?.replace(/[^\d.]/g, '') || '0')
+
+      exchangeRates[currency] = rate
+      expect(rate).toBeGreaterThan(0)
+    }
+
+    const closeButton = currencyRatesModal.getByTestId('modal-close-button')
+    await closeButton.click()
+    await expect(currencyRatesModal).not.toBeVisible()
+  })
+
+  test('should filter and read currencies in currency rates modal', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
 
@@ -159,24 +253,11 @@ test.describe.serial('Budget page scenario testing', () => {
     const countAfterClear = await rateElements.count()
     expect(countAfterClear).toBeGreaterThan(1)
 
-    await page.keyboard.press('Escape')
-    await expect(currencyRatesModal).not.toBeVisible()
-  })
+    const additionalCurrencies = ['RUB', 'AUD'] as const
 
-  test('should read exchange rates from modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
+    for (const currency of additionalCurrencies) {
+      await searchInput.fill(currency)
 
-    const monthBadge = page.getByTestId('month-badge').first()
-    await expect(monthBadge).toBeVisible()
-    await monthBadge.click()
-
-    const currencyRatesModal = page.getByTestId('currency-rates-modal')
-    await expect(currencyRatesModal).toBeVisible()
-
-    const currencies = ['USD', 'INR', 'GEL', 'EUR'] as const
-
-    for (const currency of currencies) {
       const rateElement = currencyRatesModal.getByTestId(`rate-${currency}`)
       await expect(rateElement).toBeVisible()
 
@@ -185,10 +266,11 @@ test.describe.serial('Budget page scenario testing', () => {
 
       exchangeRates[currency] = rate
       expect(rate).toBeGreaterThan(0)
+
+      await searchInput.clear()
     }
 
-    const closeButton = currencyRatesModal.getByTestId('modal-close-button')
-    await closeButton.click()
+    await page.keyboard.press('Escape')
     await expect(currencyRatesModal).not.toBeVisible()
   })
 
