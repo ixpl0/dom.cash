@@ -32,6 +32,19 @@ const INCOME_ENTRIES = Object.freeze([
   },
 ])
 
+const EXPENSE_ENTRIES = Object.freeze([
+  {
+    description: 'Rent',
+    amount: '45000',
+    currency: 'RUB',
+  },
+  {
+    description: 'Groceries',
+    amount: '320',
+    currency: 'AUD',
+  },
+])
+
 const exchangeRates = {
   USD: 0,
   INR: 0,
@@ -195,6 +208,54 @@ test.describe.serial('Budget page scenario testing', () => {
       expect(rowText).toContain(INCOME_ENTRIES[i].description)
       expect(rowText?.replace(/\s/g, '')).toContain(INCOME_ENTRIES[i].amount)
       expect(rowText).toContain(INCOME_ENTRIES[i].currency)
+    }
+
+    const closeButton = modal.getByTestId('modal-close-button')
+    await closeButton.click()
+
+    await expect(modal).not.toBeVisible()
+  })
+
+  test('should add expense entries to budget through modal', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const expenseButton = page.getByTestId('expense-button').first()
+    await expect(expenseButton).toBeVisible()
+    await expenseButton.click()
+
+    const modal = page.getByTestId('entry-modal')
+    await expect(modal).toBeVisible()
+
+    for (const entry of EXPENSE_ENTRIES) {
+      const addButton = modal.getByTestId('add-entry-button')
+      await addButton.click()
+
+      const descriptionInput = modal.getByTestId('entry-description-input')
+      await descriptionInput.fill(entry.description)
+
+      const amountInput = modal.getByTestId('entry-amount-input')
+      await amountInput.fill(entry.amount)
+
+      const currencySelect = modal.getByTestId('currency-select')
+      await currencySelect.click()
+      await currencySelect.fill(entry.currency)
+      await page.keyboard.press('Enter')
+
+      const saveRowButton = modal.getByTestId('entry-save-button')
+      await saveRowButton.click()
+    }
+
+    const tableRows = modal.locator('tbody tr')
+    await expect(tableRows).toHaveCount(EXPENSE_ENTRIES.length)
+
+    for (let i = 0; i < EXPENSE_ENTRIES.length; i++) {
+      const row = tableRows.nth(i)
+      await expect(row).toContainText(EXPENSE_ENTRIES[i].description)
+      const rowText = await row.textContent()
+      expect(rowText).toContain(EXPENSE_ENTRIES[i].description)
+      expect(rowText?.replace(/\s/g, '')).toContain(EXPENSE_ENTRIES[i].amount)
+      expect(rowText).toContain(EXPENSE_ENTRIES[i].currency)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')
