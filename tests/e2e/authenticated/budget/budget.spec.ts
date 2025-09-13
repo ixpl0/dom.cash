@@ -409,4 +409,58 @@ test.describe.serial('Budget page scenario testing', () => {
       expect(displayed).toBe(expected)
     }
   })
+
+  test('should edit entries and persist changes after page reload', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const editOperations = [
+      { testId: 'balance-button', entryIndex: 1, newAmount: '0' },
+      { testId: 'income-button', entryIndex: 0, newAmount: '0' },
+      { testId: 'expense-button', entryIndex: 1, newAmount: '0' },
+    ] as const
+
+    const updatedTotals = []
+
+    for (const operation of editOperations) {
+      const button = page.getByTestId(operation.testId).first()
+      await button.click()
+
+      const modal = page.getByTestId('entry-modal')
+      await expect(modal).toBeVisible()
+
+      const tableRows = modal.locator('tbody tr')
+      const targetRow = tableRows.nth(operation.entryIndex)
+
+      const editButton = targetRow.locator('.btn-warning')
+      await editButton.click()
+
+      const amountInput = modal.getByTestId('entry-amount-input')
+      await amountInput.clear()
+      await amountInput.fill(operation.newAmount)
+
+      const saveButton = modal.getByTestId('entry-save-button')
+      await saveButton.click()
+
+      const closeButton = modal.getByTestId('modal-close-button')
+      await closeButton.click()
+      await expect(modal).not.toBeVisible()
+
+      const updatedButtonText = await button.textContent()
+      const updatedTotal = parseInt(updatedButtonText?.replace(/[^\d]/g, ''), 10)
+      updatedTotals.push(updatedTotal)
+    }
+
+    await page.reload()
+    await waitForHydration(page)
+
+    for (let i = 0; i < editOperations.length; i++) {
+      const operation = editOperations[i]
+      const button = page.getByTestId(operation.testId).first()
+      const buttonText = await button.textContent()
+      const displayedTotal = parseInt(buttonText?.replace(/[^\d]/g, ''), 10)
+
+      expect(displayedTotal).toBe(updatedTotals[i])
+    }
+  })
 })
