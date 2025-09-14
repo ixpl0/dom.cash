@@ -576,24 +576,20 @@ test.describe.serial('Budget page scenario testing', () => {
 
     const newMonthBalanceButton = newMonth.getByTestId('balance-button')
     const previousMonthBalanceButton = previousMonth.getByTestId('balance-button')
-
-    const newMonthBalanceText = await newMonthBalanceButton.textContent()
-    const previousMonthBalanceText = await previousMonthBalanceButton.textContent()
-
-    const newMonthBalanceTotal = parseInt(newMonthBalanceText?.replace(/[^\d]/g, ''), 10)
-    const previousMonthBalanceTotal = parseInt(previousMonthBalanceText?.replace(/[^\d]/g, ''), 10)
-
-    expect(newMonthBalanceTotal).toBe(previousMonthBalanceTotal)
-
     const newMonthIncomesButton = newMonth.getByTestId('incomes-button')
     const newMonthExpensesButton = newMonth.getByTestId('expenses-button')
 
+    const newMonthBalanceText = await newMonthBalanceButton.textContent()
+    const previousMonthBalanceText = await previousMonthBalanceButton.textContent()
     const newMonthIncomesText = await newMonthIncomesButton.textContent()
     const newMonthExpensesText = await newMonthExpensesButton.textContent()
 
+    const newMonthBalanceTotal = parseInt(newMonthBalanceText?.replace(/[^\d]/g, ''), 10)
+    const previousMonthBalanceTotal = parseInt(previousMonthBalanceText?.replace(/[^\d]/g, ''), 10)
     const newMonthIncomesTotal = parseInt(newMonthIncomesText?.replace(/[^\d]/g, ''), 10)
     const newMonthExpensesTotal = parseInt(newMonthExpensesText?.replace(/[^\d]/g, ''), 10)
 
+    expect(newMonthBalanceTotal).toBe(previousMonthBalanceTotal)
     expect(newMonthIncomesTotal).toBe(0)
     expect(newMonthExpensesTotal).toBe(0)
   })
@@ -617,5 +613,25 @@ test.describe.serial('Budget page scenario testing', () => {
     await firstDeleteButton.click()
 
     await expect(months).toHaveCount(1)
+  })
+
+  test('should create 13 months timeline spanning multiple years', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const addMonthPreviousButton = page.getByTestId('add-month-previous')
+
+    for (let i = 0; i < 13; i++) {
+      await addMonthPreviousButton.click()
+      await expect(page.getByTestId('budget-month')).toHaveCount(i + 2)
+    }
+
+    const months = page.getByTestId('budget-month')
+    await expect(months).toHaveCount(14)
+
+    const yearElements = page.getByTestId('budget-year')
+    const yearCount = await yearElements.count()
+
+    expect(yearCount).toBeGreaterThanOrEqual(2)
   })
 })
