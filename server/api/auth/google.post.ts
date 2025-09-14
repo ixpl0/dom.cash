@@ -1,7 +1,6 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { authRateLimit } from '~~/server/utils/rate-limiter'
 import { verifyGoogleToken } from '~~/server/utils/google-oauth'
 import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, findUser } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
@@ -14,8 +13,6 @@ const googleAuthSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  authRateLimit(event)
-
   const { token, mainCurrency } = await parseBody(event, googleAuthSchema)
 
   try {

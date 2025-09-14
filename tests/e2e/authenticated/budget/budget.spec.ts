@@ -294,7 +294,7 @@ test.describe.serial('Budget page scenario testing', () => {
       await expect(rateElement).toBeVisible()
 
       const rateText = await rateElement.textContent()
-      const rate = parseFloat(rateText?.replace(/[^\d.]/g, '') || '0')
+      const rate = parseFloat(rateText?.replace(/[^\d.]/g, ''))
 
       exchangeRates[currency] = rate
       expect(rate).toBeGreaterThan(0)
@@ -335,7 +335,7 @@ test.describe.serial('Budget page scenario testing', () => {
       await expect(rateElement).toBeVisible()
 
       const rateText = await rateElement.textContent()
-      const rate = parseFloat(rateText?.replace(/[^\d.]/g, '') || '0')
+      const rate = parseFloat(rateText?.replace(/[^\d.]/g, ''))
 
       exchangeRates[currency] = rate
       expect(rate).toBeGreaterThan(0)
@@ -558,5 +558,43 @@ test.describe.serial('Budget page scenario testing', () => {
     await expect(totalExpensesButton).toHaveText('—')
     await expect(balanceChangeButton).toHaveText('—')
     await expect(currencyFluctuationButton).toHaveText('—')
+  })
+
+  test('should add month on top and copy only balance entries from previous month', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const addMonthTopButton = page.getByTestId('add-month-next')
+    await expect(addMonthTopButton).toBeVisible()
+    await addMonthTopButton.click()
+
+    const months = page.getByTestId('budget-month')
+    await expect(months).toHaveCount(2)
+
+    const newMonth = months.first()
+    const previousMonth = months.nth(1)
+
+    const newMonthBalanceButton = newMonth.getByTestId('balance-button')
+    const previousMonthBalanceButton = previousMonth.getByTestId('balance-button')
+
+    const newMonthBalanceText = await newMonthBalanceButton.textContent()
+    const previousMonthBalanceText = await previousMonthBalanceButton.textContent()
+
+    const newMonthBalanceTotal = parseInt(newMonthBalanceText?.replace(/[^\d]/g, ''), 10)
+    const previousMonthBalanceTotal = parseInt(previousMonthBalanceText?.replace(/[^\d]/g, ''), 10)
+
+    expect(newMonthBalanceTotal).toBe(previousMonthBalanceTotal)
+
+    const newMonthIncomesButton = newMonth.getByTestId('incomes-button')
+    const newMonthExpensesButton = newMonth.getByTestId('expenses-button')
+
+    const newMonthIncomesText = await newMonthIncomesButton.textContent()
+    const newMonthExpensesText = await newMonthExpensesButton.textContent()
+
+    const newMonthIncomesTotal = parseInt(newMonthIncomesText?.replace(/[^\d]/g, ''), 10)
+    const newMonthExpensesTotal = parseInt(newMonthExpensesText?.replace(/[^\d]/g, ''), 10)
+
+    expect(newMonthIncomesTotal).toBe(0)
+    expect(newMonthExpensesTotal).toBe(0)
   })
 })

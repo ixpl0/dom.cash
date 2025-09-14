@@ -1,6 +1,5 @@
-import { getQuery, getHeader, createError } from 'h3'
+import { defineEventHandler, getQuery, getHeader, createError } from 'h3'
 import { z } from 'zod'
-import { authRateLimit } from '~~/server/utils/rate-limiter'
 import { verifyGoogleToken } from '~~/server/utils/google-oauth'
 import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, findUser } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
@@ -17,8 +16,6 @@ type GoogleTokenResponse = {
 }
 
 export default defineEventHandler(async (event) => {
-  authRateLimit(event)
-
   const query = getQuery(event)
   const querySchema = z.object({
     code: z.string().min(1),
