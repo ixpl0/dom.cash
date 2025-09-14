@@ -25,6 +25,7 @@
             <div
               class="text-primary font-bold tooltip tooltip-bottom"
               data-tip="Средний баланс на начало месяца за год"
+              data-testid="year-average-balance"
             >
               {{ formatAmountRounded(yearStats.averageBalance, mainCurrency) }}
             </div>
@@ -44,12 +45,14 @@
             <div
               class="text-success font-bold tooltip tooltip-bottom"
               data-tip="Общая сумма доходов за год"
+              data-testid="year-total-income"
             >
               {{ formatAmountRounded(yearStats.totalIncome, mainCurrency) }}
             </div>
             <div
               class="text-sm text-success/80 tooltip tooltip-bottom"
               data-tip="Средний доход в месяц"
+              data-testid="year-average-income"
             >
               {{ formatAmountRounded(yearStats.averageIncome, mainCurrency) }}
             </div>
@@ -69,12 +72,14 @@
             <div
               class="text-error font-bold tooltip tooltip-bottom"
               data-tip="Общая сумма крупных расходов за год"
+              data-testid="year-total-expenses"
             >
               {{ formatAmountRounded(yearStats.totalExpenses, mainCurrency) }}
             </div>
             <div
               class="text-sm text-error/80 tooltip tooltip-bottom"
               data-tip="Средние крупные расходы в месяц"
+              data-testid="year-average-expenses"
             >
               {{ formatAmountRounded(yearStats.averageExpenses, mainCurrency) }}
             </div>
@@ -97,6 +102,7 @@
               class="font-bold tooltip tooltip-bottom"
               :class="yearStats.totalPocketExpenses < 0 ? 'text-warning' : 'text-error'"
               data-tip="Общая сумма карманных расходов за год"
+              data-testid="year-total-pocket-expenses"
             >
               {{ formatAmountRounded(yearStats.totalPocketExpenses, mainCurrency) }}
             </div>
@@ -104,6 +110,7 @@
               class="text-sm tooltip tooltip-bottom"
               :class="yearStats.averagePocketExpenses < 0 ? 'text-warning/80' : 'text-error/80'"
               data-tip="Средние карманные расходы в месяц"
+              data-testid="year-average-pocket-expenses"
             >
               {{ formatAmountRounded(yearStats.averagePocketExpenses, mainCurrency) }}
             </div>
@@ -125,12 +132,14 @@
             <div
               class="text-error font-bold tooltip tooltip-bottom"
               data-tip="Общая сумма всех расходов за год"
+              data-testid="year-total-all-expenses"
             >
               {{ formatAmountRounded(yearStats.totalAllExpenses, mainCurrency) }}
             </div>
             <div
               class="text-sm text-error/80 tooltip tooltip-bottom"
               data-tip="Средние расходы в месяц"
+              data-testid="year-average-all-expenses"
             >
               {{ formatAmountRounded(yearStats.averageAllExpenses, mainCurrency) }}
             </div>
@@ -157,6 +166,7 @@
                 'text-base-content': yearStats.totalBalanceChange === 0,
               }"
               data-tip="Общее изменение баланса за год"
+              data-testid="year-total-balance-change"
             >
               {{ formatAmountRounded(yearStats.totalBalanceChange, mainCurrency) }}
             </div>
@@ -168,6 +178,7 @@
                 'text-base-content/80': yearStats.averageBalanceChange === 0,
               }"
               data-tip="Среднее изменение баланса в месяц"
+              data-testid="year-average-balance-change"
             >
               {{ formatAmountRounded(yearStats.averageBalanceChange, mainCurrency) }}
             </div>
@@ -194,6 +205,7 @@
                 'text-base-content': yearStats.totalCurrencyProfitLoss === 0,
               }"
               data-tip="Общая прибыль/убыток от валютных колебаний за год"
+              data-testid="year-total-currency-profit-loss"
             >
               {{ formatAmountRounded(yearStats.totalCurrencyProfitLoss, mainCurrency) }}
             </div>
@@ -205,6 +217,7 @@
                 'text-base-content/80': yearStats.averageCurrencyProfitLoss === 0,
               }"
               data-tip="Средние валютные колебания в месяц"
+              data-testid="year-average-currency-profit-loss"
             >
               {{ formatAmountRounded(yearStats.averageCurrencyProfitLoss, mainCurrency) }}
             </div>
@@ -224,12 +237,14 @@
             <div
               class="text-error font-bold tooltip tooltip-bottom"
               data-tip="Общая сумма всех необязательных расходов за год"
+              data-testid="year-total-optional-expenses"
             >
               {{ formatAmountRounded(yearStats.totalOptionalExpenses, mainCurrency) }}
             </div>
             <div
               class="text-sm text-error/80 tooltip tooltip-bottom"
               data-tip="Средние необязательные расходы в месяц"
+              data-testid="year-average-optional-expenses"
             >
               {{ formatAmountRounded(yearStats.averageOptionalExpenses, mainCurrency) }}
             </div>
