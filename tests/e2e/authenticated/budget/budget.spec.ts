@@ -597,4 +597,25 @@ test.describe.serial('Budget page scenario testing', () => {
     expect(newMonthIncomesTotal).toBe(0)
     expect(newMonthExpensesTotal).toBe(0)
   })
+
+  test('should delete month when confirm dialog is accepted', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const months = page.getByTestId('budget-month')
+    await expect(months).toHaveCount(2)
+
+    const deleteButtons = page.getByTestId('delete-month-button')
+    await expect(deleteButtons).toHaveCount(2)
+
+    page.once('dialog', (dialog) => {
+      expect(dialog.type()).toBe('confirm')
+      dialog.accept()
+    })
+
+    const firstDeleteButton = deleteButtons.first()
+    await firstDeleteButton.click()
+
+    await expect(months).toHaveCount(1)
+  })
 })
