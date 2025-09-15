@@ -110,6 +110,7 @@
         <div class="flex gap-2">
           <button
             class="btn btn-ghost btn-sm"
+            data-testid="chart-button"
             @click="modalsStore.openChartModal"
           >
             <Icon

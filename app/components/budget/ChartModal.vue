@@ -2,12 +2,14 @@
   <dialog
     ref="modal"
     class="modal"
+    data-testid="chart-modal"
     @close="hide"
   >
     <div class="modal-box w-11/12 max-w-6xl h-[90vh] flex flex-col overflow-hidden">
       <button
         type="button"
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        data-testid="chart-modal-close-button"
         @click="hide"
       >
         <Icon

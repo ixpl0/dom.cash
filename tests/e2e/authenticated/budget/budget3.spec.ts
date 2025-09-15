@@ -112,4 +112,23 @@ test.describe.serial('Budget page historical testing', () => {
     expect(yearTotalCurrencyValue).toBe(monthCurrencyValue)
     expect(yearAverageCurrencyValue).toBe(monthCurrencyValue)
   })
+
+  test('should open chart modal with canvas and close it', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const chartButton = page.getByTestId('chart-button')
+    await expect(chartButton).toBeVisible()
+    await chartButton.click()
+
+    const chartModal = page.getByTestId('chart-modal')
+    await expect(chartModal).toBeVisible()
+
+    const canvas = chartModal.locator('canvas')
+    await expect(canvas).toBeVisible()
+
+    const closeButton = chartModal.getByTestId('chart-modal-close-button')
+    await closeButton.click()
+    await expect(chartModal).not.toBeVisible()
+  })
 })
