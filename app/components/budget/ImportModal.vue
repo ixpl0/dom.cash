@@ -2,6 +2,7 @@
   <dialog
     ref="modal"
     class="modal"
+    data-testid="import-modal"
     :class="{ 'modal-open': isOpen }"
   >
     <div class="modal-box">
@@ -21,6 +22,7 @@
               type="file"
               accept=".json,application/json"
               class="file-input file-input-bordered w-full"
+              data-testid="import-file-input"
               @change="handleFileSelect"
             >
           </label>
@@ -143,6 +145,7 @@
         <button
           v-if="importResult"
           class="btn btn-primary"
+          data-testid="import-close-button"
           @click="handleClose"
         >
           Закрыть
@@ -150,6 +153,7 @@
         <button
           v-if="!importResult"
           class="btn btn-primary"
+          data-testid="import-submit-button"
           :disabled="!selectedFile || isImporting"
           @click="handleImport"
         >

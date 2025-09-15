@@ -136,6 +136,7 @@
             </button>
             <button
               class="btn btn-ghost btn-sm"
+              data-testid="import-button"
               @click="openImportModal"
             >
               <Icon
