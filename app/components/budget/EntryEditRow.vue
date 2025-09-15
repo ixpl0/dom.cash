@@ -44,6 +44,7 @@
         v-model="localEntry.isOptional"
         type="checkbox"
         class="checkbox checkbox-sm"
+        data-testid="entry-optional-checkbox"
       >
     </td>
     <td class="w-1">
