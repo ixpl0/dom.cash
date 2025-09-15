@@ -276,4 +276,49 @@ test.describe.serial('Budget page extended testing', () => {
       expect(displayedValue).toBe(stat.expectedValue)
     }
   })
+
+  test('should edit expenses in second month and verify negative pocket expenses with warning classes', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const months = page.getByTestId('budget-month')
+    const secondMonth = months.nth(1)
+
+    const expenseButton = secondMonth.getByTestId('expenses-button')
+    await expenseButton.click()
+
+    const modal = page.getByTestId('entry-modal')
+    await expect(modal).toBeVisible()
+
+    const tableRows = modal.locator('tbody tr')
+    const firstRow = tableRows.first()
+    const editButton = firstRow.locator('.btn-warning')
+    await editButton.click()
+
+    const amountInput = modal.getByTestId('entry-amount-input')
+    await amountInput.clear()
+    await amountInput.fill('150')
+
+    const saveRowButton = modal.getByTestId('entry-save-button')
+    await saveRowButton.click()
+
+    const closeButton = modal.getByTestId('modal-close-button')
+    await closeButton.click()
+    await expect(modal).not.toBeVisible()
+
+    const pocketExpensesButton = secondMonth.getByTestId('pocket-expenses-button')
+    await expect(pocketExpensesButton).toHaveText('-50 $')
+    await expect(pocketExpensesButton).toHaveClass(/text-warning/)
+
+    const yearElements = page.getByTestId('budget-year')
+    const firstYear = yearElements.first()
+
+    const yearTotalPocketExpenses = firstYear.getByTestId('year-total-pocket-expenses')
+    await expect(yearTotalPocketExpenses).toHaveText('-50 $')
+    await expect(yearTotalPocketExpenses).toHaveClass(/text-warning/)
+
+    const yearAveragePocketExpenses = firstYear.getByTestId('year-average-pocket-expenses')
+    await expect(yearAveragePocketExpenses).toHaveText('-50 $')
+    await expect(yearAveragePocketExpenses).toHaveClass(/text-warning/)
+  })
 })
