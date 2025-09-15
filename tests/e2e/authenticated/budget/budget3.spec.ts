@@ -32,7 +32,7 @@ test.describe.serial('Budget page historical testing', () => {
     await descriptionInput.fill('Chilean Pesos Balance')
 
     const amountInput = modal.getByTestId('entry-amount-input')
-    await amountInput.fill('1000000')
+    await amountInput.fill('1000000000')
 
     const currencySelect = modal.getByTestId('currency-select')
     await currencySelect.click()
@@ -92,7 +92,7 @@ test.describe.serial('Budget page historical testing', () => {
     const yearElements = page.getByTestId('budget-year')
     const firstYear = yearElements.first()
 
-    const currencyProfitLossButton = secondMonth.getByTestId('currency-profit-loss-button')
+    const currencyProfitLossButton = secondMonth.getByTestId('currency-fluctuation-button')
     const yearTotalCurrencyElement = firstYear.getByTestId('year-total-currency-profit-loss')
     const yearAverageCurrencyElement = firstYear.getByTestId('year-average-currency-profit-loss')
 
@@ -130,5 +130,35 @@ test.describe.serial('Budget page historical testing', () => {
     const closeButton = chartModal.getByTestId('chart-modal-close-button')
     await closeButton.click()
     await expect(chartModal).not.toBeVisible()
+  })
+
+  test('should export budget data as JSON file', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    const downloadPromise = page.waitForEvent('download')
+
+    const exportButton = page.getByTestId('export-button')
+    await expect(exportButton).toBeVisible()
+    await exportButton.click()
+
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toMatch(/budget.*\.json$/)
+
+    const downloadPath = await download.path()
+    expect(downloadPath).toBeTruthy()
+
+    const savedPath = './test-export.json'
+    await download.saveAs(savedPath)
+
+    const fs = await import('fs/promises')
+    const fileContent = await fs.readFile(savedPath, 'utf-8')
+    const exportedData = JSON.parse(fileContent)
+
+    expect(exportedData).toHaveProperty('user')
+    expect(exportedData).toHaveProperty('months')
+    expect(exportedData.months).toHaveLength(2)
+
+    await fs.unlink(savedPath).catch(() => {})
   })
 })

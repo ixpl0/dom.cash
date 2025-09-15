@@ -125,6 +125,7 @@
           >
             <button
               class="btn btn-ghost btn-sm"
+              data-testid="export-button"
               @click="handleExport"
             >
               <Icon
