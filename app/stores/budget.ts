@@ -129,18 +129,17 @@ export const useBudgetStore = defineStore('budget', () => {
     error.value = null
 
     try {
-      const timestamp = Date.now()
       const yearsPromise = useFetch<YearsData>(
         targetUsername ? `/api/budget/years?username=${targetUsername}` : '/api/budget/years',
         {
-          key: targetUsername ? `budget-years-${targetUsername}-${timestamp}` : `budget-years-own-${timestamp}`,
+          key: targetUsername ? `budget-years-${targetUsername}` : 'budget-years-own',
         },
       )
 
       const { data: fetchedData, error: fetchError } = await useFetch<BudgetData>(
         targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
         {
-          key: targetUsername ? `budget-user-${targetUsername}-${timestamp}` : `budget-own-${timestamp}`,
+          key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
         },
       )
 
@@ -167,6 +166,38 @@ export const useBudgetStore = defineStore('budget', () => {
     catch (err) {
       console.error('Error refreshing budget:', err)
       error.value = 'Failed to load budget'
+    }
+  }
+
+  const forceRefresh = async (targetUsername?: string) => {
+    error.value = null
+
+    try {
+      const [yearsData, fetchedData] = await Promise.all([
+        $fetch<YearsData>(
+          targetUsername ? `/api/budget/years?username=${targetUsername}` : '/api/budget/years',
+        ),
+        $fetch<BudgetData>(
+          targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
+        ),
+      ])
+
+      data.value = fetchedData || null
+
+      if (yearsData) {
+        availableYears.value = yearsData.availableYears
+        loadedYears.value = new Set(yearsData.initialYears)
+      }
+
+      if (data.value) {
+        canEdit.value = data.value.access === 'owner' || data.value.access === 'write'
+        canView.value = true
+      }
+    }
+    catch (err) {
+      console.error('Error force refreshing budget:', err)
+      error.value = 'Failed to load budget'
+      data.value = null
     }
   }
 
@@ -584,6 +615,7 @@ export const useBudgetStore = defineStore('budget', () => {
     getComputedMonthByYearMonth,
     getYearSummary,
     refresh,
+    forceRefresh,
     loadYear,
     createMonth,
     createNextMonth,

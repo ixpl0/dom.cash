@@ -407,7 +407,7 @@ const closeImportModal = (): void => {
 
 const handleImported = async (): Promise<void> => {
   try {
-    await budgetStore.refresh(targetUsername.value)
+    await budgetStore.forceRefresh(targetUsername.value)
   }
   catch (error) {
     console.error('Failed to refresh budget after import:', error)
