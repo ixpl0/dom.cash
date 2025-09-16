@@ -59,10 +59,16 @@
                   v-else
                   data-testid="entry-row"
                 >
-                  <td>
+                  <td
+                    class="cursor-pointer hover:bg-base-200"
+                    @click="startEditWithFocus(entry, 'description')"
+                  >
                     <span>{{ entry.description }}</span>
                   </td>
-                  <td>
+                  <td
+                    class="cursor-pointer hover:bg-base-200"
+                    @click="startEditWithFocus(entry, 'amount')"
+                  >
                     <span
                       :class="{
                         'text-base-content': entry.amount === 0,
@@ -72,13 +78,24 @@
                       }"
                     >{{ formatAmount(entry.amount, entry.currency) }}</span>
                   </td>
-                  <td>
+                  <td
+                    class="cursor-pointer hover:bg-base-200"
+                    @click="startEditWithFocus(entry, 'currency')"
+                  >
                     <span>{{ entry.currency }}</span>
                   </td>
-                  <td v-if="entryModal.entryKind !== 'balance'">
+                  <td
+                    v-if="entryModal.entryKind !== 'balance'"
+                    class="cursor-pointer hover:bg-base-200"
+                    @click="startEditWithFocus(entry, 'date')"
+                  >
                     <span>{{ formatDate(getEntryDate(entry)) }}</span>
                   </td>
-                  <td v-if="entryModal.entryKind === 'expense'">
+                  <td
+                    v-if="entryModal.entryKind === 'expense'"
+                    class="cursor-pointer hover:bg-base-200"
+                    @click="startEditWithFocus(entry, 'optional')"
+                  >
                     <Icon
                       v-if="'isOptional' in entry && (entry as any).isOptional"
                       name="heroicons:check"
@@ -173,6 +190,7 @@
 import { formatAmount } from '~~/shared/utils/budget'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
+import type { BudgetEntry } from '~~/shared/types/budget'
 
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
@@ -261,6 +279,15 @@ const performUpdateEntry = async (entryId: string, entryData: { description: str
 const performDeleteEntry = async (entryId: string) => {
   await budgetStore.deleteEntry(entryId)
   emitWrapper('deleted', entryId)
+}
+
+const focusField = ref<string | null>(null)
+
+const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
+  if (entryModal.value.isReadOnly) return
+
+  focusField.value = fieldToFocus
+  startEdit(entry)
 }
 
 const addEntry = async (): Promise<void> => {
@@ -354,6 +381,52 @@ watch(() => entryModal.value.isOpen, (isOpen) => {
 
 watch([isAddingNewEntry, editingEntryId], () => {
   markAsSaved()
+})
+
+watch(editingEntryId, async (newEditingId) => {
+  if (newEditingId && focusField.value) {
+    await nextTick()
+
+    let selector = ''
+    switch (focusField.value) {
+      case 'description':
+        selector = '[data-testid="entry-description-input"]'
+        break
+      case 'amount':
+        selector = '[data-testid="entry-amount-input"]'
+        break
+      case 'date':
+        selector = 'input[type="date"]'
+        break
+      case 'optional':
+        selector = '[data-testid="entry-optional-checkbox"]'
+        break
+      case 'currency':
+        selector = '[data-testid="currency-select"]'
+        break
+    }
+
+    if (selector && modal.value) {
+      const element = modal.value.querySelector(selector) as HTMLInputElement
+
+      if (element) {
+        if (focusField.value === 'currency') {
+          requestAnimationFrame(() => {
+            element.focus()
+          })
+        }
+        else if (focusField.value === 'date') {
+          element.showPicker?.()
+        }
+        else {
+          element.focus()
+          element.select()
+        }
+      }
+    }
+
+    focusField.value = null
+  }
 })
 
 watch([newEntry, editingEntry], () => {
