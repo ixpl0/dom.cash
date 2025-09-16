@@ -3,6 +3,7 @@
     ref="modal"
     class="modal"
     @close="handleDialogClose"
+    @keydown.esc="handleEscapeKey"
   >
     <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col">
       <button
@@ -228,6 +229,7 @@ const isLoading = ref(false)
 const modal = ref<HTMLDialogElement | null>(null)
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.shareModal.isOpen)
+const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 
 const isAddingNew = ref(false)
 const isAdding = ref(false)
@@ -263,6 +265,7 @@ const addShare = async (): Promise<void> => {
     })
 
     shares.value = [...shares.value, response]
+    markAsSaved()
     cancelAdd()
   }
   catch (error) {
@@ -280,6 +283,16 @@ const startEdit = (share: ShareEntry): void => {
 
 const cancelEdit = (): void => {
   editingId.value = null
+}
+
+const resetForm = (): void => {
+  isAddingNew.value = false
+  isAdding.value = false
+  isSaving.value = false
+  isDeleting.value = null
+  editingId.value = null
+  newShare.value = { id: '', username: '', access: 'read' }
+  editingShare.value = { id: '', username: '', access: 'read' }
 }
 
 const saveShare = async (): Promise<void> => {
@@ -305,6 +318,7 @@ const saveShare = async (): Promise<void> => {
         ...shares.value.slice(index + 1),
       ]
     }
+    markAsSaved()
     cancelEdit()
   }
   catch (error) {
@@ -353,21 +367,49 @@ const loadShares = async (): Promise<void> => {
 }
 
 const hide = (): void => {
+  if (!confirmClose()) {
+    return
+  }
+
+  markAsSaved()
   modalsStore.closeShareModal()
 }
 
 const handleDialogClose = (): void => {
+  if (!confirmClose()) {
+    modal.value?.showModal()
+    return
+  }
+
   cancelAdd()
   cancelEdit()
+  markAsSaved()
+}
+
+const handleEscapeKey = (event: KeyboardEvent): void => {
+  event.preventDefault()
+  hide()
 }
 
 watch(isOpen, async (open) => {
   if (open) {
     modal.value?.showModal()
+    resetForm()
     await loadShares()
+    markAsSaved()
   }
   else {
     modal.value?.close()
   }
 })
+
+watch([isAddingNew, editingId], () => {
+  markAsSaved()
+})
+
+watch([newShare, editingShare], () => {
+  if (isAddingNew.value || editingId.value) {
+    markAsChanged()
+  }
+}, { deep: true })
 </script>

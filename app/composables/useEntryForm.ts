@@ -72,6 +72,16 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
     editingEntry.value = createDefaultFormData()
   }
 
+  const resetForm = (): void => {
+    isAdding.value = false
+    isDeleting.value = null
+    editingEntryId.value = null
+    isSaving.value = false
+    isAddingNewEntry.value = false
+    editingEntry.value = createDefaultFormData()
+    newEntry.value = createDefaultFormData()
+  }
+
   const kindValue = computed(() => unref(entryKind) || 'balance')
   const config = computed(() => getEntryConfig(kindValue.value))
 
@@ -94,5 +104,6 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
     cancelAdd,
     startEdit,
     cancelEdit,
+    resetForm,
   }
 }

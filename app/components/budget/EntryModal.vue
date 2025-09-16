@@ -4,6 +4,7 @@
     class="modal"
     data-testid="entry-modal"
     @close="handleDialogClose"
+    @keydown.esc="handleEscapeKey"
   >
     <div class="modal-box w-11/12 max-w-5xl max-h-[90vh] flex flex-col overflow-visible">
       <button
@@ -87,6 +88,7 @@
                       <button
                         v-if="!entryModal.isReadOnly"
                         class="btn btn-sm btn-warning"
+                        data-testid="entry-edit-button"
                         @click="startEdit(entry)"
                       >
                         <Icon
@@ -166,7 +168,6 @@
 
 <script setup lang="ts">
 import { formatAmount } from '~~/shared/utils/budget'
-import { useEntryForm } from '~/composables/useEntryForm'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
 
@@ -189,6 +190,7 @@ const emit = defineEmits<{
 }>()
 
 const modal = ref<HTMLDialogElement>()
+const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 
 const {
   isAdding,
@@ -206,6 +208,7 @@ const {
   cancelAdd,
   startEdit,
   cancelEdit,
+  resetForm,
 } = useEntryForm(computed(() => entryModal.value.entryKind))
 
 const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) => {
@@ -268,6 +271,7 @@ const addEntry = async (): Promise<void> => {
 
   try {
     await performAddEntry(newEntry.value)
+    markAsSaved()
     cancelAdd()
   }
   catch (error) {
@@ -311,21 +315,49 @@ const deleteEntry = async (entryId: string): Promise<void> => {
 }
 
 const hide = (): void => {
+  if (!confirmClose()) {
+    return
+  }
+
+  markAsSaved()
   modalsStore.closeEntryModal()
 }
 
 const handleDialogClose = (): void => {
+  if (!confirmClose()) {
+    modal.value?.showModal()
+    return
+  }
+
+  markAsSaved()
   modalsStore.closeEntryModal()
+}
+
+const handleEscapeKey = (event: KeyboardEvent): void => {
+  event.preventDefault()
+  hide()
 }
 
 watch(() => entryModal.value.isOpen, (isOpen) => {
   if (isOpen) {
     modal.value?.showModal()
+    resetForm()
+    markAsSaved()
   }
   else {
     modal.value?.close()
   }
 })
+
+watch([isAddingNewEntry, editingEntryId], () => {
+  markAsSaved()
+})
+
+watch([newEntry, editingEntry], () => {
+  if (isAddingNewEntry.value || editingEntryId.value) {
+    markAsChanged()
+  }
+}, { deep: true })
 
 const saveEntry = async (): Promise<void> => {
   if (isSaving.value) return
@@ -338,6 +370,7 @@ const saveEntry = async (): Promise<void> => {
 
   try {
     await performUpdateEntry(editingEntryId.value, editingEntry.value)
+    markAsSaved()
     cancelEdit()
   }
   catch (error) {

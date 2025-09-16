@@ -4,6 +4,7 @@
     class="modal"
     data-testid="import-modal"
     :class="{ 'modal-open': isOpen }"
+    @keydown.esc="handleEscapeKey"
   >
     <div class="modal-box">
       <h3 class="font-bold text-lg mb-4">
@@ -190,6 +191,7 @@ const previewData = ref<BudgetExportData | null>(null)
 const error = ref<string>('')
 const isImporting = ref(false)
 const importResult = ref<BudgetImportResult | null>(null)
+const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 
 type ImportMode = 'skip' | 'overwrite'
 
@@ -255,6 +257,7 @@ const handleImport = async () => {
     importResult.value = response as BudgetImportResult
 
     if (response.success) {
+      markAsSaved()
       emit('imported')
     }
   }
@@ -279,11 +282,33 @@ const startNewImport = () => {
 }
 
 const handleClose = () => {
+  if (!confirmClose()) {
+    return
+  }
+
   startNewImport()
+  markAsSaved()
   emit('close')
+}
+
+const handleEscapeKey = (event: KeyboardEvent): void => {
+  event.preventDefault()
+  handleClose()
 }
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('ru-RU')
 }
+
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    markAsSaved()
+  }
+})
+
+watch([selectedFile, importMode, previewData], () => {
+  if (selectedFile.value || previewData.value) {
+    markAsChanged()
+  }
+})
 </script>
