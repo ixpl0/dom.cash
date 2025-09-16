@@ -129,17 +129,18 @@ export const useBudgetStore = defineStore('budget', () => {
     error.value = null
 
     try {
+      const timestamp = Date.now()
       const yearsPromise = useFetch<YearsData>(
         targetUsername ? `/api/budget/years?username=${targetUsername}` : '/api/budget/years',
         {
-          key: targetUsername ? `budget-years-${targetUsername}` : 'budget-years-own',
+          key: targetUsername ? `budget-years-${targetUsername}-${timestamp}` : `budget-years-own-${timestamp}`,
         },
       )
 
       const { data: fetchedData, error: fetchError } = await useFetch<BudgetData>(
         targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
         {
-          key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
+          key: targetUsername ? `budget-user-${targetUsername}-${timestamp}` : `budget-own-${timestamp}`,
         },
       )
 

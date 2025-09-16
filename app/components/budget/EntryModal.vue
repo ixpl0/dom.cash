@@ -55,7 +55,10 @@
                   @save="saveEntry()"
                   @cancel="cancelEdit()"
                 />
-                <tr v-else>
+                <tr
+                  v-else
+                  data-testid="entry-row"
+                >
                   <td>
                     <span>{{ entry.description }}</span>
                   </td>
