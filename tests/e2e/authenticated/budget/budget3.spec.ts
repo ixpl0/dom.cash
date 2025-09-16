@@ -216,7 +216,7 @@ test.describe.serial('Budget page historical testing', () => {
     await expect(submitButton).toBeEnabled()
     await submitButton.click()
 
-    await expect(importModal.getByText('Импорт данных...')).toBeVisible()
+    await expect(importModal.getByTestId('import-loading')).toBeVisible()
 
     const closeButton = importModal.getByTestId('import-close-button')
     await expect(closeButton).toBeVisible()

@@ -95,6 +95,7 @@
       <div
         v-if="isImporting"
         class="mb-4"
+        data-testid="import-loading"
       >
         <div class="loading loading-spinner loading-sm mr-2" />
         <span>Импорт данных...</span>
