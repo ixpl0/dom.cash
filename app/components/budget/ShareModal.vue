@@ -366,8 +366,8 @@ const loadShares = async (): Promise<void> => {
   }
 }
 
-const hide = (): void => {
-  if (!confirmClose()) {
+const hide = async (): Promise<void> => {
+  if (!(await confirmClose())) {
     return
   }
 
@@ -375,8 +375,8 @@ const hide = (): void => {
   modalsStore.closeShareModal()
 }
 
-const handleDialogClose = (): void => {
-  if (!confirmClose()) {
+const handleDialogClose = async (): Promise<void> => {
+  if (!(await confirmClose())) {
     modal.value?.showModal()
     return
   }
@@ -386,9 +386,9 @@ const handleDialogClose = (): void => {
   markAsSaved()
 }
 
-const handleEscapeKey = (event: KeyboardEvent): void => {
+const handleEscapeKey = async (event: KeyboardEvent): Promise<void> => {
   event.preventDefault()
-  hide()
+  await hide()
 }
 
 watch(isOpen, async (open) => {

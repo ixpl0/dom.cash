@@ -96,10 +96,20 @@ const isOpen = computed(() => modalsStore.sharedBudgetsModal.isOpen)
 const revokeAccess = async (id: string): Promise<void> => {
   const budget = sharedBudgets.value.find(b => b.id === id)
   const confirmMessage = budget
-    ? `Вы уверены, что хотите отказаться от доступа к бюджету пользователя ${budget.username}?`
-    : 'Вы уверены, что хотите отказаться от этого доступа?'
+    ? `Доступ к бюджету пользователя <strong>${budget.username}</strong>`
+    : 'Доступ к этому бюджету'
 
-  if (!confirm(confirmMessage)) {
+  const { confirm } = useConfirmation()
+  const confirmed = await confirm({
+    title: 'Отказ от доступа',
+    message: confirmMessage,
+    variant: 'warning',
+    confirmText: 'Отказаться',
+    cancelText: 'Отмена',
+    icon: 'heroicons:no-symbol',
+  })
+
+  if (!confirmed) {
     return
   }
 

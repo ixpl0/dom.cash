@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
+import { acceptConfirmModal } from '../../helpers/confirmation'
 
 test.describe.serial('Budget page historical testing', () => {
   test('should create first month', async ({ page }) => {
@@ -66,12 +67,8 @@ test.describe.serial('Budget page historical testing', () => {
       const topMonth = months.first()
       const deleteButton = topMonth.getByTestId('delete-month-button')
 
-      page.once('dialog', (dialog) => {
-        expect(dialog.type()).toBe('confirm')
-        dialog.accept()
-      })
-
       await deleteButton.click()
+      await acceptConfirmModal(page)
       await expect(page.getByTestId('budget-month')).toHaveCount(2)
     }
 
@@ -185,20 +182,14 @@ test.describe.serial('Budget page historical testing', () => {
     const firstMonth = months.first()
 
     const firstDeleteButton = firstMonth.getByTestId('delete-month-button')
-    page.once('dialog', (dialog) => {
-      expect(dialog.type()).toBe('confirm')
-      dialog.accept()
-    })
     await firstDeleteButton.click()
+    await confirmModal(page)
     await expect(page.getByTestId('budget-month')).toHaveCount(1)
 
     const remainingMonth = page.getByTestId('budget-month').first()
     const secondDeleteButton = remainingMonth.getByTestId('delete-month-button')
-    page.once('dialog', (dialog) => {
-      expect(dialog.type()).toBe('confirm')
-      dialog.accept()
-    })
     await secondDeleteButton.click()
+    await confirmModal(page)
 
     const emptyState = page.getByTestId('budget-empty-state')
     await expect(emptyState).toBeVisible()

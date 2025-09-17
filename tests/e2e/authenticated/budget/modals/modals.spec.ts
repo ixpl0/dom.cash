@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../../helpers/wait-for-hydration'
 import { initBudget } from '../../../helpers/budget-setup'
+import { acceptConfirmModal } from '../../../helpers/confirmation'
 
 test.describe('Modal tests with budget fixtures', () => {
   test('should import simple budget fixture and verify month creation', async ({ page }) => {
@@ -39,13 +40,8 @@ test.describe('Modal tests with budget fixtures', () => {
     const descriptionInput = modal.getByTestId('entry-description-input')
     await descriptionInput.fill('Test Edit')
 
-    page.once('dialog', (dialog) => {
-      expect(dialog.type()).toBe('confirm')
-      expect(dialog.message()).toContain('несохранённые изменения')
-      dialog.accept()
-    })
-
     await page.keyboard.press('Escape')
+    await acceptConfirmModal(page)
     await expect(modal).not.toBeVisible()
   })
 

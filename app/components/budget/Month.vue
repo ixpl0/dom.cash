@@ -359,9 +359,19 @@ const canDeleteMonth = computed(() => {
 
 const handleDeleteMonth = async (): Promise<void> => {
   const monthName = `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
-  const confirmMessage = `Вы уверены, что хотите удалить месяц ${monthName}? Все записи этого месяца будут безвозвратно удалены.`
+  const confirmMessage = `Все записи месяца <strong>${monthName}</strong> будут безвозвратно удалены.`
 
-  if (confirm(confirmMessage)) {
+  const { confirm } = useConfirmation()
+  const confirmed = await confirm({
+    title: 'Удаление месяца',
+    message: confirmMessage,
+    variant: 'danger',
+    confirmText: 'Удалить месяц',
+    cancelText: 'Отмена',
+    icon: 'heroicons:trash',
+  })
+
+  if (confirmed) {
     try {
       await budgetStore.deleteMonth(monthData.value.id)
     }

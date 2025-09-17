@@ -324,10 +324,20 @@ const deleteEntry = async (entryId: string): Promise<void> => {
       : 'расхода'
 
   const confirmMessage = entry
-    ? `Вы уверены, что хотите удалить запись ${entryType}: "${entry.description}" ${entry.amount} ${entry.currency}?`
-    : `Вы уверены, что хотите удалить эту запись ${entryType}?`
+    ? `Запись ${entryType}: <strong>"${entry.description}"</strong><br><strong>${entry.amount} ${entry.currency}</strong>`
+    : `Эта запись ${entryType}`
 
-  if (!confirm(confirmMessage)) {
+  const { confirm } = useConfirmation()
+  const confirmed = await confirm({
+    title: 'Удаление записи',
+    message: confirmMessage,
+    variant: 'danger',
+    confirmText: 'Удалить',
+    cancelText: 'Отмена',
+    icon: 'heroicons:trash',
+  })
+
+  if (!confirmed) {
     return
   }
 
@@ -344,8 +354,8 @@ const deleteEntry = async (entryId: string): Promise<void> => {
   }
 }
 
-const hide = (): void => {
-  if (!confirmClose()) {
+const hide = async (): Promise<void> => {
+  if (!(await confirmClose())) {
     return
   }
 
@@ -353,8 +363,8 @@ const hide = (): void => {
   modalsStore.closeEntryModal()
 }
 
-const handleDialogClose = (): void => {
-  if (!confirmClose()) {
+const handleDialogClose = async (): Promise<void> => {
+  if (!(await confirmClose())) {
     modal.value?.showModal()
     return
   }
@@ -363,9 +373,9 @@ const handleDialogClose = (): void => {
   modalsStore.closeEntryModal()
 }
 
-const handleEscapeKey = (event: KeyboardEvent): void => {
+const handleEscapeKey = async (event: KeyboardEvent): Promise<void> => {
   event.preventDefault()
-  hide()
+  await hide()
 }
 
 watch(() => entryModal.value.isOpen, (isOpen) => {

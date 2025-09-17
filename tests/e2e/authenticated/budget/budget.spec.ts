@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
+import { acceptConfirmModal } from '../../helpers/confirmation'
 
 const BALANCE_ENTRIES = Object.freeze([
   {
@@ -512,13 +513,8 @@ test.describe.serial('Budget page scenario testing', () => {
       const targetRow = tableRows.nth(operation.entryIndex)
 
       const deleteButton = targetRow.locator('.btn-error')
-
-      page.once('dialog', (dialog) => {
-        expect(dialog.type()).toBe('confirm')
-        dialog.accept()
-      })
-
       await deleteButton.click()
+      await acceptConfirmModal(page)
 
       const closeButton = modal.getByTestId('modal-close-button')
       await closeButton.click()
@@ -604,13 +600,9 @@ test.describe.serial('Budget page scenario testing', () => {
     const deleteButtons = page.getByTestId('delete-month-button')
     await expect(deleteButtons).toHaveCount(2)
 
-    page.once('dialog', (dialog) => {
-      expect(dialog.type()).toBe('confirm')
-      dialog.accept()
-    })
-
     const firstDeleteButton = deleteButtons.first()
     await firstDeleteButton.click()
+    await confirmModal(page)
 
     await expect(months).toHaveCount(1)
   })
