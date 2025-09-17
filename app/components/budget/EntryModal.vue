@@ -324,7 +324,7 @@ const deleteEntry = async (entryId: string): Promise<void> => {
       : 'расхода'
 
   const confirmMessage = entry
-    ? `Запись ${entryType}: <strong>"${entry.description}"</strong><br><strong>${entry.amount} ${entry.currency}</strong>`
+    ? `Запись ${entryType}: <strong>"${entry.description}"</strong><br><strong>${formatAmount(entry.amount, entry.currency)}</strong>`
     : `Эта запись ${entryType}`
 
   const { confirm } = useConfirmation()
