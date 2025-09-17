@@ -330,6 +330,22 @@ const saveShare = async (): Promise<void> => {
 }
 
 const deleteShare = async (id: string): Promise<void> => {
+  const share = shares.value.find(s => s.id === id)
+  const shareUsername = share ? share.username : 'этого пользователя'
+
+  const { confirm } = useConfirmation()
+  const confirmed = await confirm({
+    title: 'Удаление доступа',
+    message: `Вы действительно хотите отозвать доступ к бюджету у <strong>${shareUsername}</strong>?`,
+    variant: 'danger',
+    confirmText: 'Удалить',
+    cancelText: 'Отмена',
+  })
+
+  if (!confirmed) {
+    return
+  }
+
   isDeleting.value = id
 
   try {
