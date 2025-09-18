@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "exportDate": "2025-09-19T10:00:00.000Z",
+  "user": {
+    "username": "test",
+    "mainCurrency": "USD"
+  },
+  "months": [
+    {
+      "year": 2025,
+      "month": 9,
+      "entries": [
+        {
+          "kind": "balance",
+          "description": "Cash",
+          "amount": 5000,
+          "currency": "USD"
+        },
+        {
+          "kind": "balance",
+          "description": "Bank card",
+          "amount": 12345,
+          "currency": "INR"
+        },
+        {
+          "kind": "balance",
+          "description": "Second card",
+          "amount": 6789,
+          "currency": "GEL"
+        },
+        {
+          "kind": "income",
+          "description": "Salary",
+          "amount": 3500,
+          "currency": "JPY"
+        },
+        {
+          "kind": "income",
+          "description": "Freelance",
+          "amount": 850,
+          "currency": "CAD"
+        },
+        {
+          "kind": "expense",
+          "description": "Rent",
+          "amount": 45000,
+          "currency": "RUB"
+        },
+        {
+          "kind": "expense",
+          "description": "Groceries",
+          "amount": 320,
+          "currency": "AUD"
+        }
+      ]
+    }
+  ]
+}
