@@ -1,0 +1,34 @@
+{
+  "version": "1.0",
+  "exportDate": "2025-09-19T10:00:00.000Z",
+  "user": {
+    "username": "test",
+    "mainCurrency": "USD"
+  },
+  "months": [
+    {
+      "year": 2025,
+      "month": 9,
+      "entries": [
+        {
+          "kind": "balance",
+          "description": "Chilean Pesos Balance",
+          "amount": 1000000000,
+          "currency": "CLP"
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "month": 8,
+      "entries": [
+        {
+          "kind": "balance",
+          "description": "Chilean Pesos Balance",
+          "amount": 1000000000,
+          "currency": "CLP"
+        }
+      ]
+    }
+  ]
+}
