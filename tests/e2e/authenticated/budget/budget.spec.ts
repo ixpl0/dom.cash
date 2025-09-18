@@ -602,7 +602,7 @@ test.describe.serial('Budget page scenario testing', () => {
 
     const firstDeleteButton = deleteButtons.first()
     await firstDeleteButton.click()
-    await confirmModal(page)
+    await acceptConfirmModal(page)
 
     await expect(months).toHaveCount(1)
   })
