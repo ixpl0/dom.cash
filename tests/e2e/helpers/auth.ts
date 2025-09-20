@@ -22,3 +22,14 @@ export const authenticateViaAPI = async (request: APIRequestContext) => {
 
   return response
 }
+
+export const cleanupUserData = async (request: APIRequestContext) => {
+  const response = await request.delete('/api/test/cleanup-user-data')
+
+  if (!response.ok()) {
+    const body = await response.text()
+    throw new Error(`User data cleanup failed: ${response.status()} - ${body}`)
+  }
+
+  return response
+}

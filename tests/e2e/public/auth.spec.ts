@@ -156,4 +156,42 @@ test.describe('Authentication', () => {
   test('informational text about auto registration', async ({ page }) => {
     await expect(page.getByTestId('auto-register-text')).toBeVisible()
   })
+
+  test('home button navigates to home page', async ({ page }) => {
+    const homeButton = page.getByTestId('home-btn')
+    await homeButton.click()
+    await expect(page).toHaveURL('/')
+  })
+
+  test('shows error for incorrect password', async ({ page }) => {
+    const testUsername = `test_${Date.now()}@example.com`
+    const correctPassword = 'TestPassword123!'
+    const incorrectPassword = 'WrongPassword456!'
+
+    await waitForHydration(page)
+
+    await page.getByTestId('username-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(correctPassword)
+    await page.getByTestId('submit-btn').click()
+
+    await page.waitForURL('/')
+    const userDropdown = page.getByTestId('user-dropdown')
+    await expect(userDropdown).toBeVisible()
+
+    await userDropdown.click()
+    const logoutButton = page.getByTestId('logout-btn')
+    await logoutButton.click()
+
+    await page.waitForURL('/')
+    await expect(userDropdown).not.toBeVisible()
+
+    await page.goto('/auth')
+    await waitForHydration(page)
+
+    await page.getByTestId('username-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(incorrectPassword)
+    await page.getByTestId('submit-btn').click()
+
+    await expect(page).toHaveURL('/auth')
+  })
 })
