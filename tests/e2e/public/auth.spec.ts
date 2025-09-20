@@ -5,6 +5,7 @@ import { waitForHydration } from '../helpers/wait-for-hydration'
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth')
+    await waitForHydration(page)
   })
 
   test('auth page displays correctly', async ({ page }) => {
@@ -54,8 +55,6 @@ test.describe('Authentication', () => {
   test('successful login redirects to home page', async ({ page }) => {
     const testUsername = `test_${Date.now()}@example.com`
 
-    await waitForHydration(page)
-
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
     await page.getByTestId('submit-btn').click()
@@ -69,21 +68,15 @@ test.describe('Authentication', () => {
 
   test('successful login with redirect parameter goes to correct page', async ({ page }) => {
     await page.goto('/auth?redirect=/budget')
+    await waitForHydration(page)
 
     const testUsername = `test_${Date.now()}@example.com`
-
-    // Ждём гидрации Vue компонента
-    await waitForHydration(page)
 
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
 
-    // Используем Promise.all для одновременного ожидания навигации и клика
-    await Promise.all([
-      page.waitForURL('/budget'),
-      page.getByTestId('submit-btn').click(),
-    ])
-
+    await page.getByTestId('submit-btn').click()
+    await page.waitForURL('/budget')
     await expect(page).toHaveURL('/budget')
   })
 
@@ -159,7 +152,9 @@ test.describe('Authentication', () => {
 
   test('home button navigates to home page', async ({ page }) => {
     const homeButton = page.getByTestId('home-btn')
+    await expect(homeButton).toBeVisible()
     await homeButton.click()
+    await page.waitForURL('/')
     await expect(page).toHaveURL('/')
   })
 
@@ -167,8 +162,6 @@ test.describe('Authentication', () => {
     const testUsername = `test_${Date.now()}@example.com`
     const correctPassword = 'TestPassword123!'
     const incorrectPassword = 'WrongPassword456!'
-
-    await waitForHydration(page)
 
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill(correctPassword)
