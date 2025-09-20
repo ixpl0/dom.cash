@@ -58,13 +58,9 @@ test.describe('Authentication', () => {
 
     await page.getByTestId('username-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
+    await page.getByTestId('submit-btn').click()
 
-    // Используем Promise.all для одновременного ожидания навигации и клика
-    await Promise.all([
-      page.waitForURL('/'),
-      page.getByTestId('submit-btn').click(),
-    ])
-
+    await page.waitForURL('/')
     await expect(page).toHaveURL('/')
 
     const userDropdown = page.getByTestId('user-dropdown')

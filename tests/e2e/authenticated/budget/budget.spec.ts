@@ -21,7 +21,6 @@ test.describe('Budget page isolated tests', () => {
   test('should show empty state when no months exist', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
-    await initBudget(page, 'empty')
 
     const timeline = page.getByTestId('budget-timeline')
     await expect(timeline).not.toBeVisible()
@@ -36,7 +35,6 @@ test.describe('Budget page isolated tests', () => {
   test('should create first month when clicking create button', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
-    await initBudget(page, 'empty')
 
     const createFirstMonthButton = page.getByTestId('create-first-month-btn')
     await expect(createFirstMonthButton).toBeVisible()

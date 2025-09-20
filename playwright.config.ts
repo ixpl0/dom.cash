@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
+  workers: 1,
+  fullyParallel: false,
   testDir: 'tests/e2e',
   retries: process.env.CI ? 2 : 0,
   use: {
@@ -27,11 +29,13 @@ export default defineConfig({
       },
       dependencies: ['setup'],
       testIgnore: [/.*\.teardown\.spec\.ts/, '**/public/**'],
+      fullyParallel: false,
     },
     {
       name: 'chromium-public',
       testMatch: '**/public/**',
       use: { ...devices['Desktop Chrome'] },
+      fullyParallel: false,
     },
     {
       name: 'teardown',

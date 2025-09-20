@@ -7,7 +7,6 @@ test.describe('Budget page historical testing', () => {
   test('should create first month with foreign currency', async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
-    await initBudget(page, 'empty')
 
     const emptyState = page.getByTestId('budget-empty-state')
     await expect(emptyState).toBeVisible()
