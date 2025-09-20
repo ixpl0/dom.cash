@@ -3,6 +3,8 @@ import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
 
+const DOWNLOAD_DIRECTORY = './test-results'
+
 test.describe('Budget page historical testing', () => {
   test('should create first month with foreign currency', async ({ page }) => {
     await page.goto('/budget')
@@ -149,7 +151,7 @@ test.describe('Budget page historical testing', () => {
     const downloadPath = await download.path()
     expect(downloadPath).toBeTruthy()
 
-    const savedPath = './test-export.json'
+    const savedPath = `${DOWNLOAD_DIRECTORY}/test-export.json`
     await download.saveAs(savedPath)
 
     const fs = await import('fs/promises')
@@ -180,7 +182,7 @@ test.describe('Budget page historical testing', () => {
     const exportButton = page.getByTestId('export-button')
     await exportButton.click()
     const download = await downloadPromise
-    const exportPath = './budget-for-import.json'
+    const exportPath = `${DOWNLOAD_DIRECTORY}/budget-for-import.json`
     await download.saveAs(exportPath)
 
     while (true) {
