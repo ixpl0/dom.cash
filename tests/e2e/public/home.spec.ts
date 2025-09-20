@@ -1,14 +1,19 @@
 import { test, expect } from '@playwright/test'
+import { waitForHydration } from '../helpers/wait-for-hydration'
+
 test.describe('Home page', () => {
-  test('home page renders correctly', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/')
+    await waitForHydration(page)
+  })
+
+  test('home page renders correctly', async ({ page }) => {
     await expect(page.getByTestId('home-title')).toBeVisible()
     await expect(page.getByTestId('home-subtitle')).toBeVisible()
     await expect(page.getByTestId('go-to-budget-btn')).toBeVisible()
   })
 
   test('navigation to budget redirects to auth for unauthenticated user', async ({ page }) => {
-    await page.goto('/')
     await page.getByTestId('go-to-budget-btn').click()
     await page.waitForURL(url => url.pathname === '/auth')
 

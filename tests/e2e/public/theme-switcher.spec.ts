@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Theme Switcher', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,7 +11,7 @@ test.describe('Theme Switcher', () => {
     })
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await waitForHydration(page)
   })
 
   test('theme selector is visible and has default Auto option', async ({ page }) => {
@@ -44,7 +45,7 @@ test.describe('Theme Switcher', () => {
     expect(storedTheme).toBe('dracula')
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await waitForHydration(page)
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dracula')
     const selectedValue = await themeSelect.inputValue()
@@ -89,11 +90,11 @@ test.describe('Theme Switcher', () => {
     expect(storedTheme).toBe('valentine')
 
     await page.goto('/auth')
-    await page.waitForLoadState('networkidle')
+    await waitForHydration(page)
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'valentine')
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await waitForHydration(page)
     const themeSelectBackOnHome = page.getByTestId('theme-select')
     await expect(themeSelectBackOnHome).toBeVisible()
     const selectedValue = await themeSelectBackOnHome.inputValue()
