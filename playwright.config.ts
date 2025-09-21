@@ -40,7 +40,10 @@ export default defineConfig({
     {
       name: 'teardown',
       testMatch: /.*\.teardown\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.BASE_URL || 'http://localhost:8787',
+      },
       dependencies: ['chromium', 'chromium-public'],
     },
   ],

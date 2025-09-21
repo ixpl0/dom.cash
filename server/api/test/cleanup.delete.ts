@@ -28,21 +28,40 @@ export default defineEventHandler(async (event) => {
 
     const userIds = testUsers.map((u: { id: string }) => u.id)
 
-    await db.delete(budgetShare).where(inArray(budgetShare.sharedWithId, userIds))
-    await db.delete(budgetShare).where(inArray(budgetShare.ownerId, userIds))
+    const chunkSize = 100
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize)
+      await db.delete(budgetShare).where(inArray(budgetShare.sharedWithId, chunk))
+      await db.delete(budgetShare).where(inArray(budgetShare.ownerId, chunk))
+    }
 
-    const userMonths = await db
-      .select({ id: month.id })
-      .from(month)
-      .where(inArray(month.userId, userIds))
+    const userMonths: { id: string }[] = []
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize)
+      const monthChunk = await db
+        .select({ id: month.id })
+        .from(month)
+        .where(inArray(month.userId, chunk))
+      userMonths.push(...monthChunk)
+    }
 
     if (userMonths.length > 0) {
       const monthIds = userMonths.map((m: { id: string }) => m.id)
-      await db.delete(entry).where(inArray(entry.monthId, monthIds))
+      for (let i = 0; i < monthIds.length; i += chunkSize) {
+        const chunk = monthIds.slice(i, i + chunkSize)
+        await db.delete(entry).where(inArray(entry.monthId, chunk))
+      }
     }
 
-    await db.delete(month).where(inArray(month.userId, userIds))
-    await db.delete(user).where(like(user.username, 'test_%@example.com'))
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize)
+      await db.delete(month).where(inArray(month.userId, chunk))
+    }
+
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize)
+      await db.delete(user).where(inArray(user.id, chunk))
+    }
 
     return {
       message: 'Test data cleaned up successfully',
@@ -50,10 +69,11 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (error) {
-    console.error('Cleanup failed:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to cleanup test data',
+      statusMessage: `Failed to cleanup test data: ${errorMessage}`,
     })
   }
 })
