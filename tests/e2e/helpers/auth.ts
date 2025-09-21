@@ -1,4 +1,5 @@
-import type { APIRequestContext } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { waitForHydration } from './wait-for-hydration'
 
 export const TEST_USER = {
   username: `test_${Date.now()}@example.com`,
@@ -6,21 +7,16 @@ export const TEST_USER = {
   mainCurrency: 'USD',
 }
 
-export const authenticateViaAPI = async (request: APIRequestContext) => {
-  const response = await request.post('/api/auth', {
-    data: {
-      username: TEST_USER.username,
-      password: TEST_USER.password,
-      mainCurrency: TEST_USER.mainCurrency,
-    },
-  })
+export const authenticateViaUI = async (page: Page) => {
+  await page.goto('/auth')
+  await waitForHydration(page)
 
-  if (!response.ok()) {
-    const body = await response.text()
-    throw new Error(`Authentication failed: ${response.status()} - ${body}`)
-  }
+  await page.getByTestId('username-input').fill(TEST_USER.username)
+  await page.getByTestId('password-input').fill(TEST_USER.password)
+  await page.getByTestId('submit-btn').click()
 
-  return response
+  await page.waitForURL('/')
+  await waitForHydration(page)
 }
 
 export const cleanupUserData = async (request: APIRequestContext) => {

@@ -1,12 +1,19 @@
 import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { initBudget } from '../../helpers/budget-setup'
+import { cleanupUserData } from '../../helpers/auth'
 
 test.describe('Budget page extended testing', () => {
-  test('should create first month from empty state', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
+  })
 
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should create first month from empty state', async ({ page }) => {
     const emptyState = page.getByTestId('budget-empty-state')
     await expect(emptyState).toBeVisible()
 
@@ -22,8 +29,6 @@ test.describe('Budget page extended testing', () => {
   })
 
   test('should add month on top when budget exists', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'basic-test-data')
 
     const addMonthNextButton = page.getByTestId('add-month-next')
@@ -34,8 +39,6 @@ test.describe('Budget page extended testing', () => {
   })
 
   test('should display year statistics for multiple months', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-basic')
 
     const yearElements = page.getByTestId('budget-year')
@@ -61,8 +64,6 @@ test.describe('Budget page extended testing', () => {
   })
 
   test('should edit balance entry via modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'basic-test-data')
 
     const months = page.getByTestId('budget-month')
@@ -85,6 +86,7 @@ test.describe('Budget page extended testing', () => {
 
     const saveRowButton = modal.getByTestId('entry-save-button')
     await saveRowButton.click()
+    await expect(editButton).toBeVisible()
 
     await page.keyboard.press('Escape')
     await page.waitForTimeout(500)
@@ -94,8 +96,6 @@ test.describe('Budget page extended testing', () => {
   })
 
   test('should show negative pocket expenses with warning styling', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-basic')
 
     const months = page.getByTestId('budget-month')

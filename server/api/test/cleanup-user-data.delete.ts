@@ -1,5 +1,5 @@
 import { useDatabase } from '~~/server/db'
-import { month, entry, budgetShare } from '~~/server/db/schema'
+import { month, entry, budgetShare, user as userTable } from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { getUserFromRequest } from '~~/server/utils/auth'
 
@@ -41,6 +41,8 @@ export default defineEventHandler(async (event) => {
     }
 
     await db.delete(month).where(eq(month.userId, user.id))
+
+    await db.update(userTable).set({ mainCurrency: 'USD' }).where(eq(userTable.id, user.id))
 
     return {
       message: 'User data cleaned up successfully',

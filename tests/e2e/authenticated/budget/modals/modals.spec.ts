@@ -2,11 +2,19 @@ import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../../helpers/wait-for-hydration'
 import { initBudget } from '../../../helpers/budget-setup'
 import { acceptConfirmModal } from '../../../helpers/confirmation'
+import { cleanupUserData } from '../../../helpers/auth'
 
 test.describe('Modal tests with budget fixtures', () => {
-  test('should import simple budget fixture and verify month creation', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
+  })
+
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should import simple budget fixture and verify month creation', async ({ page }) => {
     await initBudget(page, 'simple')
 
     const months = page.getByTestId('budget-month')
@@ -19,8 +27,6 @@ test.describe('Modal tests with budget fixtures', () => {
   })
 
   test('should open EntryModal after importing budget', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()
@@ -40,14 +46,13 @@ test.describe('Modal tests with budget fixtures', () => {
     const descriptionInput = modal.getByTestId('entry-description-input')
     await descriptionInput.fill('Test Edit')
 
-    await page.keyboard.press('Escape')
+    const closeButton = modal.getByTestId('modal-close-button')
+    await closeButton.click()
     await acceptConfirmModal(page)
     await expect(modal).not.toBeVisible()
   })
 
   test('should start editing when clicking on entry cells and focus correct field', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()

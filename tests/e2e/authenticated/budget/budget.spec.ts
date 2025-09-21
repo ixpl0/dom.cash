@@ -2,26 +2,19 @@ import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
+import { cleanupUserData } from '../../helpers/auth'
 
 test.describe('Budget page isolated tests', () => {
-  test('should navigate from home to budget page', async ({ page }) => {
-    await page.goto('/')
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/budget')
     await waitForHydration(page)
+  })
 
-    const budgetButton = page.getByTestId('go-to-budget-btn')
-    await expect(budgetButton).toBeVisible()
-    await budgetButton.click()
-
-    await page.waitForURL('/budget')
-    await waitForHydration(page)
-
-    await expect(page).toHaveURL('/budget')
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
   })
 
   test('should show empty state when no months exist', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
-
     const timeline = page.getByTestId('budget-timeline')
     await expect(timeline).not.toBeVisible()
 
@@ -33,9 +26,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should create first month when clicking create button', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
-
     const createFirstMonthButton = page.getByTestId('create-first-month-btn')
     await expect(createFirstMonthButton).toBeVisible()
     await createFirstMonthButton.click()
@@ -48,8 +38,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should add balance entries to budget through modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-empty')
 
     const balanceButton = page.getByTestId('balance-button').first()
@@ -103,8 +91,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should add income entries to budget through modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-empty')
 
     const incomeButton = page.getByTestId('incomes-button').first()
@@ -157,8 +143,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should add expense entries to budget through modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-empty')
 
     const expenseButton = page.getByTestId('expenses-button').first()
@@ -211,8 +195,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should read exchange rates from modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const monthBadge = page.getByTestId('month-badge').first()
@@ -240,8 +222,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should filter and read currencies in currency rates modal', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const monthBadge = page.getByTestId('month-badge').first()
@@ -282,8 +262,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should correctly calculate and display totals for balance, income and expenses in base currency', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const budgetHeader = page.getByTestId('budget-header')
@@ -311,8 +289,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should recalculate all totals when changing base currency to EUR', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const budgetHeader = page.getByTestId('budget-header')
@@ -347,8 +323,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should edit entries and persist changes after page reload', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const button = page.getByTestId('balance-button').first()
@@ -387,8 +361,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should delete entries and persist changes after page reload', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const deleteOperations = [
@@ -436,8 +408,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should display dashes for calculated fields when next month balance is missing', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const monthCard = page.getByTestId('budget-month').first()
@@ -455,8 +425,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should add month on top and copy only balance entries from previous month', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const months = page.getByTestId('budget-month')
@@ -493,8 +461,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should delete month when confirm dialog is accepted', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-with-data')
 
     const months = page.getByTestId('budget-month')
@@ -511,8 +477,6 @@ test.describe('Budget page isolated tests', () => {
   })
 
   test('should create 13 months timeline spanning multiple years', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'one-month-with-data')
 
     const months = page.getByTestId('budget-month')

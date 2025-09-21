@@ -2,11 +2,19 @@ import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../../helpers/wait-for-hydration'
 import { initBudget } from '../../../helpers/budget-setup'
 import { acceptConfirmModal, cancelConfirmModal } from '../../../helpers/confirmation'
+import { cleanupUserData } from '../../../helpers/auth'
 
 test.describe('Confirmation Modal Tests', () => {
-  test('should show confirmation modal when deleting entry and accept with confirm button', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
+  })
+
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should show confirmation modal when deleting entry and accept with confirm button', async ({ page }) => {
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()
@@ -31,8 +39,6 @@ test.describe('Confirmation Modal Tests', () => {
   })
 
   test('should show confirmation modal when deleting entry and cancel with cancel button', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()
@@ -56,8 +62,6 @@ test.describe('Confirmation Modal Tests', () => {
   })
 
   test('should accept confirmation modal with Enter key', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()
@@ -78,8 +82,6 @@ test.describe('Confirmation Modal Tests', () => {
   })
 
   test('should cancel confirmation modal with Escape key', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()
@@ -100,8 +102,6 @@ test.describe('Confirmation Modal Tests', () => {
   })
 
   test('should show confirmation modal when deleting month', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const deleteButtons = page.getByTestId('delete-month-button')
@@ -121,8 +121,6 @@ test.describe('Confirmation Modal Tests', () => {
   })
 
   test('should show different modal variants with appropriate styling', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     // Test danger variant (delete entry)
@@ -149,8 +147,6 @@ test.describe('Confirmation Modal Tests', () => {
   })
 
   test('should close modal when clicking backdrop', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'simple')
 
     const balanceButton = page.getByTestId('balance-button').first()

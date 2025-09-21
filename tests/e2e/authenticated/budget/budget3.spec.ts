@@ -2,14 +2,21 @@ import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
+import { cleanupUserData } from '../../helpers/auth'
 
 const DOWNLOAD_DIRECTORY = './test-results'
 
 test.describe('Budget page historical testing', () => {
-  test('should create first month with foreign currency', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/budget')
     await waitForHydration(page)
+  })
 
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should create first month with foreign currency', async ({ page }) => {
     const emptyState = page.getByTestId('budget-empty-state')
     await expect(emptyState).toBeVisible()
 
@@ -51,8 +58,6 @@ test.describe('Budget page historical testing', () => {
   })
 
   test('should add previous month and manage year setup', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'clp-currency')
 
     const addMonthPreviousButton = page.getByTestId('add-month-previous')
@@ -86,8 +91,6 @@ test.describe('Budget page historical testing', () => {
   })
 
   test('should display currency fluctuations in month and year stats', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-clp')
 
     const months = page.getByTestId('budget-month')
@@ -113,8 +116,6 @@ test.describe('Budget page historical testing', () => {
   })
 
   test('should open chart modal with canvas and close it', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-clp')
 
     const chartButton = page.getByTestId('chart-button')
@@ -133,8 +134,6 @@ test.describe('Budget page historical testing', () => {
   })
 
   test('should export budget data as JSON file', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-clp')
 
     const monthsCount = await page.getByTestId('budget-month').count()
@@ -166,8 +165,6 @@ test.describe('Budget page historical testing', () => {
   })
 
   test('should import budget data and restore months', async ({ page }) => {
-    await page.goto('/budget')
-    await waitForHydration(page)
     await initBudget(page, 'two-months-clp')
 
     const initialMonthsCount = await page.getByTestId('budget-month').count()
