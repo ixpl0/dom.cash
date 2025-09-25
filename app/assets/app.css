@@ -3,6 +3,41 @@
   themes: "all";
 }
 
+@plugin "daisyui/theme" {
+  name: "kekdark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: oklch(24% 0.004 49.25);
+  --color-base-200: oklch(29% 0.004 49.25);
+  --color-base-300: oklch(34% 0.004 49.25);
+  --color-base-content: oklch(100% 0.001 106.424);
+  --color-primary: hsl(205, 100%, 57%);
+  --color-primary-content: hsl(0, 0%, 100%);
+  --color-secondary: oklch(62% 0.265 303.9);
+  --color-secondary-content: oklch(97% 0.014 308.299);
+  --color-accent: oklch(69% 0.17 162.48);
+  --color-accent-content: oklch(97% 0.021 166.113);
+  --color-neutral: oklch(37% 0.01 67.558);
+  --color-neutral-content: oklch(98% 0.001 106.423);
+  --color-info: oklch(0.7 0.17 246.26);
+  --color-info-content: oklch(1 0 89.876);
+  --color-success: #39d339;
+  --color-success-content: oklch(0.446 0.192 341.883);
+  --color-warning: hsl(47 100% 54% / 1);
+  --color-warning-content: hsl(171, 100%, 21%);
+  --color-error: oklch(0.7 0.24 25.76);
+  --color-error-content: oklch(0.94 0.14 99.9);
+  --radius-selector: 1rem;
+  --radius-field: 1rem;
+  --radius-box: 2rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 1;
+}
+
 /* Prevent modal layout shifts on open/close */
 html {
   scrollbar-gutter: stable;

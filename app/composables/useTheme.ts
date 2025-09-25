@@ -1,4 +1,5 @@
 export const DAISY_THEMES = [
+  'kekdark',
   'light',
   'dark',
   'cupcake',
