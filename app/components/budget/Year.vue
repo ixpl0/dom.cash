@@ -1,6 +1,6 @@
 <template>
   <li
-    class="hover:bg-base-300/50"
+    class="hover:bg-base-200"
     data-testid="budget-year"
   >
     <hr>
