@@ -76,7 +76,7 @@
       class="space-y-6"
     >
       <div
-        class="flex items-center justify-between"
+        class="flex items-center justify-between flex-wrap gap-4"
         data-testid="budget-header"
       >
         <h1
@@ -85,7 +85,7 @@
         >
           Бюджет
         </h1>
-        <div class="flex items-center gap-2 mt-2">
+        <div class="flex items-center flex-wrap gap-2">
           <span class="badge">
             Бюджет
             {{ budgetStore.data?.user.username }}
@@ -156,63 +156,65 @@
         </div>
       </div>
 
-      <ul
-        class="timeline timeline-vertical [--timeline-col-start:23ch]"
-        data-testid="budget-timeline"
-      >
-        <BudgetTimelineAddButton
-          v-if="budgetStore.canEdit"
-          direction="next"
-          :month-text="getNextMonthText()"
-          :is-loading="isCreatingNextMonth"
-          @create="handleCreateNextMonth"
-        />
+      <div class="overflow-x-auto pb-4">
+        <ul
+          class="timeline timeline-vertical [--timeline-col-start:23ch]"
+          data-testid="budget-timeline"
+        >
+          <BudgetTimelineAddButton
+            v-if="budgetStore.canEdit"
+            direction="next"
+            :month-text="getNextMonthText()"
+            :is-loading="isCreatingNextMonth"
+            @create="handleCreateNextMonth"
+          />
 
-        <BudgetYear
-          v-for="year in years"
-          :key="year"
-          :year="year"
-          :months="groupedData[year] || []"
-          :month-names="monthNames"
-          :budget-columns-sync="budgetColumnsSyncInstance"
-        />
+          <BudgetYear
+            v-for="year in years"
+            :key="year"
+            :year="year"
+            :months="groupedData[year] || []"
+            :month-names="monthNames"
+            :budget-columns-sync="budgetColumnsSyncInstance"
+          />
 
-        <BudgetTimelineAddButton
-          v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
-          direction="previous"
-          :month-text="getPreviousMonthText()"
-          :is-loading="isCreatingPreviousMonth"
-          @create="handleCreatePreviousMonth"
-        />
+          <BudgetTimelineAddButton
+            v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
+            direction="previous"
+            :month-text="getPreviousMonthText()"
+            :is-loading="isCreatingPreviousMonth"
+            @create="handleCreatePreviousMonth"
+          />
 
-        <li v-if="budgetStore.nextYearToLoad">
-          <hr>
-          <div class="timeline-start">
-            <button
-              class="btn btn-outline btn-sm"
-              :disabled="budgetStore.isLoadingYear"
-              @click="handleLoadPreviousYear"
-            >
-              <span
-                v-if="budgetStore.isLoadingYear"
-                class="loading loading-spinner loading-xs"
-              />
-              <template v-else>
-                <Icon
-                  name="heroicons:chevron-double-down"
-                  size="16"
+          <li v-if="budgetStore.nextYearToLoad">
+            <hr>
+            <div class="timeline-start">
+              <button
+                class="btn btn-outline btn-sm"
+                :disabled="budgetStore.isLoadingYear"
+                @click="handleLoadPreviousYear"
+              >
+                <span
+                  v-if="budgetStore.isLoadingYear"
+                  class="loading loading-spinner loading-xs"
                 />
-                Показать {{ budgetStore.nextYearToLoad.year }} год
-              </template>
-              <span v-if="budgetStore.isLoadingYear">Загрузка...</span>
-            </button>
-          </div>
-          <div class="timeline-middle">
-            <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
-          </div>
-          <hr>
-        </li>
-      </ul>
+                <template v-else>
+                  <Icon
+                    name="heroicons:chevron-double-down"
+                    size="16"
+                  />
+                  Показать {{ budgetStore.nextYearToLoad.year }} год
+                </template>
+                <span v-if="budgetStore.isLoadingYear">Загрузка...</span>
+              </button>
+            </div>
+            <div class="timeline-middle">
+              <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
+            </div>
+            <hr>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <BudgetImportModal

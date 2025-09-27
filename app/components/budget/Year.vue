@@ -16,10 +16,10 @@
       <div :ref="setHeaderRef(0)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
-            data-tip="Сумма всех сбережений, конвертированных в основную валюту"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
+            data-tip="Сумма всех сбережений на начало месяца, конвертированных в основную валюту"
           >
-            Баланс на начало месяца
+            Баланс
           </div>
           <div class="flex flex-col gap-1">
             <div
@@ -36,7 +36,7 @@
       <div :ref="setHeaderRef(1)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="Сумма всех доходов, конвертированных в основную валюту"
           >
             Доходы
@@ -63,10 +63,10 @@
       <div :ref="setHeaderRef(2)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
           >
-            Крупные расходы
+            Крупные<br>расходы
           </div>
           <div class="flex flex-col gap-1">
             <div
@@ -91,10 +91,10 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="(Баланс) + (Доходы) + (Валютные колебания) - (Баланс следующего месяца) - (Крупные расходы)"
           >
-            Карманные расходы
+            Карманные<br>расходы
           </div>
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
@@ -122,7 +122,7 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="(Крупные расходы) + (Карманные расходы)"
           >
             Все расходы
@@ -151,10 +151,10 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="(Баланс на начало месяца) - (Баланс предыдущего месяца)"
           >
-            Изменение баланса
+            Изменение<br>баланса
           </div>
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
@@ -190,10 +190,10 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="(Баланс следующего месяца) - (Баланс следующего месяца, пересчитанный по курсам текущего месяца)"
           >
-            Валютные колебания
+            Валютные<br>колебания
           </div>
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
@@ -228,10 +228,10 @@
       <div :ref="setHeaderRef(7)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
             data-tip="Сумма всех необязательных расходов, конвертированных в основную валюту"
           >
-            Необязательные расходы
+            Необязательные<br>расходы
           </div>
           <div class="flex flex-col gap-1">
             <div

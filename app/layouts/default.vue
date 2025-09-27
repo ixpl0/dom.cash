@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-base-100">
-    <header class="navbar bg-base-200 shadow-lg">
-      <div class="navbar-start gap-4">
+    <header class="navbar bg-base-200 shadow-lg flex justify-between flex-wrap gap-4 px-4">
+      <div class="flex items-center gap-4">
         <NuxtLink
           to="/"
           class="text-2xl font-bold flex items-center gap-2 ml-4"
@@ -32,7 +32,7 @@
         </div>
       </div>
 
-      <div class="navbar-center gap-2">
+      <div class="flex items-center flex-wrap gap-2">
         <ThemePicker />
         <template v-if="isAuthenticated">
           <button
@@ -60,7 +60,7 @@
         </template>
       </div>
 
-      <div class="navbar-end gap-2">
+      <div class="flex items-center gap-2">
         <div
           v-if="isAuthenticated"
           class="dropdown dropdown-end"
