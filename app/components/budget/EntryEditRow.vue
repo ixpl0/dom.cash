@@ -18,7 +18,7 @@
         min="0"
         step="0.01"
         :placeholder="isNew ? '0.00' : undefined"
-        class="input input-bordered w-full"
+        class="input input-bordered w-full [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         data-testid="entry-amount-input"
         @keyup.enter="$emit('save')"
         @keyup.esc="$emit('cancel')"
