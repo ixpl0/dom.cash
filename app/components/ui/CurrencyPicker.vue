@@ -41,18 +41,18 @@
         v-if="isDropdownOpen && filteredOptions.length > 0"
         ref="dropdownRef"
         popover="manual"
-        class="menu bg-base-100 rounded-box max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap m-0 p-2"
+        class="menu bg-base-100 rounded-lg max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap m-0 p-2"
         :style="dropdownStyle"
       >
         <li
           v-for="(option, index) in filteredOptions"
           :key="option.code"
-          :class="option.code === props.modelValue && index !== highlightedIndex && 'bg-base-content/10'"
         >
           <a
             class="flex justify-between items-start gap-2 py-1"
             :class="{
               'font-bold': option.code === props.modelValue,
+              'bg-base-content/10': option.code === props.modelValue && index !== highlightedIndex,
             }"
             tabindex="0"
             @click="selectOption(option)"
