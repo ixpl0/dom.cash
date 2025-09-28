@@ -44,9 +44,12 @@ const options = computed(() => ['auto', ...themes])
 
 const themeDisplayNames: Record<string, string> = {
   auto: 'Auto',
+  crystalclear: 'Crystal Clear',
+  grayscale: 'Grayscale',
   kekdark: 'Kek Dark',
   keklight: 'Kek Light',
   summerhaze: 'Summer Haze',
+  ritualhabitual: 'Ritual Habitual',
 }
 
 const formatTheme = (t: string) => {
