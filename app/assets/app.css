@@ -36,11 +36,11 @@
   --border: 1.5px;
   --depth: 1;
   --noise: 1;
-  --logo-dark: #2c2d30;
-  --logo-light: #fff;
-  --logo-accent: #FF6661;
-  --logo-medium: #ab44ff;
-  --logo-light-medium: #FFD866;
+  --logo-contours: var(--color-base-100);
+  --logo-face: var(--color-base-content);
+  --logo-cheeks: var(--color-error);
+  --logo-roof: var(--color-error);
+  --logo-pipe: var(--color-success);
 }
 
 @plugin "daisyui/theme" {
@@ -74,11 +74,11 @@
   --border: 1.5px;
   --depth: 1;
   --noise: 1;
-  --logo-dark: #5e4a29;
-  --logo-light: #fffaed;
-  --logo-accent: #2e96ce;
-  --logo-medium: #ffe9c2;
-  --logo-light-medium: #fff1d8;
+  --logo-contours: var(--color-base-content);
+  --logo-face: var(--color-base-100);
+  --logo-cheeks: var(--color-error);
+  --logo-roof: var(--color-primary);
+  --logo-pipe: var(--color-warning);
 }
 
 @plugin "daisyui/theme" {
@@ -87,7 +87,7 @@
   --color-base-100: #ffeef0;
   --color-base-200: #ffe0e4;
   --color-base-300: #fda4af;
-  --color-base-content: #4568ba;
+  --color-base-content: #2859cb;
   --color-primary: #ff5f8a;
   --color-primary-content: #fff;
   --color-secondary: #ff9bb6;
@@ -112,18 +112,18 @@
   --border: 2px;
   --depth: 1;
   --noise: 0;
-  --logo-dark: #4568ba;
-  --logo-light: #ffeef0;
-  --logo-accent: #ff5f8a;
-  --logo-medium: #fda4af;
-  --logo-light-medium: #ffe0e4;
+  --logo-contours: var(--color-base-content);
+  --logo-face: var(--color-base-100);
+  --logo-cheeks: var(--color-primary);
+  --logo-roof: var(--color-base-300);
+  --logo-pipe: var(--color-base-100);
 }
 
 @plugin "daisyui/theme" {
   name: "ritualhabitual";
   color-scheme: dark;
   --color-base-100: #1e1515;
-  --color-base-200: #160e0e;
+  --color-base-200: #271c1c;
   --color-base-300: #593125;
   --color-base-content: #ffe6df;
   --color-primary: #d3765a;
@@ -150,11 +150,11 @@
   --border: 2px;
   --depth: 0;
   --noise: 0;
-  --logo-dark: #1e1515;
-  --logo-light: #ffe6df;
-  --logo-accent: #b91c1c;
-  --logo-medium: #dc5126;
-  --logo-light-medium: #eab308;
+  --logo-contours: var(--color-base-100);
+  --logo-face: var(--color-base-content);
+  --logo-cheeks: var(--color-primary);
+  --logo-roof: var(--color-primary);
+  --logo-pipe: var(--color-warning);
 }
 
 @plugin "daisyui/theme" {
@@ -189,11 +189,11 @@
   --border: 1px;
   --depth: 1;
   --noise: 0;
-  --logo-dark: #1e293b;
-  --logo-light: #ffffff;
-  --logo-accent: #3b82f6;
-  --logo-medium: #ededed;
-  --logo-light-medium: #ffffff;
+  --logo-contours: var(--color-base-content);
+  --logo-face: var(--color-base-100);
+  --logo-cheeks: var(--color-error);
+  --logo-roof: var(--color-error);
+  --logo-pipe: var(--color-warning);
 }
 
 @plugin "daisyui/theme" {
@@ -202,8 +202,8 @@
   --color-base-100: #ffffff;
   --color-base-200: #fafafa;
   --color-base-300: #e5e5e5;
-  --color-base-content: #737373;
-  --color-primary: #737373;
+  --color-base-content: #333;
+  --color-primary: #666;
   --color-primary-content: #fff;
   --color-secondary: #a3a3a3;
   --color-secondary-content: #fff;
@@ -211,13 +211,13 @@
   --color-accent-content: #fff;
   --color-neutral: #a1a1a1;
   --color-neutral-content: #fff;
-  --color-info: #737373;
+  --color-info: #666;
   --color-info-content: #fff;
-  --color-success: #737373;
+  --color-success: #666;
   --color-success-content: #fff;
-  --color-warning: #737373;
+  --color-warning: #666;
   --color-warning-content: #fff;
-  --color-error: #737373;
+  --color-error: #666;
   --color-error-content: #fff;
   --radius-selector: 0.5rem;
   --radius-field: 0.5rem;
@@ -227,11 +227,11 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
-  --logo-dark: #737373;
-  --logo-light: #ffffff;
-  --logo-accent: #737373;
-  --logo-medium: #e5e5e5;
-  --logo-light-medium: #fafafa;
+  --logo-contours: var(--color-base-content);
+  --logo-face: var(--color-base-100);
+  --logo-cheeks: var(--color-neutral);
+  --logo-roof: var(--color-neutral);
+  --logo-pipe: var(--color-base-300);
 }
 
 /* Prevent modal layout shifts on open/close */
