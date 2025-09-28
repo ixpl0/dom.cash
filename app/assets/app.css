@@ -36,6 +36,11 @@
   --border: 1.5px;
   --depth: 1;
   --noise: 1;
+  --logo-dark: #2c2d30;
+  --logo-light: #fff;
+  --logo-accent: #FF6661;
+  --logo-medium: #ab44ff;
+  --logo-light-medium: #FFD866;
 }
 
 @plugin "daisyui/theme" {
@@ -69,6 +74,11 @@
   --border: 1.5px;
   --depth: 1;
   --noise: 1;
+  --logo-dark: #5e4a29;
+  --logo-light: #fffaed;
+  --logo-accent: #2e96ce;
+  --logo-medium: #ffe9c2;
+  --logo-light-medium: #fff1d8;
 }
 
 @plugin "daisyui/theme" {
@@ -102,6 +112,11 @@
   --border: 2px;
   --depth: 1;
   --noise: 0;
+  --logo-dark: #4568ba;
+  --logo-light: #ffeef0;
+  --logo-accent: #ff5f8a;
+  --logo-medium: #fda4af;
+  --logo-light-medium: #ffe0e4;
 }
 
 @plugin "daisyui/theme" {
@@ -135,6 +150,11 @@
   --border: 2px;
   --depth: 0;
   --noise: 0;
+  --logo-dark: #1e1515;
+  --logo-light: #ffe6df;
+  --logo-accent: #b91c1c;
+  --logo-medium: #dc5126;
+  --logo-light-medium: #eab308;
 }
 
 @plugin "daisyui/theme" {
@@ -169,6 +189,11 @@
   --border: 1px;
   --depth: 1;
   --noise: 0;
+  --logo-dark: #1e293b;
+  --logo-light: #ffffff;
+  --logo-accent: #3b82f6;
+  --logo-medium: #ededed;
+  --logo-light-medium: #ffffff;
 }
 
 @plugin "daisyui/theme" {
@@ -202,6 +227,11 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
+  --logo-dark: #737373;
+  --logo-light: #ffffff;
+  --logo-accent: #737373;
+  --logo-medium: #e5e5e5;
+  --logo-light-medium: #fafafa;
 }
 
 /* Prevent modal layout shifts on open/close */

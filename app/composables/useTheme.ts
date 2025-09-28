@@ -31,11 +31,17 @@ export function useTheme() {
     }
 
     const next = DAISY_THEMES.includes(theme) ? theme : 'light'
+
     currentTheme.value = next
+
     if (import.meta.client) {
       try {
         document.documentElement.setAttribute('data-theme', next)
-        if (document.body) document.body.setAttribute('data-theme', next)
+
+        if (document.body) {
+          document.body.setAttribute('data-theme', next)
+        }
+
         localStorage.setItem(THEME_KEY, next)
         const isHttps = typeof location !== 'undefined' && location.protocol === 'https:'
         document.cookie = `theme=${encodeURIComponent(next)}; Path=/; Max-Age=31536000; SameSite=Lax${isHttps ? '; Secure' : ''}`
