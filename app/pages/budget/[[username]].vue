@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-base-100 p-6">
+  <div class="bg-base-100">
     <BudgetScreen :key="`budget-${targetUsername || 'own'}`" />
   </div>
 </template>

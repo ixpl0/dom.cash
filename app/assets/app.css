@@ -84,7 +84,7 @@
 @plugin "daisyui/theme" {
   name: "summerhaze";
   color-scheme: light;
-  --color-base-100: #ffeef0;
+  --color-base-100: #fffafb;
   --color-base-200: #ffe0e4;
   --color-base-300: #fda4af;
   --color-base-content: #2859cb;
@@ -147,7 +147,7 @@
   --radius-box: 0.5rem;
   --size-selector: 0.25rem;
   --size-field: 0.22rem;
-  --border: 2px;
+  --border: 1.5px;
   --depth: 0;
   --noise: 0;
   --logo-contours: var(--color-base-100);
@@ -193,7 +193,7 @@
   --logo-face: var(--color-base-100);
   --logo-cheeks: var(--color-error);
   --logo-roof: var(--color-base-300);
-  --logo-pipe: var(--color-accent);
+  --logo-pipe: var(--color-base-300);
 }
 
 @plugin "daisyui/theme" {
@@ -224,7 +224,7 @@
   --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
-  --border: 1px;
+  --border: 1.5px;
   --depth: 0;
   --noise: 0;
   --logo-contours: var(--color-base-content);
@@ -242,4 +242,13 @@ html {
 /* Override DaisyUI styles to prevent modal layout shifts on open/close */
 :where(.modal[open], .modal-open, .modal-toggle:checked + .modal):not(.modal-start, .modal-end) {
   scrollbar-gutter: auto;
+}
+
+/* Custom button hover effect */
+@media (hover: hover) {
+  .btn:hover {
+    @supports (color: color-mix(in lab, red, red)) {
+      --btn-bg: var(--btn-color, transparent) !important;
+    }
+  }
 }

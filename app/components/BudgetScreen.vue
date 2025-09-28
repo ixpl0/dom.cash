@@ -67,12 +67,9 @@
       </div>
     </div>
 
-    <div
-      v-else
-      class="space-y-6"
-    >
+    <div v-else>
       <div
-        class="flex items-center justify-between flex-wrap gap-4"
+        class="flex items-center justify-between flex-wrap gap-4 p-6 pb-0"
         data-testid="budget-header"
       >
         <h1
@@ -152,7 +149,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto pb-4">
+      <div class="overflow-x-auto py-6">
         <ul
           class="timeline timeline-vertical [--timeline-col-start:23ch]"
           data-testid="budget-timeline"
