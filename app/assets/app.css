@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @plugin "daisyui" {
-  themes: ["crystalclear", "grayscale", "kekdark", "keklight", "summerhaze", "ritualhabitual"];
+  themes: ["crystalclear", "kekdark", "grayscale", "keklight", "summerhaze", "ritualhabitual"];
 }
 
 @plugin "daisyui/theme" {
@@ -40,7 +40,6 @@
 
 @plugin "daisyui/theme" {
   name: "keklight";
-  preferslight: true;
   color-scheme: light;
   --color-base-100: #fffaed;
   --color-base-200: #fff1d8;
@@ -78,7 +77,7 @@
   --color-base-100: #ffeef0;
   --color-base-200: #ffe0e4;
   --color-base-300: #fda4af;
-  --color-base-content: #5671b1;
+  --color-base-content: #4568ba;
   --color-primary: #ff5f8a;
   --color-primary-content: #fff;
   --color-secondary: #ff9bb6;
@@ -111,7 +110,7 @@
   --color-base-100: #1e1515;
   --color-base-200: #160e0e;
   --color-base-300: #593125;
-  --color-base-content: #fff8f6;
+  --color-base-content: #ffe6df;
   --color-primary: #d3765a;
   --color-primary-content: #3e180e;
   --color-secondary: #dc5126;
@@ -128,8 +127,8 @@
   --color-warning-content: #1a1a1a;
   --color-error: #b91c1c;
   --color-error-content: #fff;
-  --radius-selector: 0.2rem;
-  --radius-field: 0.2rem;
+  --radius-selector: 0.3rem;
+  --radius-field: 0.3rem;
   --radius-box: 0.5rem;
   --size-selector: 0.25rem;
   --size-field: 0.22rem;
@@ -140,6 +139,7 @@
 
 @plugin "daisyui/theme" {
   name: "crystalclear";
+  default: true;
   color-scheme: light;
   --color-base-100: #ffffff;
   --color-base-200: #ffffff;

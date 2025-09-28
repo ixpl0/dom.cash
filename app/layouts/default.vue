@@ -7,11 +7,7 @@
           class="text-2xl font-bold flex items-center gap-2 ml-4"
           data-testid="logo-link"
         >
-          <img
-            src="/logo.svg"
-            alt="dom.cash"
-            class="w-9 h-9"
-          >
+          <UiLogo class="w-9 h-9" />
           dom.cash
         </NuxtLink>
         <div

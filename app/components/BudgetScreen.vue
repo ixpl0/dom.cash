@@ -27,11 +27,7 @@
       data-testid="budget-empty-state"
     >
       <div class="mb-4 flex justify-center">
-        <img
-          src="/logo.svg"
-          alt="dom.cash"
-          class="w-16 h-16"
-        >
+        <UiLogo class="w-16 h-16" />
       </div>
       <h2
         class="text-2xl font-bold mb-2"
