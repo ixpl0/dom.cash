@@ -23,11 +23,13 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-primary font-bold tooltip tooltip-bottom"
+              class="text-primary tooltip tooltip-bottom"
               data-tip="Средний баланс на начало месяца за год"
               data-testid="year-average-balance"
             >
-              {{ formatAmountRounded(yearStats.averageBalance, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.averageBalance, mainCurrency) }}
+              </div>
             </div>
           </div>
         </div>
@@ -43,11 +45,13 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-success font-bold tooltip tooltip-bottom"
+              class="text-success tooltip tooltip-bottom"
               data-tip="Общая сумма доходов за год"
               data-testid="year-total-income"
             >
-              {{ formatAmountRounded(yearStats.totalIncome, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalIncome, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm text-success/80 tooltip tooltip-bottom"
@@ -70,11 +74,13 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-error font-bold tooltip tooltip-bottom"
+              class="text-error tooltip tooltip-bottom"
               data-tip="Общая сумма крупных расходов за год"
               data-testid="year-total-expenses"
             >
-              {{ formatAmountRounded(yearStats.totalExpenses, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalExpenses, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm text-error/80 tooltip tooltip-bottom"
@@ -99,12 +105,14 @@
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
-              class="font-bold tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
               :class="yearStats.totalPocketExpenses < 0 ? 'text-warning' : 'text-error'"
               data-tip="Общая сумма карманных расходов за год"
               data-testid="year-total-pocket-expenses"
             >
-              {{ formatAmountRounded(yearStats.totalPocketExpenses, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalPocketExpenses, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm tooltip tooltip-bottom"
@@ -130,11 +138,13 @@
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
-              class="text-error font-bold tooltip tooltip-bottom"
+              class="text-error tooltip tooltip-bottom"
               data-tip="Общая сумма всех расходов за год"
               data-testid="year-total-all-expenses"
             >
-              {{ formatAmountRounded(yearStats.totalAllExpenses, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalAllExpenses, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm text-error/80 tooltip tooltip-bottom"
@@ -159,7 +169,7 @@
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
-              class="font-bold tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
               :class="{
                 'text-success': yearStats.totalBalanceChange > 0,
                 'text-error': yearStats.totalBalanceChange < 0,
@@ -168,7 +178,9 @@
               data-tip="Общее изменение баланса за год"
               data-testid="year-total-balance-change"
             >
-              {{ formatAmountRounded(yearStats.totalBalanceChange, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalBalanceChange, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm tooltip tooltip-bottom"
@@ -198,7 +210,7 @@
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
-              class="font-bold tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
               :class="{
                 'text-success': yearStats.totalCurrencyProfitLoss > 0,
                 'text-error': yearStats.totalCurrencyProfitLoss < 0,
@@ -207,7 +219,9 @@
               data-tip="Общая прибыль/убыток от валютных колебаний за год"
               data-testid="year-total-currency-profit-loss"
             >
-              {{ formatAmountRounded(yearStats.totalCurrencyProfitLoss, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalCurrencyProfitLoss, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm tooltip tooltip-bottom"
@@ -235,11 +249,13 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-error font-bold tooltip tooltip-bottom"
+              class="text-error tooltip tooltip-bottom"
               data-tip="Общая сумма всех необязательных расходов за год"
               data-testid="year-total-optional-expenses"
             >
-              {{ formatAmountRounded(yearStats.totalOptionalExpenses, mainCurrency) }}
+              <div class="font-bold">
+                {{ formatAmountRounded(yearStats.totalOptionalExpenses, mainCurrency) }}
+              </div>
             </div>
             <div
               class="text-sm text-error/80 tooltip tooltip-bottom"
