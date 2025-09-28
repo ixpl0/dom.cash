@@ -1,41 +1,7 @@
 export const DAISY_THEMES = [
   'kekdark',
   'keklight',
-  'light',
-  'dark',
-  'cupcake',
-  'bumblebee',
-  'emerald',
-  'corporate',
-  'synthwave',
-  'retro',
-  'cyberpunk',
-  'valentine',
-  'halloween',
-  'garden',
-  'forest',
-  'aqua',
-  'lofi',
-  'pastel',
-  'fantasy',
-  'wireframe',
-  'black',
-  'luxury',
-  'dracula',
-  'cmyk',
-  'autumn',
-  'business',
-  'acid',
-  'lemonade',
-  'night',
-  'coffee',
-  'winter',
-  'dim',
-  'nord',
-  'sunset',
-  'caramellatte',
-  'abyss',
-  'silk',
+  'summerhaze',
 ]
 
 const THEME_KEY = 'theme'
@@ -80,8 +46,12 @@ export function useTheme() {
     if (!import.meta.client) return
     try {
       const saved = localStorage.getItem(THEME_KEY) || getCookie('theme')
-      if (saved && saved !== AUTO) setTheme(saved)
-      else setTheme(AUTO)
+      if (saved && saved !== AUTO && DAISY_THEMES.includes(saved)) {
+        setTheme(saved)
+      }
+      else {
+        setTheme(AUTO)
+      }
     }
     catch {
       setTheme(AUTO)

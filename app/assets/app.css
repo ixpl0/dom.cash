@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-@plugin "daisyui" {
-  themes: "all";
-}
+@plugin "daisyui" {}
 
 @plugin "daisyui/theme" {
   name: "kekdark";
@@ -74,40 +72,39 @@
   --noise: 1;
 }
 
-/*@plugin "daisyui/theme" {*/
-/*  name: "kekdark";*/
-/*  default: false;*/
-/*  prefersdark: true;*/
-/*  color-scheme: dark;*/
-/*  --color-base-100: hsl(216, 5%, 18%);*/
-/*  --color-base-200: hsl(216, 5%, 24%);*/
-/*  --color-base-300: hsl(216, 5%, 30%);*/
-/*  --color-base-content: #fff;*/
-/*  --color-primary: hsl(205, 100%, 57%);*/
-/*  --color-primary-content: #fff;*/
-/*  --color-secondary: oklch(62% 0.265 303.9);*/
-/*  --color-secondary-content: oklch(97% 0.014 308.299);*/
-/*  --color-accent: oklch(69% 0.17 162.48);*/
-/*  --color-accent-content: oklch(97% 0.021 166.113);*/
-/*  --color-neutral: oklch(37% 0.01 67.558);*/
-/*  --color-neutral-content: oklch(98% 0.001 106.423);*/
-/*  --color-info: oklch(0.7 0.17 246.26);*/
-/*  --color-info-content: oklch(1 0 89.876);*/
-/*  --color-success: #39d339;*/
-/*  --color-success-content: oklch(0.446 0.192 341.883);*/
-/*  --color-warning: hsl(47 100% 54% / 1);*/
-/*  --color-warning-content: hsl(171, 100%, 21%);*/
-/*  --color-error: oklch(0.7 0.24 25.76);*/
-/*  --color-error-content: oklch(0.94 0.14 99.9);*/
-/*  --radius-selector: 1rem;*/
-/*  --radius-field: 1rem;*/
-/*  --radius-box: 2rem;*/
-/*  --size-selector: 0.25rem;*/
-/*  --size-field: 0.25rem;*/
-/*  --border: 1px;*/
-/*  --depth: 1;*/
-/*  --noise: 1;*/
-/*}*/
+@plugin "daisyui/theme" {
+  name: "summerhaze";
+  default: false;
+  color-scheme: light;
+  --color-base-100: #ffeef0;
+  --color-base-200: #ffe0e4;
+  --color-base-300: #fda4af;
+  --color-base-content: #5671b1;
+  --color-primary: #ff5f8a;
+  --color-primary-content: #fff;
+  --color-secondary: #ff9bb6;
+  --color-secondary-content: #fff;
+  --color-accent: #06b6d4;
+  --color-accent-content: #fff;
+  --color-neutral: #6b7280;
+  --color-neutral-content: #fff;
+  --color-info: #06b6d4;
+  --color-info-content: #fff;
+  --color-success: #10b981;
+  --color-success-content: #fff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #fff;
+  --color-error: #ef4444;
+  --color-error-content: #fff;
+  --radius-selector: 1rem;
+  --radius-field: 1rem;
+  --radius-box: 1.5rem;
+  --size-selector: 0.3rem;
+  --size-field: 0.24rem;
+  --border: 2px;
+  --depth: 1;
+  --noise: 0;
+}
 
 /* Prevent modal layout shifts on open/close */
 html {

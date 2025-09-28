@@ -42,7 +42,14 @@ const model = computed({
 
 const options = computed(() => ['auto', ...themes])
 
+const themeDisplayNames: Record<string, string> = {
+  auto: 'Auto',
+  kekdark: 'Kek Dark',
+  keklight: 'Kek Light',
+  summerhaze: 'Summer Haze',
+}
+
 const formatTheme = (t: string) => {
-  return t === 'auto' ? 'Auto' : t.replace(/\b\w/g, c => c.toUpperCase())
+  return themeDisplayNames[t] || t.replace(/\b\w/g, c => c.toUpperCase())
 }
 </script>
