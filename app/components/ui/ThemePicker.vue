@@ -46,6 +46,7 @@ const themeDisplayNames: Record<string, string> = {
   auto: 'Auto',
   crystalclear: 'Crystal Clear',
   grayscale: 'Grayscale',
+  grayscaledark: 'Grayscale Dark',
   kekdark: 'Kek Dark',
   keklight: 'Kek Light',
   summerhaze: 'Summer Haze',

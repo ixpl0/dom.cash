@@ -5,6 +5,7 @@ export const DAISY_THEMES = [
   'ritualhabitual',
   'crystalclear',
   'grayscale',
+  'grayscaledark',
 ]
 
 const THEME_KEY = 'theme'
