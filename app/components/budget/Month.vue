@@ -5,17 +5,36 @@
   >
     <hr>
     <div class="timeline-start">
-      <div
-        class="tooltip capitalize"
-        :data-tip="`${monthData.sourceMonthTitle || `${budgetStore.monthNames[monthData.month]} ${monthData.year}`} - Нажмите для просмотра курсов валют`"
-      >
-        <button
-          class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
-          data-testid="month-badge"
-          @click="openCurrencyRatesModal"
+      <div class="flex items-center gap-1">
+        <Transition
+          enter-active-class="transition-opacity duration-200"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
         >
-          {{ budgetStore.monthNames[monthData.month] }}
-        </button>
+          <div
+            v-if="isCurrentMonthValue"
+            class="tooltip flex items-center justify-center"
+            data-tip="Текущий месяц"
+          >
+            <Icon
+              name="heroicons:play-solid"
+              size="14"
+              class="text-primary"
+            />
+          </div>
+        </Transition>
+        <div
+          class="tooltip capitalize"
+          :data-tip="`${monthData.sourceMonthTitle || `${budgetStore.monthNames[monthData.month]} ${monthData.year}`} - Нажмите для просмотра курсов валют`"
+        >
+          <button
+            class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+            data-testid="month-badge"
+            @click="openCurrencyRatesModal"
+          >
+            {{ budgetStore.monthNames[monthData.month] }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -229,7 +248,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import { formatAmountRounded } from '~~/shared/utils/budget'
-import { isFirstMonth, isLastMonth } from '~~/shared/utils/month-helpers'
+import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/month-helpers'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
 
@@ -255,6 +274,7 @@ const isReadOnly = computed(() => !budgetStore.canEdit)
 const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.data?.user?.username : undefined)
 
 const cardRefs = ref<HTMLElement[]>([])
+const isCurrentMonthValue = ref(false)
 
 const { registerRow, unregisterRow, forceSync } = props.budgetColumnsSync
 
@@ -265,6 +285,8 @@ const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | n
 }
 
 onMounted(() => {
+  isCurrentMonthValue.value = isCurrentMonth(monthData.value)
+
   nextTick(() => {
     const validRefs = cardRefs.value.filter(Boolean)
     if (validRefs.length) {

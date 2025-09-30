@@ -122,3 +122,11 @@ export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boole
   const lastMonth = sortedMonths[0]
   return lastMonth?.id === monthData.id
 }
+
+export const isCurrentMonth = (monthData: MonthData): boolean => {
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+
+  return monthData.year === currentYear && monthData.month === currentMonth
+}
