@@ -7,11 +7,11 @@
       name="heroicons:paint-brush"
       size="20"
     />
-    Тема
+    <span class="hidden xl:inline">Тема</span>
     <select
       id="theme-select"
       v-model="model"
-      class="select select-bordered select-sm w-44"
+      class="select select-bordered select-sm w-36"
       aria-label="Выбрать тему"
       data-testid="theme-select"
     >

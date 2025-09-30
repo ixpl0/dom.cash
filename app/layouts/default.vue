@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-base-100">
-    <header class="navbar bg-base-200 shadow-lg flex justify-between flex-wrap gap-4 px-4">
+    <header class="navbar bg-base-200 flex justify-between gap-4 px-4">
       <div class="flex items-center gap-4">
         <NuxtLink
           to="/"
@@ -8,7 +8,7 @@
           data-testid="logo-link"
         >
           <UiLogo class="w-9 h-9" />
-          dom.cash
+          <span class="hidden xl:inline">dom.cash</span>
         </NuxtLink>
         <div
           v-if="isAuthenticated"
@@ -23,13 +23,14 @@
               name="heroicons:banknotes"
               size="16"
             />
-            Бюджет
+            <span class="hidden xl:inline">Бюджет</span>
           </NuxtLink>
         </div>
       </div>
 
-      <div class="flex items-center flex-wrap gap-2">
+      <div class="flex items-center gap-2">
         <ThemePicker />
+
         <template v-if="isAuthenticated">
           <button
             class="btn btn-outline btn-sm"
@@ -40,7 +41,7 @@
               name="heroicons:users"
               size="16"
             />
-            Общие бюджеты
+            <span class="hidden xl:inline">Общие бюджеты</span>
           </button>
           <button
             class="btn btn-outline btn-sm"
@@ -51,7 +52,7 @@
               name="heroicons:share"
               size="16"
             />
-            Поделиться
+            <span class="hidden xl:inline">Поделиться</span>
           </button>
         </template>
       </div>
@@ -70,12 +71,13 @@
             <Icon
               name="heroicons:user"
               size="16"
+              class="flex-shrink-0"
             />
-            {{ user?.username }}
+            <span class="break-all">{{ user?.username }}</span>
             <Icon
               name="heroicons:chevron-down"
               size="16"
-              class="ml-1"
+              class="flex-shrink-0 ml-1"
             />
           </div>
           <ul
