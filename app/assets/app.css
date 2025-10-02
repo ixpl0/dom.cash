@@ -293,8 +293,8 @@ html {
 /* Custom button hover effect */
 @media (hover: hover) {
   .btn:hover {
-    @supports (color: color-mix(in lab, red, red)) {
-      --btn-bg: var(--btn-color, transparent) !important;
-    }
+    --btn-bg: var(--btn-color, transparent);
+    --btn-shadow: transparent;
+    --btn-noise: transparent;
   }
 }
