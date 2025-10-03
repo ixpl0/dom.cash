@@ -23,7 +23,11 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-primary tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
+              :class="{
+                'text-primary': yearStats.averageBalance > 0,
+                'text-base-content': yearStats.averageBalance === 0,
+              }"
               data-tip="Средний баланс на начало месяца за год"
               data-testid="year-average-balance"
             >
@@ -45,7 +49,11 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-success tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
+              :class="{
+                'text-success': yearStats.totalIncome > 0,
+                'text-base-content': yearStats.totalIncome === 0,
+              }"
               data-tip="Общая сумма доходов за год"
               data-testid="year-total-income"
             >
@@ -54,7 +62,11 @@
               </div>
             </div>
             <div
-              class="text-sm text-success/80 tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-bottom"
+              :class="{
+                'text-success/80': yearStats.averageIncome > 0,
+                'text-base-content/80': yearStats.averageIncome === 0,
+              }"
               data-tip="Средний доход в месяц"
               data-testid="year-average-income"
             >
@@ -74,7 +86,11 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-error tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
+              :class="{
+                'text-error': yearStats.totalExpenses > 0,
+                'text-base-content': yearStats.totalExpenses === 0,
+              }"
               data-tip="Общая сумма крупных расходов за год"
               data-testid="year-total-expenses"
             >
@@ -83,7 +99,11 @@
               </div>
             </div>
             <div
-              class="text-sm text-error/80 tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-bottom"
+              :class="{
+                'text-error/80': yearStats.averageExpenses > 0,
+                'text-base-content/80': yearStats.averageExpenses === 0,
+              }"
               data-tip="Средние крупные расходы в месяц"
               data-testid="year-average-expenses"
             >
@@ -106,7 +126,11 @@
           <div class="flex flex-col gap-1">
             <div
               class="tooltip tooltip-bottom"
-              :class="yearStats.totalPocketExpenses < 0 ? 'text-warning' : 'text-error'"
+              :class="{
+                'text-warning': yearStats.totalPocketExpenses < 0,
+                'text-error': yearStats.totalPocketExpenses > 0,
+                'text-base-content': yearStats.totalPocketExpenses === 0,
+              }"
               data-tip="Общая сумма карманных расходов за год"
               data-testid="year-total-pocket-expenses"
             >
@@ -116,7 +140,11 @@
             </div>
             <div
               class="text-sm tooltip tooltip-bottom"
-              :class="yearStats.averagePocketExpenses < 0 ? 'text-warning/80' : 'text-error/80'"
+              :class="{
+                'text-warning/80': yearStats.averagePocketExpenses < 0,
+                'text-error/80': yearStats.averagePocketExpenses > 0,
+                'text-base-content/80': yearStats.averagePocketExpenses === 0,
+              }"
               data-tip="Средние карманные расходы в месяц"
               data-testid="year-average-pocket-expenses"
             >
@@ -138,7 +166,12 @@
           <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
-              class="text-error tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
+              :class="{
+                'text-warning': yearStats.totalAllExpenses < 0,
+                'text-error': yearStats.totalAllExpenses > 0,
+                'text-base-content': yearStats.totalAllExpenses === 0,
+              }"
               data-tip="Общая сумма всех расходов за год"
               data-testid="year-total-all-expenses"
             >
@@ -147,7 +180,12 @@
               </div>
             </div>
             <div
-              class="text-sm text-error/80 tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-bottom"
+              :class="{
+                'text-warning/80': yearStats.averageAllExpenses < 0,
+                'text-error/80': yearStats.averageAllExpenses > 0,
+                'text-base-content/80': yearStats.averageAllExpenses === 0,
+              }"
               data-tip="Средние расходы в месяц"
               data-testid="year-average-all-expenses"
             >
@@ -249,7 +287,11 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="text-error tooltip tooltip-bottom"
+              class="tooltip tooltip-bottom"
+              :class="{
+                'text-error': yearStats.totalOptionalExpenses > 0,
+                'text-base-content': yearStats.totalOptionalExpenses === 0,
+              }"
               data-tip="Общая сумма всех необязательных расходов за год"
               data-testid="year-total-optional-expenses"
             >
@@ -258,7 +300,11 @@
               </div>
             </div>
             <div
-              class="text-sm text-error/80 tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-bottom"
+              :class="{
+                'text-error/80': yearStats.averageOptionalExpenses > 0,
+                'text-base-content/80': yearStats.averageOptionalExpenses === 0,
+              }"
               data-tip="Средние необязательные расходы в месяц"
               data-testid="year-average-optional-expenses"
             >

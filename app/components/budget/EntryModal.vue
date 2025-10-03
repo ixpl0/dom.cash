@@ -71,10 +71,11 @@
                   >
                     <span
                       :class="{
+                        'text-success': entryModal.entryKind === 'income' && entry.amount > 0,
+                        'text-error': entryModal.entryKind === 'expense' && entry.amount > 0,
+                        'text-primary': entryModal.entryKind === 'balance' && entry.amount > 0,
                         'text-base-content': entry.amount === 0,
-                        'text-success': entryModal.entryKind === 'income' || (entryModal.entryKind === 'balance' && entry.amount > 0),
-                        'text-error': entryModal.entryKind === 'expense',
-                        'text-warning': entryModal.entryKind === 'balance' && entry.amount < 0,
+                        'text-warning': entry.amount < 0,
                       }"
                     >{{ formatAmount(entry.amount, entry.currency) }}</span>
                   </td>

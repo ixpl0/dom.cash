@@ -53,7 +53,11 @@
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
-            class="btn btn-ghost text-2xl text-primary"
+            class="btn btn-ghost text-2xl"
+            :class="{
+              'text-primary': monthData.startBalance !== 0,
+              'text-base-content': monthData.startBalance === 0,
+            }"
             :disabled="isReadOnly"
             data-testid="balance-button"
             @click="openBalanceModal"
@@ -145,6 +149,7 @@
             disabled
             data-testid="total-expenses-button"
             :class="{
+              'text-warning': monthData.totalAllExpenses !== null && monthData.totalAllExpenses < 0,
               'text-error': monthData.totalAllExpenses !== null && monthData.totalAllExpenses > 0,
               'text-base-content': monthData.totalAllExpenses === 0,
             }"
