@@ -285,6 +285,12 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Text selection color */
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
 /* Override DaisyUI styles to prevent modal layout shifts on open/close */
 :where(.modal[open], .modal-open, .modal-toggle:checked + .modal):not(.modal-start, .modal-end) {
   scrollbar-gutter: auto;
