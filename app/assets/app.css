@@ -56,7 +56,7 @@
   color-scheme: light;
   --color-base-100: #fffaed;
   --color-base-200: #fff1d8;
-  --color-base-300: #ffe9c2;
+  --color-base-300: #ffdc9d;
   --color-base-content: #5e4a29;
   --color-primary: #2e96ce;
   --color-primary-content: #fff;
@@ -289,6 +289,11 @@ html {
 ::selection {
   background-color: var(--color-primary);
   color: var(--color-primary-content);
+}
+
+/* Scrollbar styles */
+* {
+  scrollbar-width: thin;
 }
 
 /* Override DaisyUI styles to prevent modal layout shifts on open/close */
