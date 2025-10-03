@@ -23,7 +23,7 @@
 
       <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
         <div v-if="shares.length || isAddingNew">
-          <table class="table table-zebra">
+          <table class="table">
             <thead>
               <tr>
                 <th>Имя пользователя</th>

@@ -25,7 +25,7 @@
 
       <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
         <div v-if="currentEntries.length || isAddingNewEntry">
-          <table class="table table-zebra text-center">
+          <table class="table text-center">
             <thead>
               <tr>
                 <th>Описание</th>
