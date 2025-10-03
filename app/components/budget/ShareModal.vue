@@ -230,6 +230,18 @@ const modal = ref<HTMLDialogElement | null>(null)
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.shareModal.isOpen)
 const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
+const { toast } = useToast()
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  return error
+    && typeof error === 'object'
+    && 'data' in error
+    && error.data
+    && typeof error.data === 'object'
+    && 'message' in error.data
+    ? String(error.data.message)
+    : fallback
+}
 
 const isAddingNew = ref(false)
 const isAdding = ref(false)
@@ -250,6 +262,7 @@ const cancelAdd = (): void => {
 
 const addShare = async (): Promise<void> => {
   if (!newShare.value.username.trim()) {
+    toast({ type: 'error', message: 'Введите имя пользователя' })
     return
   }
 
@@ -267,9 +280,10 @@ const addShare = async (): Promise<void> => {
     shares.value = [...shares.value, response]
     markAsSaved()
     cancelAdd()
+    toast({ type: 'success', message: 'Доступ успешно предоставлен' })
   }
-  catch (error) {
-    console.error('Error adding share:', error)
+  catch (error: unknown) {
+    toast({ type: 'error', message: getErrorMessage(error, 'Не удалось предоставить доступ') })
   }
   finally {
     isAdding.value = false
@@ -300,6 +314,11 @@ const saveShare = async (): Promise<void> => {
     return
   }
 
+  if (!editingShare.value.username.trim()) {
+    toast({ type: 'error', message: 'Введите имя пользователя' })
+    return
+  }
+
   isSaving.value = true
 
   try {
@@ -320,9 +339,10 @@ const saveShare = async (): Promise<void> => {
     }
     markAsSaved()
     cancelEdit()
+    toast({ type: 'success', message: 'Изменения сохранены' })
   }
-  catch (error) {
-    console.error('Error saving share:', error)
+  catch (error: unknown) {
+    toast({ type: 'error', message: getErrorMessage(error, 'Не удалось сохранить изменения') })
   }
   finally {
     isSaving.value = false
