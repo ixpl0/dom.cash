@@ -18,7 +18,7 @@
         />
       </button>
 
-      <h3 class="font-bold text-lg mb-4 flex-shrink-0">
+      <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-6">
         Курсы валют за {{ currencyRatesModal.monthTitle }}
       </h3>
 
@@ -57,18 +57,20 @@
           <div
             v-for="rate in filteredRates"
             :key="rate.code"
-            class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+            class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors gap-3"
           >
-            <div class="flex items-center gap-3">
-              <span class="font-semibold text-lg">{{ rate.code }}</span>
-              <span class="text-sm opacity-70">{{ rate.name }}</span>
+            <div class="font-semibold text-lg">
+              {{ rate.code }}
             </div>
-            <span
+            <div class="text-sm opacity-70 text-center">
+              {{ rate.name }}
+            </div>
+            <div
               class="font-mono text-lg"
               :data-testid="`rate-${rate.code}`"
             >
               {{ formatRate(rate.rate) }}
-            </span>
+            </div>
           </div>
         </div>
       </div>
