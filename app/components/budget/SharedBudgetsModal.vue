@@ -54,7 +54,11 @@
                       v-if="isRevoking === budget.id"
                       class="loading loading-spinner loading-xs"
                     />
-                    <span v-else>🗑️</span>
+                    <Icon
+                      v-else
+                      name="heroicons:trash"
+                      size="16"
+                    />
                   </button>
                 </td>
               </tr>

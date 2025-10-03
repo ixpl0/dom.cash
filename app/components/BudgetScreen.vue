@@ -106,7 +106,7 @@
           </span>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button
             class="btn btn-ghost btn-sm"
             data-testid="chart-button"
@@ -118,33 +118,32 @@
             />
             График
           </button>
-          <div
-            v-if="budgetStore.canEdit"
-            class="flex gap-2"
+
+          <button
+            class="btn btn-ghost btn-sm"
+            data-testid="export-button"
+            @click="handleExport"
           >
-            <button
-              class="btn btn-ghost btn-sm"
-              data-testid="export-button"
-              @click="handleExport"
-            >
-              <Icon
-                name="heroicons:cloud-arrow-down"
-                size="20"
-              />
-              Экспорт
-            </button>
-            <button
-              class="btn btn-ghost btn-sm"
-              data-testid="import-button"
-              @click="openImportModal"
-            >
-              <Icon
-                name="heroicons:cloud-arrow-up"
-                size="20"
-              />
-              Импорт
-            </button>
-          </div>
+            <Icon
+              name="heroicons:cloud-arrow-down"
+              size="20"
+            />
+            Экспорт
+          </button>
+
+          <button
+            v-if="budgetStore.canEdit"
+            class="btn btn-ghost btn-sm"
+            data-testid="import-button"
+            @click="openImportModal"
+          >
+            <Icon
+              name="heroicons:cloud-arrow-up"
+              size="20"
+            />
+            Импорт
+          </button>
+
           <NuxtLink
             v-if="!isOwnBudget"
             to="/budget"
