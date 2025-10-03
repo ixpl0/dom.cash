@@ -1,43 +1,13 @@
 <template>
   <header class="navbar bg-base-200 flex justify-between gap-4 px-4">
-    <div class="hidden md:flex items-center gap-4">
-      <NuxtLink
-        to="/"
-        class="text-2xl font-bold flex items-center gap-2 ml-4"
-        data-testid="logo-link"
-      >
-        <UiLogo class="w-9 h-9" />
-        <span class="hidden xl:inline">dom.cash</span>
-      </NuxtLink>
-
-      <div
-        v-if="isAuthenticated"
-        class="menu menu-horizontal"
-      >
-        <NuxtLink
-          to="/budget"
-          class="btn btn-sm btn-outline"
-          data-testid="budget-nav-link"
-        >
-          <Icon
-            name="heroicons:banknotes"
-            size="16"
-          />
-          <span class="hidden xl:inline">Бюджет</span>
-        </NuxtLink>
-      </div>
-    </div>
-
-    <div class="md:hidden flex-1">
-      <NuxtLink
-        to="/"
-        class="text-2xl font-bold flex items-center gap-2 ml-4"
-        data-testid="logo-link"
-      >
-        <UiLogo class="w-9 h-9" />
-        dom.cash
-      </NuxtLink>
-    </div>
+    <NuxtLink
+      to="/"
+      class="text-2xl font-bold flex items-center gap-2 ml-4"
+      data-testid="logo-link"
+    >
+      <UiLogo class="w-9 h-9" />
+      dom.cash
+    </NuxtLink>
 
     <div class="hidden md:flex items-center gap-2">
       <UiThemePicker />
@@ -142,18 +112,6 @@
           tabindex="0"
           class="dropdown-content menu bg-base-100 rounded-box z-[1] p-2 shadow mt-3"
         >
-          <li v-if="isAuthenticated">
-            <NuxtLink
-              to="/budget"
-              data-testid="mobile-budget-link"
-            >
-              <Icon
-                name="heroicons:banknotes"
-                size="16"
-              />
-              Бюджет
-            </NuxtLink>
-          </li>
           <li v-if="isAuthenticated">
             <button
               data-testid="mobile-shared-budgets-btn"

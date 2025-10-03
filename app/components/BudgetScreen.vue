@@ -73,14 +73,17 @@
         data-testid="budget-header"
       >
         <h1
-          class="text-3xl font-bold"
+          class="text-3xl font-bold ml-2"
           data-testid="budget-title"
         >
           Бюджет
         </h1>
 
         <div class="flex items-center flex-wrap gap-2 flex-col sm:flex-row w-full sm:w-auto">
-          <span class="badge w-full sm:w-auto">
+          <span
+            v-if="budgetStore.data?.access !== 'owner'"
+            class="badge w-full sm:w-auto"
+          >
             Бюджет
             {{ budgetStore.data?.user.username }}
           </span>

@@ -7,7 +7,6 @@
       name="heroicons:paint-brush"
       size="20"
     />
-    <span class="hidden xl:inline">Тема</span>
     <select
       id="theme-select"
       v-model="model"
