@@ -78,28 +78,31 @@
         >
           Бюджет
         </h1>
-        <div class="flex items-center flex-wrap gap-2">
-          <span class="badge">
+
+        <div class="flex items-center flex-wrap gap-2 flex-col sm:flex-row w-full sm:w-auto">
+          <span class="badge w-full sm:w-auto">
             Бюджет
             {{ budgetStore.data?.user.username }}
           </span>
-          <span class="badge">
+          <span class="badge w-full sm:w-auto">
             {{ getAccessText(budgetStore.data?.access || 'unknown') }}
           </span>
           <UiCurrencyPicker
             v-if="budgetStore.canEdit"
             :model-value="budgetStore.data?.user.mainCurrency"
             placeholder="Основная валюта"
-            class="w-70"
+            class="w-full sm:w-70"
             @change="saveCurrency"
           />
           <span
             v-else
             class="opacity-70 text-sm"
           >
-            Основная валюта: {{ getCurrencyDisplayText(budgetStore.data?.user.mainCurrency || '') }}
+            Основная валюта:
+            {{ getCurrencyDisplayText(budgetStore.data?.user.mainCurrency || '') }}
           </span>
         </div>
+
         <div class="flex gap-2">
           <button
             class="btn btn-ghost btn-sm"
