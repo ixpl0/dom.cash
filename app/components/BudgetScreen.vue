@@ -52,8 +52,15 @@
             v-if="isCreatingCurrentMonth"
             class="loading loading-spinner loading-sm"
           />
-          <span v-if="!isCreatingCurrentMonth">
-            📅 Создать {{ monthNames[currentMonth] }} {{ currentYear }}
+          <span
+            v-if="!isCreatingCurrentMonth"
+            class="flex items-center gap-2"
+          >
+            <Icon
+              name="heroicons:calendar"
+              size="20"
+            />
+            Создать {{ monthNames[currentMonth] }} {{ currentYear }}
           </span>
           <span v-else>Создание месяца...</span>
         </button>
@@ -62,7 +69,11 @@
           data-testid="import-budget-btn"
           @click="openImportModal"
         >
-          📥 Импорт бюджета
+          <Icon
+            name="heroicons:arrow-down-tray"
+            size="20"
+          />
+          Импорт бюджета
         </button>
       </div>
     </div>
