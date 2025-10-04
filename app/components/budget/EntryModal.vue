@@ -21,7 +21,7 @@
       {{ modalTitle }}
     </h3>
 
-    <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
+    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
       <div v-if="currentEntries.length || isAddingNewEntry">
         <table class="table text-center">
           <thead>
