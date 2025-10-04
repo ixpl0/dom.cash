@@ -1,85 +1,79 @@
 <template>
-  <dialog
-    ref="modal"
-    class="modal"
+  <UiDialog
+    :is-open="isOpen"
     data-testid="currency-rates-modal"
-    @close="handleDialogClose"
+    content-class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col"
+    @close="hide"
   >
-    <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col">
-      <button
-        type="button"
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        data-testid="modal-close-button"
-        @click="hide()"
+    <button
+      type="button"
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      data-testid="modal-close-button"
+      @click="hide()"
+    >
+      <Icon
+        name="heroicons:x-mark"
+        size="20"
+      />
+    </button>
+
+    <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-6">
+      Курсы валют за {{ currencyRatesModal.monthTitle }}
+    </h3>
+
+    <div
+      v-if="currencyRatesModal.isUsingOtherMonthRates"
+      class="alert alert-warning alert-outline mb-4 flex-shrink-0"
+    >
+      <Icon
+        name="heroicons:exclamation-triangle"
+        size="24"
+        class="stroke-current shrink-0"
+      />
+      <span>У этого месяца нет собственных курсов валют, поэтому используются курсы из {{ currencyRatesModal.sourceMonthTitle }}</span>
+    </div>
+
+    <div class="form-control mb-4 flex-shrink-0">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Поиск валюты по коду или названию..."
+        class="input input-bordered w-full"
       >
-        <Icon
-          name="heroicons:x-mark"
-          size="20"
-        />
-      </button>
+    </div>
 
-      <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-6">
-        Курсы валют за {{ currencyRatesModal.monthTitle }}
-      </h3>
-
+    <div class="space-y-2 flex-1 overflow-y-auto min-h-0">
       <div
-        v-if="currencyRatesModal.isUsingOtherMonthRates"
-        class="alert alert-warning alert-outline mb-4 flex-shrink-0"
+        v-if="filteredRates.length === 0"
+        class="text-center py-8 text-base-content/60"
       >
-        <Icon
-          name="heroicons:exclamation-triangle"
-          size="24"
-          class="stroke-current shrink-0"
-        />
-        <span>У этого месяца нет собственных курсов валют, поэтому используются курсы из {{ currencyRatesModal.sourceMonthTitle }}</span>
+        Валюты не найдены
       </div>
-
-      <div class="form-control mb-4 flex-shrink-0">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Поиск валюты по коду или названию..."
-          class="input input-bordered w-full"
-        >
-      </div>
-
-      <div class="space-y-2 flex-1 overflow-y-auto min-h-0">
+      <div
+        v-else
+        class="grid grid-cols-1 gap-2"
+      >
         <div
-          v-if="filteredRates.length === 0"
-          class="text-center py-8 text-base-content/60"
+          v-for="rate in filteredRates"
+          :key="rate.code"
+          class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors gap-3"
         >
-          Валюты не найдены
-        </div>
-        <div
-          v-else
-          class="grid grid-cols-1 gap-2"
-        >
+          <div class="font-semibold text-lg">
+            {{ rate.code }}
+          </div>
+          <div class="text-sm opacity-70 text-center">
+            {{ rate.name }}
+          </div>
           <div
-            v-for="rate in filteredRates"
-            :key="rate.code"
-            class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors gap-3"
+            class="font-mono text-lg"
+            :data-testid="`rate-${rate.code}`"
           >
-            <div class="font-semibold text-lg">
-              {{ rate.code }}
-            </div>
-            <div class="text-sm opacity-70 text-center">
-              {{ rate.name }}
-            </div>
-            <div
-              class="font-mono text-lg"
-              :data-testid="`rate-${rate.code}`"
-            >
-              {{ formatRate(rate.rate) }}
-            </div>
+            {{ formatRate(rate.rate) }}
           </div>
         </div>
       </div>
     </div>
-    <div
-      class="modal-backdrop"
-      @click="hide"
-    />
-  </dialog>
+  </UiDialog>
 </template>
 
 <script setup lang="ts">
@@ -95,8 +89,8 @@ interface CurrencyRate {
 
 const modalsStore = useModalsStore()
 const currencyRatesModal = computed(() => modalsStore.currencyRatesModal)
+const isOpen = computed(() => currencyRatesModal.value.isOpen)
 
-const modal = ref<HTMLDialogElement | null>(null)
 const searchQuery = ref('')
 
 const { getRecentCurrencies } = useRecentCurrencies()
@@ -145,21 +139,13 @@ const formatRate = (rate: number): string => {
 }
 
 const hide = (): void => {
-  modalsStore.closeCurrencyRatesModal()
-}
-
-const handleDialogClose = (): void => {
   searchQuery.value = ''
   modalsStore.closeCurrencyRatesModal()
 }
 
-watch(() => currencyRatesModal.value.isOpen, (isOpen) => {
-  if (isOpen) {
+watch(isOpen, (open) => {
+  if (open) {
     searchQuery.value = ''
-    modal.value?.showModal()
-  }
-  else {
-    modal.value?.close()
   }
 })
 </script>

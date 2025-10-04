@@ -1,160 +1,77 @@
 <template>
-  <dialog
-    ref="modal"
-    class="modal"
-    @close="handleDialogClose"
-    @keydown.esc="handleEscapeKey"
+  <UiDialog
+    :is-open="isOpen"
+    content-class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col"
+    @close="hide"
   >
-    <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col">
-      <button
-        type="button"
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="hide()"
-      >
-        <Icon
-          name="heroicons:x-mark"
-          size="20"
-        />
-      </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      @click="hide()"
+    >
+      <Icon
+        name="heroicons:x-mark"
+        size="20"
+      />
+    </button>
 
-      <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-        Общий доступ к вашему бюджету
-      </h3>
+    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
+      Общий доступ к вашему бюджету
+    </h3>
 
-      <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
-        <div v-if="shares.length || isAddingNew">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Имя пользователя</th>
-                <th>Уровень доступа</th>
-                <th class="w-1">
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="share in shares"
-                :key="share.id"
-              >
-                <td>
-                  <input
-                    v-if="editingId === share.id"
-                    v-model="editingShare.username"
-                    type="text"
-                    class="input input-bordered w-full"
-                    @keyup.enter="saveShare()"
-                    @keyup.esc="cancelEdit()"
-                  >
-                  <span v-else>{{ share.username }}</span>
-                </td>
-                <td>
-                  <select
-                    v-if="editingId === share.id"
-                    v-model="editingShare.access"
-                    class="select select-sm select-bordered w-full max-w-xs"
-                  >
-                    <option value="read">
-                      Только чтение
-                    </option>
-                    <option value="write">
-                      Чтение и редактирование
-                    </option>
-                  </select>
-                  <span v-else>{{ getAccessText(share.access) }}</span>
-                </td>
-                <td class="w-1">
-                  <div class="flex gap-2">
-                    <template v-if="editingId === share.id">
-                      <button
-                        class="btn btn-sm btn-success"
-                        :disabled="isSaving"
-                        @click="saveShare()"
-                      >
-                        <span
-                          v-if="isSaving"
-                          class="loading loading-spinner loading-xs"
-                        />
-                        <Icon
-                          v-else
-                          name="heroicons:check"
-                          size="16"
-                        />
-                      </button>
-                      <button
-                        class="btn btn-sm btn-ghost"
-                        @click="cancelEdit()"
-                      >
-                        <Icon
-                          name="heroicons:x-mark"
-                          size="16"
-                        />
-                      </button>
-                    </template>
-                    <template v-else>
-                      <button
-                        class="btn btn-sm btn-warning"
-                        @click="startEdit(share)"
-                      >
-                        <Icon
-                          name="heroicons:pencil-square"
-                          size="16"
-                        />
-                      </button>
-                      <button
-                        class="btn btn-sm btn-error"
-                        :disabled="isDeleting === share.id"
-                        @click="deleteShare(share.id)"
-                      >
-                        <span
-                          v-if="isDeleting === share.id"
-                          class="loading loading-spinner loading-xs"
-                        />
-                        <Icon
-                          v-else
-                          name="heroicons:trash"
-                          size="16"
-                        />
-                      </button>
-                    </template>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="isAddingNew">
-                <td>
-                  <input
-                    v-model="newShare.username"
-                    type="text"
-                    placeholder="Имя пользователя"
-                    class="input input-bordered w-full"
-                    @keyup.enter="addShare()"
-                    @keyup.esc="cancelAdd()"
-                  >
-                </td>
-                <td>
-                  <select
-                    v-model="newShare.access"
-                    class="select select-sm select-bordered w-full max-w-xs"
-                  >
-                    <option value="read">
-                      Только чтение
-                    </option>
-                    <option value="write">
-                      Чтение и редактирование
-                    </option>
-                  </select>
-                </td>
-                <td class="w-1">
-                  <div class="flex gap-2">
+    <div class="space-y-4 mb-6 flex-1 overflow-y-auto min-h-0">
+      <div v-if="shares.length || isAddingNew">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Имя пользователя</th>
+              <th>Уровень доступа</th>
+              <th class="w-1">
+                Действия
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="share in shares"
+              :key="share.id"
+            >
+              <td>
+                <input
+                  v-if="editingId === share.id"
+                  v-model="editingShare.username"
+                  type="text"
+                  class="input input-bordered w-full"
+                  @keyup.enter="saveShare()"
+                  @keyup.esc="cancelEdit()"
+                >
+                <span v-else>{{ share.username }}</span>
+              </td>
+              <td>
+                <select
+                  v-if="editingId === share.id"
+                  v-model="editingShare.access"
+                  class="select select-sm select-bordered w-full max-w-xs"
+                >
+                  <option value="read">
+                    Только чтение
+                  </option>
+                  <option value="write">
+                    Чтение и редактирование
+                  </option>
+                </select>
+                <span v-else>{{ getAccessText(share.access) }}</span>
+              </td>
+              <td class="w-1">
+                <div class="flex gap-2">
+                  <template v-if="editingId === share.id">
                     <button
-                      type="button"
                       class="btn btn-sm btn-success"
-                      :disabled="isAdding"
-                      @click="addShare()"
+                      :disabled="isSaving"
+                      @click="saveShare()"
                     >
                       <span
-                        v-if="isAdding"
+                        v-if="isSaving"
                         class="loading loading-spinner loading-xs"
                       />
                       <Icon
@@ -164,41 +81,105 @@
                       />
                     </button>
                     <button
-                      type="button"
                       class="btn btn-sm btn-ghost"
-                      @click="cancelAdd()"
+                      @click="cancelEdit()"
                     >
                       <Icon
                         name="heroicons:x-mark"
                         size="16"
                       />
                     </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </template>
+                  <template v-else>
+                    <button
+                      class="btn btn-sm btn-warning"
+                      @click="startEdit(share)"
+                    >
+                      <Icon
+                        name="heroicons:pencil-square"
+                        size="16"
+                      />
+                    </button>
+                    <button
+                      class="btn btn-sm btn-error"
+                      :disabled="isDeleting === share.id"
+                      @click="deleteShare(share.id)"
+                    >
+                      <span
+                        v-if="isDeleting === share.id"
+                        class="loading loading-spinner loading-xs"
+                      />
+                      <Icon
+                        v-else
+                        name="heroicons:trash"
+                        size="16"
+                      />
+                    </button>
+                  </template>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="isAddingNew">
+              <td>
+                <input
+                  v-model="newShare.username"
+                  type="text"
+                  placeholder="Имя пользователя"
+                  class="input input-bordered w-full"
+                  @keyup.enter="addShare()"
+                  @keyup.esc="cancelAdd()"
+                >
+              </td>
+              <td>
+                <select
+                  v-model="newShare.access"
+                  class="select select-sm select-bordered w-full max-w-xs"
+                >
+                  <option value="read">
+                    Только чтение
+                  </option>
+                  <option value="write">
+                    Чтение и редактирование
+                  </option>
+                </select>
+              </td>
+              <td class="w-1">
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-success"
+                    :disabled="isAdding"
+                    @click="addShare()"
+                  >
+                    <span
+                      v-if="isAdding"
+                      class="loading loading-spinner loading-xs"
+                    />
+                    <Icon
+                      v-else
+                      name="heroicons:check"
+                      size="16"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-ghost"
+                    @click="cancelAdd()"
+                  >
+                    <Icon
+                      name="heroicons:x-mark"
+                      size="16"
+                    />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          <div class="flex justify-center mt-4">
-            <button
-              v-if="!isAddingNew"
-              class="btn btn-primary btn-sm"
-              @click="startAdd()"
-            >
-              Поделиться бюджетом с новым пользователем
-            </button>
-          </div>
-        </div>
-        <div
-          v-else
-          class="text-center py-8 text-base-content/60"
-        >
-          <div class="mb-4">
-            Вы ещё ни с кем не поделились бюджетом
-          </div>
+        <div class="flex justify-center mt-4">
           <button
             v-if="!isAddingNew"
-            type="button"
             class="btn btn-primary btn-sm"
             @click="startAdd()"
           >
@@ -206,12 +187,24 @@
           </button>
         </div>
       </div>
+      <div
+        v-else
+        class="text-center py-8 text-base-content/60"
+      >
+        <div class="mb-4">
+          Вы ещё ни с кем не поделились бюджетом
+        </div>
+        <button
+          v-if="!isAddingNew"
+          type="button"
+          class="btn btn-primary btn-sm"
+          @click="startAdd()"
+        >
+          Поделиться бюджетом с новым пользователем
+        </button>
+      </div>
     </div>
-    <div
-      class="modal-backdrop"
-      @click="hide"
-    />
-  </dialog>
+  </UiDialog>
 </template>
 
 <script setup lang="ts">
@@ -226,7 +219,6 @@ interface ShareEntry {
 
 const shares = ref<ShareEntry[]>([])
 const isLoading = ref(false)
-const modal = ref<HTMLDialogElement | null>(null)
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.shareModal.isOpen)
 const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
@@ -411,31 +403,11 @@ const hide = async (): Promise<void> => {
   modalsStore.closeShareModal()
 }
 
-const handleDialogClose = async (): Promise<void> => {
-  if (!(await confirmClose())) {
-    modal.value?.showModal()
-    return
-  }
-
-  cancelAdd()
-  cancelEdit()
-  markAsSaved()
-}
-
-const handleEscapeKey = async (event: KeyboardEvent): Promise<void> => {
-  event.preventDefault()
-  await hide()
-}
-
 watch(isOpen, async (open) => {
   if (open) {
-    modal.value?.showModal()
     resetForm()
     await loadShares()
     markAsSaved()
-  }
-  else {
-    modal.value?.close()
   }
 })
 

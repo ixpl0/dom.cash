@@ -1,47 +1,41 @@
 <template>
-  <dialog
-    ref="modal"
-    class="modal"
+  <UiDialog
+    :is-open="isOpen"
     data-testid="chart-modal"
+    content-class="modal-box w-11/12 max-w-6xl h-[90vh] flex flex-col overflow-hidden"
     @close="hide"
   >
-    <div class="modal-box w-11/12 max-w-6xl h-[90vh] flex flex-col overflow-hidden">
-      <button
-        type="button"
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        data-testid="chart-modal-close-button"
-        @click="hide"
-      >
-        <Icon
-          name="heroicons:x-mark"
-          size="20"
-        />
-      </button>
-
-      <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-        График бюджета
-      </h3>
-
-      <div class="flex-1 overflow-hidden">
-        <ClientOnly>
-          <BudgetChartClient
-            v-if="isOpen"
-            :option="chartOption"
-            @legend-select-changed="handleLegendSelectChanged"
-          />
-          <template #fallback>
-            <div class="flex items-center justify-center h-full">
-              <span class="loading loading-spinner loading-lg" />
-            </div>
-          </template>
-        </ClientOnly>
-      </div>
-    </div>
-    <div
-      class="modal-backdrop"
+    <button
+      type="button"
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      data-testid="chart-modal-close-button"
       @click="hide"
-    />
-  </dialog>
+    >
+      <Icon
+        name="heroicons:x-mark"
+        size="20"
+      />
+    </button>
+
+    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
+      График бюджета
+    </h3>
+
+    <div class="flex-1 overflow-hidden">
+      <ClientOnly>
+        <BudgetChartClient
+          v-if="isOpen"
+          :option="chartOption"
+          @legend-select-changed="handleLegendSelectChanged"
+        />
+        <template #fallback>
+          <div class="flex items-center justify-center h-full">
+            <span class="loading loading-spinner loading-lg" />
+          </div>
+        </template>
+      </ClientOnly>
+    </div>
+  </UiDialog>
 </template>
 
 <script setup lang="ts">
@@ -87,7 +81,6 @@ const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget
 
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
-const modal = ref<HTMLDialogElement>()
 const isOpen = computed(() => modalsStore.chartModal.isOpen)
 
 const chartData = computed(() => {
@@ -407,14 +400,8 @@ const hide = () => {
 }
 
 watch(isOpen, (open) => {
-  if (open) {
-    if (import.meta.client) {
-      themeUIColors.value = getThemeUIColors()
-    }
-    modal.value?.showModal()
-  }
-  else {
-    modal.value?.close()
+  if (open && import.meta.client) {
+    themeUIColors.value = getThemeUIColors()
   }
 })
 </script>

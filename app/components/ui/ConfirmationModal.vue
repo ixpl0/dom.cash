@@ -1,63 +1,59 @@
 <template>
-  <dialog
-    ref="modal"
-    class="modal"
+  <UiDialog
+    :is-open="isOpen"
     data-testid="confirmation-modal"
-    @close="handleDialogClose"
+    content-class="modal-box w-11/12 max-w-md relative overflow-visible"
+    :close-on-backdrop="false"
+    :close-on-esc="false"
+    :z-index="9999"
   >
-    <div class="modal-box w-11/12 max-w-md relative overflow-visible">
-      <div class="text-center">
-        <div
-          class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6"
-          :class="iconBgClass"
-        >
-          <Icon
-            :name="iconName"
-            size="32"
-            :class="iconClass"
-          />
-        </div>
-
-        <h3
-          class="font-bold text-xl mb-4"
-          :class="titleClass"
-        >
-          {{ title }}
-        </h3>
-
-        <div
-          class="text-base-content/70 mb-8 leading-relaxed"
-          v-html="message"
+    <div class="text-center">
+      <div
+        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6"
+        :class="iconBgClass"
+      >
+        <Icon
+          :name="iconName"
+          size="32"
+          :class="iconClass"
         />
+      </div>
 
-        <div class="flex gap-3 justify-center">
-          <button
-            ref="cancelButton"
-            type="button"
-            class="btn btn-ghost min-w-24"
-            data-testid="confirmation-cancel-button"
-            @click="handleCancel"
-          >
-            {{ cancelText }}
-          </button>
-          <button
-            ref="confirmButton"
-            type="button"
-            class="btn min-w-24"
-            :class="confirmButtonClass"
-            data-testid="confirmation-confirm-button"
-            @click="handleConfirm"
-          >
-            {{ confirmText }}
-          </button>
-        </div>
+      <h3
+        class="font-bold text-xl mb-4"
+        :class="titleClass"
+      >
+        {{ title }}
+      </h3>
+
+      <div
+        class="text-base-content/70 mb-8 leading-relaxed"
+        v-html="message"
+      />
+
+      <div class="flex gap-3 justify-center">
+        <button
+          ref="cancelButton"
+          type="button"
+          class="btn btn-ghost min-w-24"
+          data-testid="confirmation-cancel-button"
+          @click="handleCancel"
+        >
+          {{ cancelText }}
+        </button>
+        <button
+          ref="confirmButton"
+          type="button"
+          class="btn min-w-24"
+          :class="confirmButtonClass"
+          data-testid="confirmation-confirm-button"
+          @click="handleConfirm"
+        >
+          {{ confirmText }}
+        </button>
       </div>
     </div>
-    <div
-      class="modal-backdrop"
-      @click="handleCancel"
-    />
-  </dialog>
+  </UiDialog>
 </template>
 
 <script setup lang="ts">
@@ -82,7 +78,6 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const modal = ref<HTMLDialogElement>()
 const confirmButton = ref<HTMLButtonElement>()
 const cancelButton = ref<HTMLButtonElement>()
 
@@ -218,24 +213,16 @@ const confirmButtonClass = computed(() => {
 
 const handleConfirm = (): void => {
   emit('confirm')
-  close()
 }
 
 const handleCancel = (): void => {
   emit('cancel')
-  close()
-}
-
-const close = (): void => {
-  modal.value?.close()
-}
-
-const handleDialogClose = (): void => {
-  emit('cancel')
 }
 
 const handleKeydown = (event: KeyboardEvent): void => {
-  if (!props.isOpen) return
+  if (!props.isOpen) {
+    return
+  }
 
   if (event.key === 'Enter') {
     event.preventDefault()
@@ -257,13 +244,8 @@ onUnmounted(() => {
 
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
-    modal.value?.showModal()
     await nextTick()
-
     confirmButton.value?.focus()
-  }
-  else {
-    modal.value?.close()
   }
 })
 </script>
