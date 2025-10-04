@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="chart-modal"
-    content-class="modal-box w-11/12 max-w-6xl h-[90vh] flex flex-col overflow-hidden"
+    content-class="modal-box w-[calc(100vw-2rem)] max-w-6xl h-[90vh] flex flex-col overflow-hidden"
     @close="hide"
   >
     <button
@@ -21,19 +21,21 @@
       График бюджета
     </h3>
 
-    <div class="flex-1 overflow-hidden">
-      <ClientOnly>
-        <BudgetChartClient
-          v-if="isOpen"
-          :option="chartOption"
-          @legend-select-changed="handleLegendSelectChanged"
-        />
-        <template #fallback>
-          <div class="flex items-center justify-center h-full">
-            <span class="loading loading-spinner loading-lg" />
-          </div>
-        </template>
-      </ClientOnly>
+    <div class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
+      <div class="min-w-[420px] h-full">
+        <ClientOnly>
+          <BudgetChartClient
+            v-if="isOpen"
+            :option="chartOption"
+            @legend-select-changed="handleLegendSelectChanged"
+          />
+          <template #fallback>
+            <div class="flex items-center justify-center h-full">
+              <span class="loading loading-spinner loading-lg" />
+            </div>
+          </template>
+        </ClientOnly>
+      </div>
     </div>
   </UiDialog>
 </template>

@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="currency-rates-modal"
-    content-class="modal-box w-11/12 max-w-3xl max-h-[90vh] flex flex-col"
+    content-class="modal-box w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] flex flex-col"
     @close="hide"
   >
     <button
@@ -42,7 +42,7 @@
       >
     </div>
 
-    <div class="space-y-2 flex-1 overflow-y-auto min-h-0">
+    <div class="space-y-2 flex-1 overflow-y-auto overflow-x-auto min-h-0">
       <div
         v-if="filteredRates.length === 0"
         class="text-center py-8 text-base-content/60"

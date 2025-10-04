@@ -31,7 +31,7 @@
         v-html="message"
       />
 
-      <div class="flex gap-3 justify-center">
+      <div class="flex gap-3 justify-center flex-wrap">
         <button
           ref="cancelButton"
           type="button"

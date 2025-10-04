@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="entry-modal"
-    content-class="modal-box w-11/12 max-w-5xl max-h-[90vh] flex flex-col overflow-visible"
+    content-class="modal-box w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] flex flex-col overflow-visible"
     @close="hide"
   >
     <button
@@ -21,8 +21,11 @@
       {{ modalTitle }}
     </h3>
 
-    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
-      <div v-if="currentEntries.length || isAddingNewEntry">
+    <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
+      <div
+        v-if="currentEntries.length || isAddingNewEntry"
+        class="min-w-[600px]"
+      >
         <table class="table text-center">
           <thead>
             <tr>

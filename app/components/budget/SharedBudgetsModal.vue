@@ -1,7 +1,7 @@
 <template>
   <UiDialog
     :is-open="isOpen"
-    content-class="modal-box w-11/12 max-w-xl max-h-[90vh] flex flex-col"
+    content-class="modal-box w-[calc(100vw-2rem)] max-w-xl max-h-[90vh] flex flex-col"
     @close="hide"
   >
     <button
@@ -19,8 +19,11 @@
       Бюджеты, которыми с вами поделились
     </h3>
 
-    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
-      <div v-if="sharedBudgets.length">
+    <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
+      <div
+        v-if="sharedBudgets.length"
+        class="min-w-[400px]"
+      >
         <table class="table">
           <thead>
             <tr>
