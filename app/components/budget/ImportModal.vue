@@ -9,7 +9,7 @@
       Импорт бюджета
     </h3>
 
-    <div class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
+    <div class="flex-1 overflow-y-auto min-h-0">
       <div
         v-if="!importResult"
         class="mb-4"
@@ -30,31 +30,35 @@
 
         <div
           v-if="selectedFile"
-          class="mb-4"
+          class="flex flex-col gap-2 my-8"
         >
-          <div class="form-control">
-            <span class="label-text mb-2 block">Действие для существующих месяцев:</span>
+          <div class="label-text">
+            Если в вашем бюджете уже есть месяцы, которые присутствуют в импортируемом файле, выберите, как с ними поступить:
+          </div>
 
+          <div class="form-control">
             <label class="label cursor-pointer">
-              <span class="label-text">Пропустить (оставить как есть)</span>
               <input
                 v-model="importMode"
                 type="radio"
                 name="importMode"
                 value="skip"
-                class="radio"
+                class="radio mr-2"
               >
+              <span class="label-text whitespace-break-spaces">Оставить существующие (пропустить импорт таких месяцев)</span>
             </label>
+          </div>
 
+          <div class="form-control">
             <label class="label cursor-pointer">
-              <span class="label-text">Перезаписать (заменить данные)</span>
               <input
                 v-model="importMode"
                 type="radio"
                 name="importMode"
                 value="overwrite"
-                class="radio"
+                class="radio mr-2"
               >
+              <span class="label-text whitespace-break-spaces">Заменить данные (существующие месяцы будут удалены и перезаписаны данными из файла)</span>
             </label>
           </div>
         </div>
@@ -189,7 +193,6 @@ const previewData = ref<BudgetExportData | null>(null)
 const error = ref<string>('')
 const isImporting = ref(false)
 const importResult = ref<BudgetImportResult | null>(null)
-const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 
 type ImportMode = 'skip' | 'overwrite'
 
@@ -255,7 +258,6 @@ const handleImport = async () => {
     importResult.value = response as BudgetImportResult
 
     if (response.success) {
-      markAsSaved()
       emit('imported')
     }
   }
@@ -280,28 +282,11 @@ const startNewImport = () => {
 }
 
 const hide = async () => {
-  if (!(await confirmClose())) {
-    return
-  }
-
   startNewImport()
-  markAsSaved()
   emit('close')
 }
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('ru-RU')
 }
-
-watch(() => props.isOpen, (isOpen) => {
-  if (isOpen) {
-    markAsSaved()
-  }
-})
-
-watch([selectedFile, importMode, previewData], () => {
-  if (selectedFile.value || previewData.value) {
-    markAsChanged()
-  }
-})
 </script>
