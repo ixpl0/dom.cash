@@ -1,20 +1,18 @@
+import { createError, setHeader } from 'h3'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { addConnection, removeConnection } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {
   const user = await getUserFromRequest(event)
   if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized',
-    })
+    throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
-  setHeader(event, 'content-type', 'text/event-stream')
-  setHeader(event, 'cache-control', 'no-cache')
+  setHeader(event, 'content-type', 'text/event-stream; charset=utf-8')
+  setHeader(event, 'cache-control', 'no-cache, no-transform')
   setHeader(event, 'connection', 'keep-alive')
-  setHeader(event, 'access-control-allow-origin', '*')
-  setHeader(event, 'access-control-allow-credentials', 'true')
+  setHeader(event, 'cross-origin-resource-policy', 'same-origin')
+  setHeader(event, 'x-accel-buffering', 'no')
 
   const stream = new ReadableStream({
     start(controller) {
@@ -53,6 +51,7 @@ export default defineEventHandler(async (event) => {
       }, 30000)
 
       event.node.req.on('close', cleanup)
+      event.node.req.on('aborted', cleanup)
       event.node.req.on('end', cleanup)
     },
   })
