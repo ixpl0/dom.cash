@@ -22,7 +22,14 @@ const timingSafeCompare = (a: Uint8Array, b: Uint8Array): boolean => {
   let diff = 0
 
   for (let i = 0; i < a.length; i += 1) {
-    diff |= a[i] ^ b[i]
+    const aByte = a[i]
+    const bByte = b[i]
+
+    if (aByte === undefined || bByte === undefined) {
+      return false
+    }
+
+    diff |= aByte ^ bByte
   }
 
   return diff === 0
