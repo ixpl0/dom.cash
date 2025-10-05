@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { createError, setCookie, getCookie, type H3Event } from 'h3'
 import { eq, gt, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
@@ -16,6 +16,16 @@ const fromBase64 = (data: string): Uint8Array => {
     return new Uint8Array(Buffer.from(data, 'base64'))
   }
   return new Uint8Array(atob(data).split('').map(c => c.charCodeAt(0)))
+}
+
+const timingSafeCompare = (a: Uint8Array, b: Uint8Array): boolean => {
+  let diff = 0
+
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a[i] ^ b[i]
+  }
+
+  return diff === 0
 }
 
 export const hashPassword = async (password: string): Promise<string> => {
@@ -79,7 +89,16 @@ export const verifyPassword = async (password: string, hashedPassword: string): 
     )
 
     const newHash = new Uint8Array(derivedBits)
-    return hash.length === newHash.length && hash.every((byte, i) => byte === newHash[i])
+
+    if (hash.length !== newHash.length) {
+      return false
+    }
+
+    if (typeof Buffer !== 'undefined') {
+      return timingSafeEqual(Buffer.from(hash), Buffer.from(newHash))
+    }
+
+    return timingSafeCompare(hash, newHash)
   }
   catch {
     return false
