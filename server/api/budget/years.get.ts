@@ -2,6 +2,7 @@ import { getQuery, createError } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { getAvailableYears, getInitialYearsToLoad, findUserByUsername } from '~~/server/services/months'
+import { checkReadPermission } from '~~/server/services/users'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -31,6 +32,14 @@ export default defineEventHandler(async (event) => {
       })
     }
     targetUserId = targetUser.id
+
+    const hasReadPermission = await checkReadPermission(targetUserId, user.id, event)
+    if (!hasReadPermission) {
+      throw createError({
+        statusCode: 403,
+        message: 'Insufficient permissions to view budget',
+      })
+    }
   }
 
   const availableYears = await getAvailableYears(targetUserId, event)
