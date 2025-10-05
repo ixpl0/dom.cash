@@ -97,8 +97,8 @@ test.describe('Confirmation Modal Tests', () => {
 
     await page.keyboard.press('Escape')
 
-    await expect(entries).toHaveCount(1)
     await expect(confirmModal).not.toBeVisible()
+    await expect(entries).toHaveCount(1)
   })
 
   test('should show confirmation modal when deleting month', async ({ page }) => {
@@ -160,11 +160,9 @@ test.describe('Confirmation Modal Tests', () => {
     const confirmModal = page.getByTestId('confirmation-modal')
     await expect(confirmModal).toBeVisible()
 
-    // Click outside modal-box to close (force click on backdrop)
     await confirmModal.click({ position: { x: 10, y: 10 } })
 
-    // Should close modal and preserve entry
-    await expect(entries).toHaveCount(1)
     await expect(confirmModal).not.toBeVisible()
+    await expect(entries).toHaveCount(1)
   })
 })

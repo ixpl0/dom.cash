@@ -3,9 +3,10 @@
     :is-open="isOpen"
     data-testid="confirmation-modal"
     content-class="modal-box w-11/12 max-w-md relative overflow-visible"
-    :close-on-backdrop="false"
+    :close-on-backdrop="true"
     :close-on-esc="false"
     :z-index="9999"
+    @close="handleCancel"
   >
     <div class="text-center">
       <div
@@ -226,20 +227,22 @@ const handleKeydown = (event: KeyboardEvent): void => {
 
   if (event.key === 'Enter') {
     event.preventDefault()
+    event.stopPropagation()
     handleConfirm()
   }
   else if (event.key === 'Escape') {
     event.preventDefault()
+    event.stopPropagation()
     handleCancel()
   }
 }
 
 onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('keydown', handleKeydown, { capture: true })
 })
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('keydown', handleKeydown, { capture: true })
 })
 
 watch(() => props.isOpen, async (isOpen) => {
