@@ -2,6 +2,7 @@ import { useDatabase } from '~~/server/db'
 import { month, entry, budgetShare, user as userTable } from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { getUserFromRequest } from '~~/server/utils/auth'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {
   const isDevelopment = process.env.NODE_ENV === 'development'
@@ -50,7 +51,7 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (error) {
-    console.error('User data cleanup failed:', error)
+    secureLog.error('User data cleanup failed:', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to cleanup user data',

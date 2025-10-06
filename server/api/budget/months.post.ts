@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { createMonth, findUserByUsername, checkWritePermission } from '~~/server/services/months'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const createMonthSchema = z.object({
   year: z.number().int().min(2020).max(2100),
@@ -57,7 +58,7 @@ export default defineEventHandler(async (event) => {
       })
     }
     catch (error) {
-      console.error('Error creating notification:', error)
+      secureLog.error('Error creating notification:', error)
     }
 
     return createdMonth

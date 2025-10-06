@@ -4,10 +4,11 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import type { NewBudgetShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
+import { accessSchema } from '~~/shared/schemas/common'
 
 const createShareSchema = z.object({
   username: z.string().min(1),
-  access: z.enum(['read', 'write']),
+  access: accessSchema,
 })
 
 export default defineEventHandler(async (event) => {

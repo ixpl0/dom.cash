@@ -3,6 +3,7 @@ import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { getMonthOwner, checkWritePermissionForMonth, createEntry } from '~~/server/services/entries'
 import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const createEntrySchema = z.object({
   monthId: z.uuid(),
@@ -55,7 +56,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   catch (error) {
-    console.error('Error creating notification:', error)
+    secureLog.error('Error creating notification:', error)
   }
 
   return entry

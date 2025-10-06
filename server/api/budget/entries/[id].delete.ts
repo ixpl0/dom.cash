@@ -1,5 +1,6 @@
 import { requireAuth } from '~~/server/utils/session'
 import { getEntryWithMonth, checkWritePermissionForMonth, deleteEntry } from '~~/server/services/entries'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   catch (error) {
-    console.error('Error creating notification:', error)
+    secureLog.error('Error creating notification:', error)
   }
 
   return { success: true }

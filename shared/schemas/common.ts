@@ -18,6 +18,8 @@ export const amountSchema = z.number()
 
 export const entryKindSchema = z.enum(['balance', 'income', 'expense'])
 
+export const accessSchema = z.enum(['read', 'write'])
+
 export const dateStringSchema = z.string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
   .optional()

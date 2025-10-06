@@ -4,6 +4,7 @@ import { importBudget } from '~~/server/services/import-export'
 import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/types/export-import'
 import { findUserByUsername, checkWritePermission } from '~~/server/services/months'
 import { z } from 'zod'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const importRequestSchema = z.object({
   data: budgetExportSchema,
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
       })
     }
     catch (error) {
-      console.error('Error creating notification:', error)
+      secureLog.error('Error creating notification:', error)
     }
 
     return result

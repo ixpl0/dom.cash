@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -63,7 +64,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   catch (error) {
-    console.error('Error creating notification:', error)
+    secureLog.error('Error creating notification:', error)
   }
 
   return { success: true }

@@ -3,6 +3,7 @@ import { deleteMonth, checkWritePermission } from '~~/server/services/months'
 import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -53,13 +54,13 @@ export default defineEventHandler(async (event) => {
       })
     }
     catch (error) {
-      console.error('Error creating notification:', error)
+      secureLog.error('Error creating notification:', error)
     }
 
     return { success: true }
   }
   catch (error) {
-    console.error('Delete month error:', error)
+    secureLog.error('Delete month error:', error)
 
     if (error instanceof Error) {
       if (error.message === 'Month not found') {

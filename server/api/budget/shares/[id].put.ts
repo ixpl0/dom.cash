@@ -3,9 +3,11 @@ import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
+import { accessSchema } from '~~/shared/schemas/common'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const updateShareSchema = z.object({
-  access: z.enum(['read', 'write']),
+  access: accessSchema,
 })
 
 export default defineEventHandler(async (event) => {
@@ -79,7 +81,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   catch (error) {
-    console.error('Error creating notification:', error)
+    secureLog.error('Error creating notification:', error)
   }
 
   return {

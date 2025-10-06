@@ -5,6 +5,7 @@ import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, fin
 import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 type GoogleTokenResponse = {
   access_token?: string
@@ -60,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text()
-      console.error('Token exchange failed:', errorText)
+      secureLog.error('Token exchange failed:', errorText)
       throw createError({
         statusCode: 400,
         statusMessage: 'Failed to exchange authorization code',
