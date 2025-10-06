@@ -280,6 +280,34 @@ pnpm run test:e2e:headed # Run tests with visible browser
 │   └── utils/          # Shared business logic
 ```
 
+## Known Issues
+
+### Real-time Notifications (SSE) Not Production-Ready for Cloudflare Workers
+
+**Problem**: The current SSE (Server-Sent Events) implementation stores active connections and budget subscriptions in global `Map` objects (`server/services/notifications.ts`). This architecture doesn't scale in Cloudflare Workers environment:
+
+- **Memory isolation**: Each Worker instance has isolated memory, connections on Worker A are invisible to Worker B
+- **Request distribution**: Multiple Worker instances handle requests simultaneously, causing notification delivery failures
+- **Lost subscriptions**: User subscriptions and connections will be lost when requests hit different instances
+
+**Impact**:
+- Works correctly in development (single instance)
+- Works for low-traffic deployments (single Worker instance)
+- Fails under load when Cloudflare scales to multiple instances
+
+**Solution Plan**:
+1. Migrate connection state to **Cloudflare Durable Objects** (available on free tier)
+2. Create a Durable Object class to manage SSE connections per user/budget
+3. Update `server/services/notifications.ts` to use Durable Object stubs instead of Maps
+4. Update `server/api/notifications/events.get.ts` to connect through Durable Object
+5. Add Durable Object binding configuration to `wrangler.toml`
+
+**Estimated effort**: 1-2 hours
+
+**References**:
+- [Cloudflare Durable Objects Docs](https://developers.cloudflare.com/durable-objects/)
+- [Durable Objects Free Tier](https://developers.cloudflare.com/changelog/2025-04-07-durable-objects-free-tier/)
+
 ## Contributing
 
 ### Development Guidelines
