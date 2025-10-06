@@ -14,6 +14,8 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'cross-origin-resource-policy', 'same-origin')
   setHeader(event, 'x-accel-buffering', 'no')
 
+  let keepAlive: ReturnType<typeof setInterval> | null = null
+
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder()
@@ -37,7 +39,10 @@ export default defineEventHandler(async (event) => {
       }
 
       const cleanup = () => {
-        clearInterval(keepAlive)
+        if (keepAlive) {
+          clearInterval(keepAlive)
+          keepAlive = null
+        }
         removeConnection(user.id)
         close()
       }
@@ -46,13 +51,16 @@ export default defineEventHandler(async (event) => {
 
       write('data: {"type":"connected"}\n\n')
 
-      const keepAlive = setInterval(() => {
+      keepAlive = setInterval(() => {
         write('data: {"type":"ping"}\n\n')
       }, 30000)
-
-      event.node.req.on('close', cleanup)
-      event.node.req.on('aborted', cleanup)
-      event.node.req.on('end', cleanup)
+    },
+    cancel() {
+      if (keepAlive) {
+        clearInterval(keepAlive)
+        keepAlive = null
+      }
+      removeConnection(user.id)
     },
   })
 
