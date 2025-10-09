@@ -117,32 +117,38 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     }
   }
 
-  const allCurrencyData = await db
+  const beforeOrEqual = await db
     .select()
     .from(currency)
-    .orderBy(currency.date)
+    .where(sql`${currency.date} <= ${rateDate}`)
+    .orderBy(desc(currency.date))
+    .limit(1)
 
-  let closestData = allCurrencyData[0]
-  if (!closestData) {
+  const afterOrEqual = await db
+    .select()
+    .from(currency)
+    .where(sql`${currency.date} >= ${rateDate}`)
+    .orderBy(currency.date)
+    .limit(1)
+
+  const candidates = [...beforeOrEqual, ...afterOrEqual].filter(
+    c => c?.rates && Object.keys(c.rates).length > 0,
+  )
+
+  if (candidates.length === 0) {
     throw new Error(`No exchange rates available in database for ${rateDate}`)
   }
 
   const targetDate = new Date(rateDate)
-  let minDiff = Math.abs(new Date(closestData.date).getTime() - targetDate.getTime())
+  const closestData = candidates.reduce((closest, current) => {
+    const closestDiff = Math.abs(new Date(closest.date).getTime() - targetDate.getTime())
+    const currentDiff = Math.abs(new Date(current.date).getTime() - targetDate.getTime())
+    return currentDiff < closestDiff ? current : closest
+  })
 
-  for (const data of allCurrencyData) {
-    const diff = Math.abs(new Date(data.date).getTime() - targetDate.getTime())
-    if (diff < minDiff) {
-      minDiff = diff
-      closestData = data
-    }
-  }
-
-  if (closestData?.rates && Object.keys(closestData.rates).length > 0) {
-    return { rates: closestData.rates, source: closestData.date }
-  }
-
-  throw new Error(`No exchange rates available for ${rateDate} or any fallback date`)
+  const result = { rates: closestData.rates, source: closestData.date }
+  ratesCache.set(rateDate, result)
+  return result
 }
 
 export const getUserMonths = async (userId: string, event: H3Event): Promise<MonthData[]> => {
