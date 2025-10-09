@@ -25,9 +25,10 @@ export interface BudgetExportEntry {
   date?: string
 }
 
+export type ImportStrategy = 'skip' | 'overwrite'
+
 export interface BudgetImportOptions {
-  overwriteExisting: boolean
-  skipExisting: boolean
+  strategy: ImportStrategy
 }
 
 export interface BudgetImportResult {
@@ -63,8 +64,7 @@ export const budgetExportSchema = z.object({
 })
 
 export const budgetImportOptionsSchema = z.object({
-  overwriteExisting: z.boolean().default(false),
-  skipExisting: z.boolean().default(true),
+  strategy: z.enum(['skip', 'overwrite']).default('skip'),
 })
 
 export type BudgetExportSchema = z.infer<typeof budgetExportSchema>

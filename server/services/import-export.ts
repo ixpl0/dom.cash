@@ -103,13 +103,8 @@ export const importBudget = async (
       let monthId: string
 
       if (existingMonth.length > 0) {
-        if (options.skipExisting) {
+        if (options.strategy === 'skip') {
           result.skippedMonths++
-          continue
-        }
-
-        if (!options.overwriteExisting) {
-          result.errors.push(`Month ${importMonth.year}-${importMonth.month + 1} already exists`)
           continue
         }
 
@@ -144,6 +139,7 @@ export const importBudget = async (
     catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       result.errors.push(`Error importing month ${importMonth.year}-${importMonth.month + 1}: ${errorMessage}`)
+      result.success = false
     }
   }
 

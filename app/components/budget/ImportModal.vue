@@ -199,8 +199,7 @@ type ImportMode = 'skip' | 'overwrite'
 const importMode = ref<ImportMode>('skip')
 
 const options = computed<BudgetImportOptions>(() => ({
-  skipExisting: importMode.value === 'skip',
-  overwriteExisting: importMode.value === 'overwrite',
+  strategy: importMode.value,
 }))
 
 const totalEntries = computed(() => {
