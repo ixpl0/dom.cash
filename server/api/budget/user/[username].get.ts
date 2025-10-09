@@ -1,6 +1,6 @@
 import { getQuery, getRouterParam, createError } from 'h3'
 import { z } from 'zod'
-import { eq, or, and, desc, sql } from 'drizzle-orm'
+import { eq, and, desc, sql, inArray } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
@@ -132,7 +132,7 @@ export default defineEventHandler(async (event) => {
     entries = await db
       .select()
       .from(entry)
-      .where(or(...monthIds.map(id => eq(entry.monthId, id))))
+      .where(inArray(entry.monthId, monthIds))
   }
 
   const monthsWithEntries = await Promise.all(months.map(async (monthData) => {
