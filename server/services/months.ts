@@ -1,10 +1,19 @@
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, currency, entry, month, user } from '~~/server/db/schema'
 import type { MonthData } from '~~/shared/types/budget'
 
 const ratesCache = new Map<string, { rates: Record<string, number>, source: string }>()
+
+const groupEntriesByMonthId = (entries: (typeof entry.$inferSelect)[]): Map<string, (typeof entry.$inferSelect)[]> => {
+  const map = new Map<string, (typeof entry.$inferSelect)[]>()
+  for (const e of entries) {
+    const list = map.get(e.monthId) || []
+    map.set(e.monthId, [...list, e])
+  }
+  return map
+}
 
 export const clearRatesCache = () => {
   ratesCache.clear()
@@ -159,12 +168,21 @@ export const getUserMonths = async (userId: string, event: H3Event): Promise<Mon
     .where(eq(month.userId, userId))
     .orderBy(desc(month.year), desc(month.month))
 
+  if (monthsData.length === 0) {
+    return []
+  }
+
+  const monthIds = monthsData.map(m => m.id)
+  const allEntries = await db
+    .select()
+    .from(entry)
+    .where(inArray(entry.monthId, monthIds))
+
+  const entriesByMonthId = groupEntriesByMonthId(allEntries)
+
   return await Promise.all(
     monthsData.map(async (monthData) => {
-      const entries = await db
-        .select()
-        .from(entry)
-        .where(eq(entry.monthId, monthData.id))
+      const entries = entriesByMonthId.get(monthData.id) || []
 
       const balanceSources = entries
         .filter(e => e.kind === 'balance')
@@ -460,12 +478,21 @@ export const getUserMonthsByYears = async (userId: string, years: number[], even
     ))
     .orderBy(desc(month.year), desc(month.month))
 
+  if (monthsData.length === 0) {
+    return []
+  }
+
+  const monthIds = monthsData.map(m => m.id)
+  const allEntries = await db
+    .select()
+    .from(entry)
+    .where(inArray(entry.monthId, monthIds))
+
+  const entriesByMonthId = groupEntriesByMonthId(allEntries)
+
   return await Promise.all(
     monthsData.map(async (monthData) => {
-      const entries = await db
-        .select()
-        .from(entry)
-        .where(eq(entry.monthId, monthData.id))
+      const entries = entriesByMonthId.get(monthData.id) || []
 
       const balanceSources = entries
         .filter(e => e.kind === 'balance')
