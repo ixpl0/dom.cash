@@ -58,6 +58,8 @@
 </template>
 
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
+
 export interface ConfirmationModalOptions {
   title?: string
   message: string
@@ -83,7 +85,14 @@ const confirmButton = ref<HTMLButtonElement>()
 const cancelButton = ref<HTMLButtonElement>()
 
 const title = computed(() => props.options.title || getDefaultTitle())
-const message = computed(() => props.options.message)
+
+const message = computed(() => {
+  return DOMPurify.sanitize(props.options.message, {
+    ALLOWED_TAGS: ['strong', 'br'],
+    ALLOWED_ATTR: [],
+  })
+})
+
 const confirmText = computed(() => props.options.confirmText || 'Подтвердить')
 const cancelText = computed(() => props.options.cancelText || 'Отмена')
 const variant = computed(() => props.options.variant || 'danger')
