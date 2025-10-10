@@ -21,7 +21,7 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/app.css'],
-  compatibilityDate: '2025-10-11',
+  compatibilityDate: '2025-10-10',
   nitro: {
     preset: 'cloudflare-module',
     routeRules: {
