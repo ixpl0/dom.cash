@@ -1,3 +1,5 @@
+import { currenciesRu } from './currencies/ru'
+
 export default {
   common: {
     or: 'или',
@@ -291,4 +293,6 @@ export default {
     description: 'Прозрачность домашних финансов. Трекинг личного бюджета с поддержкой множественных валют.',
     keywords: 'budget, finance, tracker, домашние финансы, бюджет, трекер',
   },
+
+  currencies: currenciesRu,
 }

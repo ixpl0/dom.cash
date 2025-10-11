@@ -1,3 +1,5 @@
+import { currenciesEn } from './currencies/en'
+
 export default {
   common: {
     or: 'or',
@@ -291,4 +293,6 @@ export default {
     description: 'Transparent home finances. Personal budget tracking with multi-currency support.',
     keywords: 'budget, finance, tracker, personal budget, home finances, money management',
   },
+
+  currencies: currenciesEn,
 }

@@ -1,218 +1,26 @@
-export const CURRENCIES = {
-  AED: 'Дирхам ОАЭ',
-  AFN: 'Афганский афгани',
-  ALL: 'Албанский лек',
-  AMD: 'Армянский драм',
-  ANG: 'Нидерландский антильский гульден',
-  AOA: 'Ангольская кванза',
-  ARS: 'Аргентинское песо',
-  AUD: 'Австралийский доллар',
-  AWG: 'Арубанский флорин',
-  AZN: 'Азербайджанский манат',
-  BAM: 'Конвертируемая марка Боснии и Герцеговины',
-  BBD: 'Барбадосский доллар',
-  BDT: 'Бангладешская така',
-  BGN: 'Болгарский лев',
-  BHD: 'Бахрейнский динар',
-  BIF: 'Бурундийский франк',
-  BMD: 'Бермудский доллар',
-  BND: 'Брунейский доллар',
-  BOB: 'Боливийский боливиано',
-  BRL: 'Бразильский реал',
-  BSD: 'Багамский доллар',
-  BTC: 'Биткоин',
-  BTN: 'Бутанский нгултрум',
-  BWP: 'Ботсванская пула',
-  BYN: 'Белорусский рубль',
-  BZD: 'Белизский доллар',
-  CAD: 'Канадский доллар',
-  CDF: 'Конголезский франк',
-  CHF: 'Швейцарский франк',
-  CLF: 'Чилийская единица счёта (UF)',
-  CLP: 'Чилийское песо',
-  CNH: 'Китайский юань (офшорный)',
-  CNY: 'Китайский юань',
-  COP: 'Колумбийское песо',
-  CRC: 'Костариканский колон',
-  CUP: 'Кубинское песо',
-  CVE: 'Эскудо Кабо-Верде',
-  CZK: 'Чешская крона',
-  DJF: 'Франк Джибути',
-  DKK: 'Датская крона',
-  DOP: 'Доминиканское песо',
-  DZD: 'Алжирский динар',
-  EGP: 'Египетский фунт',
-  ERN: 'Эритрейская накфа',
-  ETB: 'Эфиопский бирр',
-  EUR: 'Евро',
-  FJD: 'Доллар Фиджи',
-  FKP: 'Фунт Фолклендских островов',
-  GBP: 'Фунт стерлингов',
-  GEL: 'Грузинский лари',
-  GGP: 'Гернсийский фунт',
-  GHS: 'Ганский седи',
-  GIP: 'Гибралтарский фунт',
-  GMD: 'Гамбийский даласи',
-  GNF: 'Гвинейский франк',
-  GTQ: 'Гватемальский кетсаль',
-  GYD: 'Гайанский доллар',
-  HKD: 'Гонконгский доллар',
-  HNL: 'Гондурасская лемпира',
-  HRK: 'Хорватская куна',
-  HTG: 'Гаитянский гурд',
-  HUF: 'Венгерский форинт',
-  IDR: 'Индонезийская рупия',
-  ILS: 'Новый израильский шекель',
-  IMP: 'Мэнский фунт',
-  INR: 'Индийская рупия',
-  IQD: 'Иракский динар',
-  IRR: 'Иранский риал',
-  ISK: 'Исландская крона',
-  JEP: 'Джерсийский фунт',
-  JMD: 'Ямайский доллар',
-  JOD: 'Иорданский динар',
-  JPY: 'Японская иена',
-  KES: 'Кенийский шиллинг',
-  KGS: 'Киргизский сом',
-  KHR: 'Камбоджийский риель',
-  KMF: 'Коморский франк',
-  KPW: 'Северокорейская вона',
-  KRW: 'Южнокорейская вона',
-  KWD: 'Кувейтский динар',
-  KYD: 'Доллар Каймановых островов',
-  KZT: 'Казахстанский тенге',
-  LAK: 'Лаосский кип',
-  LBP: 'Ливанский фунт',
-  LKR: 'Шри-ланкийская рупия',
-  LRD: 'Либерийский доллар',
-  LSL: 'Лоти Лесото',
-  LYD: 'Ливийский динар',
-  MAD: 'Марокканский дирхам',
-  MDL: 'Молдавский лей',
-  MGA: 'Малагасийский ариари',
-  MKD: 'Македонский денар',
-  MMK: 'Мьянманский кьят',
-  MNT: 'Монгольский тугрик',
-  MOP: 'Патака Макао',
-  MRU: 'Мавританская угия',
-  MUR: 'Маврикийская рупия',
-  MVR: 'Мальдивская руфия',
-  MWK: 'Малавийская квача',
-  MXN: 'Мексиканское песо',
-  MYR: 'Малайзийский ринггит',
-  MZN: 'Мозамбикский метикал',
-  NAD: 'Намибийский доллар',
-  NGN: 'Нигерийская найра',
-  NIO: 'Никарагуанская кордоба',
-  NOK: 'Норвежская крона',
-  NPR: 'Непальская рупия',
-  NZD: 'Новозеландский доллар',
-  OMR: 'Оманский риал',
-  PAB: 'Панамский бальбоа',
-  PEN: 'Перуанский соль',
-  PGK: 'Кина Папуа — Новой Гвинеи',
-  PHP: 'Филиппинское песо',
-  PKR: 'Пакистанская рупия',
-  PLN: 'Польский злотый',
-  PYG: 'Парагвайский гуарани',
-  QAR: 'Катарский риал',
-  RON: 'Румынский лей',
-  RSD: 'Сербский динар',
-  RUB: 'Российский рубль',
-  RWF: 'Руандийский франк',
-  SAR: 'Саудовский риал',
-  SBD: 'Доллар Соломоновых Островов',
-  SCR: 'Сейшельская рупия',
-  SDG: 'Суданский фунт',
-  SEK: 'Шведская крона',
-  SGD: 'Сингапурский доллар',
-  SHP: 'Фунт острова Святой Елены',
-  SLE: 'Леоне Сьерра-Леоне',
-  SLL: 'Леоне Сьерра-Леоне (старый)',
-  SOS: 'Сомалийский шиллинг',
-  SRD: 'Суринамский доллар',
-  SSP: 'Южносуданский фунт',
-  STN: 'Добра Сан-Томе и Принсипи',
-  SYP: 'Сирийский фунт',
-  SZL: 'Лилангени Эсватини',
-  THB: 'Тайский бат',
-  TJS: 'Таджикский сомони',
-  TMT: 'Туркменский манат',
-  TND: 'Тунисский динар',
-  TOP: 'Тонганская паанга',
-  TRY: 'Турецкая лира',
-  TTD: 'Доллар Тринидада и Тобаго',
-  TWD: 'Новый тайваньский доллар',
-  TZS: 'Танзанийский шиллинг',
-  UAH: 'Украинская гривна',
-  UGX: 'Угандийский шиллинг',
-  USD: 'Доллар США',
-  UYU: 'Уругвайское песо',
-  UZS: 'Узбекский сум',
-  VES: 'Венесуэльский боливар соберано',
-  VND: 'Вьетнамский донг',
-  VUV: 'Вату Вануату',
-  WST: 'Самоанская тала',
-  XAF: 'Франк КФА BEAC',
-  XAG: 'Унция серебра',
-  XAU: 'Унция золота',
-  XCD: 'Восточно-карибский доллар',
-  XDR: 'Специальные права заимствования',
-  XOF: 'Франк КФА BCEAO',
-  XPD: 'Унция палладия',
-  XPF: 'Франк КФП',
-  XPT: 'Унция платины',
-  YER: 'Йеменский риал',
-  ZAR: 'Южноафриканский рэнд',
-  ZMW: 'Замбийская квача',
-  ZWL: 'Зимбабвийский доллар',
-} as const
+export const CURRENCY_CODES = [
+  'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
+  'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL',
+  'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF',
+  'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK',
+  'DOP', 'DZD', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL',
+  'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK',
+  'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP',
+  'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD',
+  'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL',
+  'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRU', 'MUR', 'MVR', 'MWK', 'MXN',
+  'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB',
+  'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB',
+  'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLE', 'SLL',
+  'SOS', 'SRD', 'SSP', 'STN', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND',
+  'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS',
+  'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF',
+  'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMW', 'ZWL',
+] as const
 
-export type CurrencyCode = keyof typeof CURRENCIES
+export type CurrencyCode = typeof CURRENCY_CODES[number]
 
 export interface CurrencyOption {
   code: CurrencyCode
   name: string
-}
-
-export const CURRENCY_OPTIONS: CurrencyOption[] = Object.entries(CURRENCIES).map(
-  ([code, name]) => ({ code: code as CurrencyCode, name }),
-)
-
-export const getCurrencyName = (code: string): string => {
-  return CURRENCIES[code as CurrencyCode] || code
-}
-
-export const filterCurrencies = (query: string, recentCurrencies: string[] = []): CurrencyOption[] => {
-  const searchQuery = query.toLowerCase().trim()
-
-  let filteredOptions = CURRENCY_OPTIONS
-  if (searchQuery) {
-    filteredOptions = CURRENCY_OPTIONS.filter(currency =>
-      currency.code.toLowerCase().includes(searchQuery)
-      || currency.name.toLowerCase().includes(searchQuery),
-    )
-  }
-
-  if (recentCurrencies.length === 0) {
-    return filteredOptions
-  }
-
-  const recentOptions: CurrencyOption[] = []
-  const remainingOptions: CurrencyOption[] = []
-
-  for (const option of filteredOptions) {
-    if (recentCurrencies.includes(option.code)) {
-      recentOptions.push(option)
-    }
-    else {
-      remainingOptions.push(option)
-    }
-  }
-
-  recentOptions.sort((a, b) =>
-    recentCurrencies.indexOf(a.code) - recentCurrencies.indexOf(b.code),
-  )
-
-  return [...recentOptions, ...remainingOptions]
 }

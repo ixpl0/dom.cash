@@ -242,7 +242,6 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrencyName } from '~~/shared/utils/currencies'
 import { findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
 import { useBudgetStore } from '~/stores/budget'
@@ -253,6 +252,7 @@ const modalsStore = useModalsStore()
 const route = useRoute()
 const { t } = useI18n()
 const { monthNames } = useMonthNames()
+const { getCurrencyName } = useCurrencies()
 
 const targetUsername = computed(() => {
   const username = Array.isArray(route.params.username)

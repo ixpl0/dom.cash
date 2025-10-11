@@ -77,7 +77,6 @@
 </template>
 
 <script setup lang="ts">
-import { filterCurrencies } from '~~/shared/utils/currencies'
 import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
 import { useModalsStore } from '~/stores/modals'
 
@@ -96,13 +95,14 @@ const searchQuery = ref('')
 
 const { getRecentCurrencies } = useRecentCurrencies()
 const recentCurrencies = getRecentCurrencies()
+const { getCurrencyOptions } = useCurrencies()
 
 const allRates = computed((): CurrencyRate[] => {
   if (!currencyRatesModal.value.rates) {
     return []
   }
 
-  const currencies = filterCurrencies('', [...recentCurrencies.value])
+  const currencies = getCurrencyOptions([...recentCurrencies.value])
 
   return currencies
     .map(currency => ({

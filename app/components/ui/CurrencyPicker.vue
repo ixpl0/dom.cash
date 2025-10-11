@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { filterCurrencies, getCurrencyName, type CurrencyOption } from '~~/shared/utils/currencies'
+import type { CurrencyOption } from '~~/shared/utils/currencies'
 import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
 
 interface Props {
@@ -106,6 +106,7 @@ const dropdownStyle = ref<Record<string, string>>({})
 const { addRecentCurrency, getRecentCurrencies } = useRecentCurrencies()
 const recentCurrencies = getRecentCurrencies()
 const { t } = useI18n()
+const { getCurrencyName, filterCurrencies } = useCurrencies()
 
 const displayValue = computed(() => {
   if (isFocused.value) {
