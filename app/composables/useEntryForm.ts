@@ -20,6 +20,7 @@ export interface EntryFormState {
 }
 
 export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>) => {
+  const { locale } = useI18n()
   const isAdding = ref(false)
   const isDeleting = ref<string | null>(null)
   const editingEntryId = ref<string | null>(null)
@@ -42,8 +43,10 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
   }
 
   const formatDate = (date: string | null | undefined): string => {
-    if (!date) return '—'
-    return new Date(date).toLocaleDateString('ru-RU')
+    if (!date) {
+      return '—'
+    }
+    return new Date(date).toLocaleDateString(locale.value)
   }
 
   const startAdd = (): void => {

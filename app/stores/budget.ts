@@ -47,11 +47,7 @@ export const useBudgetStore = defineStore('budget', () => {
   const isOwnBudget = computed(() => data.value?.access === 'owner')
   const months = computed(() => data.value?.months || [])
   const { mainCurrency } = useUser()
-
-  const monthNames = [
-    'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
-    'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
-  ]
+  const { monthNames } = useMonthNames()
 
   const effectiveMainCurrency = computed(() => data.value?.user?.mainCurrency || mainCurrency.value)
 
@@ -61,7 +57,7 @@ export const useBudgetStore = defineStore('budget', () => {
     }
 
     return data.value.months.map(month =>
-      computeMonthData(month, data.value!.months, effectiveMainCurrency.value, monthNames),
+      computeMonthData(month, data.value!.months, effectiveMainCurrency.value, monthNames.value),
     )
   })
 

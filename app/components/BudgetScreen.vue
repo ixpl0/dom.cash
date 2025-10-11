@@ -252,6 +252,7 @@ const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const route = useRoute()
 const { t } = useI18n()
+const { monthNames } = useMonthNames()
 
 const targetUsername = computed(() => {
   const username = Array.isArray(route.params.username)
@@ -259,11 +260,6 @@ const targetUsername = computed(() => {
     : route.params.username
   return username || undefined
 })
-
-const monthNames = [
-  'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
-  'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
-]
 
 const now = new Date()
 const currentYear = now.getFullYear()
@@ -298,12 +294,12 @@ const years = computed(() => {
 
 const getNextMonthText = (): string => {
   const nextMonth = budgetStore.getNextMonth()
-  return `${monthNames[nextMonth.month]} ${nextMonth.year}`
+  return `${monthNames.value[nextMonth.month]} ${nextMonth.year}`
 }
 
 const getPreviousMonthText = (): string => {
   const prevMonth = budgetStore.getPreviousMonth()
-  return `${monthNames[prevMonth.month]} ${prevMonth.year}`
+  return `${monthNames.value[prevMonth.month]} ${prevMonth.year}`
 }
 
 const handleCreateNextMonth = async (): Promise<void> => {
