@@ -10,7 +10,7 @@
     <select
       id="theme-select"
       v-model="model"
-      class="select select-bordered select-sm w-36"
+      class="select select-bordered select-sm w-32"
       :aria-label="t('theme.label')"
       data-testid="theme-select"
     >

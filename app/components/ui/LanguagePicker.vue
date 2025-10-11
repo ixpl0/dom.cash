@@ -10,7 +10,7 @@
     <select
       id="language-select"
       v-model="currentLocale"
-      class="select select-bordered select-sm w-36"
+      class="select select-bordered select-sm w-24"
       aria-label="Select language"
       data-testid="language-select"
     >
