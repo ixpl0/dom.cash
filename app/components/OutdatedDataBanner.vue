@@ -11,7 +11,7 @@
           class="flex-shrink-0"
         />
         <span class="font-medium">
-          Данные на странице устарели и могут быть неактуальными
+          {{ t('outdated.message') }}
         </span>
       </div>
 
@@ -20,7 +20,7 @@
           class="btn btn-sm btn-outline"
           @click="refreshPage"
         >
-          Обновить страницу
+          {{ t('outdated.refresh') }}
         </button>
 
         <button
@@ -38,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const { isOutdatedBannerVisible, hideWarningBanner } = useOutdatedBanner()
 
 const hide = () => {

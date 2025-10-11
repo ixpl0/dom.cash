@@ -6,7 +6,7 @@
           class="card-title justify-center text-3xl mb-6"
           data-testid="welcome-text"
         >
-          Добро пожаловать
+          {{ t('auth.welcome') }}
         </h2>
 
         <form
@@ -15,12 +15,12 @@
         >
           <div class="form-control">
             <label class="label">
-              <span class="label-text">Имя пользователя</span>
+              <span class="label-text">{{ t('auth.username') }}</span>
             </label>
             <input
               v-model="formData.username"
               type="text"
-              placeholder="Введите имя пользователя"
+              :placeholder="t('auth.usernamePlaceholder')"
               class="input input-bordered w-full"
               :class="{ 'input-error': errors.username }"
               required
@@ -40,12 +40,12 @@
 
           <div class="form-control">
             <label class="label">
-              <span class="label-text">Пароль</span>
+              <span class="label-text">{{ t('auth.password') }}</span>
             </label>
             <input
               v-model="formData.password"
               type="password"
-              placeholder="Введите пароль"
+              :placeholder="t('auth.passwordPlaceholder')"
               class="input input-bordered w-full"
               :class="{ 'input-error': errors.password }"
               required
@@ -81,13 +81,13 @@
                 v-if="isLoading"
                 class="loading loading-spinner loading-sm"
               />
-              {{ isLoading ? 'Входим...' : 'Войти / Зарегистрироваться' }}
+              {{ isLoading ? t('auth.loggingIn') : t('auth.loginButton') }}
             </button>
           </div>
         </form>
 
         <div class="divider">
-          или
+          {{ t('common.or') }}
         </div>
 
         <div class="space-y-4">
@@ -106,7 +106,7 @@
               v-if="isGoogleLoading"
               class="loading loading-spinner loading-sm"
             />
-            {{ isGoogleLoading ? 'Входим через Google...' : 'Войти через Google' }}
+            {{ isGoogleLoading ? t('auth.googleLoggingIn') : t('auth.googleLogin') }}
           </button>
 
           <div class="text-center space-y-2">
@@ -116,14 +116,14 @@
               data-testid="home-btn"
               @click="goHome"
             >
-              На главную
+              {{ t('auth.goHome') }}
             </button>
 
             <p
               class="text-sm opacity-70"
               data-testid="auto-register-text"
             >
-              Если у вас нет аккаунта, он будет создан автоматически
+              {{ t('auth.autoRegister') }}
             </p>
           </div>
         </div>
@@ -146,6 +146,7 @@ interface FormErrors {
 const { login } = useAuth()
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 
 const formData = ref<FormData>({
   username: '',
@@ -166,17 +167,17 @@ const validateForm = (): boolean => {
   const newErrors: FormErrors = {}
 
   if (formData.value.username.length < 3) {
-    newErrors.username = 'Имя пользователя должно содержать минимум 3 символа'
+    newErrors.username = t('auth.usernameMinLength')
   }
   else if (formData.value.username.length > 64) {
-    newErrors.username = 'Имя пользователя не должно превышать 64 символа'
+    newErrors.username = t('auth.usernameMaxLength')
   }
 
   if (formData.value.password.length < 8) {
-    newErrors.password = 'Пароль должен содержать минимум 8 символов'
+    newErrors.password = t('auth.passwordMinLength')
   }
   else if (formData.value.password.length > 100) {
-    newErrors.password = 'Пароль не должен превышать 100 символов'
+    newErrors.password = t('auth.passwordMaxLength')
   }
 
   errors.value = newErrors
@@ -218,7 +219,7 @@ const handleSubmit = async (): Promise<void> => {
       apiError.value = error.message
     }
     else {
-      apiError.value = 'Произошла неожиданная ошибка'
+      apiError.value = t('auth.unexpectedError')
     }
   }
   finally {
@@ -240,7 +241,7 @@ const handleGoogleLogin = async (): Promise<void> => {
       apiError.value = error.message
     }
     else {
-      apiError.value = 'Произошла ошибка при входе через Google'
+      apiError.value = t('auth.googleError')
     }
   }
   finally {
@@ -289,7 +290,7 @@ onMounted(async () => {
         apiError.value = error.message
       }
       else {
-        apiError.value = 'Ошибка при обработке Google OAuth'
+        apiError.value = t('auth.googleOAuthError')
       }
     }
     finally {

@@ -16,7 +16,7 @@
     </button>
 
     <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      Общий доступ к вашему бюджету
+      {{ t('share.title') }}
     </h3>
 
     <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -27,10 +27,10 @@
         <table class="table">
           <thead>
             <tr>
-              <th>Имя пользователя</th>
-              <th>Уровень доступа</th>
+              <th>{{ t('share.username') }}</th>
+              <th>{{ t('share.accessLevel') }}</th>
               <th class="w-1">
-                Действия
+                {{ t('share.actions') }}
               </th>
             </tr>
           </thead>
@@ -57,10 +57,10 @@
                   class="select select-sm select-bordered w-full max-w-xs"
                 >
                   <option value="read">
-                    Только чтение
+                    {{ t('share.accessRead') }}
                   </option>
                   <option value="write">
-                    Чтение и редактирование
+                    {{ t('share.accessWrite') }}
                   </option>
                 </select>
                 <span v-else>{{ getAccessText(share.access) }}</span>
@@ -127,7 +127,7 @@
                 <input
                   v-model="newShare.username"
                   type="text"
-                  placeholder="Имя пользователя"
+                  :placeholder="t('share.usernamePlaceholder')"
                   class="input input-bordered w-full"
                   @keyup.enter="addShare()"
                   @keyup.esc="cancelAdd()"
@@ -139,10 +139,10 @@
                   class="select select-sm select-bordered w-full max-w-xs"
                 >
                   <option value="read">
-                    Только чтение
+                    {{ t('share.accessRead') }}
                   </option>
                   <option value="write">
-                    Чтение и редактирование
+                    {{ t('share.accessWrite') }}
                   </option>
                 </select>
               </td>
@@ -186,7 +186,7 @@
             class="btn btn-primary btn-sm"
             @click="startAdd()"
           >
-            Поделиться бюджетом с новым пользователем
+            {{ t('share.addNew') }}
           </button>
         </div>
       </div>
@@ -195,7 +195,7 @@
         class="text-center py-8 text-base-content/60"
       >
         <div class="mb-4">
-          Вы ещё ни с кем не поделились бюджетом
+          {{ t('share.empty') }}
         </div>
         <button
           v-if="!isAddingNew"
@@ -203,7 +203,7 @@
           class="btn btn-primary btn-sm"
           @click="startAdd()"
         >
-          Поделиться бюджетом с новым пользователем
+          {{ t('share.addNew') }}
         </button>
       </div>
     </div>
@@ -226,6 +226,7 @@ const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.shareModal.isOpen)
 const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 const { toast } = useToast()
+const { t } = useI18n()
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   return error
@@ -257,7 +258,7 @@ const cancelAdd = (): void => {
 
 const addShare = async (): Promise<void> => {
   if (!newShare.value.username.trim()) {
-    toast({ type: 'error', message: 'Введите имя пользователя' })
+    toast({ type: 'error', message: t('share.enterUsername') })
     return
   }
 
@@ -275,10 +276,10 @@ const addShare = async (): Promise<void> => {
     shares.value = [...shares.value, response]
     markAsSaved()
     cancelAdd()
-    toast({ type: 'success', message: 'Доступ успешно предоставлен' })
+    toast({ type: 'success', message: t('share.accessGranted') })
   }
   catch (error: unknown) {
-    toast({ type: 'error', message: getErrorMessage(error, 'Не удалось предоставить доступ') })
+    toast({ type: 'error', message: getErrorMessage(error, t('share.accessGrantError')) })
   }
   finally {
     isAdding.value = false
@@ -310,7 +311,7 @@ const saveShare = async (): Promise<void> => {
   }
 
   if (!editingShare.value.username.trim()) {
-    toast({ type: 'error', message: 'Введите имя пользователя' })
+    toast({ type: 'error', message: t('share.enterUsername') })
     return
   }
 
@@ -334,10 +335,10 @@ const saveShare = async (): Promise<void> => {
     }
     markAsSaved()
     cancelEdit()
-    toast({ type: 'success', message: 'Изменения сохранены' })
+    toast({ type: 'success', message: t('share.changesSaved') })
   }
   catch (error: unknown) {
-    toast({ type: 'error', message: getErrorMessage(error, 'Не удалось сохранить изменения') })
+    toast({ type: 'error', message: getErrorMessage(error, t('share.changesError')) })
   }
   finally {
     isSaving.value = false
@@ -350,11 +351,11 @@ const deleteShare = async (id: string): Promise<void> => {
 
   const { confirm } = useConfirmation()
   const confirmed = await confirm({
-    title: 'Удаление доступа',
-    message: `Вы действительно хотите отозвать доступ к бюджету у <strong>${shareUsername}</strong>?`,
+    title: t('share.deleteTitle'),
+    message: `${t('share.deleteMessage')} <strong>${shareUsername}</strong>?`,
     variant: 'danger',
-    confirmText: 'Удалить',
-    cancelText: 'Отмена',
+    confirmText: t('share.deleteConfirm'),
+    cancelText: t('common.cancel'),
   })
 
   if (!confirmed) {
@@ -376,7 +377,7 @@ const deleteShare = async (id: string): Promise<void> => {
 }
 
 const getAccessText = (access: ShareEntry['access']): string => {
-  return access === 'read' ? 'Только чтение' : 'Чтение и редактирование'
+  return access === 'read' ? t('share.accessRead') : t('share.accessWrite')
 }
 
 const loadShares = async (): Promise<void> => {

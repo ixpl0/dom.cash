@@ -4,7 +4,7 @@
       <input
         v-model="localEntry.description"
         type="text"
-        :placeholder="isNew ? 'Введите описание...' : undefined"
+        :placeholder="isNew ? t('entryEdit.descriptionPlaceholder') : undefined"
         class="input input-bordered w-full"
         data-testid="entry-description-input"
         @keyup.enter="$emit('save')"
@@ -17,7 +17,7 @@
         type="number"
         min="0"
         step="0.01"
-        :placeholder="isNew ? '0.00' : undefined"
+        :placeholder="isNew ? t('entryEdit.amountPlaceholder') : undefined"
         class="input input-bordered w-full [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         data-testid="entry-amount-input"
         @keyup.enter="$emit('save')"
@@ -97,6 +97,8 @@ const emit = defineEmits<{
   'save': []
   'cancel': []
 }>()
+
+const { t } = useI18n()
 
 const localEntry = computed({
   get: () => props.modelValue,

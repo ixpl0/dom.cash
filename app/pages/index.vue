@@ -7,13 +7,13 @@
           data-testid="home-title"
         >
           <UiLogo class="w-10 h-10" />
-          dom.cash
+          {{ t('home.title') }}
         </h2>
         <p
           class="text-xl opacity-70"
           data-testid="home-subtitle"
         >
-          Прозрачность домашних финансов
+          {{ t('home.subtitle') }}
         </p>
 
         <div
@@ -28,10 +28,14 @@
               name="heroicons:banknotes"
               size="24"
             />
-            Перейти к бюджету
+            {{ t('home.goToBudget') }}
           </NuxtLink>
         </div>
       </div>
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+const { t } = useI18n()
+</script>

@@ -29,17 +29,17 @@
         <table class="table text-center">
           <thead>
             <tr>
-              <th>Описание</th>
-              <th>Сумма</th>
-              <th>Валюта</th>
+              <th>{{ t('entry.description') }}</th>
+              <th>{{ t('entry.amount') }}</th>
+              <th>{{ t('entry.currency') }}</th>
               <th v-if="entryModal.entryKind !== 'balance'">
-                Дата
+                {{ t('entry.date') }}
               </th>
               <th v-if="entryModal.entryKind === 'expense'">
-                Необязательное
+                {{ t('entry.optional') }}
               </th>
               <th class="w-1">
-                Действия
+                {{ t('entry.actions') }}
               </th>
             </tr>
           </thead>
@@ -157,7 +157,7 @@
             data-testid="add-entry-button"
             @click="startAdd()"
           >
-            + Добавить новую запись
+            {{ t('entry.addNew') }}
           </button>
         </div>
       </div>
@@ -176,7 +176,7 @@
           data-testid="add-entry-button"
           @click="startAdd()"
         >
-          + Добавить новую запись
+          {{ t('entry.addNew') }}
         </button>
       </div>
     </div>
@@ -191,6 +191,7 @@ import type { BudgetEntry } from '~~/shared/types/budget'
 
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
+const { t } = useI18n()
 const entryModal = computed(() => modalsStore.entryModal)
 const isOpen = computed(() => entryModal.value.isOpen)
 
@@ -315,10 +316,10 @@ const deleteEntry = async (entryId: string): Promise<void> => {
   const entry = currentEntries.value.find(e => e.id === entryId)
 
   const entryType = entryModal.value.entryKind === 'balance'
-    ? 'баланса'
+    ? t('entry.deleteBalance')
     : entryModal.value.entryKind === 'income'
-      ? 'дохода'
-      : 'расхода'
+      ? t('entry.deleteIncome')
+      : t('entry.deleteExpense')
 
   const confirmMessage = entry
     ? `Запись ${entryType}: <strong>"${entry.description}"</strong><br><strong>${formatAmount(entry.amount, entry.currency)}</strong>`
@@ -326,11 +327,11 @@ const deleteEntry = async (entryId: string): Promise<void> => {
 
   const { confirm } = useConfirmation()
   const confirmed = await confirm({
-    title: 'Удаление записи',
+    title: t('entry.deleteTitle'),
     message: confirmMessage,
     variant: 'danger',
-    confirmText: 'Удалить',
-    cancelText: 'Отмена',
+    confirmText: t('entry.deleteConfirm'),
+    cancelText: t('common.cancel'),
     icon: 'heroicons:trash',
   })
 

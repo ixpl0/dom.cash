@@ -8,16 +8,16 @@
         ❌
       </div>
       <h2 class="text-2xl font-bold mb-2">
-        Ошибка доступа
+        {{ t('budget.accessError') }}
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ budgetStore.error || 'Не удалось загрузить бюджет' }}
+        {{ budgetStore.error || t('budget.loadError') }}
       </p>
       <NuxtLink
         to="/budget"
         class="btn btn-primary"
       >
-        Вернуться к своему бюджету
+        {{ t('budget.backToOwnBudget') }}
       </NuxtLink>
     </div>
 
@@ -33,10 +33,10 @@
         class="text-2xl font-bold mb-2"
         data-testid="no-budget-message"
       >
-        Пока нет данных о бюджете
+        {{ t('budget.noBudgetYet') }}
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ !budgetStore.canEdit ? 'Этот пользователь ещё не создал месяцы бюджета' : 'Начните с создания месяца и добавления источников баланса или импортируйте данные' }}
+        {{ !budgetStore.canEdit ? t('budget.userNoMonths') : t('budget.startWithMonth') }}
       </p>
       <div
         v-if="budgetStore.canEdit"
@@ -60,9 +60,9 @@
               name="heroicons:calendar"
               size="20"
             />
-            Создать {{ monthNames[currentMonth] }} {{ currentYear }}
+            {{ t('budget.createFirstMonth') }} {{ monthNames[currentMonth] }} {{ currentYear }}
           </span>
-          <span v-else>Создание месяца...</span>
+          <span v-else>{{ t('budget.creatingMonth') }}</span>
         </button>
         <button
           class="btn btn-outline btn-lg"
@@ -73,7 +73,7 @@
             name="heroicons:arrow-down-tray"
             size="20"
           />
-          Импорт бюджета
+          {{ t('budget.importBudget') }}
         </button>
       </div>
     </div>
@@ -87,7 +87,7 @@
           class="text-3xl font-bold ml-2"
           data-testid="budget-title"
         >
-          Бюджет
+          {{ t('budget.title') }}
         </h1>
 
         <div class="flex items-center flex-wrap gap-2 flex-col sm:flex-row w-full sm:w-auto">
@@ -95,7 +95,7 @@
             v-if="budgetStore.data?.access !== 'owner'"
             class="badge w-full sm:w-auto"
           >
-            Бюджет
+            {{ t('budget.access.ownerOf') }}
             {{ budgetStore.data?.user.username }}
           </span>
           <span class="badge w-full sm:w-auto">
@@ -104,7 +104,7 @@
           <UiCurrencyPicker
             v-if="budgetStore.canEdit"
             :model-value="budgetStore.data?.user.mainCurrency"
-            placeholder="Основная валюта"
+            :placeholder="t('budget.mainCurrency')"
             class="w-full sm:w-70"
             @change="saveCurrency"
           />
@@ -112,7 +112,7 @@
             v-else
             class="opacity-70 text-sm"
           >
-            Основная валюта:
+            {{ t('budget.mainCurrencyLabel') }}
             {{ getCurrencyDisplayText(budgetStore.data?.user.mainCurrency || '') }}
           </span>
         </div>
@@ -127,7 +127,7 @@
               name="heroicons:chart-bar"
               size="20"
             />
-            График
+            {{ t('budget.chart') }}
           </button>
 
           <button
@@ -139,7 +139,7 @@
               name="heroicons:cloud-arrow-down"
               size="20"
             />
-            Экспорт
+            {{ t('budget.export') }}
           </button>
 
           <button
@@ -152,7 +152,7 @@
               name="heroicons:cloud-arrow-up"
               size="20"
             />
-            Импорт
+            {{ t('budget.import') }}
           </button>
 
           <NuxtLink
@@ -160,7 +160,7 @@
             to="/budget"
             class="btn btn-outline btn-sm"
           >
-            К своему бюджету
+            {{ t('budget.toOwnBudget') }}
           </NuxtLink>
         </div>
       </div>
@@ -212,9 +212,9 @@
                     name="heroicons:chevron-double-down"
                     size="16"
                   />
-                  Показать {{ budgetStore.nextYearToLoad.year }} год
+                  {{ t('budget.showYear') }} {{ budgetStore.nextYearToLoad.year }} {{ t('budget.yearWord') }}
                 </template>
-                <span v-if="budgetStore.isLoadingYear">Загрузка...</span>
+                <span v-if="budgetStore.isLoadingYear">{{ t('common.loading') }}</span>
               </button>
             </div>
             <div class="timeline-middle">
@@ -251,6 +251,7 @@ import { useModalsStore } from '~/stores/modals'
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const route = useRoute()
+const { t } = useI18n()
 
 const targetUsername = computed(() => {
   const username = Array.isArray(route.params.username)
@@ -370,20 +371,20 @@ const saveCurrency = async (newCurrency: string): Promise<void> => {
   }
   catch (error) {
     console.error('Failed to update currency:', error)
-    alert('Не удалось обновить валюту. Попробуйте ещё раз.')
+    alert(t('budget.currencyUpdateError'))
   }
 }
 
 const getAccessText = (access: string): string => {
   switch (access) {
     case 'owner':
-      return 'Вы владелец'
+      return t('budget.access.owner')
     case 'read':
-      return 'Только чтение'
+      return t('budget.access.read')
     case 'write':
-      return 'Чтение и редактирование'
+      return t('budget.access.write')
     default:
-      return 'Доступы неизвестны'
+      return t('budget.access.unknown')
   }
 }
 
@@ -404,7 +405,7 @@ const handleExport = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Export failed:', error)
-    alert('Не удалось экспортировать бюджет. Попробуйте ещё раз.')
+    alert(t('budget.exportError'))
   }
 }
 

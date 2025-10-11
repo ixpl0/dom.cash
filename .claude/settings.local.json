@@ -24,7 +24,10 @@
       "mcp__filesystem__edit_file",
       "mcp__filesystem__directory_tree",
       "Bash(pnpm playwright test:*)",
-      "Bash(pnpm lint:fix:*)"
+      "Bash(pnpm lint:fix:*)",
+      "WebFetch(domain:i18n.nuxtjs.org)",
+      "Bash(cat:*)",
+      "WebFetch(domain:next.i18n.nuxtjs.org)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

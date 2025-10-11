@@ -16,7 +16,7 @@
     </button>
 
     <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      Бюджеты, которыми с вами поделились
+      {{ t('sharedBudgets.title') }}
     </h3>
 
     <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -27,9 +27,9 @@
         <table class="table">
           <thead>
             <tr>
-              <th>Пользователь</th>
+              <th>{{ t('sharedBudgets.user') }}</th>
               <th class="w-1">
-                Действия
+                {{ t('sharedBudgets.actions') }}
               </th>
             </tr>
           </thead>
@@ -44,7 +44,7 @@
                   class="btn btn-sm btn-ghost"
                   @click="hide()"
                 >
-                  Перейти к бюджету {{ budget.username }}
+                  {{ t('sharedBudgets.goToBudget') }} {{ budget.username }}
                 </NuxtLink>
               </td>
               <td class="w-1">
@@ -72,7 +72,7 @@
         v-else
         class="text-center py-8 text-base-content/60"
       >
-        Пока нет бюджетов, которыми с вами поделились
+        {{ t('sharedBudgets.empty') }}
       </div>
     </div>
   </UiDialog>
@@ -92,21 +92,22 @@ const sharedBudgets = ref<SharedBudget[]>([])
 const isRevoking = ref<string | null>(null)
 const isLoading = ref(false)
 const modalsStore = useModalsStore()
+const { t } = useI18n()
 const isOpen = computed(() => modalsStore.sharedBudgetsModal.isOpen)
 
 const revokeAccess = async (id: string): Promise<void> => {
   const budget = sharedBudgets.value.find(b => b.id === id)
   const confirmMessage = budget
-    ? `Доступ к бюджету пользователя <strong>${budget.username}</strong>`
-    : 'Доступ к этому бюджету'
+    ? `${t('sharedBudgets.revokeMessage')} <strong>${budget.username}</strong>`
+    : t('sharedBudgets.revokeThisBudget')
 
   const { confirm } = useConfirmation()
   const confirmed = await confirm({
-    title: 'Отказ от доступа',
+    title: t('sharedBudgets.revokeTitle'),
     message: confirmMessage,
     variant: 'warning',
-    confirmText: 'Отказаться',
-    cancelText: 'Отмена',
+    confirmText: t('sharedBudgets.revokeConfirm'),
+    cancelText: t('common.cancel'),
     icon: 'heroicons:no-symbol',
   })
 

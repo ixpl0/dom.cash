@@ -18,7 +18,7 @@
     </button>
 
     <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      График бюджета
+      {{ t('chart.title') }}
     </h3>
 
     <div class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -82,6 +82,7 @@ type ECOption = ComposeOption<
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
 const budgetStore = useBudgetStore()
+const { t } = useI18n()
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.chartModal.isOpen)
 
@@ -166,13 +167,13 @@ const themeUIColors = ref(getThemeUIColors())
 const LEGEND_STORAGE_KEY = 'budget-chart-legend-selected'
 
 const getDefaultSelected = () => ({
-  'Баланс': true,
-  'Доходы': true,
-  'Расходы': true,
-  'Карманные расходы': false,
-  'Крупные расходы': false,
-  'Валютные колебания': false,
-  'Необязательные расходы': false,
+  [t('chart.balance')]: true,
+  [t('chart.income')]: true,
+  [t('chart.expenses')]: true,
+  [t('chart.pocketExpenses')]: false,
+  [t('chart.majorExpenses')]: false,
+  [t('chart.currencyFluctuations')]: false,
+  [t('chart.optionalExpenses')]: false,
 })
 
 const loadLegendSelected = () => {
@@ -278,7 +279,7 @@ const chartOption = computed(() => ({
   ],
   series: [
     {
-      name: 'Баланс',
+      name: t('chart.balance'),
       type: 'line' as const,
       data: chartData.value.datasets.startBalance,
       smooth: true,
@@ -294,7 +295,7 @@ const chartOption = computed(() => ({
       connectNulls: true,
     },
     {
-      name: 'Доходы',
+      name: t('chart.income'),
       type: 'line' as const,
       data: chartData.value.datasets.totalIncome,
       smooth: true,
@@ -310,7 +311,7 @@ const chartOption = computed(() => ({
       connectNulls: true,
     },
     {
-      name: 'Расходы',
+      name: t('chart.expenses'),
       type: 'line' as const,
       data: chartData.value.datasets.allExpenses,
       smooth: true,
@@ -326,7 +327,7 @@ const chartOption = computed(() => ({
       connectNulls: true,
     },
     {
-      name: 'Карманные расходы',
+      name: t('chart.pocketExpenses'),
       type: 'line' as const,
       data: chartData.value.datasets.calculatedPocketExpenses,
       smooth: true,
@@ -342,7 +343,7 @@ const chartOption = computed(() => ({
       connectNulls: true,
     },
     {
-      name: 'Крупные расходы',
+      name: t('chart.majorExpenses'),
       type: 'line' as const,
       data: chartData.value.datasets.totalExpenses,
       smooth: true,
@@ -358,7 +359,7 @@ const chartOption = computed(() => ({
       connectNulls: true,
     },
     {
-      name: 'Валютные колебания',
+      name: t('chart.currencyFluctuations'),
       type: 'line' as const,
       data: chartData.value.datasets.currencyProfitLoss,
       smooth: true,
@@ -374,7 +375,7 @@ const chartOption = computed(() => ({
       connectNulls: true,
     },
     {
-      name: 'Необязательные расходы',
+      name: t('chart.optionalExpenses'),
       type: 'line' as const,
       data: chartData.value.datasets.totalOptionalExpenses,
       smooth: true,

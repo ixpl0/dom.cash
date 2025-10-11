@@ -10,6 +10,7 @@
     </NuxtLink>
 
     <div class="hidden md:flex items-center gap-2">
+      <UiLanguagePicker />
       <UiThemePicker />
 
       <template v-if="isAuthenticated">
@@ -22,7 +23,7 @@
             name="heroicons:users"
             size="16"
           />
-          <span class="hidden xl:inline">Общие бюджеты</span>
+          <span class="hidden xl:inline">{{ t('header.sharedBudgets') }}</span>
         </button>
         <button
           class="btn btn-outline btn-sm"
@@ -33,7 +34,7 @@
             name="heroicons:share"
             size="16"
           />
-          <span class="hidden xl:inline">Поделиться</span>
+          <span class="hidden xl:inline">{{ t('header.share') }}</span>
         </button>
       </template>
     </div>
@@ -75,7 +76,7 @@
                 name="heroicons:arrow-right-start-on-rectangle"
                 size="16"
               />
-              Выйти
+              {{ t('header.logout') }}
             </button>
           </li>
         </ul>
@@ -91,7 +92,7 @@
           name="heroicons:arrow-right-end-on-rectangle"
           size="16"
         />
-        Войти
+        {{ t('header.login') }}
       </NuxtLink>
     </div>
 
@@ -121,7 +122,7 @@
                 name="heroicons:users"
                 size="16"
               />
-              Общие бюджеты
+              {{ t('header.sharedBudgets') }}
             </button>
           </li>
           <li v-if="isAuthenticated">
@@ -133,9 +134,10 @@
                 name="heroicons:share"
                 size="16"
               />
-              Поделиться
+              {{ t('header.share') }}
             </button>
           </li>
+          <UiLanguagePicker class="px-3 py-2" />
           <UiThemePicker class="px-3 py-2" />
           <div
             v-if="isAuthenticated"
@@ -160,7 +162,7 @@
                 name="heroicons:arrow-right-start-on-rectangle"
                 size="16"
               />
-              Выйти
+              {{ t('header.logout') }}
             </button>
           </li>
           <li v-else>
@@ -172,7 +174,7 @@
                 name="heroicons:arrow-right-end-on-rectangle"
                 size="16"
               />
-              Войти
+              {{ t('header.login') }}
             </NuxtLink>
           </li>
         </ul>
@@ -184,4 +186,5 @@
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
 const modalsStore = useModalsStore()
+const { t } = useI18n()
 </script>

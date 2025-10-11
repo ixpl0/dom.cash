@@ -27,10 +27,9 @@
         {{ title }}
       </h3>
 
-      <div
-        class="text-base-content/70 mb-8 leading-relaxed"
-        v-html="message"
-      />
+      <div class="text-base-content/70 mb-8 leading-relaxed">
+        {{ options.message }}
+      </div>
 
       <div class="flex gap-3 justify-center flex-wrap">
         <button
@@ -58,8 +57,6 @@
 </template>
 
 <script setup lang="ts">
-import DOMPurify from 'dompurify'
-
 export interface ConfirmationModalOptions {
   title?: string
   message: string
@@ -83,36 +80,30 @@ const emit = defineEmits<{
 
 const confirmButton = ref<HTMLButtonElement>()
 const cancelButton = ref<HTMLButtonElement>()
+const { t } = useI18n()
 
 const title = computed(() => props.options.title || getDefaultTitle())
 
-const message = computed(() => {
-  return DOMPurify.sanitize(props.options.message, {
-    ALLOWED_TAGS: ['strong', 'br'],
-    ALLOWED_ATTR: [],
-  })
-})
-
-const confirmText = computed(() => props.options.confirmText || 'Подтвердить')
-const cancelText = computed(() => props.options.cancelText || 'Отмена')
+const confirmText = computed(() => props.options.confirmText || t('confirmation.confirm'))
+const cancelText = computed(() => props.options.cancelText || t('confirmation.cancel'))
 const variant = computed(() => props.options.variant || 'danger')
 
 const getDefaultTitle = (): string => {
   switch (variant.value) {
     case 'danger': {
-      return 'Подтверждение действия'
+      return t('confirmation.titleDanger')
     }
     case 'warning': {
-      return 'Внимание'
+      return t('confirmation.titleWarning')
     }
     case 'info': {
-      return 'Информация'
+      return t('confirmation.titleInfo')
     }
     case 'success': {
-      return 'Успех'
+      return t('confirmation.titleSuccess')
     }
     default: {
-      return 'Подтверждение'
+      return t('confirmation.titleDefault')
     }
   }
 }

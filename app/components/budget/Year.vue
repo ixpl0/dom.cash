@@ -17,9 +17,9 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="Сумма всех сбережений на начало месяца, конвертированных в основную валюту"
+            :data-tip="t('budget.year.balanceTooltip')"
           >
-            Баланс
+            {{ t('budget.year.balance') }}
           </div>
           <div class="flex flex-col gap-1">
             <div
@@ -28,7 +28,7 @@
                 'text-primary': yearStats.averageBalance > 0,
                 'text-base-content': yearStats.averageBalance === 0,
               }"
-              data-tip="Средний баланс на начало месяца за год"
+              :data-tip="t('budget.year.averageBalance')"
               data-testid="year-average-balance"
             >
               <div class="font-bold">
@@ -43,9 +43,9 @@
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="Сумма всех доходов, конвертированных в основную валюту"
+            :data-tip="t('budget.year.incomeTooltip')"
           >
-            Доходы
+            {{ t('budget.year.income') }}
           </div>
           <div class="flex flex-col gap-1">
             <div
@@ -54,7 +54,7 @@
                 'text-success': yearStats.totalIncome > 0,
                 'text-base-content': yearStats.totalIncome === 0,
               }"
-              data-tip="Общая сумма доходов за год"
+              :data-tip="t('budget.year.totalIncome')"
               data-testid="year-total-income"
             >
               <div class="font-bold">
@@ -67,7 +67,7 @@
                 'text-success/80': yearStats.averageIncome > 0,
                 'text-base-content/80': yearStats.averageIncome === 0,
               }"
-              data-tip="Средний доход в месяц"
+              :data-tip="t('budget.year.averageIncome')"
               data-testid="year-average-income"
             >
               {{ formatAmountRounded(yearStats.averageIncome, mainCurrency) }}
@@ -79,10 +79,11 @@
       <div :ref="setHeaderRef(2)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="Сумма всех крупных расходов, конвертированных в основную валюту"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            :data-tip="t('budget.year.majorExpensesTooltip')"
           >
-            Крупные<br>расходы
+            <span>{{ t('budget.year.majorExpensesLine1') }}</span>
+            <span>{{ t('budget.year.majorExpensesLine2') }}</span>
           </div>
           <div class="flex flex-col gap-1">
             <div
@@ -91,7 +92,7 @@
                 'text-error': yearStats.totalExpenses > 0,
                 'text-base-content': yearStats.totalExpenses === 0,
               }"
-              data-tip="Общая сумма крупных расходов за год"
+              :data-tip="t('budget.year.totalMajorExpenses')"
               data-testid="year-total-expenses"
             >
               <div class="font-bold">
@@ -104,7 +105,7 @@
                 'text-error/80': yearStats.averageExpenses > 0,
                 'text-base-content/80': yearStats.averageExpenses === 0,
               }"
-              data-tip="Средние крупные расходы в месяц"
+              :data-tip="t('budget.year.averageMajorExpenses')"
               data-testid="year-average-expenses"
             >
               {{ formatAmountRounded(yearStats.averageExpenses, mainCurrency) }}
@@ -115,14 +116,13 @@
 
       <div :ref="setHeaderRef(3)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="(Баланс) + (Доходы) + (Валютные колебания) - (Баланс следующего месяца) - (Крупные расходы)"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            :data-tip="t('budget.year.pocketExpensesFormula')"
           >
-            Карманные<br>расходы
+            <span>{{ t('budget.year.pocketExpensesLine1') }}</span>
+            <span>{{ t('budget.year.pocketExpensesLine2') }}</span>
           </div>
-          <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
               class="tooltip tooltip-bottom"
@@ -131,7 +131,7 @@
                 'text-error': yearStats.totalPocketExpenses > 0,
                 'text-base-content': yearStats.totalPocketExpenses === 0,
               }"
-              data-tip="Общая сумма карманных расходов за год"
+              :data-tip="t('budget.year.totalPocketExpenses')"
               data-testid="year-total-pocket-expenses"
             >
               <div class="font-bold">
@@ -145,7 +145,7 @@
                 'text-error/80': yearStats.averagePocketExpenses > 0,
                 'text-base-content/80': yearStats.averagePocketExpenses === 0,
               }"
-              data-tip="Средние карманные расходы в месяц"
+              :data-tip="t('budget.year.averagePocketExpenses')"
               data-testid="year-average-pocket-expenses"
             >
               {{ formatAmountRounded(yearStats.averagePocketExpenses, mainCurrency) }}
@@ -156,14 +156,12 @@
 
       <div :ref="setHeaderRef(4)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <!-- eslint-disable no-irregular-whitespace -->
           <div
             class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="(Крупные расходы) + (Карманные расходы)"
+            :data-tip="t('budget.year.allExpensesFormula')"
           >
-            Все расходы
+            {{ t('budget.year.allExpenses') }}
           </div>
-          <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
               class="tooltip tooltip-bottom"
@@ -172,7 +170,7 @@
                 'text-error': yearStats.totalAllExpenses > 0,
                 'text-base-content': yearStats.totalAllExpenses === 0,
               }"
-              data-tip="Общая сумма всех расходов за год"
+              :data-tip="t('budget.year.totalAllExpenses')"
               data-testid="year-total-all-expenses"
             >
               <div class="font-bold">
@@ -186,7 +184,7 @@
                 'text-error/80': yearStats.averageAllExpenses > 0,
                 'text-base-content/80': yearStats.averageAllExpenses === 0,
               }"
-              data-tip="Средние расходы в месяц"
+              :data-tip="t('budget.year.averageAllExpenses')"
               data-testid="year-average-all-expenses"
             >
               {{ formatAmountRounded(yearStats.averageAllExpenses, mainCurrency) }}
@@ -197,14 +195,13 @@
 
       <div :ref="setHeaderRef(5)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="(Баланс на начало месяца) - (Баланс предыдущего месяца)"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            :data-tip="t('budget.year.balanceChangeFormula')"
           >
-            Изменение<br>баланса
+            <span>{{ t('budget.year.balanceChangeLine1') }}</span>
+            <span>{{ t('budget.year.balanceChangeLine2') }}</span>
           </div>
-          <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
               class="tooltip tooltip-bottom"
@@ -213,7 +210,7 @@
                 'text-error': yearStats.totalBalanceChange < 0,
                 'text-base-content': yearStats.totalBalanceChange === 0,
               }"
-              data-tip="Общее изменение баланса за год"
+              :data-tip="t('budget.year.totalBalanceChange')"
               data-testid="year-total-balance-change"
             >
               <div class="font-bold">
@@ -227,7 +224,7 @@
                 'text-error/80': yearStats.averageBalanceChange < 0,
                 'text-base-content/80': yearStats.averageBalanceChange === 0,
               }"
-              data-tip="Среднее изменение баланса в месяц"
+              :data-tip="t('budget.year.averageBalanceChange')"
               data-testid="year-average-balance-change"
             >
               {{ formatAmountRounded(yearStats.averageBalanceChange, mainCurrency) }}
@@ -238,14 +235,13 @@
 
       <div :ref="setHeaderRef(6)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <!-- eslint-disable no-irregular-whitespace -->
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="(Баланс следующего месяца) - (Баланс следующего месяца, пересчитанный по курсам текущего месяца)"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            :data-tip="t('budget.year.currencyFluctuationsFormula')"
           >
-            Валютные<br>колебания
+            <span>{{ t('budget.year.currencyFluctuationsLine1') }}</span>
+            <span>{{ t('budget.year.currencyFluctuationsLine2') }}</span>
           </div>
-          <!-- eslint-enable no-irregular-whitespace -->
           <div class="flex flex-col gap-1">
             <div
               class="tooltip tooltip-bottom"
@@ -254,7 +250,7 @@
                 'text-error': yearStats.totalCurrencyProfitLoss < 0,
                 'text-base-content': yearStats.totalCurrencyProfitLoss === 0,
               }"
-              data-tip="Общая прибыль/убыток от валютных колебаний за год"
+              :data-tip="t('budget.year.totalCurrencyFluctuations')"
               data-testid="year-total-currency-profit-loss"
             >
               <div class="font-bold">
@@ -268,7 +264,7 @@
                 'text-error/80': yearStats.averageCurrencyProfitLoss < 0,
                 'text-base-content/80': yearStats.averageCurrencyProfitLoss === 0,
               }"
-              data-tip="Средние валютные колебания в месяц"
+              :data-tip="t('budget.year.averageCurrencyFluctuations')"
               data-testid="year-average-currency-profit-loss"
             >
               {{ formatAmountRounded(yearStats.averageCurrencyProfitLoss, mainCurrency) }}
@@ -280,10 +276,11 @@
       <div :ref="setHeaderRef(7)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-            data-tip="Сумма всех необязательных расходов, конвертированных в основную валюту"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            :data-tip="t('budget.year.optionalExpensesTooltip')"
           >
-            Необязательные<br>расходы
+            <span>{{ t('budget.year.optionalExpensesLine1') }}</span>
+            <span>{{ t('budget.year.optionalExpensesLine2') }}</span>
           </div>
           <div class="flex flex-col gap-1">
             <div
@@ -292,7 +289,7 @@
                 'text-error': yearStats.totalOptionalExpenses > 0,
                 'text-base-content': yearStats.totalOptionalExpenses === 0,
               }"
-              data-tip="Общая сумма всех необязательных расходов за год"
+              :data-tip="t('budget.year.totalOptionalExpenses')"
               data-testid="year-total-optional-expenses"
             >
               <div class="font-bold">
@@ -305,7 +302,7 @@
                 'text-error/80': yearStats.averageOptionalExpenses > 0,
                 'text-base-content/80': yearStats.averageOptionalExpenses === 0,
               }"
-              data-tip="Средние необязательные расходы в месяц"
+              :data-tip="t('budget.year.averageOptionalExpenses')"
               data-testid="year-average-optional-expenses"
             >
               {{ formatAmountRounded(yearStats.averageOptionalExpenses, mainCurrency) }}
@@ -344,6 +341,7 @@ defineEmits<{
   refresh: []
 }>()
 
+const { t } = useI18n()
 const { mainCurrency: userMainCurrency } = useUser()
 const budgetStore = useBudgetStore()
 const mainCurrency = computed(() => budgetStore.data?.user?.mainCurrency || userMainCurrency.value)

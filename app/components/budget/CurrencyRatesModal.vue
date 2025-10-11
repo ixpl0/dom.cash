@@ -18,7 +18,7 @@
     </button>
 
     <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-6">
-      Курсы валют за {{ currencyRatesModal.monthTitle }}
+      {{ t('currencyRates.title') }} {{ currencyRatesModal.monthTitle }}
     </h3>
 
     <div
@@ -30,14 +30,14 @@
         size="24"
         class="stroke-current shrink-0"
       />
-      <span>У этого месяца нет собственных курсов валют, поэтому используются курсы из {{ currencyRatesModal.sourceMonthTitle }}</span>
+      <span>{{ t('currencyRates.usingOtherRates') }} {{ currencyRatesModal.sourceMonthTitle }}{{ t('currencyRates.usingOtherRatesEnd') }}</span>
     </div>
 
     <div class="form-control mb-4 flex-shrink-0">
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Поиск валюты по коду или названию..."
+        :placeholder="t('currencyRates.search')"
         class="input input-bordered w-full"
       >
     </div>
@@ -47,7 +47,7 @@
         v-if="filteredRates.length === 0"
         class="text-center py-8 text-base-content/60"
       >
-        Валюты не найдены
+        {{ t('currencyRates.notFound') }}
       </div>
       <div
         v-else
@@ -87,6 +87,7 @@ interface CurrencyRate {
   rate: number
 }
 
+const { t } = useI18n()
 const modalsStore = useModalsStore()
 const currencyRatesModal = computed(() => modalsStore.currencyRatesModal)
 const isOpen = computed(() => currencyRatesModal.value.isOpen)

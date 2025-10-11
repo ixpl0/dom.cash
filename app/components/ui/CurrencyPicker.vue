@@ -105,6 +105,7 @@ const dropdownStyle = ref<Record<string, string>>({})
 
 const { addRecentCurrency, getRecentCurrencies } = useRecentCurrencies()
 const recentCurrencies = getRecentCurrencies()
+const { t } = useI18n()
 
 const displayValue = computed(() => {
   if (isFocused.value) {
@@ -119,9 +120,11 @@ const displayValue = computed(() => {
   return ''
 })
 
-const placeholder = computed(() => isFocused.value || !props.modelValue
-  ? 'Выберите валюту...'
-  : '')
+const placeholder = computed(() => {
+  return isFocused.value || !props.modelValue
+    ? t('currencyPicker.placeholder')
+    : ''
+})
 
 const titleText = computed(() => {
   if (!props.modelValue || isFocused.value) {

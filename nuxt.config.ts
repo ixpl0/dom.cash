@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@pinia/nuxt', '@nuxt/icon'],
+  modules: ['@nuxt/eslint', '@pinia/nuxt', '@nuxt/icon', '@nuxtjs/i18n'],
   devtools: { enabled: true },
   app: {
     head: {
@@ -44,6 +44,21 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
   eslint: { config: { stylistic: true } },
+  i18n: {
+    defaultLocale: 'ru',
+    langDir: 'locales',
+    locales: [
+      { code: 'ru', language: 'ru-RU', name: 'Русский', file: 'ru.ts' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.ts' },
+    ],
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_locale',
+      redirectOn: 'root',
+      alwaysRedirect: false,
+    },
+  },
   icon: {
     clientBundle: {
       scan: true,

@@ -11,7 +11,7 @@
       id="theme-select"
       v-model="model"
       class="select select-bordered select-sm w-36"
-      aria-label="Выбрать тему"
+      :aria-label="t('theme.label')"
       data-testid="theme-select"
     >
       <option
@@ -28,6 +28,7 @@
 <script setup lang="ts">
 import { useTheme } from '~/composables/useTheme'
 
+const { t } = useI18n()
 const { themes, currentTheme, setTheme, initTheme } = useTheme()
 
 onMounted(() => {

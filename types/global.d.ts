@@ -1,3 +1,18 @@
+type I18nComposer = ReturnType<typeof import('vue-i18n')['useI18n']>
+type Translate = I18nComposer['t']
+
+declare module '#app' {
+  interface NuxtApp {
+    $t: Translate
+  }
+}
+
+declare module 'vue' {
+  interface ComponentCustomProperties {
+    $t: Translate
+  }
+}
+
 declare global {
   interface Window {
     google: {

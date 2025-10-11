@@ -14,7 +14,7 @@
           <div
             v-if="isCurrentMonthValue"
             class="tooltip flex items-center justify-center"
-            data-tip="Текущий месяц"
+            :data-tip="t('budget.month.currentMonth')"
           >
             <Icon
               name="heroicons:play-solid"
@@ -25,7 +25,7 @@
         </Transition>
         <div
           class="tooltip capitalize"
-          :data-tip="`${monthData.sourceMonthTitle || `${budgetStore.monthNames[monthData.month]} ${monthData.year}`} - Нажмите для просмотра курсов валют`"
+          :data-tip="`${monthData.sourceMonthTitle || `${budgetStore.monthNames[monthData.month]} ${monthData.year}`} - ${t('budget.month.clickForRates')}`"
         >
           <button
             class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
@@ -49,7 +49,7 @@
       <div
         :ref="setCardRef(0)"
         class="tooltip text-center"
-        :data-tip="`Сумма всех сбережений на начало месяца. Этого хватило бы на ${Math.floor(monthData.startBalance / averageMonthlyExpenses)} мес`"
+        :data-tip="`${t('budget.month.balanceTooltip')} ${Math.floor(monthData.startBalance / averageMonthlyExpenses)} ${t('budget.month.balanceTooltipMonths')}`"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -70,7 +70,7 @@
       <div
         :ref="setCardRef(1)"
         class="tooltip text-center"
-        :data-tip="`Все доходы за ${budgetStore.monthNames[monthData.month]} ${monthData.year}. Это зарплата, бонусы, подарки и т.д.`"
+        :data-tip="`${t('budget.month.incomeTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}. ${t('budget.month.incomeTooltipText')}`"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -91,7 +91,7 @@
       <div
         :ref="setCardRef(2)"
         class="tooltip text-center"
-        :data-tip="`Все крупные расходы за ${budgetStore.monthNames[monthData.month]} ${monthData.year}. Это оплата квартиры, покупка техники, путешествия и т.д.`"
+        :data-tip="`${t('budget.month.expensesTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}. ${t('budget.month.expensesTooltipText')}`"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -115,10 +115,10 @@
         :data-tip="monthData.calculatedPocketExpenses !== null
           ? (
             monthData.calculatedPocketExpenses < 0
-              ? 'Вероятно, вы не добавили все доходы, или по ошибке добавили лишнюю запись в крупные расходы. Ещё может быть связано с неточностями при работе с валютой'
-              : 'Всё, что осталось после вычета крупных расходов и валютных колебаний из общих расходов. Это деньги на еду, оплату подписок, мелкие покупки и т.д. Может быть неточным, если вы не добавили все доходы или расходы, или валютные колебания были вычислены неточно.'
+              ? t('budget.month.pocketExpensesError')
+              : t('budget.month.pocketExpensesTooltip')
           )
-          : 'Будет доступно после появления баланса следующего месяца'"
+          : t('budget.month.pocketExpensesAvailable')"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -140,8 +140,8 @@
         :ref="setCardRef(4)"
         class="tooltip text-center"
         :data-tip="monthData.totalAllExpenses !== null
-          ? `Сумма крупных и карманных расходов за ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
-          : 'Будет доступно после появления баланса следующего месяца'"
+          ? `${t('budget.month.totalExpensesTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
+          : t('budget.month.pocketExpensesAvailable')"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -163,8 +163,8 @@
         :ref="setCardRef(5)"
         class="tooltip text-center"
         :data-tip="monthData.calculatedBalanceChange !== null
-          ? `Изменение баланса за ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
-          : 'Будет доступно после появления баланса следующего месяца'"
+          ? `${t('budget.month.balanceChangeTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
+          : t('budget.month.pocketExpensesAvailable')"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -186,8 +186,8 @@
         :ref="setCardRef(6)"
         class="tooltip text-center"
         :data-tip="monthData.currencyProfitLoss !== null
-          ? `Прибыль или убытки от изменения валютных курсов за ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
-          : 'Будет доступно после появления баланса следующего месяца'"
+          ? `${t('budget.month.currencyFluctuationTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
+          : t('budget.month.pocketExpensesAvailable')"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -208,7 +208,7 @@
       <div
         :ref="setCardRef(7)"
         class="tooltip text-center"
-        :data-tip="`Сумма всех необязательных расходов за ${budgetStore.monthNames[monthData.month]} ${monthData.year}. Это расходы, от которых можно было бы отказаться.`"
+        :data-tip="`${t('budget.month.optionalExpensesTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}. ${t('budget.month.optionalExpensesTooltipText')}`"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -229,7 +229,7 @@
         v-if="canDeleteMonth"
         :ref="setCardRef(8)"
         class="tooltip text-center"
-        data-tip="Удалить месяц"
+        :data-tip="t('budget.month.deleteMonth')"
       >
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
           <button
@@ -266,6 +266,7 @@ const props = defineProps<Props>()
 
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
+const { t } = useI18n()
 
 const monthData = computed(() => {
   const computed = budgetStore.getComputedMonthById(props.monthId)
@@ -386,15 +387,15 @@ const canDeleteMonth = computed(() => {
 
 const handleDeleteMonth = async (): Promise<void> => {
   const monthName = `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
-  const confirmMessage = `Все записи месяца <strong>${monthName}</strong> будут безвозвратно удалены.`
+  const confirmMessage = `${t('budget.month.deleteConfirmMessage')} <strong>${monthName}</strong> ${t('budget.month.deleteConfirmWillBeDeleted')}`
 
   const { confirm } = useConfirmation()
   const confirmed = await confirm({
-    title: 'Удаление месяца',
+    title: t('budget.month.deleteConfirmTitle'),
     message: confirmMessage,
     variant: 'danger',
-    confirmText: 'Удалить месяц',
-    cancelText: 'Отмена',
+    confirmText: t('budget.month.deleteConfirmButton'),
+    cancelText: t('common.cancel'),
     icon: 'heroicons:trash',
   })
 
@@ -404,7 +405,7 @@ const handleDeleteMonth = async (): Promise<void> => {
     }
     catch (error) {
       console.error('Error deleting month:', error)
-      alert('Не удалось удалить месяц. Попробуйте ещё раз.')
+      alert(t('budget.month.deleteError'))
     }
   }
 }
