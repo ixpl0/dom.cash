@@ -30,7 +30,7 @@
         size="24"
         class="stroke-current shrink-0"
       />
-      <span>{{ t('currencyRates.usingOtherRates') }} {{ currencyRatesModal.sourceMonthTitle }}{{ t('currencyRates.usingOtherRatesEnd') }}</span>
+      <span>{{ usingOtherRatesMessage }}</span>
     </div>
 
     <div class="form-control mb-4 flex-shrink-0">
@@ -125,6 +125,16 @@ const filteredRates = computed((): CurrencyRate[] => {
     rate.code.toLowerCase().includes(query)
     || rate.name.toLowerCase().includes(query),
   )
+})
+
+const usingOtherRatesMessage = computed((): string => {
+  return [
+    t('currencyRates.usingOtherRates'),
+    currencyRatesModal.value.sourceMonthTitle,
+    t('currencyRates.usingOtherRatesEnd'),
+  ]
+    .filter(Boolean)
+    .join(' ')
 })
 
 const formatRate = (rate: number): string => {
