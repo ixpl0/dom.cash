@@ -184,7 +184,7 @@ export default {
 
   entryEdit: {
     descriptionPlaceholder: 'Enter description...',
-    amountPlaceholder: '0.00',
+    amountPlaceholder: '0',
   },
 
   currencyPicker: {

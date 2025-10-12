@@ -20,17 +20,16 @@ test.describe('Budget page historical testing', () => {
     await initBudget(page, 'clp-currency')
 
     const addMonthPreviousButton = page.getByTestId('add-month-previous')
-    const initialMonths = await page.getByTestId('budget-month').count()
 
     await addMonthPreviousButton.click()
-    await expect(page.getByTestId('budget-month')).toHaveCount(initialMonths + 1)
+    await expect(page.getByTestId('budget-month')).toHaveCount(2)
 
     const yearElements = page.getByTestId('budget-year')
     const yearCount = await yearElements.count()
 
     if (yearCount > 1) {
       await addMonthPreviousButton.click()
-      await expect(page.getByTestId('budget-month')).toHaveCount(initialMonths + 2)
+      await expect(page.getByTestId('budget-month')).toHaveCount(3)
 
       const months = page.getByTestId('budget-month')
       const topMonth = months.first()
@@ -38,7 +37,7 @@ test.describe('Budget page historical testing', () => {
 
       await deleteButton.click()
       await acceptConfirmModal(page)
-      await expect(page.getByTestId('budget-month')).toHaveCount(initialMonths + 1)
+      await expect(page.getByTestId('budget-month')).toHaveCount(2)
     }
 
     const finalYearElements = page.getByTestId('budget-year')
@@ -46,7 +45,7 @@ test.describe('Budget page historical testing', () => {
     expect(finalYearCount).toBeGreaterThanOrEqual(1)
 
     const finalMonthsCount = await page.getByTestId('budget-month').count()
-    expect(finalMonthsCount).toBe(initialMonths + 1)
+    expect(finalMonthsCount).toBe(2)
   })
 
   test('should display currency fluctuations in month and year stats', async ({ page }) => {
@@ -95,8 +94,6 @@ test.describe('Budget page historical testing', () => {
   test('should export budget data as JSON file', async ({ page }) => {
     await initBudget(page, 'two-months-clp')
 
-    const monthsCount = await page.getByTestId('budget-month').count()
-
     const downloadPromise = page.waitForEvent('download')
 
     const exportButton = page.getByTestId('export-button')
@@ -118,7 +115,7 @@ test.describe('Budget page historical testing', () => {
 
     expect(exportedData).toHaveProperty('user')
     expect(exportedData).toHaveProperty('months')
-    expect(exportedData.months).toHaveLength(monthsCount)
+    expect(exportedData.months).toHaveLength(2)
 
     await fs.unlink(savedPath).catch(() => {})
   })
