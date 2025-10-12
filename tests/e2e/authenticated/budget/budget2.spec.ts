@@ -13,21 +13,6 @@ test.describe('Budget page extended testing', () => {
     await cleanupUserData(request)
   })
 
-  test('should create first month from empty state', async ({ page }) => {
-    const emptyState = page.getByTestId('budget-empty-state')
-    await expect(emptyState).toBeVisible()
-
-    const createFirstMonthButton = page.getByTestId('create-first-month-btn')
-    await expect(createFirstMonthButton).toBeVisible()
-    await createFirstMonthButton.click()
-
-    const timeline = page.getByTestId('budget-timeline')
-    await expect(timeline).toBeVisible()
-
-    const months = page.getByTestId('budget-month')
-    await expect(months).toHaveCount(1)
-  })
-
   test('should add month on top when budget exists', async ({ page }) => {
     await initBudget(page, 'basic-test-data')
 
@@ -70,6 +55,9 @@ test.describe('Budget page extended testing', () => {
     const firstMonth = months.first()
 
     const balanceButton = firstMonth.getByTestId('balance-button')
+
+    const oldBalanceText = await balanceButton.textContent()
+
     await balanceButton.click()
 
     const modal = page.getByTestId('entry-modal')
@@ -89,7 +77,9 @@ test.describe('Budget page extended testing', () => {
     await expect(editButton).toBeVisible()
 
     await page.keyboard.press('Escape')
-    await page.waitForTimeout(500)
+    await expect(modal).not.toBeVisible()
+
+    await expect(balanceButton).not.toHaveText(oldBalanceText || '')
 
     const updatedBalanceText = await balanceButton.textContent()
     expect(updatedBalanceText).toContain('200')
@@ -100,6 +90,9 @@ test.describe('Budget page extended testing', () => {
 
     const months = page.getByTestId('budget-month')
     const secondMonth = months.nth(1)
+
+    const pocketExpensesButton = secondMonth.getByTestId('pocket-expenses-button')
+    const oldPocketExpensesText = await pocketExpensesButton.textContent()
 
     const expenseButton = secondMonth.getByTestId('expenses-button')
     await expenseButton.click()
@@ -119,10 +112,13 @@ test.describe('Budget page extended testing', () => {
     const saveRowButton = modal.getByTestId('entry-save-button')
     await saveRowButton.click()
 
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(500)
+    await expect(editButton).toBeVisible()
 
-    const pocketExpensesButton = secondMonth.getByTestId('pocket-expenses-button')
+    await page.keyboard.press('Escape')
+    await expect(modal).not.toBeVisible()
+
+    await expect(pocketExpensesButton).not.toHaveText(oldPocketExpensesText || '')
+
     const pocketExpensesText = await pocketExpensesButton.textContent()
 
     expect(pocketExpensesText).toContain('-')

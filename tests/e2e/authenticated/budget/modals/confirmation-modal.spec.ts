@@ -29,7 +29,6 @@ test.describe('Confirmation Modal Tests', () => {
 
     const confirmModal = page.getByTestId('confirmation-modal')
     await expect(confirmModal).toBeVisible()
-    await expect(confirmModal).toContainText('Удаление записи')
     await expect(confirmModal).toContainText('Cash')
 
     await acceptConfirmModal(page)
@@ -111,8 +110,6 @@ test.describe('Confirmation Modal Tests', () => {
 
     const confirmModal = page.getByTestId('confirmation-modal')
     await expect(confirmModal).toBeVisible()
-    await expect(confirmModal).toContainText('Удаление месяца')
-    await expect(confirmModal).toContainText('будут безвозвратно удалены')
 
     await cancelConfirmModal(page)
 

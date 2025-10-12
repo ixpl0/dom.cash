@@ -88,7 +88,7 @@ test.describe('Modal tests with budget fixtures', () => {
     await currencyCell.click()
 
     // Check that editing mode started (currency input is visible)
-    const currencyInput = modal.getByTestId('currency-select')
+    const currencyInput = modal.getByTestId('currency-picker-input')
     await expect(currencyInput).toBeVisible()
 
     const cancelButton3 = modal.getByTestId('entry-cancel-button')

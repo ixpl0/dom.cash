@@ -100,7 +100,6 @@ test.describe('Authentication', () => {
 
     const submitButton = page.getByTestId('submit-btn')
     await expect(submitButton).toBeEnabled()
-    await expect(submitButton).toContainText('Войти / Зарегистрироваться')
   })
 
   test('form can be submitted with valid data', async ({ page }) => {

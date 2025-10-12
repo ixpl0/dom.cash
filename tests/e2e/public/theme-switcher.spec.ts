@@ -71,10 +71,7 @@ test.describe('Theme Switcher', () => {
 
     await themeSelect.selectOption('auto')
 
-    await expect(async () => {
-      const hasThemeAttribute = await page.locator('html').getAttribute('data-theme')
-      expect(hasThemeAttribute).toBeNull()
-    }).toPass({ timeout: 1000 })
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme')
 
     const storedTheme = await page.evaluate(() => localStorage.getItem('theme'))
     expect(storedTheme).toBeNull()

@@ -291,7 +291,13 @@ const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
 const addEntry = async (): Promise<void> => {
   if (isAdding.value) return
 
-  if (!newEntry.value.description.trim() || newEntry.value.amount <= 0) {
+  const isBalanceEntry = entryModal.value.entryKind === 'balance'
+  const isAmountValid = isBalanceEntry
+    ? newEntry.value.amount >= 0
+    : newEntry.value.amount > 0
+
+  if (!newEntry.value.description.trim() || newEntry.value.amount === null || newEntry.value.amount === undefined || !isAmountValid) {
+    // TODO show error toast (i18n)
     return
   }
 
@@ -391,7 +397,7 @@ watch(editingEntryId, async (newEditingId) => {
         selector = '[data-testid="entry-optional-checkbox"]'
         break
       case 'currency':
-        selector = '[data-testid="currency-select"]'
+        selector = '[data-testid="currency-picker-input"]'
         break
     }
 
@@ -427,7 +433,12 @@ watch([newEntry, editingEntry], () => {
 const saveEntry = async (): Promise<void> => {
   if (isSaving.value) return
 
-  if (!editingEntryId.value || !editingEntry.value.description.trim() || editingEntry.value.amount <= 0) {
+  const isBalanceEntry = entryModal.value.entryKind === 'balance'
+  const isAmountValid = isBalanceEntry
+    ? editingEntry.value.amount >= 0
+    : editingEntry.value.amount > 0
+
+  if (!editingEntryId.value || !editingEntry.value.description.trim() || editingEntry.value.amount === null || editingEntry.value.amount === undefined || !isAmountValid) {
     return
   }
 

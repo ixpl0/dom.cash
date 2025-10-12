@@ -63,10 +63,13 @@ test.describe('Budget page isolated tests', () => {
       const amountInput = modal.getByTestId('entry-amount-input')
       await amountInput.fill(entry.amount)
 
-      const currencySelect = modal.getByTestId('currency-select')
-      await currencySelect.click()
-      await currencySelect.fill(entry.currency)
-      await page.keyboard.press('Enter')
+      const currencySelect = modal.getByTestId('currency-picker')
+      const currencySelectInput = currencySelect.getByTestId('currency-picker-input')
+      await currencySelectInput.click()
+      await currencySelectInput.fill(entry.currency)
+      await currencySelect.getByTestId('currency-picker-dropdown-item')
+        .filter({ hasText: new RegExp(`^${entry.currency}`) })
+        .click()
 
       const saveRowButton = modal.getByTestId('entry-save-button')
       await saveRowButton.click()
@@ -115,10 +118,13 @@ test.describe('Budget page isolated tests', () => {
       const amountInput = modal.getByTestId('entry-amount-input')
       await amountInput.fill(entry.amount)
 
-      const currencySelect = modal.getByTestId('currency-select')
-      await currencySelect.click()
-      await currencySelect.fill(entry.currency)
-      await page.keyboard.press('Enter')
+      const currencySelect = modal.getByTestId('currency-picker')
+      const currencySelectInput = currencySelect.getByTestId('currency-picker-input')
+      await currencySelectInput.click()
+      await currencySelectInput.fill(entry.currency)
+      await currencySelect.getByTestId('currency-picker-dropdown-item')
+        .filter({ hasText: new RegExp(`^${entry.currency}`) })
+        .click()
 
       const saveRowButton = modal.getByTestId('entry-save-button')
       await saveRowButton.click()
@@ -167,10 +173,13 @@ test.describe('Budget page isolated tests', () => {
       const amountInput = modal.getByTestId('entry-amount-input')
       await amountInput.fill(entry.amount)
 
-      const currencySelect = modal.getByTestId('currency-select')
-      await currencySelect.click()
-      await currencySelect.fill(entry.currency)
-      await page.keyboard.press('Enter')
+      const currencySelect = modal.getByTestId('currency-picker')
+      const currencySelectInput = currencySelect.getByTestId('currency-picker-input')
+      await currencySelectInput.click()
+      await currencySelectInput.fill(entry.currency)
+      await currencySelect.getByTestId('currency-picker-dropdown-item')
+        .filter({ hasText: new RegExp(`^${entry.currency}`) })
+        .click()
 
       const saveRowButton = modal.getByTestId('entry-save-button')
       await saveRowButton.click()
@@ -231,7 +240,7 @@ test.describe('Budget page isolated tests', () => {
     const currencyRatesModal = page.getByTestId('currency-rates-modal')
     await expect(currencyRatesModal).toBeVisible()
 
-    const searchInput = currencyRatesModal.getByPlaceholder('Поиск валюты по коду или названию...')
+    const searchInput = currencyRatesModal.getByTestId('currency-rates-search-input')
     await searchInput.fill('JPY')
 
     const rateElements = currencyRatesModal.locator('[data-testid^="rate-"]')
@@ -265,7 +274,7 @@ test.describe('Budget page isolated tests', () => {
     await initBudget(page, 'one-month-with-data')
 
     const budgetHeader = page.getByTestId('budget-header')
-    const currencySelect = budgetHeader.getByTestId('currency-select')
+    const currencySelect = budgetHeader.getByTestId('currency-picker-input')
     const baseCurrencyValue = await currencySelect.inputValue()
     const baseCurrency = baseCurrencyValue.split(' ')[0]
 
@@ -292,22 +301,28 @@ test.describe('Budget page isolated tests', () => {
     await initBudget(page, 'one-month-with-data')
 
     const budgetHeader = page.getByTestId('budget-header')
-    const currencySelect = budgetHeader.getByTestId('currency-select')
-
-    await currencySelect.click()
-    await currencySelect.fill('EUR')
-    await page.keyboard.press('Enter')
-
-    await page.waitForTimeout(500)
-
-    const baseCurrencyValue = await currencySelect.inputValue()
-    const baseCurrency = baseCurrencyValue.split(' ')[0]
-
-    expect(baseCurrency).toBe('EUR')
 
     const balanceButton = page.getByTestId('balance-button').first()
     const incomesButton = page.getByTestId('incomes-button').first()
     const expensesButton = page.getByTestId('expenses-button').first()
+
+    const oldBalanceText = await balanceButton.textContent()
+    const oldIncomesText = await incomesButton.textContent()
+    const oldExpensesText = await expensesButton.textContent()
+
+    const currencySelect = budgetHeader.getByTestId('currency-picker')
+    const currencySelectInput = currencySelect.getByTestId('currency-picker-input')
+    await currencySelectInput.click()
+    await currencySelectInput.fill('EUR')
+    await currencySelect.getByTestId('currency-picker-dropdown-item')
+      .filter({ hasText: /^EUR/ })
+      .click()
+
+    await expect(currencySelectInput).toHaveValue(/^EUR/)
+
+    await expect(balanceButton).not.toHaveText(oldBalanceText || '')
+    await expect(incomesButton).not.toHaveText(oldIncomesText || '')
+    await expect(expensesButton).not.toHaveText(oldExpensesText || '')
 
     const balanceText = await balanceButton.textContent()
     const incomesText = await incomesButton.textContent()
@@ -326,6 +341,9 @@ test.describe('Budget page isolated tests', () => {
     await initBudget(page, 'one-month-with-data')
 
     const button = page.getByTestId('balance-button').first()
+
+    const oldButtonText = await button.textContent()
+
     await button.click()
 
     const modal = page.getByTestId('entry-modal')
@@ -344,8 +362,12 @@ test.describe('Budget page isolated tests', () => {
     const saveButton = modal.getByTestId('entry-save-button')
     await saveButton.click()
 
+    await expect(editButton).toBeVisible()
+
     await page.keyboard.press('Escape')
-    await page.waitForTimeout(1000)
+    await expect(modal).not.toBeVisible()
+
+    await expect(button).not.toHaveText(oldButtonText || '')
 
     const updatedButtonText = await button.textContent()
     const updatedTotal = parseInt(updatedButtonText?.replace(/\D/g, ''), 10)
@@ -373,6 +395,9 @@ test.describe('Budget page isolated tests', () => {
 
     for (const operation of deleteOperations) {
       const button = page.getByTestId(operation.testId).first()
+
+      const oldButtonText = await button.textContent()
+
       await button.click()
 
       const modal = page.getByTestId('entry-modal')
@@ -388,6 +413,8 @@ test.describe('Budget page isolated tests', () => {
       const closeButton = modal.getByTestId('modal-close-button')
       await closeButton.click()
       await expect(modal).not.toBeVisible()
+
+      await expect(button).not.toHaveText(oldButtonText || '')
 
       const updatedButtonText = await button.textContent()
       const updatedTotal = parseInt(updatedButtonText?.replace(/\D/g, ''), 10)
@@ -428,30 +455,34 @@ test.describe('Budget page isolated tests', () => {
     await initBudget(page, 'one-month-with-data')
 
     const months = page.getByTestId('budget-month')
-    const initialCount = await months.count()
+    await expect(months).toHaveCount(1)
+
+    const previousMonth = months.first()
+    const previousMonthBalanceButton = previousMonth.getByTestId('balance-button')
+    const previousMonthBalanceText = await previousMonthBalanceButton.textContent()
+    const previousMonthBalanceTotal = parseInt(previousMonthBalanceText?.replace(/\D/g, ''), 10)
 
     const addMonthTopButton = page.getByTestId('add-month-next')
     await expect(addMonthTopButton).toBeVisible()
     await addMonthTopButton.click()
 
-    await expect(months).toHaveCount(initialCount + 1)
-    await page.waitForTimeout(500)
+    await expect(months).toHaveCount(2)
 
     const newMonth = months.first()
-    const previousMonth = months.nth(1)
 
     const newMonthBalanceButton = newMonth.getByTestId('balance-button')
-    const previousMonthBalanceButton = previousMonth.getByTestId('balance-button')
     const newMonthIncomesButton = newMonth.getByTestId('incomes-button')
     const newMonthExpensesButton = newMonth.getByTestId('expenses-button')
 
+    await expect(newMonthBalanceButton).toBeVisible()
+    await expect(newMonthIncomesButton).toBeVisible()
+    await expect(newMonthExpensesButton).toBeVisible()
+
     const newMonthBalanceText = await newMonthBalanceButton.textContent()
-    const previousMonthBalanceText = await previousMonthBalanceButton.textContent()
     const newMonthIncomesText = await newMonthIncomesButton.textContent()
     const newMonthExpensesText = await newMonthExpensesButton.textContent()
 
     const newMonthBalanceTotal = parseInt(newMonthBalanceText?.replace(/\D/g, ''), 10)
-    const previousMonthBalanceTotal = parseInt(previousMonthBalanceText?.replace(/\D/g, ''), 10)
     const newMonthIncomesTotal = parseInt(newMonthIncomesText?.replace(/\D/g, ''), 10)
     const newMonthExpensesTotal = parseInt(newMonthExpensesText?.replace(/\D/g, ''), 10)
 
@@ -464,7 +495,7 @@ test.describe('Budget page isolated tests', () => {
     await initBudget(page, 'two-months-with-data')
 
     const months = page.getByTestId('budget-month')
-    const initialCount = await months.count()
+    await expect(months).toHaveCount(2)
 
     const deleteButtons = page.getByTestId('delete-month-button')
 
@@ -472,25 +503,21 @@ test.describe('Budget page isolated tests', () => {
     await firstDeleteButton.click()
     await acceptConfirmModal(page)
 
-    await expect(months).toHaveCount(initialCount - 1)
-    await page.waitForTimeout(500)
+    await expect(months).toHaveCount(1)
   })
 
   test('should create 13 months timeline spanning multiple years', async ({ page }) => {
     await initBudget(page, 'one-month-with-data')
 
     const months = page.getByTestId('budget-month')
-    const initialCount = await months.count()
+    await expect(months).toHaveCount(1)
 
     const addMonthPreviousButton = page.getByTestId('add-month-previous')
 
     for (let i = 0; i < 13; i++) {
       await addMonthPreviousButton.click()
-      await expect(page.getByTestId('budget-month')).toHaveCount(initialCount + i + 1)
-      await page.waitForTimeout(200)
+      await expect(months).toHaveCount(i + 2)
     }
-
-    await expect(months).toHaveCount(initialCount + 13)
 
     const yearElements = page.getByTestId('budget-year')
     const yearCount = await yearElements.count()

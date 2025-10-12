@@ -39,6 +39,7 @@
         type="text"
         :placeholder="t('currencyRates.search')"
         class="input input-bordered w-full"
+        data-testid="currency-rates-search-input"
       >
     </div>
 

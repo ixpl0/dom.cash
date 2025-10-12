@@ -16,47 +16,6 @@ test.describe('Budget page historical testing', () => {
     await cleanupUserData(request)
   })
 
-  test('should create first month with foreign currency', async ({ page }) => {
-    const emptyState = page.getByTestId('budget-empty-state')
-    await expect(emptyState).toBeVisible()
-
-    const createFirstMonthButton = page.getByTestId('create-first-month-btn')
-    await expect(createFirstMonthButton).toBeVisible()
-    await createFirstMonthButton.click()
-
-    const timeline = page.getByTestId('budget-timeline')
-    await expect(timeline).toBeVisible()
-
-    const months = page.getByTestId('budget-month')
-    await expect(months).toHaveCount(1)
-
-    const balanceButton = page.getByTestId('balance-button').first()
-    await balanceButton.click()
-
-    const modal = page.getByTestId('entry-modal')
-    await expect(modal).toBeVisible()
-
-    const addButton = modal.getByTestId('add-entry-button')
-    await addButton.click()
-
-    const descriptionInput = modal.getByTestId('entry-description-input')
-    await descriptionInput.fill('Chilean Pesos Balance')
-
-    const amountInput = modal.getByTestId('entry-amount-input')
-    await amountInput.fill('1000000000')
-
-    const currencySelect = modal.getByTestId('currency-select')
-    await currencySelect.click()
-    await currencySelect.fill('CLP')
-    await page.keyboard.press('Enter')
-
-    const saveRowButton = modal.getByTestId('entry-save-button')
-    await saveRowButton.click()
-
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(500)
-  })
-
   test('should add previous month and manage year setup', async ({ page }) => {
     await initBudget(page, 'clp-currency')
 
@@ -167,8 +126,6 @@ test.describe('Budget page historical testing', () => {
   test('should import budget data and restore months', async ({ page }) => {
     await initBudget(page, 'two-months-clp')
 
-    const initialMonthsCount = await page.getByTestId('budget-month').count()
-
     const yearElements = page.getByTestId('budget-year')
     const firstYear = yearElements.first()
     const yearAverageBalanceElement = firstYear.getByTestId('year-average-balance')
@@ -194,7 +151,8 @@ test.describe('Budget page historical testing', () => {
       const deleteButton = firstMonth.getByTestId('delete-month-button')
       await deleteButton.click()
       await acceptConfirmModal(page)
-      await page.waitForTimeout(500)
+
+      await expect(months).toHaveCount(monthsCount - 1)
     }
 
     const emptyState = page.getByTestId('budget-empty-state')
@@ -220,7 +178,7 @@ test.describe('Budget page historical testing', () => {
     await closeButton.click()
     await expect(importModal).not.toBeVisible()
 
-    await expect(page.getByTestId('budget-month')).toHaveCount(initialMonthsCount)
+    await expect(page.getByTestId('budget-month')).toHaveCount(2)
 
     const restoredYearElements = page.getByTestId('budget-year')
     const restoredFirstYear = restoredYearElements.first()

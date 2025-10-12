@@ -2,6 +2,7 @@
   <div
     class="form-control"
     :class="$attrs.class || 'w-48'"
+    data-testid="currency-picker"
   >
     <div
       class="dropdown w-full"
@@ -21,7 +22,7 @@
           :placeholder="placeholder"
           :disabled="disabled"
           :title="titleText"
-          data-testid="currency-select"
+          data-testid="currency-picker-input"
           @input="onInput"
           @focus="onFocus"
           @keydown="onKeyDown"
@@ -42,6 +43,7 @@
         ref="dropdownRef"
         popover="manual"
         class="menu bg-base-100 rounded-lg max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap m-0 p-2"
+        data-testid="currency-picker-dropdown"
         :style="dropdownStyle"
       >
         <li
@@ -55,6 +57,7 @@
               'bg-base-content/10': option.code === props.modelValue && index !== highlightedIndex,
             }"
             tabindex="0"
+            data-testid="currency-picker-dropdown-item"
             @click="selectOption(option)"
             @keydown="(event) => onOptionKeydown(event, option)"
             @mouseenter="highlightedIndex = index"
