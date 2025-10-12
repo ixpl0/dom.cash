@@ -45,7 +45,7 @@ export default defineNuxtConfig({
   },
   eslint: { config: { stylistic: true } },
   i18n: {
-    defaultLocale: 'ru',
+    defaultLocale: 'en',
     langDir: 'locales',
     locales: [
       { code: 'ru', language: 'ru-RU', name: 'Русский', file: 'ru.ts' },
@@ -55,8 +55,7 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_locale',
-      redirectOn: 'root',
-      alwaysRedirect: false,
+      redirectOn: 'all',
     },
   },
   icon: {
