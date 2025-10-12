@@ -25,9 +25,9 @@ export default {
 
   auth: {
     welcome: 'Welcome',
-    username: 'Username',
+    username: 'Email',
     password: 'Password',
-    usernamePlaceholder: 'Enter username',
+    usernamePlaceholder: 'Enter email',
     passwordPlaceholder: 'Enter password',
     loginButton: 'Login / Register',
     loggingIn: 'Logging in...',
@@ -35,8 +35,9 @@ export default {
     googleLoggingIn: 'Logging in with Google...',
     goHome: 'Go to Home',
     autoRegister: 'If you don\'t have an account, it will be created automatically',
-    usernameMinLength: 'Username must contain at least 3 characters',
-    usernameMaxLength: 'Username must not exceed 64 characters',
+    usernameMinLength: 'Email must contain at least 3 characters',
+    usernameMaxLength: 'Email must not exceed 64 characters',
+    usernameInvalid: 'Invalid email format',
     passwordMinLength: 'Password must contain at least 8 characters',
     passwordMaxLength: 'Password must not exceed 100 characters',
     unexpectedError: 'An unexpected error occurred',

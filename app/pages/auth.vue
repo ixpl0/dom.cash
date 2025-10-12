@@ -20,7 +20,7 @@
             </label>
             <input
               v-model="formData.username"
-              type="text"
+              type="email"
               :placeholder="t('auth.usernamePlaceholder')"
               class="input input-bordered w-full"
               :class="{ 'input-error': errors.username }"
@@ -162,11 +162,16 @@ const redirectPath = computed<string | null>(() => {
 const validateForm = (): boolean => {
   const newErrors: FormErrors = {}
 
+  const emailRegex = /^[a-zA-Z0-9]([a-zA-Z0-9+._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/
+
   if (formData.value.username.length < 3) {
     newErrors.username = t('auth.usernameMinLength')
   }
   else if (formData.value.username.length > 64) {
     newErrors.username = t('auth.usernameMaxLength')
+  }
+  else if (!emailRegex.test(formData.value.username)) {
+    newErrors.username = t('auth.usernameInvalid')
   }
 
   if (formData.value.password.length < 8) {

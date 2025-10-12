@@ -25,9 +25,9 @@ export default {
 
   auth: {
     welcome: 'Добро пожаловать',
-    username: 'Имя пользователя',
+    username: 'Email',
     password: 'Пароль',
-    usernamePlaceholder: 'Введите имя пользователя',
+    usernamePlaceholder: 'Введите email',
     passwordPlaceholder: 'Введите пароль',
     loginButton: 'Войти / Зарегистрироваться',
     loggingIn: 'Входим...',
@@ -35,8 +35,9 @@ export default {
     googleLoggingIn: 'Входим через Google...',
     goHome: 'На главную',
     autoRegister: 'Если у вас нет аккаунта, он будет создан автоматически',
-    usernameMinLength: 'Имя пользователя должно содержать минимум 3 символа',
-    usernameMaxLength: 'Имя пользователя не должно превышать 64 символа',
+    usernameMinLength: 'Email должен содержать минимум 3 символа',
+    usernameMaxLength: 'Email не должен превышать 64 символа',
+    usernameInvalid: 'Неверный формат email',
     passwordMinLength: 'Пароль должен содержать минимум 8 символов',
     passwordMaxLength: 'Пароль не должен превышать 100 символов',
     unexpectedError: 'Произошла неожиданная ошибка',
