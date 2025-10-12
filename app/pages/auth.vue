@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-base-100 flex items-center justify-center p-4">
+    <AppToast />
     <div class="card w-full max-w-md bg-base-200 shadow-xl">
       <div class="card-body">
         <h2
@@ -61,13 +62,6 @@
             >
               <span class="label-text-alt text-error">{{ errors.password }}</span>
             </label>
-          </div>
-
-          <div
-            v-if="apiError"
-            class="alert alert-error"
-          >
-            {{ apiError }}
           </div>
 
           <div class="form-control mt-6">
@@ -133,6 +127,8 @@
 </template>
 
 <script setup lang="ts">
+import { getErrorMessage } from '~~/shared/utils/errors'
+
 interface FormData {
   username: string
   password: string
@@ -154,9 +150,9 @@ const formData = ref<FormData>({
 })
 
 const errors = ref<FormErrors>({})
-const apiError = ref<string>('')
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
+const { toast } = useToast()
 
 const redirectPath = computed<string | null>(() => {
   const { redirect } = route.query
@@ -198,8 +194,6 @@ const navigateAfterLogin = async (): Promise<void> => {
 }
 
 const handleSubmit = async (): Promise<void> => {
-  apiError.value = ''
-
   if (!validateForm()) {
     return
   }
@@ -215,12 +209,7 @@ const handleSubmit = async (): Promise<void> => {
     await navigateAfterLogin()
   }
   catch (error) {
-    if (error instanceof Error) {
-      apiError.value = error.message
-    }
-    else {
-      apiError.value = t('auth.unexpectedError')
-    }
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -230,19 +219,13 @@ const handleSubmit = async (): Promise<void> => {
 const handleGoogleLogin = async (): Promise<void> => {
   try {
     isGoogleLoading.value = true
-    apiError.value = ''
 
     const { loginWithGoogle } = useAuth()
     await loginWithGoogle()
     await navigateAfterLogin()
   }
   catch (error) {
-    if (error instanceof Error) {
-      apiError.value = error.message
-    }
-    else {
-      apiError.value = t('auth.googleError')
-    }
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.googleError')) })
   }
   finally {
     isGoogleLoading.value = false
@@ -252,9 +235,6 @@ const handleGoogleLogin = async (): Promise<void> => {
 watch(formData, () => {
   if (Object.keys(errors.value).length > 0) {
     validateForm()
-  }
-  if (apiError.value) {
-    apiError.value = ''
   }
 }, { deep: true })
 
@@ -286,12 +266,7 @@ onMounted(async () => {
     }
     catch (error) {
       console.error('Google OAuth redirect failed:', error)
-      if (error instanceof Error) {
-        apiError.value = error.message
-      }
-      else {
-        apiError.value = t('auth.googleOAuthError')
-      }
+      toast({ type: 'error', message: getErrorMessage(error, t('auth.googleOAuthError')) })
     }
     finally {
       isGoogleLoading.value = false
