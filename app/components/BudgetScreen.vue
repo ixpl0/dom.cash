@@ -242,6 +242,7 @@
 </template>
 
 <script setup lang="ts">
+import { getErrorMessage } from '~~/shared/utils/errors'
 import { findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
 import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
 import { useBudgetStore } from '~/stores/budget'
@@ -253,6 +254,7 @@ const route = useRoute()
 const { t } = useI18n()
 const { monthNames } = useMonthNames()
 const { getCurrencyName } = useCurrencies()
+const { toast } = useToast()
 
 const targetUsername = computed(() => {
   const username = Array.isArray(route.params.username)
@@ -312,6 +314,7 @@ const handleCreateNextMonth = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error creating next month:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.toast.createNextMonthError')) })
   }
   finally {
     isCreatingNextMonth.value = false
@@ -328,6 +331,7 @@ const handleCreatePreviousMonth = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error creating previous month:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.toast.createPreviousMonthError')) })
   }
   finally {
     isCreatingPreviousMonth.value = false
@@ -350,6 +354,7 @@ const createCurrentMonth = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error creating current month:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.toast.createCurrentMonthError')) })
   }
   finally {
     isCreatingCurrentMonth.value = false
@@ -367,7 +372,7 @@ const saveCurrency = async (newCurrency: string): Promise<void> => {
   }
   catch (error) {
     console.error('Failed to update currency:', error)
-    alert(t('budget.currencyUpdateError'))
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.currencyUpdateError')) })
   }
 }
 
@@ -392,6 +397,7 @@ const handleLoadPreviousYear = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error loading previous year:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.toast.loadYearError')) })
   }
 }
 
@@ -401,7 +407,7 @@ const handleExport = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Export failed:', error)
-    alert(t('budget.exportError'))
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.exportError')) })
   }
 }
 
@@ -419,6 +425,7 @@ const handleImported = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Failed to refresh budget after import:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('budget.toast.refreshAfterImportError')) })
   }
 }
 

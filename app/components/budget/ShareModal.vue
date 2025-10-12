@@ -211,6 +211,7 @@
 </template>
 
 <script setup lang="ts">
+import { getErrorMessage } from '~~/shared/utils/errors'
 import { useModalsStore } from '~/stores/modals'
 
 interface ShareEntry {
@@ -227,17 +228,6 @@ const isOpen = computed(() => modalsStore.shareModal.isOpen)
 const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 const { toast } = useToast()
 const { t } = useI18n()
-
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  return error
-    && typeof error === 'object'
-    && 'data' in error
-    && error.data
-    && typeof error.data === 'object'
-    && 'message' in error.data
-    ? String(error.data.message)
-    : fallback
-}
 
 const isAddingNew = ref(false)
 const isAdding = ref(false)
@@ -371,6 +361,10 @@ const deleteShare = async (id: string): Promise<void> => {
 
     shares.value = shares.value.filter(s => s.id !== id)
   }
+  catch (error) {
+    console.error('Error deleting share:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('share.deleteError')) })
+  }
   finally {
     isDeleting.value = null
   }
@@ -389,9 +383,13 @@ const loadShares = async (): Promise<void> => {
     if (response.ok) {
       shares.value = await response.json()
     }
+    else {
+      throw new Error('Failed to load shares')
+    }
   }
   catch (error) {
     console.error('Error loading shares:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('share.loadError')) })
   }
   finally {
     isLoading.value = false

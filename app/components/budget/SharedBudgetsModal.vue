@@ -79,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+import { getErrorMessage } from '~~/shared/utils/errors'
 import { useModalsStore } from '~/stores/modals'
 
 interface SharedBudget {
@@ -93,6 +94,7 @@ const isRevoking = ref<string | null>(null)
 const isLoading = ref(false)
 const modalsStore = useModalsStore()
 const { t } = useI18n()
+const { toast } = useToast()
 const isOpen = computed(() => modalsStore.sharedBudgetsModal.isOpen)
 
 const revokeAccess = async (id: string): Promise<void> => {
@@ -126,6 +128,7 @@ const revokeAccess = async (id: string): Promise<void> => {
   }
   catch (error) {
     console.error('Error revoking access:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('sharedBudgets.revokeError')) })
   }
   finally {
     isRevoking.value = null
@@ -141,9 +144,13 @@ const loadSharedBudgets = async (): Promise<void> => {
     if (response.ok) {
       sharedBudgets.value = await response.json()
     }
+    else {
+      throw new Error('Failed to load shared budgets')
+    }
   }
   catch (error) {
     console.error('Error loading shared budgets:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('sharedBudgets.loadError')) })
   }
   finally {
     isLoading.value = false

@@ -184,6 +184,7 @@
 </template>
 
 <script setup lang="ts">
+import { getErrorMessage } from '~~/shared/utils/errors'
 import { formatAmount } from '~~/shared/utils/budget'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
@@ -192,6 +193,7 @@ import type { BudgetEntry } from '~~/shared/types/budget'
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
 const { t } = useI18n()
+const { toast } = useToast()
 const entryModal = computed(() => modalsStore.entryModal)
 const isOpen = computed(() => entryModal.value.isOpen)
 
@@ -288,16 +290,33 @@ const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
   startEdit(entry)
 }
 
+const validateEntry = (entry: { description: string, amount: number | null | undefined }, entryKind: string | null): string | null => {
+  if (!entry.description.trim()) {
+    return t('entry.errors.descriptionRequired')
+  }
+
+  if (entry.amount === null || entry.amount === undefined) {
+    return t('entry.errors.amountRequired')
+  }
+
+  const isBalanceEntry = entryKind === 'balance'
+  if (isBalanceEntry && entry.amount < 0) {
+    return t('entry.errors.amountNonNegative')
+  }
+
+  if (!isBalanceEntry && entry.amount <= 0) {
+    return t('entry.errors.amountPositive')
+  }
+
+  return null
+}
+
 const addEntry = async (): Promise<void> => {
   if (isAdding.value) return
 
-  const isBalanceEntry = entryModal.value.entryKind === 'balance'
-  const isAmountValid = isBalanceEntry
-    ? newEntry.value.amount >= 0
-    : newEntry.value.amount > 0
-
-  if (!newEntry.value.description.trim() || newEntry.value.amount === null || newEntry.value.amount === undefined || !isAmountValid) {
-    // TODO show error toast (i18n)
+  const validationError = validateEntry(newEntry.value, entryModal.value.entryKind)
+  if (validationError) {
+    toast({ type: 'error', message: validationError })
     return
   }
 
@@ -310,6 +329,7 @@ const addEntry = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error adding entry:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('entry.errors.addFailed')) })
   }
   finally {
     isAdding.value = false
@@ -352,6 +372,7 @@ const deleteEntry = async (entryId: string): Promise<void> => {
   }
   catch (error) {
     console.error('Error deleting entry:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('entry.errors.deleteFailed')) })
   }
   finally {
     isDeleting.value = null
@@ -433,12 +454,13 @@ watch([newEntry, editingEntry], () => {
 const saveEntry = async (): Promise<void> => {
   if (isSaving.value) return
 
-  const isBalanceEntry = entryModal.value.entryKind === 'balance'
-  const isAmountValid = isBalanceEntry
-    ? editingEntry.value.amount >= 0
-    : editingEntry.value.amount > 0
+  if (!editingEntryId.value) {
+    return
+  }
 
-  if (!editingEntryId.value || !editingEntry.value.description.trim() || editingEntry.value.amount === null || editingEntry.value.amount === undefined || !isAmountValid) {
+  const validationError = validateEntry(editingEntry.value, entryModal.value.entryKind)
+  if (validationError) {
+    toast({ type: 'error', message: validationError })
     return
   }
 
@@ -451,6 +473,7 @@ const saveEntry = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error updating entry:', error)
+    toast({ type: 'error', message: getErrorMessage(error, t('entry.errors.updateFailed')) })
   }
   finally {
     isSaving.value = false

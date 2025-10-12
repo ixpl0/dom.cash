@@ -72,6 +72,14 @@ export default {
     currencyUpdateError: 'Не удалось обновить валюту. Попробуйте ещё раз.',
     exportError: 'Не удалось экспортировать бюджет. Попробуйте ещё раз.',
 
+    toast: {
+      createNextMonthError: 'Не удалось создать следующий месяц. Попробуйте ещё раз.',
+      createPreviousMonthError: 'Не удалось создать предыдущий месяц. Попробуйте ещё раз.',
+      createCurrentMonthError: 'Не удалось создать месяц. Попробуйте ещё раз.',
+      loadYearError: 'Не удалось загрузить предыдущий год. Попробуйте ещё раз.',
+      refreshAfterImportError: 'Не удалось обновить бюджет после импорта.',
+    },
+
     access: {
       owner: 'Вы владелец',
       read: 'Только чтение',
@@ -180,6 +188,16 @@ export default {
     deleteIncome: 'дохода',
     deleteExpense: 'расхода',
     deleteConfirm: 'Удалить',
+
+    errors: {
+      descriptionRequired: 'Введите описание',
+      amountRequired: 'Укажите сумму',
+      amountPositive: 'Сумма должна быть больше нуля',
+      amountNonNegative: 'Сумма не может быть отрицательной',
+      addFailed: 'Не удалось добавить запись',
+      updateFailed: 'Не удалось обновить запись',
+      deleteFailed: 'Не удалось удалить запись',
+    },
   },
 
   entryEdit: {
@@ -218,6 +236,8 @@ export default {
     accessGrantError: 'Не удалось предоставить доступ',
     changesSaved: 'Изменения сохранены',
     changesError: 'Не удалось сохранить изменения',
+    deleteError: 'Не удалось отозвать доступ',
+    loadError: 'Не удалось загрузить список пользователей',
   },
 
   sharedBudgets: {
@@ -230,6 +250,8 @@ export default {
     revokeMessage: 'Доступ к бюджету пользователя',
     revokeThisBudget: 'Доступ к этому бюджету',
     revokeConfirm: 'Отказаться',
+    revokeError: 'Не удалось отказаться от доступа. Попробуйте ещё раз.',
+    loadError: 'Не удалось загрузить бюджеты. Попробуйте ещё раз.',
   },
 
   chart: {

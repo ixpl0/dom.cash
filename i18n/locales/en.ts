@@ -72,6 +72,14 @@ export default {
     currencyUpdateError: 'Failed to update currency. Please try again.',
     exportError: 'Failed to export budget. Please try again.',
 
+    toast: {
+      createNextMonthError: 'Failed to create next month. Please try again.',
+      createPreviousMonthError: 'Failed to create previous month. Please try again.',
+      createCurrentMonthError: 'Failed to create month. Please try again.',
+      loadYearError: 'Failed to load previous year. Please try again.',
+      refreshAfterImportError: 'Failed to refresh budget after import.',
+    },
+
     access: {
       owner: 'You are the owner',
       read: 'Read only',
@@ -180,6 +188,16 @@ export default {
     deleteIncome: 'income',
     deleteExpense: 'expense',
     deleteConfirm: 'Delete',
+
+    errors: {
+      descriptionRequired: 'Please enter a description',
+      amountRequired: 'Please enter an amount',
+      amountPositive: 'Amount must be greater than zero',
+      amountNonNegative: 'Amount cannot be negative',
+      addFailed: 'Failed to add entry',
+      updateFailed: 'Failed to update entry',
+      deleteFailed: 'Failed to delete entry',
+    },
   },
 
   entryEdit: {
@@ -218,6 +236,8 @@ export default {
     accessGrantError: 'Failed to grant access',
     changesSaved: 'Changes saved',
     changesError: 'Failed to save changes',
+    deleteError: 'Failed to revoke access',
+    loadError: 'Failed to load shared users',
   },
 
   sharedBudgets: {
@@ -230,6 +250,8 @@ export default {
     revokeMessage: 'Access to budget of user',
     revokeThisBudget: 'Access to this budget',
     revokeConfirm: 'Revoke',
+    revokeError: 'Failed to revoke access. Please try again.',
+    loadError: 'Failed to load shared budgets. Please try again.',
   },
 
   chart: {
