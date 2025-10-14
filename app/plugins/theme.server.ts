@@ -10,12 +10,16 @@ export default defineNuxtPlugin(() => {
     state.value = cookie
 
     const getFaviconLink = () => {
-      if (!faviconColorsCookie) {
-        return undefined
-      }
-
       try {
-        const colors = JSON.parse(decodeURIComponent(faviconColorsCookie)) as FaviconColors
+        const colors = faviconColorsCookie
+          ? JSON.parse(decodeURIComponent(faviconColorsCookie)) as FaviconColors
+          : {
+              contours: '#2c2d30',
+              face: '#fff',
+              cheeks: '#FF6661',
+              roof: '#FF6661',
+              pipe: '#A9DC76',
+            }
 
         return [
           {

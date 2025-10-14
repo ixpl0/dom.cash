@@ -16,7 +16,6 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'canonical', href: 'https://dom.cash' },
-        { rel: 'apple-touch-icon', href: '/logo.svg' },
       ],
     },
   },
