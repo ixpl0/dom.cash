@@ -120,3 +120,23 @@ export const budgetShare = sqliteTable(
 export type BudgetShare = typeof budgetShare.$inferSelect
 export type NewBudgetShare = typeof budgetShare.$inferInsert
 export type BudgetShareAccess = BudgetShare['access']
+
+export const emailVerificationCode = sqliteTable(
+  'email_verification_codes',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    code: text('code').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    attemptCount: integer('attempt_count').notNull().default(0),
+    lastSentAt: integer('last_sent_at', { mode: 'timestamp' }),
+  },
+  t => [
+    index('idx_verification_email').on(t.email),
+    index('idx_verification_expires').on(t.expiresAt),
+  ],
+)
+
+export type EmailVerificationCode = typeof emailVerificationCode.$inferSelect
+export type NewEmailVerificationCode = typeof emailVerificationCode.$inferInsert

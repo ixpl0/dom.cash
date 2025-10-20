@@ -11,11 +11,12 @@
         </h2>
 
         <form
+          v-if="!showVerificationStep"
           class="space-y-4"
           @submit.prevent="handleSubmit"
         >
           <div class="form-control">
-            <label class="label">
+            <label class="label mb-2">
               <span class="label-text">{{ t('auth.username') }}</span>
             </label>
             <input
@@ -40,7 +41,7 @@
           </div>
 
           <div class="form-control">
-            <label class="label">
+            <label class="label mb-2">
               <span class="label-text">{{ t('auth.password') }}</span>
             </label>
             <input
@@ -64,7 +65,7 @@
             </label>
           </div>
 
-          <div class="form-control mt-6">
+          <div class="form-control mt-6 space-y-2">
             <button
               type="submit"
               class="btn btn-primary w-full"
@@ -77,14 +78,121 @@
               />
               {{ isLoading ? t('auth.loggingIn') : t('auth.loginButton') }}
             </button>
+
+            <button
+              type="button"
+              class="btn btn-outline w-full"
+              :disabled="isLoading"
+              data-testid="register-btn"
+              @click="handleRegister"
+            >
+              {{ t('auth.registerButton') }}
+            </button>
           </div>
         </form>
 
-        <div class="divider">
+        <form
+          v-else
+          class="space-y-4"
+          @submit.prevent="handleVerifyCode"
+        >
+          <div class="space-y-2">
+            <div class="alert alert-info">
+              <div class="flex flex-col gap-2">
+                <div>
+                  {{ t('auth.verificationCodeSent') }}: {{ formData.username }}
+                </div>
+                <div>
+                  {{ t('auth.checkSpamFolder') }}
+                </div>
+                <div v-if="attemptCount > 1">
+                  {{ t('auth.checkSpamAndDelay') }}
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="maxAttemptsReached"
+              class="alert alert-error text-sm"
+            >
+              <span>{{ t('auth.maxAttemptsExceeded') }}</span>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label mb-2">
+              <span class="label-text">{{ t('auth.verificationCode') }}</span>
+            </label>
+            <input
+              v-model="verificationCode"
+              type="text"
+              inputmode="numeric"
+              :placeholder="t('auth.verificationCodePlaceholder')"
+              class="input input-bordered w-full"
+              :class="{ 'input-error': errors.code }"
+              required
+              maxlength="6"
+              :disabled="isLoading"
+              data-testid="verification-code-input"
+            >
+            <label
+              v-if="errors.code"
+              class="label"
+            >
+              <span class="label-text-alt text-error">{{ errors.code }}</span>
+            </label>
+          </div>
+
+          <div class="form-control mt-6 space-y-2">
+            <button
+              type="submit"
+              class="btn btn-primary w-full"
+              :disabled="isLoading"
+              data-testid="verify-code-btn"
+            >
+              <span
+                v-if="isLoading"
+                class="loading loading-spinner loading-sm"
+              />
+              {{ isLoading ? t('auth.verifyingCode') : t('auth.registerButton') }}
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-outline btn-sm w-full"
+              :disabled="isLoading || resendTimer > 0 || maxAttemptsReached"
+              @click="handleResendCode"
+            >
+              <span v-if="resendTimer > 0">
+                {{ t('auth.resendCodeIn', { seconds: resendTimer }) }}
+              </span>
+              <span v-else>
+                {{ t('auth.resendCode') }}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm w-full"
+              :disabled="isLoading"
+              @click="backToEmailStep"
+            >
+              {{ t('auth.backToEmail') }}
+            </button>
+          </div>
+        </form>
+
+        <div
+          v-if="!showVerificationStep"
+          class="divider"
+        >
           {{ t('common.or') }}
         </div>
 
-        <div class="space-y-4">
+        <div
+          v-if="!showVerificationStep"
+          class="space-y-4"
+        >
           <button
             type="button"
             class="btn btn-outline w-full"
@@ -112,13 +220,6 @@
             >
               {{ t('auth.goHome') }}
             </button>
-
-            <p
-              class="text-sm opacity-70"
-              data-testid="auto-register-text"
-            >
-              {{ t('auth.autoRegister') }}
-            </p>
           </div>
         </div>
       </div>
@@ -137,6 +238,7 @@ interface FormData {
 interface FormErrors {
   username?: string
   password?: string
+  code?: string
 }
 
 const { login } = useAuth()
@@ -149,10 +251,21 @@ const formData = ref<FormData>({
   password: '',
 })
 
+const verificationCode = ref('')
+const showVerificationStep = ref(false)
 const errors = ref<FormErrors>({})
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
 const { toast } = useToast()
+const resendTimer = ref(0)
+const attemptCount = ref(0)
+const maxAttemptsReached = ref(false)
+
+const RESEND_DELAYS = [90, 180]
+
+const nextResendDelay = computed(() => {
+  return RESEND_DELAYS[attemptCount.value - 1] || 180
+})
 
 const redirectPath = computed<string | null>(() => {
   const { redirect } = route.query
@@ -179,6 +292,17 @@ const validateForm = (): boolean => {
   }
   else if (formData.value.password.length > 100) {
     newErrors.password = t('auth.passwordMaxLength')
+  }
+
+  errors.value = newErrors
+  return Object.keys(newErrors).length === 0
+}
+
+const validateVerificationCode = (): boolean => {
+  const newErrors: FormErrors = {}
+
+  if (!/^\d{6}$/.test(verificationCode.value)) {
+    newErrors.code = t('auth.verificationCodeInvalid')
   }
 
   errors.value = newErrors
@@ -221,6 +345,145 @@ const handleSubmit = async (): Promise<void> => {
   }
 }
 
+const startResendTimer = (seconds: number) => {
+  resendTimer.value = seconds
+  const interval = setInterval(() => {
+    resendTimer.value -= 1
+    if (resendTimer.value <= 0) {
+      clearInterval(interval)
+    }
+  }, 1000)
+}
+
+const handleRegister = async (): Promise<void> => {
+  if (!validateForm()) {
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/send-code', {
+      method: 'POST',
+      body: {
+        email: formData.value.username,
+      },
+    })
+
+    attemptCount.value = response.attemptCount
+    showVerificationStep.value = true
+    toast({ type: 'success', message: t('auth.verificationCodeSent') })
+
+    startResendTimer(nextResendDelay.value)
+  }
+  catch (error) {
+    const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number, attemptCount?: number } } })?.data
+
+    if (errorData?.statusCode === 429) {
+      if (errorData.data?.waitSeconds) {
+        startResendTimer(errorData.data.waitSeconds)
+        toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
+      }
+      else {
+        maxAttemptsReached.value = true
+        toast({ type: 'error', message: t('auth.maxAttemptsExceeded') })
+      }
+    }
+    else {
+      toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    }
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+const handleVerifyCode = async (): Promise<void> => {
+  if (!validateVerificationCode()) {
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    const response = await $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/verify-code', {
+      method: 'POST',
+      body: {
+        email: formData.value.username,
+        code: verificationCode.value,
+        password: formData.value.password,
+        mainCurrency: 'USD',
+      },
+    })
+
+    const auth = useAuth()
+    auth.setUser(response)
+
+    if (import.meta.client) {
+      localStorage.setItem('hasSession', 'true')
+    }
+
+    await navigateAfterLogin()
+  }
+  catch (error) {
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+const handleResendCode = async (): Promise<void> => {
+  if (resendTimer.value > 0 || maxAttemptsReached.value) {
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/send-code', {
+      method: 'POST',
+      body: {
+        email: formData.value.username,
+      },
+    })
+
+    attemptCount.value = response.attemptCount
+    toast({ type: 'success', message: t('auth.verificationCodeSent') })
+
+    startResendTimer(nextResendDelay.value)
+  }
+  catch (error) {
+    const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number } } })?.data
+
+    if (errorData?.statusCode === 429) {
+      if (errorData.data?.waitSeconds) {
+        startResendTimer(errorData.data.waitSeconds)
+        toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
+      }
+      else {
+        maxAttemptsReached.value = true
+        toast({ type: 'error', message: t('auth.maxAttemptsExceeded') })
+      }
+    }
+    else {
+      toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    }
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+const backToEmailStep = (): void => {
+  showVerificationStep.value = false
+  verificationCode.value = ''
+  errors.value = {}
+  resendTimer.value = 0
+  attemptCount.value = 0
+  maxAttemptsReached.value = false
+}
+
 const handleGoogleLogin = async (): Promise<void> => {
   try {
     isGoogleLoading.value = true
@@ -242,6 +505,12 @@ watch(formData, () => {
     validateForm()
   }
 }, { deep: true })
+
+watch(verificationCode, () => {
+  if (errors.value.code) {
+    validateVerificationCode()
+  }
+})
 
 onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search)
