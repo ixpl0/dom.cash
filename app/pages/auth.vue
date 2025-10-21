@@ -112,10 +112,10 @@
             </div>
 
             <div
-              v-if="maxAttemptsReached"
-              class="alert alert-error text-sm"
+              v-if="attemptCount === 3"
+              class="alert alert-warning text-sm"
             >
-              <span>{{ t('auth.maxAttemptsExceeded') }}</span>
+              <span>{{ t('auth.lastAttemptSent') }}</span>
             </div>
           </div>
 
@@ -158,9 +158,10 @@
             </button>
 
             <button
+              v-if="attemptCount < 3"
               type="button"
               class="btn btn-outline btn-sm w-full"
-              :disabled="isLoading || resendTimer > 0 || maxAttemptsReached"
+              :disabled="isLoading || resendTimer > 0"
               @click="handleResendCode"
             >
               <span v-if="resendTimer > 0">
@@ -259,7 +260,6 @@ const isGoogleLoading = ref(false)
 const { toast } = useToast()
 const resendTimer = ref(0)
 const attemptCount = ref(0)
-const maxAttemptsReached = ref(false)
 
 const RESEND_DELAYS = [90, 180]
 
@@ -374,20 +374,16 @@ const handleRegister = async (): Promise<void> => {
     showVerificationStep.value = true
     toast({ type: 'success', message: t('auth.verificationCodeSent') })
 
-    startResendTimer(nextResendDelay.value)
+    if (response.attemptCount < 3) {
+      startResendTimer(nextResendDelay.value)
+    }
   }
   catch (error) {
     const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number, attemptCount?: number } } })?.data
 
-    if (errorData?.statusCode === 429) {
-      if (errorData.data?.waitSeconds) {
-        startResendTimer(errorData.data.waitSeconds)
-        toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
-      }
-      else {
-        maxAttemptsReached.value = true
-        toast({ type: 'error', message: t('auth.maxAttemptsExceeded') })
-      }
+    if (errorData?.statusCode === 429 && errorData.data?.waitSeconds) {
+      startResendTimer(errorData.data.waitSeconds)
+      toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
     }
     else {
       toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
@@ -434,7 +430,7 @@ const handleVerifyCode = async (): Promise<void> => {
 }
 
 const handleResendCode = async (): Promise<void> => {
-  if (resendTimer.value > 0 || maxAttemptsReached.value) {
+  if (resendTimer.value > 0 || attemptCount.value >= 3) {
     return
   }
 
@@ -451,20 +447,16 @@ const handleResendCode = async (): Promise<void> => {
     attemptCount.value = response.attemptCount
     toast({ type: 'success', message: t('auth.verificationCodeSent') })
 
-    startResendTimer(nextResendDelay.value)
+    if (response.attemptCount < 3) {
+      startResendTimer(nextResendDelay.value)
+    }
   }
   catch (error) {
     const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number } } })?.data
 
-    if (errorData?.statusCode === 429) {
-      if (errorData.data?.waitSeconds) {
-        startResendTimer(errorData.data.waitSeconds)
-        toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
-      }
-      else {
-        maxAttemptsReached.value = true
-        toast({ type: 'error', message: t('auth.maxAttemptsExceeded') })
-      }
+    if (errorData?.statusCode === 429 && errorData.data?.waitSeconds) {
+      startResendTimer(errorData.data.waitSeconds)
+      toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
     }
     else {
       toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
@@ -481,7 +473,6 @@ const backToEmailStep = (): void => {
   errors.value = {}
   resendTimer.value = 0
   attemptCount.value = 0
-  maxAttemptsReached.value = false
 }
 
 const handleGoogleLogin = async (): Promise<void> => {

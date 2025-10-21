@@ -5,17 +5,10 @@ import { emailVerificationCode, user } from '~~/server/db/schema'
 import { eq, and, gt } from 'drizzle-orm'
 import { createSession, setAuthCookie, hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
+import { emailSchema } from '~~/server/schemas/auth'
 
 const verifyCodeSchema = z.object({
-  email: z
-    .string()
-    .min(3)
-    .max(64)
-    .trim()
-    .regex(
-      /^[a-zA-Z0-9]([a-zA-Z0-9+._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/,
-      'Invalid email format',
-    ),
+  email: emailSchema,
   code: z.string().length(6),
   password: z.string().min(8).max(100),
   mainCurrency: z.string().length(3),

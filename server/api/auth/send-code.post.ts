@@ -3,25 +3,17 @@ import { z } from 'zod'
 import { Resend } from 'resend'
 import { parseBody } from '~~/server/utils/validation'
 import { emailVerificationCode, user } from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, lt } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
+import { emailSchema } from '~~/server/schemas/auth'
 
 const sendCodeSchema = z.object({
-  email: z
-    .string()
-    .min(3)
-    .max(64)
-    .trim()
-    .regex(/^[a-zA-Z0-9]([a-zA-Z0-9+._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/, 'Invalid email format'),
+  email: emailSchema,
 })
 
 const generateCode = (): string => {
-  const buf = new Uint32Array(1)
-  crypto.getRandomValues(buf)
-  const n = (buf[0] ?? 0) % 900000
-  const code = 100000 + n
-
-  return String(code)
+  const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0
+  return String(100000 + (randomValue % 900000))
 }
 
 const RATE_LIMITS = [
@@ -29,13 +21,17 @@ const RATE_LIMITS = [
   { attempt: 2, delaySeconds: 180 },
 ]
 
-const MAX_ATTEMPTS = 2
+const MAX_ATTEMPTS = 3
 const DEV_CODE = '111111'
 
 export default defineEventHandler(async (event) => {
   const { email } = await parseBody(event, sendCodeSchema)
   const db = useDatabase(event)
   const now = new Date()
+
+  await db
+    .delete(emailVerificationCode)
+    .where(lt(emailVerificationCode.expiresAt, now))
 
   const existingUser = await db.query.user.findFirst({
     where: eq(user.username, email),
@@ -78,11 +74,6 @@ export default defineEventHandler(async (event) => {
   const code = isExistingCodeValid ? existingCode.code : (isProduction ? generateCode() : DEV_CODE)
   const expiresAt = isExistingCodeValid ? existingCode.expiresAt : new Date(now.getTime() + 10 * 60 * 1000)
   const attemptCount = isExistingCodeValid ? existingCode.attemptCount + 1 : 1
-
-  await db
-    .delete(emailVerificationCode)
-    .where(eq(emailVerificationCode.email, email))
-
   const verificationId = isExistingCodeValid ? existingCode.id : crypto.randomUUID()
 
   await db
@@ -96,6 +87,15 @@ export default defineEventHandler(async (event) => {
       attemptCount,
       lastSentAt: now,
     })
+    .onConflictDoUpdate({
+      target: emailVerificationCode.id,
+      set: {
+        code,
+        expiresAt,
+        attemptCount,
+        lastSentAt: now,
+      },
+    })
 
   if (isProduction) {
     const resendApiKey = event.context.cloudflare?.env?.RESEND_API_KEY
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
 
     try {
       await resend.emails.send({
-        from: 'dom.cash <no-reply@auth.dom.cash>',
+        from: 'dom.cash <noreply@auth.dom.cash>',
         to: email,
         subject: 'Your verification code',
         html: `

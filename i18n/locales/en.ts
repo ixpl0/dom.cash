@@ -58,7 +58,7 @@ export default {
     backToEmail: 'Back to email',
     checkSpamFolder: 'If you don\'t see the email, please check your spam folder',
     checkSpamAndDelay: 'The email may arrive with a delay of a few minutes',
-    maxAttemptsExceeded: 'Maximum send attempts exceeded. Please try with a different email provider',
+    lastAttemptSent: 'This was the last email. If the code didn\'t arrive, try using an email from a different provider',
     pleaseWait: 'Please wait {seconds} seconds before requesting a new code',
   },
 
