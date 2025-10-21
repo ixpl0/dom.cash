@@ -16,4 +16,4 @@ Automated tests are currently minimal; validate behaviors through targeted unit 
 Commits follow Conventional Commit prefixes (`feat:`, `fix:`, `refactor:`, etc.) and should isolate coherent changes. Pull requests must include a clear summary, reproduction steps, linked issues, screenshots for visual updates, and note any DB migrations. Confirm `pnpm typecheck` and `pnpm lint` pass locally and mention any manual verification performed.
 
 ## Security & Configuration Tips
-Do not commit secrets; configure runtime values through Wrangler secrets (`wrangler secret put JWT_SECRET`). Verify D1 database IDs in `wrangler.toml` before deploying, and use `pnpm db:migrate` to apply schema updates. `pnpm db:reset` irreversibly wipes local data, so take backups with `pnpm db:backup`, `pnpm db:backup:test`, or `pnpm db:backup:prod` as needed.
+Use `pnpm db:migrate` to apply schema updates. `pnpm db:reset` irreversibly wipes local data, so take backups with `pnpm db:backup`, `pnpm db:backup:test`, or `pnpm db:backup:prod` as needed.

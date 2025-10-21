@@ -195,30 +195,6 @@ pnpm run lint
 pnpm run lint:fix
 ```
 
-## Cloudflare Deployment
-
-### Initial Setup
-
-1. **Login to Cloudflare**
-```bash
-wrangler login
-```
-
-2. **Create D1 databases** in Cloudflare Dashboard:
-- `dom-test` - for testing
-- `dom-prod` - for production
-
-3. **Update database IDs** in `wrangler.toml`
-
-4. **Set secrets**
-```bash
-# Test environment
-wrangler secret put JWT_SECRET --env=""
-
-# Production environment
-wrangler secret put JWT_SECRET --env production
-```
-
 ### Deploy Commands
 
 ```bash
