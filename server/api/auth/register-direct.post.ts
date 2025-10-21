@@ -1,21 +1,28 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { emailVerificationCode, user } from '~~/server/db/schema'
-import { eq, and, gt } from 'drizzle-orm'
+import { user } from '~~/server/db/schema'
+import { eq } from 'drizzle-orm'
 import { createSession, setAuthCookie, hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
+import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
 
-const verifyCodeSchema = z.object({
+const registerSchema = z.object({
   email: emailSchema,
-  code: z.string().length(6),
   password: z.string().min(8).max(100),
   mainCurrency: z.string().length(3),
 })
 
 export default defineEventHandler(async (event) => {
-  const { email, code, password, mainCurrency } = await parseBody(event, verifyCodeSchema)
+  if (!isEmailVerificationDisabled()) {
+    throw createError({
+      statusCode: 403,
+      message: 'Direct registration is disabled. Use email verification instead.',
+    })
+  }
+
+  const { email, password, mainCurrency } = await parseBody(event, registerSchema)
   const db = useDatabase(event)
   const now = new Date()
 
@@ -30,21 +37,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const verificationRecord = await db.query.emailVerificationCode.findFirst({
-    where: and(
-      eq(emailVerificationCode.email, email),
-      eq(emailVerificationCode.code, code),
-      gt(emailVerificationCode.expiresAt, now),
-    ),
-  })
-
-  if (!verificationRecord) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid or expired verification code',
-    })
-  }
-
   const passwordHash = await hashPassword(password)
 
   const [newUser] = await db
@@ -55,7 +47,7 @@ export default defineEventHandler(async (event) => {
       passwordHash,
       mainCurrency,
       createdAt: now,
-      emailVerified: true,
+      emailVerified: false,
     })
     .returning()
 
@@ -65,10 +57,6 @@ export default defineEventHandler(async (event) => {
       message: 'Failed to create user',
     })
   }
-
-  await db
-    .delete(emailVerificationCode)
-    .where(eq(emailVerificationCode.email, email))
 
   const token = await createSession(newUser.id, now, event)
   setAuthCookie(event, token)

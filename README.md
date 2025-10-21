@@ -124,6 +124,32 @@ pnpm run dev
 
 Visit `http://localhost:3000`
 
+### Environment Variables
+
+#### DISABLE_EMAIL_VERIFICATION
+
+Disables mandatory email verification during registration. Useful for development and testing.
+
+**Behavior**:
+- **Disabled** (default, empty or unset): Registration requires email confirmation via verification code
+- **Enabled** (any truthy value): Registration happens immediately without sending a code. User is created with `emailVerified = false`
+
+**Usage**:
+
+```bash
+# In .dev.vars for local development
+DISABLE_EMAIL_VERIFICATION=1
+# or
+DISABLE_EMAIL_VERIFICATION=true
+# or any non-empty value
+
+# Via wrangler for remote environments
+wrangler secret put DISABLE_EMAIL_VERIFICATION
+# Enter any truthy value: 1, true, yes, etc.
+```
+
+**Important**: All users have an `emailVerified` field in the database that indicates whether their email has been verified. This allows requiring verification from users with `emailVerified = false` in the future.
+
 ## Database Migrations
 
 This project uses **Wrangler D1 migrations** for Cloudflare deployment (NOT Drizzle migrations).
@@ -160,6 +186,11 @@ pnpm run db:migrate:prod
 
 - `0001_create_tables.sql` - All database tables
 - `0002_seed_currency_rates.sql` - Initial currency rates data
+- `0003_fix_august_2025_rates.sql` - Fix currency rates for August 2025
+- `0004_add_is_optional_to_entry.sql` - Add is_optional field to entry table
+- `0005_add_email_verification_codes.sql` - Add email verification codes table
+- `0006_add_attempt_count_to_verification_codes.sql` - Add attempt tracking to verification codes
+- `0007_add_email_verified_to_user.sql` - Add email_verified field to user table
 
 ### Database Commands
 

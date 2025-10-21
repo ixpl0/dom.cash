@@ -12,6 +12,7 @@ export const user = sqliteTable(
     googleId: text('google_id').unique(),
     mainCurrency: text('main_currency').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
   },
   t => [
     check('ck_user_currency_3_upper', sql`${t.mainCurrency} GLOB '[A-Z][A-Z][A-Z]'`),

@@ -155,6 +155,7 @@ export const createGoogleUser = async (username: string, googleId: string, mainC
     googleId,
     mainCurrency,
     createdAt: now,
+    emailVerified: true,
   })
 
   const created = await findUser(username, event)

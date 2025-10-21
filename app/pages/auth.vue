@@ -260,6 +260,7 @@ const isGoogleLoading = ref(false)
 const { toast } = useToast()
 const resendTimer = ref(0)
 const attemptCount = ref(0)
+const emailVerificationDisabled = ref(false)
 
 const RESEND_DELAYS = [90, 180]
 
@@ -363,19 +364,40 @@ const handleRegister = async (): Promise<void> => {
   isLoading.value = true
 
   try {
-    const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/send-code', {
-      method: 'POST',
-      body: {
-        email: formData.value.username,
-      },
-    })
+    if (emailVerificationDisabled.value) {
+      const response = await $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/register-direct', {
+        method: 'POST',
+        body: {
+          email: formData.value.username,
+          password: formData.value.password,
+          mainCurrency: 'USD',
+        },
+      })
 
-    attemptCount.value = response.attemptCount
-    showVerificationStep.value = true
-    toast({ type: 'success', message: t('auth.verificationCodeSent') })
+      const auth = useAuth()
+      auth.setUser(response)
 
-    if (response.attemptCount < 3) {
-      startResendTimer(nextResendDelay.value)
+      if (import.meta.client) {
+        localStorage.setItem('hasSession', 'true')
+      }
+
+      await navigateAfterLogin()
+    }
+    else {
+      const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/send-code', {
+        method: 'POST',
+        body: {
+          email: formData.value.username,
+        },
+      })
+
+      attemptCount.value = response.attemptCount
+      showVerificationStep.value = true
+      toast({ type: 'success', message: t('auth.verificationCodeSent') })
+
+      if (response.attemptCount < 3) {
+        startResendTimer(nextResendDelay.value)
+      }
     }
   }
   catch (error) {
@@ -504,6 +526,14 @@ watch(verificationCode, () => {
 })
 
 onMounted(async () => {
+  try {
+    const config = await $fetch<{ emailVerificationDisabled: boolean }>('/api/auth/config')
+    emailVerificationDisabled.value = config.emailVerificationDisabled
+  }
+  catch (error) {
+    console.error('Failed to load auth config:', error)
+  }
+
   const urlParams = new URLSearchParams(window.location.search)
   const code = urlParams.get('code')
   const state = urlParams.get('state')
