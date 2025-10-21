@@ -1,6 +1,5 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
-import { Resend } from 'resend'
 import { parseBody } from '~~/server/utils/validation'
 import { emailVerificationCode, user } from '~~/server/db/schema'
 import { eq, lt } from 'drizzle-orm'
@@ -103,27 +102,38 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, message: 'Email service not configured' })
     }
 
-    const resend = new Resend(resendApiKey)
-
     try {
-      await resend.emails.send({
-        from: 'dom.cash <noreply@auth.dom.cash>',
-        to: email,
-        subject: 'Your verification code',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width:600px; margin:0 auto;">
-            <h2>Welcome to dom.cash</h2>
-            <p>Your verification code:</p>
-            <div style="background:#f4f4f4; padding:20px; text-align:center; font-size:32px; font-weight:700; letter-spacing:6px; margin:20px 0;">
-              ${code}
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'dom.cash <noreply@auth.dom.cash>',
+          to: [email],
+          subject: 'Your verification code',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width:600px; margin:0 auto;">
+              <h2>Welcome to dom.cash</h2>
+              <p>Your verification code:</p>
+              <div style="background:#f4f4f4; padding:20px; text-align:center; font-size:32px; font-weight:700; letter-spacing:6px; margin:20px 0;">
+                ${code}
+              </div>
+              <p>The code expires in 10 minutes.</p>
+              <p>If you didn't request it, just ignore this email.</p>
             </div>
-            <p>The code expires in 10 minutes.</p>
-            <p>If you didn't request it, just ignore this email.</p>
-          </div>
-        `,
-        text: `Your verification code: ${code}\nIt expires in 10 minutes.`,
-        tags: [{ name: 'type', value: 'verification' }],
+          `,
+          text: `Your verification code: ${code}\nIt expires in 10 minutes.`,
+          tags: [{ name: 'type', value: 'verification' }],
+        }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Resend API error:', errorData)
+        throw new Error('Resend API request failed')
+      }
     }
     catch {
       throw createError({ statusCode: 500, message: 'Failed to send verification code' })
