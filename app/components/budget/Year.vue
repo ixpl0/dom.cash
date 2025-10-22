@@ -16,7 +16,7 @@
       <div :ref="setHeaderRef(0)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex"
             :data-tip="t('budget.year.balanceTooltip')"
           >
             {{ t('budget.year.balance') }}
@@ -42,7 +42,7 @@
       <div :ref="setHeaderRef(1)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex"
             :data-tip="t('budget.year.incomeTooltip')"
           >
             {{ t('budget.year.income') }}
@@ -79,7 +79,7 @@
       <div :ref="setHeaderRef(2)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
             :data-tip="t('budget.year.majorExpensesTooltip')"
           >
             <span>{{ t('budget.year.majorExpensesLine1') }}</span>
@@ -117,7 +117,7 @@
       <div :ref="setHeaderRef(3)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
             :data-tip="t('budget.year.pocketExpensesFormula')"
           >
             <span>{{ t('budget.year.pocketExpensesLine1') }}</span>
@@ -157,7 +157,7 @@
       <div :ref="setHeaderRef(4)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex"
             :data-tip="t('budget.year.allExpensesFormula')"
           >
             {{ t('budget.year.allExpenses') }}
@@ -196,7 +196,7 @@
       <div :ref="setHeaderRef(5)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
             :data-tip="t('budget.year.balanceChangeFormula')"
           >
             <span>{{ t('budget.year.balanceChangeLine1') }}</span>
@@ -236,7 +236,7 @@
       <div :ref="setHeaderRef(6)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
             :data-tip="t('budget.year.currencyFluctuationsFormula')"
           >
             <span>{{ t('budget.year.currencyFluctuationsLine1') }}</span>
@@ -276,7 +276,7 @@
       <div :ref="setHeaderRef(7)">
         <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
           <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col justify-center"
+            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
             :data-tip="t('budget.year.optionalExpensesTooltip')"
           >
             <span>{{ t('budget.year.optionalExpensesLine1') }}</span>
