@@ -382,7 +382,8 @@ export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
 
   const exportBudget = async (): Promise<void> => {
     if (!isOwnBudget.value) {
-      throw new Error('Экспорт доступен только для собственного бюджета')
+      const t = useT()
+      throw new Error(t('budget.exportOnlyOwnBudget'))
     }
 
     try {

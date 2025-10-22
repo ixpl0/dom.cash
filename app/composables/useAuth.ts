@@ -94,7 +94,8 @@ export const useAuth = () => {
     }
     catch (error) {
       console.error('Failed to redirect to Google OAuth:', error)
-      throw new Error('Не удалось перенаправить на Google OAuth')
+      const t = useT()
+      throw new Error(t('auth.googleRedirectError'))
     }
   }
 

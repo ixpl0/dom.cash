@@ -47,6 +47,7 @@ export default {
     unexpectedError: 'An unexpected error occurred',
     googleError: 'An error occurred during Google login',
     googleOAuthError: 'Error processing Google OAuth',
+    googleRedirectError: 'Failed to redirect to Google OAuth',
     verificationCodeSent: 'Code sent to the email you provided',
     verificationCode: 'Verification code',
     verificationCodePlaceholder: 'Enter 6-digit code',
@@ -89,6 +90,7 @@ export default {
     yearWord: 'year',
     currencyUpdateError: 'Failed to update currency. Please try again.',
     exportError: 'Failed to export budget. Please try again.',
+    exportOnlyOwnBudget: 'Export is only available for your own budget',
 
     toast: {
       createNextMonthError: 'Failed to create next month. Please try again.',
@@ -206,6 +208,23 @@ export default {
     deleteIncome: 'income',
     deleteExpense: 'expense',
     deleteConfirm: 'Delete',
+    deleteMessageWithEntry: 'Entry {entryType}',
+    deleteMessageFallback: 'This entry {entryType}',
+
+    balance: {
+      title: 'Balance Sources',
+      emptyMessage: 'No balance sources yet',
+    },
+
+    income: {
+      title: 'Income',
+      emptyMessage: 'No income yet',
+    },
+
+    expense: {
+      title: 'Major Expenses',
+      emptyMessage: 'No major expenses yet',
+    },
 
     errors: {
       descriptionRequired: 'Please enter a description',
@@ -249,6 +268,7 @@ export default {
     deleteTitle: 'Revoke access',
     deleteMessage: 'Are you sure you want to revoke budget access from',
     deleteConfirm: 'Revoke',
+    usernameFallback: 'this user',
     enterUsername: 'Enter username',
     accessGranted: 'Access granted successfully',
     accessGrantError: 'Failed to grant access',
@@ -317,6 +337,12 @@ export default {
     titleSuccess: 'Success',
     confirm: 'Confirm',
     cancel: 'Cancel',
+  },
+
+  unsavedChanges: {
+    title: 'Unsaved changes',
+    message: 'You have unsaved changes. Are you sure you want to close?',
+    confirmText: 'Close without saving',
   },
 
   theme: {

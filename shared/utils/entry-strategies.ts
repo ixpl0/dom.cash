@@ -2,16 +2,16 @@ import type { MonthData, BalanceSourceData, IncomeEntryData, ExpenseEntryData } 
 import type { EntryKind } from '~~/server/db/schema'
 
 interface EntryConfig {
-  title: string
-  emptyMessage: string
+  titleKey: string
+  emptyMessageKey: string
   arrayKey: keyof MonthData
   createEntry: (data: { id: string, description: string, amount: number, currency: string, date?: string | null, isOptional?: boolean }) => BalanceSourceData | IncomeEntryData | ExpenseEntryData
 }
 
 export const entryStrategies: Record<EntryKind, EntryConfig> = {
   balance: {
-    title: 'Источники баланса',
-    emptyMessage: 'Пока нет источников баланса',
+    titleKey: 'entry.balance.title',
+    emptyMessageKey: 'entry.balance.emptyMessage',
     arrayKey: 'balanceSources',
     createEntry: data => ({
       id: data.id,
@@ -21,8 +21,8 @@ export const entryStrategies: Record<EntryKind, EntryConfig> = {
     } as BalanceSourceData),
   },
   income: {
-    title: 'Доходы',
-    emptyMessage: 'Пока нет доходов',
+    titleKey: 'entry.income.title',
+    emptyMessageKey: 'entry.income.emptyMessage',
     arrayKey: 'incomeEntries',
     createEntry: data => ({
       id: data.id,
@@ -33,8 +33,8 @@ export const entryStrategies: Record<EntryKind, EntryConfig> = {
     } as IncomeEntryData),
   },
   expense: {
-    title: 'Крупные расходы',
-    emptyMessage: 'Пока нет крупных расходов',
+    titleKey: 'entry.expense.title',
+    emptyMessageKey: 'entry.expense.emptyMessage',
     arrayKey: 'expenseEntries',
     createEntry: data => ({
       id: data.id,

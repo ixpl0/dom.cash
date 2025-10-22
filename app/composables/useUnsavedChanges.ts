@@ -10,17 +10,19 @@ export const useUnsavedChanges = () => {
     hasUnsavedChanges.value = false
   }
 
-  const confirmClose = async (message = 'У вас есть несохранённые изменения. Вы уверены, что хотите закрыть?'): Promise<boolean> => {
+  const confirmClose = async (message?: string): Promise<boolean> => {
     if (!hasUnsavedChanges.value) {
       return true
     }
 
+    const t = useT()
+
     return await confirm({
-      title: 'Несохранённые изменения',
-      message,
+      title: t('unsavedChanges.title'),
+      message: message || t('unsavedChanges.message'),
       variant: 'warning',
-      confirmText: 'Закрыть без сохранения',
-      cancelText: 'Отмена',
+      confirmText: t('unsavedChanges.confirmText'),
+      cancelText: t('common.cancel'),
     })
   }
 

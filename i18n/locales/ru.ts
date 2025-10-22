@@ -47,6 +47,7 @@ export default {
     unexpectedError: 'Произошла неожиданная ошибка',
     googleError: 'Произошла ошибка при входе через Google',
     googleOAuthError: 'Ошибка при обработке Google OAuth',
+    googleRedirectError: 'Не удалось перенаправить на Google OAuth',
     verificationCodeSent: 'Код отправлен на указанный вами email',
     verificationCode: 'Код подтверждения',
     verificationCodePlaceholder: 'Введите 6-значный код',
@@ -89,6 +90,7 @@ export default {
     yearWord: 'год',
     currencyUpdateError: 'Не удалось обновить валюту. Попробуйте ещё раз.',
     exportError: 'Не удалось экспортировать бюджет. Попробуйте ещё раз.',
+    exportOnlyOwnBudget: 'Экспорт доступен только для собственного бюджета',
 
     toast: {
       createNextMonthError: 'Не удалось создать следующий месяц. Попробуйте ещё раз.',
@@ -206,6 +208,23 @@ export default {
     deleteIncome: 'дохода',
     deleteExpense: 'расхода',
     deleteConfirm: 'Удалить',
+    deleteMessageWithEntry: 'Запись {entryType}',
+    deleteMessageFallback: 'Эта запись {entryType}',
+
+    balance: {
+      title: 'Источники баланса',
+      emptyMessage: 'Пока нет источников баланса',
+    },
+
+    income: {
+      title: 'Доходы',
+      emptyMessage: 'Пока нет доходов',
+    },
+
+    expense: {
+      title: 'Крупные расходы',
+      emptyMessage: 'Пока нет крупных расходов',
+    },
 
     errors: {
       descriptionRequired: 'Введите описание',
@@ -249,6 +268,7 @@ export default {
     deleteTitle: 'Удаление доступа',
     deleteMessage: 'Вы действительно хотите отозвать доступ к бюджету у',
     deleteConfirm: 'Удалить',
+    usernameFallback: 'этого пользователя',
     enterUsername: 'Введите имя пользователя',
     accessGranted: 'Доступ успешно предоставлен',
     accessGrantError: 'Не удалось предоставить доступ',
@@ -317,6 +337,12 @@ export default {
     titleSuccess: 'Успех',
     confirm: 'Подтвердить',
     cancel: 'Отмена',
+  },
+
+  unsavedChanges: {
+    title: 'Несохранённые изменения',
+    message: 'У вас есть несохранённые изменения. Вы уверены, что хотите закрыть?',
+    confirmText: 'Закрыть без сохранения',
   },
 
   theme: {

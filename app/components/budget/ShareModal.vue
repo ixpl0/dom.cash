@@ -337,7 +337,7 @@ const saveShare = async (): Promise<void> => {
 
 const deleteShare = async (id: string): Promise<void> => {
   const share = shares.value.find(s => s.id === id)
-  const shareUsername = share ? share.username : 'этого пользователя'
+  const shareUsername = share ? share.username : t('share.usernameFallback')
 
   const { confirm } = useConfirmation()
   const confirmed = await confirm({

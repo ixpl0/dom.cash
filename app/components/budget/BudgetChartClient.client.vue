@@ -31,7 +31,6 @@ type ECOption = ComposeOption<
   | DataZoomComponentOption
 >
 
-// Регистрируем компоненты ECharts локально
 use([
   CanvasRenderer,
   LineChart,

@@ -20,7 +20,7 @@ export interface EntryFormState {
 }
 
 export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>) => {
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const isAdding = ref(false)
   const isDeleting = ref<string | null>(null)
   const editingEntryId = ref<string | null>(null)
@@ -88,8 +88,8 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
   const kindValue = computed(() => unref(entryKind) || 'balance')
   const config = computed(() => getEntryConfig(kindValue.value))
 
-  const getModalTitle = (): string => config.value.title
-  const getEmptyMessage = (): string => config.value.emptyMessage
+  const getModalTitle = (): string => t(config.value.titleKey)
+  const getEmptyMessage = (): string => t(config.value.emptyMessageKey)
 
   return {
     isAdding,
