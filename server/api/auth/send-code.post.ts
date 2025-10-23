@@ -21,7 +21,7 @@ const RATE_LIMITS = [
 ]
 
 const MAX_ATTEMPTS = 3
-const DEV_CODE = '111111'
+const DEV_VERIFICATION_CODE = '111111'
 
 export default defineEventHandler(async (event) => {
   const { email } = await parseBody(event, sendCodeSchema)
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
 
   const isProduction = process.env.NODE_ENV === 'production'
   const isExistingCodeValid = existingCode && existingCode.expiresAt > now
-  const code = isExistingCodeValid ? existingCode.code : (isProduction ? generateCode() : DEV_CODE)
+  const code = isExistingCodeValid ? existingCode.code : (isProduction ? generateCode() : DEV_VERIFICATION_CODE)
   const expiresAt = isExistingCodeValid ? existingCode.expiresAt : new Date(now.getTime() + 10 * 60 * 1000)
   const attemptCount = isExistingCodeValid ? existingCode.attemptCount + 1 : 1
   const verificationId = isExistingCodeValid ? existingCode.id : crypto.randomUUID()

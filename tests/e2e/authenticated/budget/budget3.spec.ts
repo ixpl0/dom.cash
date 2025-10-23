@@ -18,6 +18,7 @@ test.describe('Budget page historical testing', () => {
 
   test('should add previous month and manage year setup', async ({ page }) => {
     await initBudget(page, 'clp-currency')
+    await waitForHydration(page)
 
     const addMonthPreviousButton = page.getByTestId('add-month-previous')
 
@@ -50,6 +51,7 @@ test.describe('Budget page historical testing', () => {
 
   test('should display currency fluctuations in month and year stats', async ({ page }) => {
     await initBudget(page, 'two-months-clp')
+    await waitForHydration(page)
 
     const months = page.getByTestId('budget-month')
     const secondMonth = months.nth(1)
@@ -75,6 +77,7 @@ test.describe('Budget page historical testing', () => {
 
   test('should open chart modal with canvas and close it', async ({ page }) => {
     await initBudget(page, 'two-months-clp')
+    await waitForHydration(page)
 
     const chartButton = page.getByTestId('chart-button')
     await expect(chartButton).toBeVisible()
@@ -93,6 +96,7 @@ test.describe('Budget page historical testing', () => {
 
   test('should export budget data as JSON file', async ({ page }) => {
     await initBudget(page, 'two-months-clp')
+    await waitForHydration(page)
 
     const downloadPromise = page.waitForEvent('download')
 

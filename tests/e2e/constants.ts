@@ -4,3 +4,5 @@ export const INPUT_LIMITS = {
   PASSWORD_MIN: 8,
   PASSWORD_MAX: 100,
 }
+
+export const DEV_VERIFICATION_CODE = '111111'

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { INPUT_LIMITS } from '../constants'
+import { INPUT_LIMITS, DEV_VERIFICATION_CODE } from '../constants'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Authentication', () => {
@@ -10,9 +10,9 @@ test.describe('Authentication', () => {
 
   test('auth page displays correctly', async ({ page }) => {
     await expect(page.getByTestId('welcome-text')).toBeVisible()
-    await expect(page.getByTestId('username-input')).toBeVisible()
+    await expect(page.getByTestId('email-input')).toBeVisible()
     await expect(page.getByTestId('password-input')).toBeVisible()
-    await expect(page.getByTestId('submit-btn')).toBeVisible()
+    await expect(page.getByTestId('login-btn')).toBeVisible()
     await expect(page.getByTestId('google-auth-btn')).toBeVisible()
   })
 
@@ -22,7 +22,7 @@ test.describe('Authentication', () => {
   })
 
   test('form inputs enforce minimum length via HTML5 validation', async ({ page }) => {
-    const usernameInput = page.getByTestId('username-input')
+    const usernameInput = page.getByTestId('email-input')
     const passwordInput = page.getByTestId('password-input')
 
     await usernameInput.fill('ab')
@@ -36,7 +36,7 @@ test.describe('Authentication', () => {
   })
 
   test('form inputs enforce maximum length via HTML5 validation', async ({ page }) => {
-    const usernameInput = page.getByTestId('username-input')
+    const usernameInput = page.getByTestId('email-input')
     const passwordInput = page.getByTestId('password-input')
 
     const longUsername = 'a'.repeat(INPUT_LIMITS.USERNAME_MAX + 1)
@@ -52,12 +52,14 @@ test.describe('Authentication', () => {
     expect(actualPassword.length).toBe(INPUT_LIMITS.PASSWORD_MAX)
   })
 
-  test('successful login redirects to home page', async ({ page }) => {
+  test('successful registration redirects to home page', async ({ page }) => {
     const testUsername = `test_${Date.now()}@example.com`
 
-    await page.getByTestId('username-input').fill(testUsername)
+    await page.getByTestId('email-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
-    await page.getByTestId('submit-btn').click()
+    await page.getByTestId('register-btn').click()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
 
     await page.waitForURL('/')
     await expect(page).toHaveURL('/')
@@ -72,10 +74,12 @@ test.describe('Authentication', () => {
 
     const testUsername = `test_${Date.now()}@example.com`
 
-    await page.getByTestId('username-input').fill(testUsername)
+    await page.getByTestId('email-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
+    await page.getByTestId('register-btn').click()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
 
-    await page.getByTestId('submit-btn').click()
     await page.waitForURL('/budget')
     await expect(page).toHaveURL('/budget')
   })
@@ -89,54 +93,30 @@ test.describe('Authentication', () => {
   test('redirect parameter is preserved in URL', async ({ page }) => {
     await page.goto('/auth?redirect=/budget')
     await expect(page).toHaveURL('/auth?redirect=/budget')
-
-    const googleButton = page.getByTestId('google-auth-btn')
-    await expect(googleButton).toBeVisible()
   })
 
-  test('button is clickable when form is valid', async ({ page }) => {
-    await page.getByTestId('username-input').fill('testuser')
-    await page.getByTestId('password-input').fill('password123')
-
-    const submitButton = page.getByTestId('submit-btn')
-    await expect(submitButton).toBeEnabled()
-  })
-
-  test('form can be submitted with valid data', async ({ page }) => {
-    await page.getByTestId('username-input').fill('testuser')
-    await page.getByTestId('password-input').fill('password123')
-
-    const canSubmit = await page.getByTestId('submit-btn').evaluate((btn: HTMLButtonElement) => {
-      const form = btn.closest('form')
-      return form ? form.checkValidity() : false
-    })
-
-    expect(canSubmit).toBe(true)
-  })
-
-  test('both login and Google OAuth buttons are visible', async ({ page }) => {
-    const submitButton = page.getByTestId('submit-btn')
+  test('login, register and Google OAuth buttons are visible and enabled', async ({ page }) => {
+    const loginButton = page.getByTestId('login-btn')
+    const registerButton = page.getByTestId('register-btn')
     const googleButton = page.getByTestId('google-auth-btn')
 
-    await expect(submitButton).toBeVisible()
+    await expect(loginButton).toBeVisible()
+    await expect(registerButton).toBeVisible()
     await expect(googleButton).toBeVisible()
-    await expect(submitButton).toBeEnabled()
+    await expect(loginButton).toBeEnabled()
+    await expect(registerButton).toBeEnabled()
     await expect(googleButton).toBeEnabled()
   })
 
-  test('home button is visible', async ({ page }) => {
-    const homeButton = page.getByTestId('home-btn')
-    await expect(homeButton).toBeVisible()
-  })
-
   test('form inputs have correct attributes', async ({ page }) => {
-    const usernameInput = page.getByTestId('username-input')
+    const emailInput = page.getByTestId('email-input')
     const passwordInput = page.getByTestId('password-input')
 
-    await expect(usernameInput).toHaveAttribute('minlength', INPUT_LIMITS.USERNAME_MIN.toString())
-    await expect(usernameInput).toHaveAttribute('maxlength', INPUT_LIMITS.USERNAME_MAX.toString())
-    await expect(usernameInput).toHaveAttribute('required', '')
-    await expect(usernameInput).toHaveAttribute('autocomplete', 'username')
+    await expect(emailInput).toHaveAttribute('minlength', INPUT_LIMITS.USERNAME_MIN.toString())
+    await expect(emailInput).toHaveAttribute('maxlength', INPUT_LIMITS.USERNAME_MAX.toString())
+    await expect(emailInput).toHaveAttribute('required', '')
+    await expect(emailInput).toHaveAttribute('type', 'email')
+    await expect(emailInput).toHaveAttribute('autocomplete', 'email')
 
     await expect(passwordInput).toHaveAttribute('minlength', INPUT_LIMITS.PASSWORD_MIN.toString())
     await expect(passwordInput).toHaveAttribute('maxlength', INPUT_LIMITS.PASSWORD_MAX.toString())
@@ -145,12 +125,9 @@ test.describe('Authentication', () => {
     await expect(passwordInput).toHaveAttribute('autocomplete', 'current-password')
   })
 
-  test('informational text about auto registration', async ({ page }) => {
-    await expect(page.getByTestId('auto-register-text')).toBeVisible()
-  })
-
   test('home button navigates to home page', async ({ page }) => {
     const homeButton = page.getByTestId('home-btn')
+
     await expect(homeButton).toBeVisible()
     await homeButton.click()
     await page.waitForURL('/')
@@ -162,9 +139,11 @@ test.describe('Authentication', () => {
     const correctPassword = 'TestPassword123!'
     const incorrectPassword = 'WrongPassword456!'
 
-    await page.getByTestId('username-input').fill(testUsername)
+    await page.getByTestId('email-input').fill(testUsername)
     await page.getByTestId('password-input').fill(correctPassword)
-    await page.getByTestId('submit-btn').click()
+    await page.getByTestId('register-btn').click()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
 
     await page.waitForURL('/')
     const userDropdown = page.getByTestId('user-dropdown')
@@ -180,9 +159,9 @@ test.describe('Authentication', () => {
     await page.goto('/auth')
     await waitForHydration(page)
 
-    await page.getByTestId('username-input').fill(testUsername)
+    await page.getByTestId('email-input').fill(testUsername)
     await page.getByTestId('password-input').fill(incorrectPassword)
-    await page.getByTestId('submit-btn').click()
+    await page.getByTestId('login-btn').click()
 
     await expect(page).toHaveURL('/auth')
   })

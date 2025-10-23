@@ -29,8 +29,8 @@
               minlength="3"
               maxlength="64"
               :disabled="isLoading"
-              autocomplete="username"
-              data-testid="username-input"
+              autocomplete="email"
+              data-testid="email-input"
             >
             <label
               v-if="errors.username"
@@ -70,7 +70,7 @@
               type="submit"
               class="btn btn-primary w-full"
               :disabled="isLoading"
-              data-testid="submit-btn"
+              data-testid="login-btn"
             >
               <span
                 v-if="isLoading"
