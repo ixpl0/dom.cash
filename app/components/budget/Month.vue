@@ -257,6 +257,7 @@ import { formatAmountRounded } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/month-helpers'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
+import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 
 interface Props {
   monthId: string
@@ -389,7 +390,12 @@ const canDeleteMonth = computed(() => {
 
 const handleDeleteMonth = async (): Promise<void> => {
   const monthName = `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
-  const confirmMessage = `${t('budget.month.deleteConfirmMessage')} <strong>${monthName}</strong> ${t('budget.month.deleteConfirmWillBeDeleted')}`
+
+  const confirmMessage: ConfirmationModalMessage = [
+    t('budget.month.deleteConfirmMessage'),
+    { text: monthName, isBold: true },
+    t('budget.month.deleteConfirmWillBeDeleted'),
+  ]
 
   const { confirm } = useConfirmation()
   const confirmed = await confirm({

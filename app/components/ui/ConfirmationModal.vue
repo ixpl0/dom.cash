@@ -27,8 +27,32 @@
         {{ title }}
       </h3>
 
-      <div class="text-base-content/70 mb-8 leading-relaxed">
+      <div
+        v-if="typeof options.message === 'string'"
+        class="text-base-content/70 mb-8 leading-relaxed"
+      >
         {{ options.message }}
+      </div>
+      <div
+        v-else
+        class="text-base-content/70 mb-8 leading-relaxed"
+      >
+        <template
+          v-for="(item, index) in options.message"
+          :key="index"
+        >
+          <span v-if="typeof item === 'string'">
+            {{ item }}
+          </span>
+          <span v-else-if="'text' in item && !item.isBold">
+            {{ item.text }}
+          </span>
+          <b v-else-if="'text' in item && item.isBold">
+            {{ item.text }}
+          </b>
+          <br v-else-if="'isDivider' in item && item.isDivider">
+          {{ ' ' }}
+        </template>
       </div>
 
       <div class="flex gap-3 justify-center flex-wrap">
@@ -57,9 +81,20 @@
 </template>
 
 <script setup lang="ts">
+export interface ConfirmationModalMessageItem {
+  text: string
+  isBold?: boolean
+}
+
+export interface ConfirmationModalMessageDivider {
+  isDivider: true
+}
+
+export type ConfirmationModalMessage = Array<ConfirmationModalMessageItem | ConfirmationModalMessageDivider | string>
+
 export interface ConfirmationModalOptions {
   title?: string
-  message: string
+  message: string | ConfirmationModalMessage
   confirmText?: string
   cancelText?: string
   variant?: 'danger' | 'warning' | 'info' | 'success'

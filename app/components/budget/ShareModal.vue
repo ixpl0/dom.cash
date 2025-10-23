@@ -213,6 +213,7 @@
 <script setup lang="ts">
 import { getErrorMessage } from '~~/shared/utils/errors'
 import { useModalsStore } from '~/stores/modals'
+import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 
 interface ShareEntry {
   id: string
@@ -338,11 +339,16 @@ const saveShare = async (): Promise<void> => {
 const deleteShare = async (id: string): Promise<void> => {
   const share = shares.value.find(s => s.id === id)
   const shareUsername = share ? share.username : t('share.usernameFallback')
-
   const { confirm } = useConfirmation()
+
+  const message: ConfirmationModalMessage = [
+    t('share.deleteMessage'),
+    { text: shareUsername, isBold: true },
+  ]
+
   const confirmed = await confirm({
     title: t('share.deleteTitle'),
-    message: `${t('share.deleteMessage')} <strong>${shareUsername}</strong>?`,
+    message,
     variant: 'danger',
     confirmText: t('share.deleteConfirm'),
     cancelText: t('common.cancel'),

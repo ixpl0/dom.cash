@@ -189,6 +189,7 @@ import { formatAmount } from '~~/shared/utils/budget'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
 import type { BudgetEntry } from '~~/shared/types/budget'
+import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
@@ -336,6 +337,16 @@ const addEntry = async (): Promise<void> => {
   }
 }
 
+const getDeleteEntryConfirmMessage = (
+  entry: BudgetEntry,
+  entryType: string,
+): ConfirmationModalMessage => [
+  `${t('entry.deleteMessageWithEntry', { entryType })}:`,
+  { text: entry.description, isBold: true },
+  { isDivider: true },
+  { text: formatAmount(entry.amount, entry.currency), isBold: true },
+]
+
 const deleteEntry = async (entryId: string): Promise<void> => {
   if (isDeleting.value) return
 
@@ -348,7 +359,7 @@ const deleteEntry = async (entryId: string): Promise<void> => {
       : t('entry.deleteExpense')
 
   const confirmMessage = entry
-    ? `${t('entry.deleteMessageWithEntry', { entryType })}: <strong>"${entry.description}"</strong><br><strong>${formatAmount(entry.amount, entry.currency)}</strong>`
+    ? getDeleteEntryConfirmMessage(entry, entryType)
     : t('entry.deleteMessageFallback', { entryType })
 
   const { confirm } = useConfirmation()

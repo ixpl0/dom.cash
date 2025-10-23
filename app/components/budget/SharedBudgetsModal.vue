@@ -99,8 +99,12 @@ const isOpen = computed(() => modalsStore.sharedBudgetsModal.isOpen)
 
 const revokeAccess = async (id: string): Promise<void> => {
   const budget = sharedBudgets.value.find(b => b.id === id)
+
   const confirmMessage = budget
-    ? `${t('sharedBudgets.revokeMessage')} <strong>${budget.username}</strong>`
+    ? [
+        t('sharedBudgets.revokeMessage'),
+        { text: budget.username, isBold: true },
+      ]
     : t('sharedBudgets.revokeThisBudget')
 
   const { confirm } = useConfirmation()
