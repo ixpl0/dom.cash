@@ -1,5 +1,6 @@
 <template>
   <UiDialog
+    ref="modalRef"
     :is-open="isOpen"
     data-testid="entry-modal"
     content-class="modal-box w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] flex flex-col overflow-visible"
@@ -283,6 +284,7 @@ const performDeleteEntry = async (entryId: string) => {
 }
 
 const focusField = ref<string | null>(null)
+const modalRef = ref<{ $el: HTMLElement } | null>(null)
 
 const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
   if (entryModal.value.isReadOnly) return
@@ -434,7 +436,7 @@ watch(editingEntryId, async (newEditingId) => {
     }
 
     if (selector) {
-      const element = document.querySelector(selector) as HTMLInputElement
+      const element = modalRef.value?.$el?.querySelector(selector) as HTMLInputElement
 
       if (element) {
         if (focusField.value === 'currency') {
