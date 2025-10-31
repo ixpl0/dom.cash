@@ -43,7 +43,7 @@
   --size-field: 0.24rem;
   --border: 1.5px;
   --depth: 1;
-  --noise: 1;
+  --noise: 0;
   --logo-contours: var(--color-base-100);
   --logo-face: var(--color-base-content);
   --logo-cheeks: var(--color-error);
@@ -81,7 +81,7 @@
   --size-field: 0.24rem;
   --border: 1.5px;
   --depth: 1;
-  --noise: 1;
+  --noise: 0;
   --logo-contours: var(--color-base-content);
   --logo-face: var(--color-base-100);
   --logo-cheeks: var(--color-error);
