@@ -1,11 +1,13 @@
 import { requireAuth } from '~~/server/utils/session'
 import { saveHistoricalRatesForCurrentMonth } from '~~/server/utils/rates/database'
+import { clearRatesCache } from '~~/server/services/months'
 
 export default defineEventHandler(async (event) => {
   await requireAuth(event)
 
   try {
     await saveHistoricalRatesForCurrentMonth(event)
+    clearRatesCache()
     return { success: true, message: 'Currency rates updated successfully' }
   }
   catch (error) {
