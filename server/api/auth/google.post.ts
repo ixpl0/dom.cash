@@ -13,7 +13,7 @@ const googleAuthSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const { token, mainCurrency } = await parseBody(event, googleAuthSchema)
+  const { token } = await parseBody(event, googleAuthSchema)
 
   try {
     const googleUserInfo = await verifyGoogleToken(token)
@@ -45,8 +45,6 @@ export default defineEventHandler(async (event) => {
         authenticatedUser = await createGoogleUser(
           googleUserInfo.email,
           googleUserInfo.id,
-          mainCurrency,
-          now,
           event,
         )
       }
@@ -66,6 +64,7 @@ export default defineEventHandler(async (event) => {
       id: authenticatedUser.id,
       username: authenticatedUser.username,
       mainCurrency: authenticatedUser.mainCurrency,
+      isAdmin: authenticatedUser.isAdmin,
     }
   }
   catch (error) {

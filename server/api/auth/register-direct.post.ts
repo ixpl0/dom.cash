@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { createSession, setAuthCookie, hashPassword } from '~~/server/utils/auth'
+import { createSession, setAuthCookie, hashPassword, createUserInDb } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
 import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
@@ -11,7 +11,6 @@ import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
 const registerSchema = z.object({
   email: emailSchema,
   password: z.string().min(8).max(100),
-  mainCurrency: z.string().length(3),
 })
 
 export default defineEventHandler(async (event) => {
@@ -22,7 +21,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { email, password, mainCurrency } = await parseBody(event, registerSchema)
+  const { email, password } = await parseBody(event, registerSchema)
   const db = useDatabase(event)
   const now = new Date()
 
@@ -39,24 +38,10 @@ export default defineEventHandler(async (event) => {
 
   const passwordHash = await hashPassword(password)
 
-  const [newUser] = await db
-    .insert(user)
-    .values({
-      id: crypto.randomUUID(),
-      username: email,
-      passwordHash,
-      mainCurrency,
-      createdAt: now,
-      emailVerified: false,
-    })
-    .returning()
-
-  if (!newUser) {
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to create user',
-    })
-  }
+  const newUser = await createUserInDb(
+    event,
+    { username: email, passwordHash },
+  )
 
   const token = await createSession(newUser.id, now, event)
   setAuthCookie(event, token)

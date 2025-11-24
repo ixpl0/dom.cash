@@ -127,42 +127,48 @@ export const findUser = async (username: string, event: H3Event) => {
   })
 }
 
-export const createUser = async (username: string, password: string, mainCurrency: string, now: Date, event: H3Event) => {
+type CreateUserParams = {
+  username: string
+  passwordHash?: string
+  googleId?: string
+  emailVerified?: boolean
+  mainCurrency?: string
+}
+
+export const createUserInDb = async (event: H3Event, params: CreateUserParams) => {
   const database = useDatabase(event)
-  const passwordHash = await hashPassword(password)
+  const mainCurrency = params.mainCurrency ?? 'USD'
+  const emailVerified = params.emailVerified ?? false
+  const createdAt = new Date()
 
   await database.insert(user).values({
     id: crypto.randomUUID(),
-    username,
-    passwordHash,
+    username: params.username,
     mainCurrency,
-    createdAt: now,
+    createdAt,
+    isAdmin: false,
+    passwordHash: params.passwordHash,
+    googleId: params.googleId,
+    emailVerified,
   })
 
-  const created = await findUser(username, event)
+  const created = await findUser(params.username, event)
+
   if (!created) {
     throw createError({ statusCode: 500, message: 'Failed to create user' })
   }
+
   return created
 }
 
-export const createGoogleUser = async (username: string, googleId: string, mainCurrency: string, now: Date, event: H3Event) => {
-  const database = useDatabase(event)
+export const createUser = async (username: string, password: string, event: H3Event) => {
+  const passwordHash = await hashPassword(password)
 
-  await database.insert(user).values({
-    id: crypto.randomUUID(),
-    username,
-    googleId,
-    mainCurrency,
-    createdAt: now,
-    emailVerified: true,
-  })
+  return createUserInDb(event, { username, passwordHash })
+}
 
-  const created = await findUser(username, event)
-  if (!created) {
-    throw createError({ statusCode: 500, message: 'Failed to create user' })
-  }
-  return created
+export const createGoogleUser = async (username: string, googleId: string, event: H3Event) => {
+  return createUserInDb(event, { username, googleId, emailVerified: true })
 }
 
 export const findUserByGoogleId = async (googleId: string, event: H3Event) => {
@@ -173,11 +179,11 @@ export const findUserByGoogleId = async (googleId: string, event: H3Event) => {
   })
 }
 
-export const ensureUser = async (username: string, password: string, mainCurrency: string, now: Date, event: H3Event) => {
+export const ensureUser = async (username: string, password: string, event: H3Event) => {
   const existing = await findUser(username, event)
 
   if (!existing) {
-    return await createUser(username, password, mainCurrency, now, event)
+    return await createUser(username, password, event)
   }
 
   if (!existing.passwordHash) {

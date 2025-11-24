@@ -81,7 +81,6 @@ export default defineEventHandler(async (event) => {
     const googleUserInfo = await verifyGoogleToken(id_token)
 
     const now = new Date()
-    const mainCurrency = 'USD'
 
     let authenticatedUser = await findUserByGoogleId(googleUserInfo.id, event)
 
@@ -109,8 +108,6 @@ export default defineEventHandler(async (event) => {
         authenticatedUser = await createGoogleUser(
           googleUserInfo.email,
           googleUserInfo.id,
-          mainCurrency,
-          now,
           event,
         )
       }
