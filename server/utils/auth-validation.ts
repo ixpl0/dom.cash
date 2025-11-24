@@ -29,6 +29,7 @@ export const validateAuthToken = async (event: H3Event): Promise<ValidateTokenRe
         id: user.id,
         username: user.username,
         mainCurrency: user.mainCurrency,
+        isAdmin: user.isAdmin,
       })
       .from(session)
       .innerJoin(user, eq(session.userId, user.id))

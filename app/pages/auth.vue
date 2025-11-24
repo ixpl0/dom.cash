@@ -365,7 +365,7 @@ const handleRegister = async (): Promise<void> => {
 
   try {
     if (emailVerificationDisabled.value) {
-      const response = await $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/register-direct', {
+      const response = await $fetch<{ id: string, username: string, mainCurrency: string, isAdmin: boolean }>('/api/auth/register-direct', {
         method: 'POST',
         body: {
           email: formData.value.username,
@@ -424,7 +424,7 @@ const handleVerifyCode = async (): Promise<void> => {
   isLoading.value = true
 
   try {
-    const response = await $fetch<{ id: string, username: string, mainCurrency: string }>('/api/auth/verify-code', {
+    const response = await $fetch<{ id: string, username: string, mainCurrency: string, isAdmin: boolean }>('/api/auth/verify-code', {
       method: 'POST',
       body: {
         email: formData.value.username,

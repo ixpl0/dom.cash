@@ -13,6 +13,7 @@ export const user = sqliteTable(
     mainCurrency: text('main_currency').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+    isAdmin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
   },
   t => [
     check('ck_user_currency_3_upper', sql`${t.mainCurrency} GLOB '[A-Z][A-Z][A-Z]'`),

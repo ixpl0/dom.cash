@@ -123,7 +123,7 @@ export const findUser = async (username: string, event: H3Event) => {
   const database = useDatabase(event)
   return database.query.user.findFirst({
     where: eq(user.username, username),
-    columns: { id: true, username: true, passwordHash: true, googleId: true, mainCurrency: true },
+    columns: { id: true, username: true, passwordHash: true, googleId: true, mainCurrency: true, isAdmin: true },
   })
 }
 
@@ -169,7 +169,7 @@ export const findUserByGoogleId = async (googleId: string, event: H3Event) => {
   const database = useDatabase(event)
   return database.query.user.findFirst({
     where: eq(user.googleId, googleId),
-    columns: { id: true, username: true, googleId: true, mainCurrency: true },
+    columns: { id: true, username: true, googleId: true, mainCurrency: true, isAdmin: true },
   })
 }
 
@@ -238,6 +238,7 @@ export const getUserFromRequest = async (event: H3Event) => {
       id: user.id,
       username: user.username,
       mainCurrency: user.mainCurrency,
+      isAdmin: user.isAdmin,
     })
     .from(session)
     .innerJoin(user, eq(session.userId, user.id))

@@ -18,6 +18,7 @@ export default {
 
   header: {
     sharedBudgets: 'Общие бюджеты',
+    metrics: 'Метрики',
     share: 'Поделиться',
     logout: 'Выйти',
     login: 'Войти',

@@ -18,6 +18,7 @@ export default {
 
   header: {
     sharedBudgets: 'Shared Budgets',
+    metrics: 'Metrics',
     share: 'Share',
     logout: 'Logout',
     login: 'Login',

@@ -14,6 +14,18 @@
       <UiThemePicker />
 
       <template v-if="isAuthenticated">
+        <NuxtLink
+          v-if="user?.isAdmin"
+          to="/metrics"
+          class="btn btn-outline btn-sm"
+          data-testid="metrics-btn"
+        >
+          <Icon
+            name="heroicons:chart-bar"
+            size="16"
+          />
+          <span class="hidden xl:inline">{{ t('header.metrics') }}</span>
+        </NuxtLink>
         <button
           class="btn btn-outline btn-sm"
           data-testid="shared-budgets-btn"
@@ -113,6 +125,18 @@
           tabindex="0"
           class="dropdown-content menu bg-base-100 rounded-box z-[1] p-2 shadow mt-3"
         >
+          <li v-if="isAuthenticated && user?.isAdmin">
+            <NuxtLink
+              to="/metrics"
+              data-testid="mobile-metrics-btn"
+            >
+              <Icon
+                name="heroicons:chart-bar"
+                size="16"
+              />
+              {{ t('header.metrics') }}
+            </NuxtLink>
+          </li>
           <li v-if="isAuthenticated">
             <button
               data-testid="mobile-shared-budgets-btn"

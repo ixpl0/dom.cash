@@ -77,5 +77,6 @@ export default defineEventHandler(async (event) => {
     id: newUser.id,
     username: newUser.username,
     mainCurrency: newUser.mainCurrency,
+    isAdmin: newUser.isAdmin,
   }
 })

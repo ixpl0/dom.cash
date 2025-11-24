@@ -131,6 +131,7 @@ export default defineEventHandler(async (event) => {
         id: authenticatedUser.id,
         username: authenticatedUser.username,
         mainCurrency: authenticatedUser.mainCurrency,
+        isAdmin: authenticatedUser.isAdmin,
       },
       redirectTo: state || '/',
     }
