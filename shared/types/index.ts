@@ -14,4 +14,19 @@ export interface LoginCredentials {
   password: string
 }
 
+export interface AdminUser {
+  id: string
+  username: string
+  emailVerified: boolean
+  isAdmin: boolean
+  createdAt: Date
+}
+
+export interface AdminUsersResponse {
+  users: AdminUser[]
+  total: number
+  page: number
+  limit: number
+}
+
 export * from './export-import'
