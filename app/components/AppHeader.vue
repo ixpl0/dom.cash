@@ -9,9 +9,12 @@
       dom.cash
     </NuxtLink>
 
-    <div class="hidden md:flex items-center gap-2">
-      <UiLanguagePicker />
-      <UiThemePicker />
+    <div
+      class="hidden md:flex items-center gap-2"
+      data-testid="desktop-header-actions"
+    >
+      <UiLanguagePicker :class="isAuthenticated ? 'hidden xl:flex' : ''" />
+      <UiThemePicker :class="isAuthenticated ? 'hidden xl:flex' : ''" />
 
       <template v-if="isAuthenticated">
         <NuxtLink
@@ -51,7 +54,10 @@
       </template>
     </div>
 
-    <div class="hidden md:flex items-center gap-2">
+    <div
+      class="hidden md:flex items-center gap-2"
+      data-testid="desktop-user-menu"
+    >
       <div
         v-if="isAuthenticated"
         class="dropdown dropdown-end"
@@ -77,10 +83,12 @@
         <ul
           tabindex="0"
           class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+          data-testid="user-dropdown-content"
         >
+          <UiLanguagePicker class="xl:hidden px-3 py-1" />
+          <UiThemePicker class="xl:hidden px-3 py-1" />
           <li>
             <button
-              class="btn btn-ghost btn-sm"
               data-testid="logout-btn"
               @click="logout"
             >
@@ -125,70 +133,70 @@
           tabindex="0"
           class="dropdown-content menu bg-base-100 rounded-box z-[1] p-2 shadow mt-3"
         >
-          <li v-if="isAuthenticated && user?.isAdmin">
-            <NuxtLink
-              to="/metrics"
-              data-testid="mobile-metrics-btn"
-            >
+          <template v-if="isAuthenticated">
+            <li v-if="user?.isAdmin">
+              <NuxtLink
+                to="/metrics"
+                data-testid="mobile-metrics-btn"
+              >
+                <Icon
+                  name="heroicons:chart-bar"
+                  size="16"
+                />
+                {{ t('header.metrics') }}
+              </NuxtLink>
+            </li>
+            <li>
+              <button
+                data-testid="mobile-shared-budgets-btn"
+                @click="modalsStore.openSharedBudgetsModal"
+              >
+                <Icon
+                  name="heroicons:users"
+                  size="16"
+                />
+                {{ t('header.sharedBudgets') }}
+              </button>
+            </li>
+            <li>
+              <button
+                data-testid="mobile-share-btn"
+                @click="modalsStore.openShareModal('')"
+              >
+                <Icon
+                  name="heroicons:share"
+                  size="16"
+                />
+                {{ t('header.share') }}
+              </button>
+            </li>
+          </template>
+
+          <UiLanguagePicker class="px-3 py-1" />
+          <UiThemePicker class="px-3 py-1" />
+
+          <template v-if="isAuthenticated">
+            <div class="divider my-0" />
+            <div class="flex items-center gap-2 px-3 py-2">
               <Icon
-                name="heroicons:chart-bar"
+                name="heroicons:user"
                 size="16"
               />
-              {{ t('header.metrics') }}
-            </NuxtLink>
-          </li>
-          <li v-if="isAuthenticated">
-            <button
-              data-testid="mobile-shared-budgets-btn"
-              @click="modalsStore.openSharedBudgetsModal"
-            >
-              <Icon
-                name="heroicons:users"
-                size="16"
-              />
-              {{ t('header.sharedBudgets') }}
-            </button>
-          </li>
-          <li v-if="isAuthenticated">
-            <button
-              data-testid="mobile-share-btn"
-              @click="modalsStore.openShareModal('')"
-            >
-              <Icon
-                name="heroicons:share"
-                size="16"
-              />
-              {{ t('header.share') }}
-            </button>
-          </li>
-          <UiLanguagePicker class="px-3 py-2" />
-          <UiThemePicker class="px-3 py-2" />
-          <div
-            v-if="isAuthenticated"
-            class="divider my-0"
-          />
-          <div
-            v-if="isAuthenticated"
-            class="flex items-center gap-2 px-3 py-2"
-          >
-            <Icon
-              name="heroicons:user"
-              size="16"
-            />
-            <span class="break-all">{{ user?.username }}</span>
-          </div>
-          <li v-if="isAuthenticated">
-            <button
-              data-testid="mobile-logout-btn"
-              @click="logout"
-            >
-              <Icon
-                name="heroicons:arrow-right-start-on-rectangle"
-                size="16"
-              />
-              {{ t('header.logout') }}
-            </button>
-          </li>
+              <span>{{ user?.username }}</span>
+            </div>
+            <li>
+              <button
+                data-testid="mobile-logout-btn"
+                @click="logout"
+              >
+                <Icon
+                  name="heroicons:arrow-right-start-on-rectangle"
+                  size="16"
+                />
+                {{ t('header.logout') }}
+              </button>
+            </li>
+          </template>
           <li v-else>
             <NuxtLink
               to="/auth"
