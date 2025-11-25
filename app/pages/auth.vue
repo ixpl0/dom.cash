@@ -541,7 +541,6 @@ onMounted(async () => {
   if (code) {
     try {
       isGoogleLoading.value = true
-      console.log('Processing Google OAuth redirect')
 
       const response = await $fetch<{
         user: User
