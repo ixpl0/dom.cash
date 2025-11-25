@@ -1,6 +1,8 @@
 export const DAISY_THEMES = [
   'kekdark',
+  'kekdarker',
   'keklight',
+  'keklighter',
   'summerhaze',
   'ritualhabitual',
   'crystalclear',
