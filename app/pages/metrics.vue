@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AdminUsersResponse } from '~~/shared/types'
 
+const { t } = useI18n()
 const { user: currentUser } = useAuth()
 
 if (!currentUser.value) {
@@ -18,7 +19,7 @@ if (!currentUser.value.isAdmin) {
 }
 
 useHead({
-  title: 'Metrics & Users',
+  title: computed(() => t('metrics.title')),
 })
 
 const page = ref(1)
@@ -80,19 +81,19 @@ const formatDate = (dateStr: string | Date) => {
 <template>
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-6">
-      Admin Dashboard
+      {{ t('metrics.dashboardTitle') }}
     </h1>
 
     <div class="bg-base-100 p-6 rounded-lg shadow-md border border-base-300">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">
-          Users
+          {{ t('metrics.usersTitle') }}
         </h2>
         <div class="form-control w-full max-w-xs">
           <input
             :value="search"
             type="text"
-            placeholder="Search by email..."
+            :placeholder="t('metrics.searchPlaceholder')"
             class="input input-bordered w-full"
             data-testid="user-search-input"
             @input="e => updateSearch((e.target as HTMLInputElement).value)"
@@ -112,7 +113,7 @@ const formatDate = (dateStr: string | Date) => {
                 data-testid="sort-email"
                 @click="toggleSort('username')"
               >
-                Email
+                {{ t('metrics.emailColumn') }}
                 <span
                   v-if="sortBy === 'username'"
                   class="text-xs ml-1"
@@ -123,7 +124,7 @@ const formatDate = (dateStr: string | Date) => {
                 data-testid="sort-status"
                 @click="toggleSort('status')"
               >
-                Status
+                {{ t('metrics.statusColumn') }}
                 <span
                   v-if="sortBy === 'status'"
                   class="text-xs ml-1"
@@ -134,7 +135,7 @@ const formatDate = (dateStr: string | Date) => {
                 data-testid="sort-role"
                 @click="toggleSort('role')"
               >
-                Role
+                {{ t('metrics.roleColumn') }}
                 <span
                   v-if="sortBy === 'role'"
                   class="text-xs ml-1"
@@ -145,7 +146,7 @@ const formatDate = (dateStr: string | Date) => {
                 data-testid="sort-registered"
                 @click="toggleSort('createdAt')"
               >
-                Registered
+                {{ t('metrics.registeredColumn') }}
                 <span
                   v-if="sortBy === 'createdAt'"
                   class="text-xs ml-1"
@@ -159,7 +160,7 @@ const formatDate = (dateStr: string | Date) => {
                 colspan="4"
                 class="text-center py-4"
               >
-                Loading...
+                {{ t('metrics.loading') }}
               </td>
             </tr>
             <tr v-else-if="users.length === 0">
@@ -167,35 +168,35 @@ const formatDate = (dateStr: string | Date) => {
                 colspan="4"
                 class="text-center py-4"
               >
-                No users found
+                {{ t('metrics.noUsersFound') }}
               </td>
             </tr>
             <tr
-              v-for="u in users"
-              :key="u.id"
+              v-for="user in users"
+              :key="user.id"
             >
               <td>
                 <div class="font-bold">
-                  {{ u.username }}
+                  {{ user.username }}
                 </div>
               </td>
               <td>
                 <div
                   class="badge"
-                  :class="u.emailVerified ? 'badge-success' : 'badge-warning'"
+                  :class="user.emailVerified ? 'badge-success' : 'badge-warning'"
                 >
-                  {{ u.emailVerified ? 'Verified' : 'Unverified' }}
+                  {{ user.emailVerified ? t('metrics.statusVerified') : t('metrics.statusUnverified') }}
                 </div>
               </td>
               <td>
                 <div
                   class="badge"
-                  :class="u.isAdmin ? 'badge-primary' : 'badge-ghost'"
+                  :class="user.isAdmin ? 'badge-primary' : 'badge-ghost'"
                 >
-                  {{ u.isAdmin ? 'Admin' : 'User' }}
+                  {{ user.isAdmin ? t('metrics.roleAdmin') : t('metrics.roleUser') }}
                 </div>
               </td>
-              <td>{{ formatDate(u.createdAt) }}</td>
+              <td>{{ formatDate(user.createdAt) }}</td>
             </tr>
           </tbody>
         </table>
@@ -218,7 +219,7 @@ const formatDate = (dateStr: string | Date) => {
             class="join-item btn"
             data-testid="pagination-info"
           >
-            Page {{ page }} of {{ totalPages }}
+            {{ t('metrics.pageInfo', { page, total: totalPages }) }}
           </button>
           <button
             class="join-item btn"

@@ -361,5 +361,23 @@ export default {
     keywords: 'budget, finance, tracker, personal budget, home finances, money management',
   },
 
+  metrics: {
+    title: 'Metrics & Users',
+    dashboardTitle: 'Admin Dashboard',
+    usersTitle: 'Users',
+    searchPlaceholder: 'Search by email...',
+    emailColumn: 'Email',
+    statusColumn: 'Status',
+    roleColumn: 'Role',
+    registeredColumn: 'Registered',
+    loading: 'Loading...',
+    noUsersFound: 'No users found',
+    statusVerified: 'Verified',
+    statusUnverified: 'Unverified',
+    roleAdmin: 'Admin',
+    roleUser: 'User',
+    pageInfo: 'Page {page} of {total}',
+  },
+
   currencies: currenciesEn,
 }

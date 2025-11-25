@@ -361,5 +361,23 @@ export default {
     keywords: 'budget, finance, tracker, домашние финансы, бюджет, трекер',
   },
 
+  metrics: {
+    title: 'Метрики и пользователи',
+    dashboardTitle: 'Панель администратора',
+    usersTitle: 'Пользователи',
+    searchPlaceholder: 'Поиск по email...',
+    emailColumn: 'Email',
+    statusColumn: 'Статус',
+    roleColumn: 'Роль',
+    registeredColumn: 'Дата регистрации',
+    loading: 'Загрузка...',
+    noUsersFound: 'Пользователи не найдены',
+    statusVerified: 'Подтверждён',
+    statusUnverified: 'Не подтверждён',
+    roleAdmin: 'Администратор',
+    roleUser: 'Пользователь',
+    pageInfo: 'Страница {page} из {total}',
+  },
+
   currencies: currenciesRu,
 }
