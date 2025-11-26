@@ -116,17 +116,7 @@
                 <div>
                   {{ t('auth.checkSpamFolder') }}
                 </div>
-                <div v-if="attemptCount > 1">
-                  {{ t('auth.checkSpamAndDelay') }}
-                </div>
               </div>
-            </div>
-
-            <div
-              v-if="attemptCount === 3"
-              class="alert alert-warning text-sm"
-            >
-              <span>{{ t('auth.lastAttemptSent') }}</span>
             </div>
           </div>
 
@@ -169,18 +159,12 @@
             </button>
 
             <button
-              v-if="attemptCount < 3"
               type="button"
               class="btn btn-outline btn-sm w-full"
-              :disabled="isLoading || resendTimer > 0"
+              :disabled="isLoading"
               @click="handleResendCode"
             >
-              <span v-if="resendTimer > 0">
-                {{ t('auth.resendCodeIn', { seconds: resendTimer }) }}
-              </span>
-              <span v-else>
-                {{ t('auth.resendCode') }}
-              </span>
+              {{ t('auth.resendCode') }}
             </button>
 
             <button
@@ -420,15 +404,7 @@ const errors = ref<FormErrors>({})
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
 const { toast } = useToast()
-const resendTimer = ref(0)
-const attemptCount = ref(0)
 const emailVerificationDisabled = ref(false)
-
-const RESEND_DELAYS = [90, 180]
-
-const nextResendDelay = computed(() => {
-  return RESEND_DELAYS[attemptCount.value - 1] || 180
-})
 
 const redirectPath = computed<string | null>(() => {
   const { redirect } = route.query
@@ -510,16 +486,6 @@ const handleSubmit = async (): Promise<void> => {
   }
 }
 
-const startResendTimer = (seconds: number) => {
-  resendTimer.value = seconds
-  const interval = setInterval(() => {
-    resendTimer.value -= 1
-    if (resendTimer.value <= 0) {
-      clearInterval(interval)
-    }
-  }, 1000)
-}
-
 const handleRegister = async (): Promise<void> => {
   if (!validateForm()) {
     return
@@ -548,32 +514,25 @@ const handleRegister = async (): Promise<void> => {
       await navigateAfterLogin()
     }
     else {
-      const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/send-code', {
+      const response = await $fetch<{ success: boolean, alreadySent?: boolean, waitMinutes?: number }>('/api/auth/send-code', {
         method: 'POST',
         body: {
           email: formData.value.username,
         },
       })
 
-      attemptCount.value = response.attemptCount
-      showVerificationStep.value = true
-      toast({ type: 'success', message: t('auth.verificationCodeSent') })
-
-      if (response.attemptCount < 3) {
-        startResendTimer(nextResendDelay.value)
+      if (response.alreadySent && response.waitMinutes) {
+        const timeText = t('auth.codeAlreadySentTime', { count: response.waitMinutes }, response.waitMinutes)
+        toast({ type: 'info', message: t('auth.codeAlreadySent', { time: timeText }) })
+      }
+      else {
+        showVerificationStep.value = true
+        toast({ type: 'success', message: t('auth.verificationCodeSent') })
       }
     }
   }
   catch (error) {
-    const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number, attemptCount?: number } } })?.data
-
-    if (errorData?.statusCode === 429 && errorData.data?.waitSeconds) {
-      startResendTimer(errorData.data.waitSeconds)
-      toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
-    }
-    else {
-      toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
-    }
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -616,10 +575,6 @@ const handleVerifyCode = async (): Promise<void> => {
 }
 
 const handleResendCode = async (): Promise<void> => {
-  if (resendTimer.value > 0 || attemptCount.value >= 3) {
-    return
-  }
-
   if (showForgotPasswordStep.value) {
     return
   }
@@ -627,30 +582,23 @@ const handleResendCode = async (): Promise<void> => {
   isLoading.value = true
 
   try {
-    const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/send-code', {
+    const response = await $fetch<{ success: boolean, alreadySent?: boolean, waitMinutes?: number }>('/api/auth/send-code', {
       method: 'POST',
       body: {
         email: formData.value.username,
       },
     })
 
-    attemptCount.value = response.attemptCount
-    toast({ type: 'success', message: t('auth.verificationCodeSent') })
-
-    if (response.attemptCount < 3) {
-      startResendTimer(nextResendDelay.value)
+    if (response.alreadySent && response.waitMinutes) {
+      const timeText = t('auth.codeAlreadySentTime', { count: response.waitMinutes }, response.waitMinutes)
+      toast({ type: 'info', message: t('auth.codeAlreadySent', { time: timeText }) })
+    }
+    else {
+      toast({ type: 'success', message: t('auth.verificationCodeSent') })
     }
   }
   catch (error) {
-    const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number } } })?.data
-
-    if (errorData?.statusCode === 429 && errorData.data?.waitSeconds) {
-      startResendTimer(errorData.data.waitSeconds)
-      toast({ type: 'error', message: t('auth.pleaseWait', { seconds: errorData.data.waitSeconds }) })
-    }
-    else {
-      toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
-    }
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -669,8 +617,6 @@ const backToLoginFromForgot = (): void => {
   newPassword.value = ''
   verificationCode.value = ''
   errors.value = {}
-  resendTimer.value = 0
-  attemptCount.value = 0
 }
 
 const handleForgotPassword = async (): Promise<void> => {
@@ -681,36 +627,24 @@ const handleForgotPassword = async (): Promise<void> => {
   isLoading.value = true
 
   try {
-    const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/forgot-password', {
+    const response = await $fetch<{ success: boolean, alreadySent?: boolean, waitMinutes?: number }>('/api/auth/forgot-password', {
       method: 'POST',
       body: {
         email: formData.value.username,
       },
     })
 
-    attemptCount.value = response.attemptCount
-    forgotPasswordStep.value = 2
-    toast({ type: 'success', message: t('auth.emailSent') })
-  }
-  catch (error) {
-    const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number, attemptCount?: number } } })?.data
-
-    if (errorData?.statusCode === 429 && errorData.data?.waitSeconds) {
-      const hours = Math.floor(errorData.data.waitSeconds / 3600)
-      const minutes = Math.floor((errorData.data.waitSeconds % 3600) / 60)
-      const timeParts: Array<string> = []
-      if (hours > 0) {
-        timeParts.push(t('auth.timeHours', { count: hours }, hours))
-      }
-      if (minutes > 0) {
-        timeParts.push(t('auth.timeMinutes', { count: minutes }, minutes))
-      }
-      const timeMessage = timeParts.join(' ')
-      toast({ type: 'error', message: t('auth.pleaseWaitBeforeReset', { time: timeMessage }) })
+    if (response.alreadySent && response.waitMinutes) {
+      const timeText = t('auth.codeAlreadySentTime', { count: response.waitMinutes }, response.waitMinutes)
+      toast({ type: 'info', message: t('auth.codeAlreadySent', { time: timeText }) })
     }
     else {
-      toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+      forgotPasswordStep.value = 2
+      toast({ type: 'success', message: t('auth.emailSent') })
     }
+  }
+  catch (error) {
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -758,8 +692,6 @@ const backToEmailStep = (): void => {
   showVerificationStep.value = false
   verificationCode.value = ''
   errors.value = {}
-  resendTimer.value = 0
-  attemptCount.value = 0
 }
 
 const handleGoogleLogin = async (): Promise<void> => {

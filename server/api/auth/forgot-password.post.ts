@@ -8,8 +8,7 @@ import { emailSchema } from '~~/server/schemas/auth'
 import {
   cleanupExpiredCodes,
   getExistingCode,
-  checkRateLimit,
-  throwRateLimitError,
+  checkAlreadySent,
   prepareVerificationCode,
   saveVerificationCode,
   VERIFICATION_CONFIG,
@@ -38,10 +37,15 @@ export default defineEventHandler(async (event) => {
 
   const existingCode = await getExistingCode(event, email)
 
-  const rateLimitResult = checkRateLimit(existingCode ?? undefined, config, now)
+  const cooldownMinutes = config.cooldownMinutes ?? 60
+  const alreadySentResult = checkAlreadySent(existingCode ?? undefined, now, cooldownMinutes)
 
-  if (!rateLimitResult.allowed) {
-    throwRateLimitError(rateLimitResult)
+  if (alreadySentResult.alreadySent) {
+    return {
+      success: false,
+      alreadySent: true,
+      waitMinutes: alreadySentResult.waitMinutes,
+    }
   }
 
   const { code, expiresAt, attemptCount } = prepareVerificationCode(
@@ -66,5 +70,5 @@ export default defineEventHandler(async (event) => {
     template: 'reset-password',
   })
 
-  return { success: true, attemptCount }
+  return { success: true, alreadySent: false, attemptCount }
 })

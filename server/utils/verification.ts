@@ -19,23 +19,21 @@ type VerificationConfig = {
   readonly rateLimits: ReadonlyArray<RateLimit>
   readonly maxAttempts: number
   readonly expirationMinutes: number
+  readonly cooldownMinutes?: number
 }
 
 export const VERIFICATION_CONFIG = {
   registration: {
-    rateLimits: [
-      { attempt: 1, delaySeconds: 90 },
-      { attempt: 2, delaySeconds: 180 },
-    ],
-    maxAttempts: 3,
-    expirationMinutes: 10,
+    rateLimits: [],
+    maxAttempts: 5,
+    expirationMinutes: 60,
+    cooldownMinutes: 60,
   },
   passwordReset: {
-    rateLimits: [
-      { attempt: 1, delaySeconds: 3600 },
-    ],
-    maxAttempts: 1,
+    rateLimits: [],
+    maxAttempts: 5,
     expirationMinutes: 60,
+    cooldownMinutes: 60,
   },
 } as const satisfies Record<string, VerificationConfig>
 
@@ -145,6 +143,30 @@ type PrepareCodeResult = {
   readonly code: string
   readonly expiresAt: Date
   readonly attemptCount: number
+}
+
+type AlreadySentCheckResult = {
+  readonly alreadySent: boolean
+  readonly waitMinutes?: number
+}
+
+export const checkAlreadySent = (
+  existingCode: { lastSentAt: Date | null } | undefined,
+  now: Date,
+  cooldownMinutes: number,
+): AlreadySentCheckResult => {
+  if (!existingCode || !existingCode.lastSentAt) {
+    return { alreadySent: false }
+  }
+
+  const elapsedMinutes = (now.getTime() - existingCode.lastSentAt.getTime()) / 60000
+
+  if (elapsedMinutes < cooldownMinutes) {
+    const waitMinutes = Math.ceil(cooldownMinutes - elapsedMinutes)
+    return { alreadySent: true, waitMinutes }
+  }
+
+  return { alreadySent: false }
 }
 
 export const prepareVerificationCode = (

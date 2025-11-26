@@ -73,6 +73,8 @@ export default {
     pleaseWaitBeforeReset: 'Please wait {time} before requesting another reset code',
     timeHours: '{count} hour | {count} hours',
     timeMinutes: '{count} minute | {count} minutes',
+    codeAlreadySent: 'Code was already sent. You can request a new one in {time}.',
+    codeAlreadySentTime: '{count} minute | {count} minutes',
   },
 
   home: {

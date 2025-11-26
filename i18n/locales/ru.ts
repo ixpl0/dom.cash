@@ -73,6 +73,8 @@ export default {
     pleaseWaitBeforeReset: 'Подождите {time} перед повторным запросом кода сброса',
     timeHours: '{count} час | {count} часа | {count} часов',
     timeMinutes: '{count} минуту | {count} минуты | {count} минут',
+    codeAlreadySent: 'Код уже был отправлен. Повторный запрос возможен через {time}.',
+    codeAlreadySentTime: '{count} минуту | {count} минуты | {count} минут',
   },
 
   home: {
