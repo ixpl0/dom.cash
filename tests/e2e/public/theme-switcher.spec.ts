@@ -119,13 +119,15 @@ test.describe('Theme Switcher', () => {
 
     expect(options).toContain('Auto')
     expect(options).toContain('Kek Dark')
+    expect(options).toContain('Kek Darker')
     expect(options).toContain('Kek Light')
+    expect(options).toContain('Kek Lighter')
     expect(options).toContain('Summer Haze')
     expect(options).toContain('Ritual Habitual')
     expect(options).toContain('Crystal Clear')
     expect(options).toContain('Grayscale')
     expect(options).toContain('Grayscale Dark')
-    expect(options.length).toBe(8)
+    expect(options.length).toBe(10)
   })
 
   test('theme changes immediately without page reload', async ({ page }) => {

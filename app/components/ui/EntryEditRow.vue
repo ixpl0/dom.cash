@@ -2,49 +2,54 @@
   <tr>
     <td>
       <input
-        v-model="localEntry.description"
+        :value="modelValue.description"
         type="text"
-        :placeholder="isNew ? t('entryEdit.descriptionPlaceholder') : undefined"
+        :placeholder="isNew ? descriptionPlaceholder : undefined"
         class="input input-bordered w-full"
         data-testid="entry-description-input"
+        @input="updateField('description', ($event.target as HTMLInputElement).value)"
         @keyup.enter="$emit('save')"
         @keyup.esc="$emit('cancel')"
       >
     </td>
     <td>
       <input
-        v-model.number="localEntry.amount"
+        :value="modelValue.amount"
         type="number"
         min="0"
         step="0.01"
-        :placeholder="isNew ? t('entryEdit.amountPlaceholder') : undefined"
+        :placeholder="isNew ? amountPlaceholder : undefined"
         class="input input-bordered w-full [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         data-testid="entry-amount-input"
+        @input="updateField('amount', parseFloat(($event.target as HTMLInputElement).value) || 0)"
         @keyup.enter="$emit('save')"
         @keyup.esc="$emit('cancel')"
       >
     </td>
     <td>
       <UiCurrencyPicker
-        v-model="localEntry.currency"
+        :model-value="modelValue.currency"
         class="w-full min-w-[240px]"
+        @update:model-value="updateField('currency', $event)"
       />
     </td>
     <td v-if="entryKind !== 'balance'">
       <input
-        v-model="localEntry.date"
+        :value="modelValue.date"
         type="date"
         class="input input-bordered"
+        @input="updateField('date', ($event.target as HTMLInputElement).value)"
         @keyup.enter="$emit('save')"
         @keyup.esc="$emit('cancel')"
       >
     </td>
     <td v-if="entryKind === 'expense'">
       <input
-        v-model="localEntry.isOptional"
+        :checked="modelValue.isOptional"
         type="checkbox"
         class="checkbox checkbox-sm"
         data-testid="entry-optional-checkbox"
+        @change="updateField('isOptional', ($event.target as HTMLInputElement).checked)"
       >
     </td>
     <td class="w-1">
@@ -85,12 +90,20 @@
 <script setup lang="ts">
 import type { EntryFormData } from '~/composables/useEntryForm'
 
-const props = defineProps<{
+export interface UiEntryEditRowProps {
   modelValue: EntryFormData
   entryKind: 'balance' | 'income' | 'expense'
   isSaving: boolean
   isNew?: boolean
-}>()
+  descriptionPlaceholder?: string
+  amountPlaceholder?: string
+}
+
+const props = withDefaults(defineProps<UiEntryEditRowProps>(), {
+  isNew: false,
+  descriptionPlaceholder: '',
+  amountPlaceholder: '',
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: EntryFormData]
@@ -98,10 +111,10 @@ const emit = defineEmits<{
   'cancel': []
 }>()
 
-const { t } = useI18n()
-
-const localEntry = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
-})
+const updateField = <K extends keyof EntryFormData>(field: K, value: EntryFormData[K]): void => {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    [field]: value,
+  })
+}
 </script>

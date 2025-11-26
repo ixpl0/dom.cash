@@ -1,187 +1,41 @@
 <template>
-  <UiDialog
+  <UiEntryModal
     ref="modalRef"
     :is-open="isOpen"
-    data-testid="entry-modal"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] flex flex-col overflow-visible"
+    :title="modalTitle"
+    :entries="currentEntries"
+    :entry-kind="entryModal.entryKind || 'balance'"
+    :is-read-only="entryModal.isReadOnly"
+    :empty-message="emptyMessage"
+    :editing-entry-id="editingEntryId"
+    :editing-entry="editingEntry"
+    :new-entry="newEntry"
+    :is-adding-new-entry="isAddingNewEntry"
+    :is-adding="isAdding"
+    :is-saving="isSaving"
+    :deleting-entry-id="isDeleting"
+    :description-label="t('entry.description')"
+    :amount-label="t('entry.amount')"
+    :currency-label="t('entry.currency')"
+    :date-label="t('entry.date')"
+    :optional-label="t('entry.optional')"
+    :actions-label="t('entry.actions')"
+    :add-button-label="t('entry.addNew')"
+    :description-placeholder="t('entryEdit.descriptionPlaceholder')"
+    :amount-placeholder="t('entryEdit.amountPlaceholder')"
+    :format-date="formatDate"
     @close="hide"
-  >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="modal-close-button"
-      @click="hide()"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      {{ modalTitle }}
-    </h3>
-
-    <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
-      <div
-        v-if="currentEntries.length || isAddingNewEntry"
-        class="min-w-[600px]"
-      >
-        <table class="table text-center">
-          <thead>
-            <tr>
-              <th>{{ t('entry.description') }}</th>
-              <th>{{ t('entry.amount') }}</th>
-              <th>{{ t('entry.currency') }}</th>
-              <th v-if="entryModal.entryKind !== 'balance'">
-                {{ t('entry.date') }}
-              </th>
-              <th v-if="entryModal.entryKind === 'expense'">
-                {{ t('entry.optional') }}
-              </th>
-              <th class="w-1">
-                {{ t('entry.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <template
-              v-for="entry in currentEntries"
-              :key="entry.id"
-            >
-              <BudgetEntryEditRow
-                v-if="editingEntryId === entry.id"
-                v-model="editingEntry"
-                :entry-kind="entryModal.entryKind || 'balance'"
-                :is-saving="isSaving"
-                @save="saveEntry()"
-                @cancel="cancelEdit()"
-              />
-              <tr
-                v-else
-                data-testid="entry-row"
-              >
-                <td
-                  class="cursor-pointer hover:bg-base-200"
-                  @click="startEditWithFocus(entry, 'description')"
-                >
-                  <span>{{ entry.description }}</span>
-                </td>
-                <td
-                  class="cursor-pointer hover:bg-base-200"
-                  @click="startEditWithFocus(entry, 'amount')"
-                >
-                  <span
-                    :class="{
-                      'text-success': entryModal.entryKind === 'income' && entry.amount > 0,
-                      'text-error': entryModal.entryKind === 'expense' && entry.amount > 0,
-                      'text-primary': entryModal.entryKind === 'balance' && entry.amount > 0,
-                      'text-base-content': entry.amount === 0,
-                      'text-warning': entry.amount < 0,
-                    }"
-                  >{{ formatAmount(entry.amount, entry.currency) }}</span>
-                </td>
-                <td
-                  class="cursor-pointer hover:bg-base-200"
-                  @click="startEditWithFocus(entry, 'currency')"
-                >
-                  <span>{{ entry.currency }}</span>
-                </td>
-                <td
-                  v-if="entryModal.entryKind !== 'balance'"
-                  class="cursor-pointer hover:bg-base-200"
-                  @click="startEditWithFocus(entry, 'date')"
-                >
-                  <span>{{ formatDate(getEntryDate(entry)) }}</span>
-                </td>
-                <td
-                  v-if="entryModal.entryKind === 'expense'"
-                  class="cursor-pointer hover:bg-base-200"
-                  @click="startEditWithFocus(entry, 'optional')"
-                >
-                  <Icon
-                    v-if="'isOptional' in entry && (entry as any).isOptional"
-                    name="heroicons:check"
-                    size="20"
-                    class="text-success inline-block"
-                  />
-                </td>
-                <td class="w-1">
-                  <div class="flex gap-2">
-                    <button
-                      v-if="!entryModal.isReadOnly"
-                      class="btn btn-sm btn-warning"
-                      data-testid="entry-edit-button"
-                      @click="startEdit(entry)"
-                    >
-                      <Icon
-                        name="heroicons:pencil-square"
-                        size="16"
-                      />
-                    </button>
-                    <button
-                      v-if="!entryModal.isReadOnly"
-                      class="btn btn-sm btn-error"
-                      :disabled="isDeleting === entry.id"
-                      @click="deleteEntry(entry.id)"
-                    >
-                      <span
-                        v-if="isDeleting === entry.id"
-                        class="loading loading-spinner loading-xs"
-                      />
-                      <Icon
-                        v-else
-                        name="heroicons:trash"
-                        size="16"
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <BudgetEntryEditRow
-              v-if="isAddingNewEntry"
-              v-model="newEntry"
-              :entry-kind="entryModal.entryKind || 'balance'"
-              :is-saving="isAdding"
-              :is-new="true"
-              @save="addEntry()"
-              @cancel="cancelAdd()"
-            />
-          </tbody>
-        </table>
-
-        <div class="flex justify-center mt-4">
-          <button
-            v-if="!isAddingNewEntry && !entryModal.isReadOnly"
-            class="btn btn-primary btn-sm"
-            data-testid="add-entry-button"
-            @click="startAdd()"
-          >
-            {{ t('entry.addNew') }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-else
-        class="text-center py-8 text-base-content/60"
-      >
-        <div class="mb-4">
-          {{ emptyMessage }}
-        </div>
-        <button
-          v-if="!isAddingNewEntry && !entryModal.isReadOnly"
-          type="button"
-          class="btn btn-primary btn-sm"
-          data-testid="add-entry-button"
-          @click="startAdd()"
-        >
-          {{ t('entry.addNew') }}
-        </button>
-      </div>
-    </div>
-  </UiDialog>
+    @start-new="startAdd"
+    @save-new="addEntry"
+    @cancel-new="cancelAdd"
+    @start-edit="startEdit"
+    @start-edit-with-focus="startEditWithFocus"
+    @save-edit="saveEntry"
+    @cancel-edit="cancelEdit"
+    @delete="deleteEntry"
+    @update:editing-entry="editingEntry = $event"
+    @update:new-entry="newEntry = $event"
+  />
 </template>
 
 <script setup lang="ts">
@@ -225,7 +79,6 @@ const {
   newEntry,
   modalTitle,
   emptyMessage,
-  getEntryDate,
   formatDate,
   startAdd,
   cancelAdd,
@@ -287,7 +140,9 @@ const focusField = ref<string | null>(null)
 const modalRef = ref<{ $el: HTMLElement } | null>(null)
 
 const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
-  if (entryModal.value.isReadOnly) return
+  if (entryModal.value.isReadOnly) {
+    return
+  }
 
   focusField.value = fieldToFocus
   startEdit(entry)
@@ -315,7 +170,9 @@ const validateEntry = (entry: { description: string, amount: number | null | und
 }
 
 const addEntry = async (): Promise<void> => {
-  if (isAdding.value) return
+  if (isAdding.value) {
+    return
+  }
 
   const validationError = validateEntry(newEntry.value, entryModal.value.entryKind)
   if (validationError) {
@@ -350,7 +207,9 @@ const getDeleteEntryConfirmMessage = (
 ]
 
 const deleteEntry = async (entryId: string): Promise<void> => {
-  if (isDeleting.value) return
+  if (isDeleting.value) {
+    return
+  }
 
   const entry = currentEntries.value.find(e => e.id === entryId)
 
@@ -401,8 +260,8 @@ const hide = async (): Promise<void> => {
   modalsStore.closeEntryModal()
 }
 
-watch(() => entryModal.value.isOpen, (isOpen) => {
-  if (isOpen) {
+watch(() => entryModal.value.isOpen, (newIsOpen) => {
+  if (newIsOpen) {
     resetForm()
     markAsSaved()
   }
@@ -465,7 +324,9 @@ watch([newEntry, editingEntry], () => {
 }, { deep: true })
 
 const saveEntry = async (): Promise<void> => {
-  if (isSaving.value) return
+  if (isSaving.value) {
+    return
+  }
 
   if (!editingEntryId.value) {
     return

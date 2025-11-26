@@ -27,7 +27,8 @@
       "Bash(pnpm lint:fix:*)",
       "WebFetch(domain:i18n.nuxtjs.org)",
       "Bash(cat:*)",
-      "WebFetch(domain:next.i18n.nuxtjs.org)"
+      "WebFetch(domain:next.i18n.nuxtjs.org)",
+      "Bash(git rm:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
