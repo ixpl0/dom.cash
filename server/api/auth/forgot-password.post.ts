@@ -1,4 +1,4 @@
-import { defineEventHandler, createError } from 'h3'
+import { defineEventHandler } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
 import { user } from '~~/server/db/schema'
@@ -16,15 +16,15 @@ import {
 } from '~~/server/utils/verification'
 import { sendVerificationEmail } from '~~/server/utils/email'
 
-const sendCodeSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: emailSchema,
 })
 
 export default defineEventHandler(async (event) => {
-  const { email } = await parseBody(event, sendCodeSchema)
+  const { email } = await parseBody(event, forgotPasswordSchema)
   const db = useDatabase(event)
   const now = new Date()
-  const config = VERIFICATION_CONFIG.registration
+  const config = VERIFICATION_CONFIG.passwordReset
 
   await cleanupExpiredCodes(event)
 
@@ -32,8 +32,8 @@ export default defineEventHandler(async (event) => {
     where: eq(user.username, email),
   })
 
-  if (existingUser) {
-    throw createError({ statusCode: 400, message: 'User already exists' })
+  if (!existingUser) {
+    return { success: true, attemptCount: 0 }
   }
 
   const existingCode = await getExistingCode(event, email)
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
     event,
     to: email,
     code,
-    template: 'verification',
+    template: 'reset-password',
   })
 
   return { success: true, attemptCount }

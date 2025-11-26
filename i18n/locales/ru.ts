@@ -62,6 +62,17 @@ export default {
     checkSpamAndDelay: 'Письмо может прийти с задержкой до нескольких минут',
     lastAttemptSent: 'Это было последнее письмо. Если код не пришёл, попробуйте использовать email другого провайдера',
     pleaseWait: 'Подождите {seconds} секунд перед повторной отправкой кода',
+    forgotPassword: 'Забыли пароль?',
+    resetPassword: 'Сброс пароля',
+    sendResetCode: 'Отправить код сброса',
+    emailSent: 'Код сброса отправлен на ваш email',
+    newPassword: 'Новый пароль',
+    newPasswordPlaceholder: 'Введите новый пароль',
+    backToLogin: 'Вернуться ко входу',
+    passwordResetSuccess: 'Пароль успешно сброшен',
+    pleaseWaitBeforeReset: 'Подождите {time} перед повторным запросом кода сброса',
+    timeHours: '{count} час | {count} часа | {count} часов',
+    timeMinutes: '{count} минуту | {count} минуты | {count} минут',
   },
 
   home: {

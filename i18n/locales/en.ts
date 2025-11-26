@@ -62,6 +62,17 @@ export default {
     checkSpamAndDelay: 'The email may arrive with a delay of a few minutes',
     lastAttemptSent: 'This was the last email. If the code didn\'t arrive, try using an email from a different provider',
     pleaseWait: 'Please wait {seconds} seconds before requesting a new code',
+    forgotPassword: 'Forgot password?',
+    resetPassword: 'Reset Password',
+    sendResetCode: 'Send Reset Code',
+    emailSent: 'Reset code sent to your email',
+    newPassword: 'New Password',
+    newPasswordPlaceholder: 'Enter new password',
+    backToLogin: 'Back to Login',
+    passwordResetSuccess: 'Password reset successfully',
+    pleaseWaitBeforeReset: 'Please wait {time} before requesting another reset code',
+    timeHours: '{count} hour | {count} hours',
+    timeMinutes: '{count} minute | {count} minutes',
   },
 
   home: {

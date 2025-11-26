@@ -7,11 +7,11 @@
           class="card-title justify-center text-3xl mb-6"
           data-testid="welcome-text"
         >
-          {{ t('auth.welcome') }}
+          {{ showForgotPasswordStep ? t('auth.resetPassword') : t('auth.welcome') }}
         </h2>
 
         <form
-          v-if="!showVerificationStep"
+          v-if="!showVerificationStep && !showForgotPasswordStep"
           class="space-y-4"
           @submit.prevent="handleSubmit"
         >
@@ -65,7 +65,18 @@
             </label>
           </div>
 
-          <div class="form-control mt-6 space-y-2">
+          <div class="text-center">
+            <a
+              href="#"
+              class="link link-hover text-sm"
+              data-testid="forgot-password-link"
+              @click.prevent="startForgotPassword"
+            >
+              {{ t('auth.forgotPassword') }}
+            </a>
+          </div>
+
+          <div class="form-control mt-4 space-y-2">
             <button
               type="submit"
               class="btn btn-primary w-full"
@@ -92,7 +103,7 @@
         </form>
 
         <form
-          v-else
+          v-else-if="showVerificationStep"
           class="space-y-4"
           @submit.prevent="handleVerifyCode"
         >
@@ -183,15 +194,163 @@
           </div>
         </form>
 
+        <form
+          v-else-if="showForgotPasswordStep"
+          class="space-y-4"
+          data-testid="forgot-password-form"
+          @submit.prevent="forgotPasswordStep === 1 ? handleForgotPassword() : handleResetPassword()"
+        >
+          <div v-if="forgotPasswordStep === 1">
+            <div class="form-control">
+              <label class="label mb-2">
+                <span class="label-text">{{ t('auth.username') }}</span>
+              </label>
+              <input
+                v-model="formData.username"
+                type="email"
+                :placeholder="t('auth.usernamePlaceholder')"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': errors.username }"
+                required
+                minlength="3"
+                maxlength="64"
+                :disabled="isLoading"
+                autocomplete="email"
+                data-testid="forgot-password-email-input"
+              >
+              <label
+                v-if="errors.username"
+                class="label"
+              >
+                <span class="label-text-alt text-error">{{ errors.username }}</span>
+              </label>
+            </div>
+
+            <div class="form-control mt-6 space-y-2">
+              <button
+                type="submit"
+                class="btn btn-primary w-full"
+                :disabled="isLoading"
+                data-testid="send-reset-code-btn"
+              >
+                <span
+                  v-if="isLoading"
+                  class="loading loading-spinner loading-sm"
+                />
+                {{ isLoading ? t('auth.sendingCode') : t('auth.sendResetCode') }}
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm w-full"
+                :disabled="isLoading"
+                data-testid="back-to-login-btn"
+                @click="backToLoginFromForgot"
+              >
+                {{ t('auth.backToLogin') }}
+              </button>
+            </div>
+          </div>
+
+          <div v-else>
+            <div class="space-y-2">
+              <div class="alert alert-info">
+                <div class="flex flex-col gap-2">
+                  <div>
+                    {{ t('auth.emailSent') }}
+                  </div>
+                  <div>
+                    {{ t('auth.checkSpamFolder') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label mb-2">
+                <span class="label-text">{{ t('auth.verificationCode') }}</span>
+              </label>
+              <input
+                v-model="verificationCode"
+                type="text"
+                inputmode="numeric"
+                :placeholder="t('auth.verificationCodePlaceholder')"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': errors.code }"
+                required
+                maxlength="6"
+                :disabled="isLoading"
+                data-testid="reset-code-input"
+              >
+              <label
+                v-if="errors.code"
+                class="label"
+              >
+                <span class="label-text-alt text-error">{{ errors.code }}</span>
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="label mb-2">
+                <span class="label-text">{{ t('auth.newPassword') }}</span>
+              </label>
+              <input
+                v-model="newPassword"
+                type="password"
+                :placeholder="t('auth.newPasswordPlaceholder')"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': errors.password }"
+                required
+                minlength="8"
+                maxlength="100"
+                :disabled="isLoading"
+                autocomplete="new-password"
+                data-testid="new-password-input"
+              >
+              <label
+                v-if="errors.password"
+                class="label"
+              >
+                <span class="label-text-alt text-error">{{ errors.password }}</span>
+              </label>
+            </div>
+
+            <div class="form-control mt-6 space-y-2">
+              <button
+                type="submit"
+                class="btn btn-primary w-full"
+                :disabled="isLoading"
+                data-testid="reset-password-btn"
+              >
+                <span
+                  v-if="isLoading"
+                  class="loading loading-spinner loading-sm"
+                />
+                {{ isLoading ? t('auth.verifyingCode') : t('auth.resetPassword') }}
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm w-full"
+                :disabled="isLoading"
+                data-testid="back-to-login-from-reset-btn"
+                @click="backToLoginFromForgot"
+              >
+                {{ t('auth.backToLogin') }}
+              </button>
+            </div>
+          </div>
+        </form>
+
         <div
-          v-if="!showVerificationStep"
+          v-if="!showVerificationStep && !showForgotPasswordStep"
           class="divider"
         >
           {{ t('common.or') }}
         </div>
 
         <div
-          v-if="!showVerificationStep"
+          v-if="!showVerificationStep && !showForgotPasswordStep"
           class="space-y-4"
         >
           <button
@@ -254,6 +413,9 @@ const formData = ref<FormData>({
 
 const verificationCode = ref('')
 const showVerificationStep = ref(false)
+const showForgotPasswordStep = ref(false)
+const forgotPasswordStep = ref(1)
+const newPassword = ref('')
 const errors = ref<FormErrors>({})
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
@@ -273,7 +435,7 @@ const redirectPath = computed<string | null>(() => {
   return typeof redirect === 'string' ? redirect : null
 })
 
-const validateForm = (): boolean => {
+const validateForm = (skipPassword = false): boolean => {
   const newErrors: FormErrors = {}
 
   const emailRegex = /^[a-zA-Z0-9]([a-zA-Z0-9+._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/
@@ -288,11 +450,13 @@ const validateForm = (): boolean => {
     newErrors.username = t('auth.usernameInvalid')
   }
 
-  if (formData.value.password.length < 8) {
-    newErrors.password = t('auth.passwordMinLength')
-  }
-  else if (formData.value.password.length > 100) {
-    newErrors.password = t('auth.passwordMaxLength')
+  if (!skipPassword) {
+    if (formData.value.password.length < 8) {
+      newErrors.password = t('auth.passwordMinLength')
+    }
+    else if (formData.value.password.length > 100) {
+      newErrors.password = t('auth.passwordMaxLength')
+    }
   }
 
   errors.value = newErrors
@@ -456,6 +620,10 @@ const handleResendCode = async (): Promise<void> => {
     return
   }
 
+  if (showForgotPasswordStep.value) {
+    return
+  }
+
   isLoading.value = true
 
   try {
@@ -489,6 +657,103 @@ const handleResendCode = async (): Promise<void> => {
   }
 }
 
+const startForgotPassword = (): void => {
+  showForgotPasswordStep.value = true
+  forgotPasswordStep.value = 1
+  errors.value = {}
+}
+
+const backToLoginFromForgot = (): void => {
+  showForgotPasswordStep.value = false
+  forgotPasswordStep.value = 1
+  newPassword.value = ''
+  verificationCode.value = ''
+  errors.value = {}
+  resendTimer.value = 0
+  attemptCount.value = 0
+}
+
+const handleForgotPassword = async (): Promise<void> => {
+  if (!validateForm(true)) {
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    const response = await $fetch<{ success: boolean, attemptCount: number }>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: {
+        email: formData.value.username,
+      },
+    })
+
+    attemptCount.value = response.attemptCount
+    forgotPasswordStep.value = 2
+    toast({ type: 'success', message: t('auth.emailSent') })
+  }
+  catch (error) {
+    const errorData = (error as { data?: { statusCode?: number, data?: { waitSeconds?: number, attemptCount?: number } } })?.data
+
+    if (errorData?.statusCode === 429 && errorData.data?.waitSeconds) {
+      const hours = Math.floor(errorData.data.waitSeconds / 3600)
+      const minutes = Math.floor((errorData.data.waitSeconds % 3600) / 60)
+      const timeParts: Array<string> = []
+      if (hours > 0) {
+        timeParts.push(t('auth.timeHours', { count: hours }, hours))
+      }
+      if (minutes > 0) {
+        timeParts.push(t('auth.timeMinutes', { count: minutes }, minutes))
+      }
+      const timeMessage = timeParts.join(' ')
+      toast({ type: 'error', message: t('auth.pleaseWaitBeforeReset', { time: timeMessage }) })
+    }
+    else {
+      toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    }
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+const handleResetPassword = async (): Promise<void> => {
+  const newErrors: FormErrors = {}
+  if (!/^\d{6}$/.test(verificationCode.value)) {
+    newErrors.code = t('auth.verificationCodeInvalid')
+  }
+  if (newPassword.value.length < 8) {
+    newErrors.password = t('auth.passwordMinLength')
+  }
+
+  if (Object.keys(newErrors).length > 0) {
+    errors.value = newErrors
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    await $fetch('/api/auth/reset-password', {
+      method: 'POST',
+      body: {
+        email: formData.value.username,
+        code: verificationCode.value,
+        newPassword: newPassword.value,
+      },
+    })
+
+    toast({ type: 'success', message: t('auth.passwordResetSuccess') })
+    backToLoginFromForgot()
+  }
+  catch (error) {
+    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
 const backToEmailStep = (): void => {
   showVerificationStep.value = false
   verificationCode.value = ''
@@ -515,9 +780,23 @@ const handleGoogleLogin = async (): Promise<void> => {
 
 watch(formData, () => {
   if (Object.keys(errors.value).length > 0) {
-    validateForm()
+    validateForm(showForgotPasswordStep.value)
   }
 }, { deep: true })
+
+watch(newPassword, () => {
+  if (errors.value.password) {
+    if (newPassword.value.length < 8) {
+      errors.value.password = t('auth.passwordMinLength')
+    }
+    else if (newPassword.value.length > 100) {
+      errors.value.password = t('auth.passwordMaxLength')
+    }
+    else {
+      delete errors.value.password
+    }
+  }
+})
 
 watch(verificationCode, () => {
   if (errors.value.code) {
