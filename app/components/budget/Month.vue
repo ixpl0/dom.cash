@@ -1,263 +1,39 @@
 <template>
-  <li
-    class="hover:bg-base-200"
-    data-testid="budget-month"
-  >
-    <hr>
-    <div class="timeline-start">
-      <div class="flex items-center gap-1">
-        <Transition
-          enter-active-class="transition-opacity duration-200"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-        >
-          <div
-            v-if="isCurrentMonthValue"
-            class="tooltip flex items-center justify-center"
-            :data-tip="t('budget.month.currentMonth')"
-          >
-            <Icon
-              name="heroicons:play-solid"
-              size="14"
-              class="text-primary"
-            />
-          </div>
-        </Transition>
-        <div
-          class="tooltip capitalize"
-          :data-tip="`${monthData.sourceMonthTitle || `${budgetStore.monthNames[monthData.month]} ${monthData.year}`} - ${t('budget.month.clickForRates')}`"
-        >
-          <button
-            class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
-            data-testid="month-badge"
-            @click="openCurrencyRatesModal"
-          >
-            {{ budgetStore.monthNames[monthData.month] }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="timeline-middle">
-      <Icon
-        name="heroicons:check-circle-solid"
-        size="20"
-      />
-    </div>
-
-    <div class="timeline-end flex gap-4 pl-4 py-1">
-      <div
-        :ref="setCardRef(0)"
-        class="tooltip text-center"
-        :data-tip="`${t('budget.month.balanceTooltip')} ${Math.floor(monthData.startBalance / averageMonthlyExpenses)} ${t('budget.month.balanceTooltipMonths')}`"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-2xl"
-            :class="{
-              'text-primary': monthData.startBalance !== 0,
-              'text-base-content': monthData.startBalance === 0,
-            }"
-            :disabled="isReadOnly"
-            data-testid="balance-button"
-            @click="openBalanceModal"
-          >
-            {{ formatAmountRounded(monthData.startBalance, budgetStore.effectiveMainCurrency) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(1)"
-        class="tooltip text-center"
-        :data-tip="`${t('budget.month.incomeTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}. ${t('budget.month.incomeTooltipText')}`"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-2xl"
-            :class="{
-              'text-success': monthData.totalIncome !== 0,
-              'text-base-content': monthData.totalIncome === 0,
-            }"
-            :disabled="isReadOnly"
-            data-testid="incomes-button"
-            @click="openIncomeModal"
-          >
-            {{ formatAmountRounded(monthData.totalIncome, budgetStore.effectiveMainCurrency) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(2)"
-        class="tooltip text-center"
-        :data-tip="`${t('budget.month.expensesTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}. ${t('budget.month.expensesTooltipText')}`"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-2xl"
-            :class="{
-              'text-error': monthData.totalExpenses !== 0,
-              'text-base-content': monthData.totalExpenses === 0,
-            }"
-            :disabled="isReadOnly"
-            data-testid="expenses-button"
-            @click="openExpenseModal"
-          >
-            {{ formatAmountRounded(monthData.totalExpenses, budgetStore.effectiveMainCurrency) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(3)"
-        class="tooltip text-center"
-        :data-tip="monthData.calculatedPocketExpenses !== null
-          ? (
-            monthData.calculatedPocketExpenses < 0
-              ? t('budget.month.pocketExpensesError')
-              : t('budget.month.pocketExpensesTooltip')
-          )
-          : t('budget.month.pocketExpensesAvailable')"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            disabled
-            data-testid="pocket-expenses-button"
-            :class="{
-              'text-warning': monthData.calculatedPocketExpenses !== null && monthData.calculatedPocketExpenses < 0,
-              'text-error': monthData.calculatedPocketExpenses !== null && monthData.calculatedPocketExpenses > 0,
-              'text-base-content': monthData.calculatedPocketExpenses === 0,
-            }"
-          >
-            {{ monthData.calculatedPocketExpenses !== null ? formatAmountRounded(monthData.calculatedPocketExpenses, budgetStore.effectiveMainCurrency) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(4)"
-        class="tooltip text-center"
-        :data-tip="monthData.totalAllExpenses !== null
-          ? `${t('budget.month.totalExpensesTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
-          : t('budget.month.pocketExpensesAvailable')"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            disabled
-            data-testid="total-expenses-button"
-            :class="{
-              'text-warning': monthData.totalAllExpenses !== null && monthData.totalAllExpenses < 0,
-              'text-error': monthData.totalAllExpenses !== null && monthData.totalAllExpenses > 0,
-              'text-base-content': monthData.totalAllExpenses === 0,
-            }"
-          >
-            {{ monthData.totalAllExpenses !== null ? formatAmountRounded(monthData.totalAllExpenses, budgetStore.effectiveMainCurrency) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(5)"
-        class="tooltip text-center"
-        :data-tip="monthData.calculatedBalanceChange !== null
-          ? `${t('budget.month.balanceChangeTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
-          : t('budget.month.pocketExpensesAvailable')"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            data-testid="balance-change-button"
-            :class="{
-              'text-success': monthData.calculatedBalanceChange !== null && monthData.calculatedBalanceChange > 0,
-              'text-error': monthData.calculatedBalanceChange !== null && monthData.calculatedBalanceChange < 0,
-              'text-base-content': monthData.calculatedBalanceChange === 0,
-            }"
-            disabled
-          >
-            {{ monthData.calculatedBalanceChange !== null ? formatAmountRounded(monthData.calculatedBalanceChange, budgetStore.effectiveMainCurrency) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(6)"
-        class="tooltip text-center"
-        :data-tip="monthData.currencyProfitLoss !== null
-          ? `${t('budget.month.currencyFluctuationTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}`
-          : t('budget.month.pocketExpensesAvailable')"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            data-testid="currency-fluctuation-button"
-            :class="{
-              'text-success': monthData.currencyProfitLoss !== null && monthData.currencyProfitLoss > 0,
-              'text-error': monthData.currencyProfitLoss !== null && monthData.currencyProfitLoss < 0,
-              'text-base-content': monthData.currencyProfitLoss === 0,
-            }"
-            disabled
-          >
-            {{ monthData.currencyProfitLoss !== null ? formatAmountRounded(monthData.currencyProfitLoss, budgetStore.effectiveMainCurrency) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(7)"
-        class="tooltip text-center"
-        :data-tip="`${t('budget.month.optionalExpensesTooltip')} ${budgetStore.monthNames[monthData.month]} ${monthData.year}. ${t('budget.month.optionalExpensesTooltipText')}`"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            data-testid="optional-expenses-button"
-            :class="{
-              'text-error': monthData.totalOptionalExpenses !== 0,
-              'text-base-content': monthData.totalOptionalExpenses === 0,
-            }"
-            disabled
-          >
-            {{ formatAmountRounded(monthData.totalOptionalExpenses, budgetStore.effectiveMainCurrency) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="canDeleteMonth"
-        :ref="setCardRef(8)"
-        class="tooltip text-center"
-        :data-tip="t('budget.month.deleteMonth')"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
-            data-testid="delete-month-button"
-            @click="handleDeleteMonth"
-          >
-            <Icon
-              name="heroicons:trash"
-              size="16"
-            />
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <hr>
-  </li>
+  <UiMonth
+    :month-name="budgetStore.monthNames[monthData.month]"
+    :month-badge-tooltip="monthBadgeTooltip"
+    :balance-tooltip="balanceTooltip"
+    :income-tooltip="incomeTooltip"
+    :expenses-tooltip="expensesTooltip"
+    :pocket-expenses-tooltip="pocketExpensesTooltip"
+    :total-expenses-tooltip="totalExpensesTooltip"
+    :balance-change-tooltip="balanceChangeTooltip"
+    :currency-fluctuation-tooltip="currencyFluctuationTooltip"
+    :optional-expenses-tooltip="optionalExpensesTooltip"
+    :data="uiMonthData"
+    :labels="labels"
+    :is-current-month="isCurrentMonthValue"
+    :is-read-only="isReadOnly"
+    :can-delete="canDeleteMonth"
+    :format-amount="formatAmountForDisplay"
+    @balance-click="openBalanceModal"
+    @income-click="openIncomeModal"
+    @expense-click="openExpenseModal"
+    @currency-rates-click="openCurrencyRatesModal"
+    @delete-click="handleDeleteMonth"
+    @card-refs-ready="registerRow"
+    @card-refs-removed="unregisterRow"
+  />
 </template>
 
 <script setup lang="ts">
-import type { ComponentPublicInstance } from 'vue'
 import { getErrorMessage } from '~~/shared/utils/errors'
 import { formatAmountRounded } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/month-helpers'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
+import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
 
 interface Props {
   monthId: string
@@ -282,33 +58,12 @@ const monthData = computed(() => {
 const isReadOnly = computed(() => !budgetStore.canEdit)
 const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.data?.user?.username : undefined)
 
-const cardRefs = ref<HTMLElement[]>([])
 const isCurrentMonthValue = ref(false)
 
 const { registerRow, unregisterRow, forceSync } = props.budgetColumnsSync
 
-const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
-  if (el && el instanceof HTMLElement) {
-    cardRefs.value[index] = el
-  }
-}
-
 onMounted(() => {
   isCurrentMonthValue.value = isCurrentMonth(monthData.value)
-
-  nextTick(() => {
-    const validRefs = cardRefs.value.filter(Boolean)
-    if (validRefs.length) {
-      registerRow(validRefs)
-    }
-  })
-})
-
-onUnmounted(() => {
-  const validRefs = cardRefs.value.filter(Boolean)
-  if (validRefs.length) {
-    unregisterRow(validRefs)
-  }
 })
 
 const averageMonthlyExpenses = computed(() => {
@@ -333,6 +88,79 @@ watch([
     forceSync()
   })
 }, { flush: 'post' })
+
+const uiMonthData = computed((): UiMonthData => ({
+  startBalance: monthData.value.startBalance,
+  totalIncome: monthData.value.totalIncome,
+  totalExpenses: monthData.value.totalExpenses,
+  totalOptionalExpenses: monthData.value.totalOptionalExpenses,
+  calculatedPocketExpenses: monthData.value.calculatedPocketExpenses,
+  totalAllExpenses: monthData.value.totalAllExpenses,
+  calculatedBalanceChange: monthData.value.calculatedBalanceChange,
+  currencyProfitLoss: monthData.value.currencyProfitLoss,
+}))
+
+const labels = computed((): UiMonthLabels => ({
+  currentMonth: t('budget.month.currentMonth'),
+  deleteMonth: t('budget.month.deleteMonth'),
+}))
+
+const monthBadgeTooltip = computed(() => {
+  const title = monthData.value.sourceMonthTitle || `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
+  return `${title} - ${t('budget.month.clickForRates')}`
+})
+
+const balanceTooltip = computed(() => {
+  const months = Math.floor(monthData.value.startBalance / averageMonthlyExpenses.value)
+  return `${t('budget.month.balanceTooltip')} ${months} ${t('budget.month.balanceTooltipMonths')}`
+})
+
+const incomeTooltip = computed(() => {
+  return `${t('budget.month.incomeTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}. ${t('budget.month.incomeTooltipText')}`
+})
+
+const expensesTooltip = computed(() => {
+  return `${t('budget.month.expensesTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}. ${t('budget.month.expensesTooltipText')}`
+})
+
+const pocketExpensesTooltip = computed(() => {
+  if (monthData.value.calculatedPocketExpenses === null) {
+    return t('budget.month.pocketExpensesAvailable')
+  }
+  if (monthData.value.calculatedPocketExpenses < 0) {
+    return t('budget.month.pocketExpensesError')
+  }
+  return t('budget.month.pocketExpensesTooltip')
+})
+
+const totalExpensesTooltip = computed(() => {
+  if (monthData.value.totalAllExpenses === null) {
+    return t('budget.month.pocketExpensesAvailable')
+  }
+  return `${t('budget.month.totalExpensesTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
+})
+
+const balanceChangeTooltip = computed(() => {
+  if (monthData.value.calculatedBalanceChange === null) {
+    return t('budget.month.pocketExpensesAvailable')
+  }
+  return `${t('budget.month.balanceChangeTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
+})
+
+const currencyFluctuationTooltip = computed(() => {
+  if (monthData.value.currencyProfitLoss === null) {
+    return t('budget.month.pocketExpensesAvailable')
+  }
+  return `${t('budget.month.currencyFluctuationTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
+})
+
+const optionalExpensesTooltip = computed(() => {
+  return `${t('budget.month.optionalExpensesTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}. ${t('budget.month.optionalExpensesTooltipText')}`
+})
+
+const formatAmountForDisplay = (amount: number): string => {
+  return formatAmountRounded(amount, budgetStore.effectiveMainCurrency)
+}
 
 const openBalanceModal = (): void => {
   modalsStore.openEntryModal({

@@ -1,333 +1,27 @@
 <template>
-  <li
-    class="hover:bg-base-200"
-    data-testid="budget-year"
+  <UiYear
+    :year="year"
+    :stats="yearStats"
+    :labels="labels"
+    :format-amount="formatAmountForDisplay"
+    @header-refs-ready="registerRow"
+    @header-refs-removed="unregisterRow"
   >
-    <hr>
-    <div class="timeline-start">
-      <h2 class="text-3xl font-bold">
-        {{ year }}
-      </h2>
-    </div>
-    <div class="timeline-middle">
-      <div class="w-3 h-3 m-1 bg-base-content rounded-full" />
-    </div>
-    <div class="timeline-end flex gap-4 pl-4 py-1">
-      <div :ref="setHeaderRef(0)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex"
-            :data-tip="t('budget.year.balanceTooltip')"
-          >
-            {{ t('budget.year.balance') }}
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-primary': yearStats.averageBalance > 0,
-                'text-base-content': yearStats.averageBalance === 0,
-              }"
-              :data-tip="t('budget.year.averageBalance')"
-              data-testid="year-average-balance"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.averageBalance, mainCurrency) }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(1)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex"
-            :data-tip="t('budget.year.incomeTooltip')"
-          >
-            {{ t('budget.year.income') }}
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-success': yearStats.totalIncome > 0,
-                'text-base-content': yearStats.totalIncome === 0,
-              }"
-              :data-tip="t('budget.year.totalIncome')"
-              data-testid="year-total-income"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalIncome, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-success/80': yearStats.averageIncome > 0,
-                'text-base-content/80': yearStats.averageIncome === 0,
-              }"
-              :data-tip="t('budget.year.averageIncome')"
-              data-testid="year-average-income"
-            >
-              {{ formatAmountRounded(yearStats.averageIncome, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(2)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
-            :data-tip="t('budget.year.majorExpensesTooltip')"
-          >
-            <span>{{ t('budget.year.majorExpensesLine1') }}</span>
-            <span>{{ t('budget.year.majorExpensesLine2') }}</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-error': yearStats.totalExpenses > 0,
-                'text-base-content': yearStats.totalExpenses === 0,
-              }"
-              :data-tip="t('budget.year.totalMajorExpenses')"
-              data-testid="year-total-expenses"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalExpenses, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-error/80': yearStats.averageExpenses > 0,
-                'text-base-content/80': yearStats.averageExpenses === 0,
-              }"
-              :data-tip="t('budget.year.averageMajorExpenses')"
-              data-testid="year-average-expenses"
-            >
-              {{ formatAmountRounded(yearStats.averageExpenses, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(3)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
-            :data-tip="t('budget.year.pocketExpensesFormula')"
-          >
-            <span>{{ t('budget.year.pocketExpensesLine1') }}</span>
-            <span>{{ t('budget.year.pocketExpensesLine2') }}</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-warning': yearStats.totalPocketExpenses < 0,
-                'text-error': yearStats.totalPocketExpenses > 0,
-                'text-base-content': yearStats.totalPocketExpenses === 0,
-              }"
-              :data-tip="t('budget.year.totalPocketExpenses')"
-              data-testid="year-total-pocket-expenses"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalPocketExpenses, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-warning/80': yearStats.averagePocketExpenses < 0,
-                'text-error/80': yearStats.averagePocketExpenses > 0,
-                'text-base-content/80': yearStats.averagePocketExpenses === 0,
-              }"
-              :data-tip="t('budget.year.averagePocketExpenses')"
-              data-testid="year-average-pocket-expenses"
-            >
-              {{ formatAmountRounded(yearStats.averagePocketExpenses, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(4)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex"
-            :data-tip="t('budget.year.allExpensesFormula')"
-          >
-            {{ t('budget.year.allExpenses') }}
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-warning': yearStats.totalAllExpenses < 0,
-                'text-error': yearStats.totalAllExpenses > 0,
-                'text-base-content': yearStats.totalAllExpenses === 0,
-              }"
-              :data-tip="t('budget.year.totalAllExpenses')"
-              data-testid="year-total-all-expenses"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalAllExpenses, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-warning/80': yearStats.averageAllExpenses < 0,
-                'text-error/80': yearStats.averageAllExpenses > 0,
-                'text-base-content/80': yearStats.averageAllExpenses === 0,
-              }"
-              :data-tip="t('budget.year.averageAllExpenses')"
-              data-testid="year-average-all-expenses"
-            >
-              {{ formatAmountRounded(yearStats.averageAllExpenses, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(5)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
-            :data-tip="t('budget.year.balanceChangeFormula')"
-          >
-            <span>{{ t('budget.year.balanceChangeLine1') }}</span>
-            <span>{{ t('budget.year.balanceChangeLine2') }}</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-success': yearStats.totalBalanceChange > 0,
-                'text-error': yearStats.totalBalanceChange < 0,
-                'text-base-content': yearStats.totalBalanceChange === 0,
-              }"
-              :data-tip="t('budget.year.totalBalanceChange')"
-              data-testid="year-total-balance-change"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalBalanceChange, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-success/80': yearStats.averageBalanceChange > 0,
-                'text-error/80': yearStats.averageBalanceChange < 0,
-                'text-base-content/80': yearStats.averageBalanceChange === 0,
-              }"
-              :data-tip="t('budget.year.averageBalanceChange')"
-              data-testid="year-average-balance-change"
-            >
-              {{ formatAmountRounded(yearStats.averageBalanceChange, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(6)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
-            :data-tip="t('budget.year.currencyFluctuationsFormula')"
-          >
-            <span>{{ t('budget.year.currencyFluctuationsLine1') }}</span>
-            <span>{{ t('budget.year.currencyFluctuationsLine2') }}</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-success': yearStats.totalCurrencyProfitLoss > 0,
-                'text-error': yearStats.totalCurrencyProfitLoss < 0,
-                'text-base-content': yearStats.totalCurrencyProfitLoss === 0,
-              }"
-              :data-tip="t('budget.year.totalCurrencyFluctuations')"
-              data-testid="year-total-currency-profit-loss"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalCurrencyProfitLoss, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-success/80': yearStats.averageCurrencyProfitLoss > 0,
-                'text-error/80': yearStats.averageCurrencyProfitLoss < 0,
-                'text-base-content/80': yearStats.averageCurrencyProfitLoss === 0,
-              }"
-              :data-tip="t('budget.year.averageCurrencyFluctuations')"
-              data-testid="year-average-currency-profit-loss"
-            >
-              {{ formatAmountRounded(yearStats.averageCurrencyProfitLoss, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div :ref="setHeaderRef(7)">
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
-          <div
-            class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col"
-            :data-tip="t('budget.year.optionalExpensesTooltip')"
-          >
-            <span>{{ t('budget.year.optionalExpensesLine1') }}</span>
-            <span>{{ t('budget.year.optionalExpensesLine2') }}</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              class="tooltip tooltip-bottom"
-              :class="{
-                'text-error': yearStats.totalOptionalExpenses > 0,
-                'text-base-content': yearStats.totalOptionalExpenses === 0,
-              }"
-              :data-tip="t('budget.year.totalOptionalExpenses')"
-              data-testid="year-total-optional-expenses"
-            >
-              <div class="font-bold">
-                {{ formatAmountRounded(yearStats.totalOptionalExpenses, mainCurrency) }}
-              </div>
-            </div>
-            <div
-              class="text-sm tooltip tooltip-bottom"
-              :class="{
-                'text-error/80': yearStats.averageOptionalExpenses > 0,
-                'text-base-content/80': yearStats.averageOptionalExpenses === 0,
-              }"
-              :data-tip="t('budget.year.averageOptionalExpenses')"
-              data-testid="year-average-optional-expenses"
-            >
-              {{ formatAmountRounded(yearStats.averageOptionalExpenses, mainCurrency) }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <hr>
-  </li>
-
-  <BudgetMonth
-    v-for="monthData in months"
-    :key="`${monthData.year}-${monthData.month}`"
-    :month-id="createMonthId(monthData.year, monthData.month)"
-    :budget-columns-sync="budgetColumnsSync"
-  />
+    <BudgetMonth
+      v-for="monthData in months"
+      :key="`${monthData.year}-${monthData.month}`"
+      :month-id="createMonthId(monthData.year, monthData.month)"
+      :budget-columns-sync="budgetColumnsSync"
+    />
+  </UiYear>
 </template>
 
 <script setup lang="ts">
-import type { ComponentPublicInstance } from 'vue'
 import type { MonthData } from '~~/shared/types/budget'
 import { formatAmountRounded } from '~~/shared/utils/budget'
 import { createMonthId } from '~~/shared/utils/budget-calculations'
 import { useBudgetStore } from '~/stores/budget'
+import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 
 interface Props {
   year: number
@@ -346,11 +40,9 @@ const { mainCurrency: userMainCurrency } = useUser()
 const budgetStore = useBudgetStore()
 const mainCurrency = computed(() => budgetStore.data?.user?.mainCurrency || userMainCurrency.value)
 
-const headerRefs = ref<HTMLElement[]>([])
-
 const { registerRow, unregisterRow } = props.budgetColumnsSync
 
-const yearStats = computed(() => {
+const yearStats = computed((): UiYearStats => {
   const summary = budgetStore.getYearSummary(props.year)
   if (!summary) {
     return {
@@ -391,25 +83,46 @@ const yearStats = computed(() => {
   }
 })
 
-const setHeaderRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
-  if (el && el instanceof HTMLElement) {
-    headerRefs.value[index] = el
-  }
+const labels = computed((): UiYearLabels => ({
+  balance: t('budget.year.balance'),
+  balanceTooltip: t('budget.year.balanceTooltip'),
+  averageBalance: t('budget.year.averageBalance'),
+  income: t('budget.year.income'),
+  incomeTooltip: t('budget.year.incomeTooltip'),
+  totalIncome: t('budget.year.totalIncome'),
+  averageIncome: t('budget.year.averageIncome'),
+  majorExpensesLine1: t('budget.year.majorExpensesLine1'),
+  majorExpensesLine2: t('budget.year.majorExpensesLine2'),
+  majorExpensesTooltip: t('budget.year.majorExpensesTooltip'),
+  totalMajorExpenses: t('budget.year.totalMajorExpenses'),
+  averageMajorExpenses: t('budget.year.averageMajorExpenses'),
+  pocketExpensesLine1: t('budget.year.pocketExpensesLine1'),
+  pocketExpensesLine2: t('budget.year.pocketExpensesLine2'),
+  pocketExpensesFormula: t('budget.year.pocketExpensesFormula'),
+  totalPocketExpenses: t('budget.year.totalPocketExpenses'),
+  averagePocketExpenses: t('budget.year.averagePocketExpenses'),
+  allExpenses: t('budget.year.allExpenses'),
+  allExpensesFormula: t('budget.year.allExpensesFormula'),
+  totalAllExpenses: t('budget.year.totalAllExpenses'),
+  averageAllExpenses: t('budget.year.averageAllExpenses'),
+  balanceChangeLine1: t('budget.year.balanceChangeLine1'),
+  balanceChangeLine2: t('budget.year.balanceChangeLine2'),
+  balanceChangeFormula: t('budget.year.balanceChangeFormula'),
+  totalBalanceChange: t('budget.year.totalBalanceChange'),
+  averageBalanceChange: t('budget.year.averageBalanceChange'),
+  currencyFluctuationsLine1: t('budget.year.currencyFluctuationsLine1'),
+  currencyFluctuationsLine2: t('budget.year.currencyFluctuationsLine2'),
+  currencyFluctuationsFormula: t('budget.year.currencyFluctuationsFormula'),
+  totalCurrencyFluctuations: t('budget.year.totalCurrencyFluctuations'),
+  averageCurrencyFluctuations: t('budget.year.averageCurrencyFluctuations'),
+  optionalExpensesLine1: t('budget.year.optionalExpensesLine1'),
+  optionalExpensesLine2: t('budget.year.optionalExpensesLine2'),
+  optionalExpensesTooltip: t('budget.year.optionalExpensesTooltip'),
+  totalOptionalExpenses: t('budget.year.totalOptionalExpenses'),
+  averageOptionalExpenses: t('budget.year.averageOptionalExpenses'),
+}))
+
+const formatAmountForDisplay = (amount: number): string => {
+  return formatAmountRounded(amount, mainCurrency.value)
 }
-
-onMounted(() => {
-  nextTick(() => {
-    const validRefs = headerRefs.value.filter(Boolean)
-    if (validRefs.length) {
-      registerRow(validRefs)
-    }
-  })
-})
-
-onUnmounted(() => {
-  const validRefs = headerRefs.value.filter(Boolean)
-  if (validRefs.length) {
-    unregisterRow(validRefs)
-  }
-})
 </script>

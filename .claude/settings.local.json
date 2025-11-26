@@ -28,7 +28,8 @@
       "WebFetch(domain:i18n.nuxtjs.org)",
       "Bash(cat:*)",
       "WebFetch(domain:next.i18n.nuxtjs.org)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(pnpm test:e2e:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

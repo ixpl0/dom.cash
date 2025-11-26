@@ -1,25 +1,10 @@
 <template>
-  <li>
-    <hr>
-    <div class="timeline-start">
-      <button
-        class="btn btn-dash btn-sm"
-        :disabled="isLoading"
-        :data-testid="`add-month-${direction}`"
-        @click="handleClick"
-      >
-        <Icon
-          name="heroicons:plus"
-          size="16"
-        />
-        {{ monthText }}
-      </button>
-    </div>
-    <div class="timeline-middle">
-      <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
-    </div>
-    <hr>
-  </li>
+  <UiTimelineAddButton
+    :direction="direction"
+    :month-text="monthText"
+    :is-loading="isLoading"
+    @create="$emit('create')"
+  />
 </template>
 
 <script setup lang="ts">
@@ -29,13 +14,11 @@ interface Props {
   isLoading?: boolean
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  isLoading: false,
+})
 
-const emit = defineEmits<{
+defineEmits<{
   create: []
 }>()
-
-const handleClick = (): void => {
-  emit('create')
-}
 </script>
