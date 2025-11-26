@@ -87,9 +87,13 @@ Budget timeline implements **responsive column width synchronization**:
 - **Framework**: Nuxt 4, Vue 3
 - **Backend**: Nitro, Cloudflare Workers
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
-- **Authentication**: JWT with secure HTTP-only cookies
-- **Styling**: Tailwind CSS + DaisyUI
-- **Type Safety**: TypeScript with strict mode
+- **Authentication**: JWT with secure HTTP-only cookies, Google OAuth
+- **Styling**: Tailwind CSS 4 + DaisyUI 5
+- **Type Safety**: TypeScript 5 with strict mode
+- **Validation**: Zod for runtime type checking
+- **State Management**: Pinia
+- **Charts**: Vue ECharts
+- **Internationalization**: @nuxtjs/i18n (Russian, English)
 - **Deployment**: Cloudflare Workers
 
 ## Getting Started
@@ -150,6 +154,27 @@ wrangler secret put DISABLE_EMAIL_VERIFICATION
 
 **Important**: All users have an `emailVerified` field in the database that indicates whether their email has been verified. This allows requiring verification from users with `emailVerified = false` in the future.
 
+#### Google OAuth
+
+To enable Google OAuth authentication:
+
+```bash
+# In .dev.vars for local development
+GOOGLE_OAUTH_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+
+# Via wrangler for remote environments
+wrangler secret put GOOGLE_OAUTH_CLIENT_ID
+wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET
+```
+
+**Setup in Google Cloud Console**:
+1. Create a new project or select an existing one
+2. Enable Google+ API
+3. Configure OAuth consent screen
+4. Create OAuth 2.0 credentials (Web application)
+5. Add authorized redirect URI: `https://your-domain.com/api/auth/google-redirect`
+
 ## Database Migrations
 
 This project uses **Wrangler D1 migrations** for Cloudflare deployment (NOT Drizzle migrations).
@@ -191,6 +216,7 @@ pnpm run db:migrate:prod
 - `0005_add_email_verification_codes.sql` - Add email verification codes table
 - `0006_add_attempt_count_to_verification_codes.sql` - Add attempt tracking to verification codes
 - `0007_add_email_verified_to_user.sql` - Add email_verified field to user table
+- `0008_add_is_admin_to_user.sql` - Add is_admin field to user table
 
 ### Database Commands
 
@@ -275,6 +301,10 @@ pnpm run test:e2e:headed # Run tests with visible browser
 │   ├── components/     # Vue components
 │   ├── composables/    # Vue composables (frontend-only)
 │   ├── pages/          # Nuxt pages
+│   ├── stores/         # Pinia state management
+│   ├── layouts/        # Page layouts
+│   ├── middleware/     # Nuxt middleware
+│   ├── plugins/        # Nuxt plugins
 │   └── utils/          # Frontend utilities
 ├── server/
 │   ├── api/            # Thin API handlers (HTTP adapters)
@@ -284,7 +314,10 @@ pnpm run test:e2e:headed # Run tests with visible browser
 │   └── schemas/        # Zod validation schemas
 ├── shared/
 │   ├── types/          # Shared TypeScript types
+│   ├── schemas/        # Shared Zod schemas
 │   └── utils/          # Shared business logic
+├── i18n/
+│   └── locales/        # Translation files (ru, en)
 ```
 
 ## Known Issues
@@ -333,3 +366,57 @@ pnpm run typecheck
 # Fix linting issues
 pnpm run lint:fix
 ```
+
+## Internationalization (i18n)
+
+The application supports multiple languages:
+
+- **Russian (ru)** - default for Russian-speaking users
+- **English (en)** - default language
+
+### Configuration
+
+- Language detection: browser preference with cookie persistence
+- Strategy: `no_prefix` (language stored in cookie, not URL)
+- Cookie name: `i18n_locale`
+
+### Adding Translations
+
+Translation files are located in `i18n/locales/`:
+
+```
+i18n/
+├── locales/
+│   ├── ru.ts           # Russian translations
+│   ├── en.ts           # English translations
+│   └── currencies/     # Currency name translations
+│       ├── ru.ts
+│       └── en.ts
+```
+
+### Usage in Components
+
+```vue
+<script setup lang="ts">
+const { t } = useI18n()
+</script>
+
+<template>
+  <p>{{ t('welcome') }}</p>
+</template>
+```
+
+## Themes
+
+The application supports multiple DaisyUI themes:
+
+- **light** - Light theme (default)
+- **dark** - Dark theme
+- **autumn** - Warm autumn colors
+- **nord** - Nord color palette
+- **valentine** - Pink/red theme
+- **coffee** - Coffee-inspired dark theme
+
+### Theme Switching
+
+Theme preference is stored in localStorage and applied via the `data-theme` attribute on the HTML element. Users can switch themes using the theme switcher in the header.
