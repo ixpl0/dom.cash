@@ -25,13 +25,13 @@ test.describe('Home page (unauthenticated)', () => {
     await expect(page.getByTestId('cta-register-btn')).toBeVisible()
   })
 
-  test('register button navigates to login page', async ({ page }) => {
+  test('register button navigates to auth page', async ({ page }) => {
     await page.getByTestId('register-btn').click()
-    await page.waitForURL(url => url.pathname === '/login')
+    await page.waitForURL(url => url.pathname === '/auth')
   })
 
-  test('login button navigates to login page', async ({ page }) => {
+  test('login button navigates to auth page', async ({ page }) => {
     await page.getByTestId('login-btn').click()
-    await page.waitForURL(url => url.pathname === '/login')
+    await page.waitForURL(url => url.pathname === '/auth')
   })
 })

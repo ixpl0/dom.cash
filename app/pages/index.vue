@@ -43,7 +43,7 @@
 
             <template v-else>
               <NuxtLink
-                to="/login"
+                to="/auth"
                 class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
                 data-testid="register-btn"
               >
@@ -55,7 +55,7 @@
               </NuxtLink>
 
               <NuxtLink
-                to="/login"
+                to="/auth"
                 class="btn btn-outline btn-lg gap-2"
                 data-testid="login-btn"
               >
@@ -121,6 +121,64 @@
     </section>
 
     <section class="py-16 px-4">
+      <div class="max-w-5xl mx-auto">
+        <h2
+          class="text-3xl font-bold text-center mb-4"
+          data-testid="demo-chart-title"
+        >
+          {{ t('home.demoChartTitle') }}
+        </h2>
+        <p
+          class="text-center opacity-60 mb-12 max-w-xl mx-auto"
+          data-testid="demo-chart-subtitle"
+        >
+          {{ t('home.demoChartSubtitle') }}
+        </p>
+
+        <div class="animate-slide-up pointer-events-none select-none">
+          <UiChart chart-height="400px">
+            <ClientOnly>
+              <BudgetChartClient
+                :option="demoChartOption"
+              />
+              <template #fallback>
+                <div class="flex items-center justify-center h-full">
+                  <span class="loading loading-spinner loading-lg" />
+                </div>
+              </template>
+            </ClientOnly>
+          </UiChart>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-16 px-4 bg-base-200/50">
+      <div class="max-w-4xl mx-auto">
+        <h2
+          class="text-3xl font-bold text-center mb-4"
+          data-testid="demo-entries-title"
+        >
+          {{ t('home.demoEntriesTitle') }}
+        </h2>
+        <p
+          class="text-center opacity-60 mb-12 max-w-xl mx-auto"
+          data-testid="demo-entries-subtitle"
+        >
+          {{ t('home.demoEntriesSubtitle') }}
+        </p>
+
+        <div class="animate-slide-up pointer-events-none select-none">
+          <UiEntryTable
+            :entries="demoEntries"
+            :entry-kind="'expense'"
+            :labels="entryTableLabels"
+            :format-date="formatDemoDate"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="pt-16 pb-40 px-4">
       <div class="max-w-4xl mx-auto text-center">
         <h2
           class="text-3xl font-bold mb-8"
@@ -180,7 +238,7 @@
         </div>
 
         <NuxtLink
-          :to="isAuthenticated ? '/budget' : '/login'"
+          :to="isAuthenticated ? '/budget' : '/auth'"
           class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
           data-testid="cta-register-btn"
         >
@@ -196,12 +254,27 @@
 </template>
 
 <script setup lang="ts">
+import type { ComposeOption } from 'echarts/core'
+import type { LineSeriesOption } from 'echarts/charts'
+import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, DataZoomComponentOption } from 'echarts/components'
 import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
 import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
+import type { EntryTableEntry, EntryTableLabels } from '~/components/ui/EntryTable.vue'
+
+type ECOption = ComposeOption<
+  | LineSeriesOption
+  | GridComponentOption
+  | LegendComponentOption
+  | TooltipComponentOption
+  | DataZoomComponentOption
+>
+
+const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
 const { t } = useI18n()
 const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
+const { currentTheme } = useTheme()
 
 const formatDemoAmount = (amount: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -342,6 +415,199 @@ const demoData = computed((): DemoData => {
     months,
   }
 })
+
+const getThemeColors = () => {
+  if (!import.meta.client) {
+    return {
+      text: '#6b7280',
+      axis: '#9ca3af',
+      grid: '#e5e7eb',
+      background: '#f3f4f6',
+      primary: '#3b82f6',
+      success: '#22c55e',
+      error: '#ef4444',
+    }
+  }
+
+  const style = getComputedStyle(document.documentElement)
+  const baseContent = style.getPropertyValue('--color-base-content').trim()
+  const base200 = style.getPropertyValue('--color-base-200').trim()
+  const primary = style.getPropertyValue('--color-primary').trim()
+  const success = style.getPropertyValue('--color-success').trim()
+  const error = style.getPropertyValue('--color-error').trim()
+
+  return {
+    text: baseContent || '#6b7280',
+    axis: `color-mix(in srgb, ${baseContent || '#9ca3af'} 70%, transparent)`,
+    grid: `color-mix(in srgb, ${baseContent || '#e5e7eb'} 10%, transparent)`,
+    background: base200 || '#f3f4f6',
+    primary: primary || '#3b82f6',
+    success: success || '#22c55e',
+    error: error || '#ef4444',
+  }
+}
+
+const demoChartLabels = computed(() => {
+  const currentDate = new Date()
+  const result: string[] = []
+
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+    result.push(`${monthNames.value[date.getMonth()]} ${date.getFullYear()}`)
+  }
+
+  return result
+})
+
+const demoChartData = {
+  balance: [2000, 5800, 9500, 13700, 17200, 21000],
+  income: [4800, 7200, 5500, 8100, 8800, 11200],
+  expenses: [7500, 5200, 7800, 5600, 5800, 4900],
+}
+
+const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
+
+const demoChartOption = computed((): ECOption => {
+  // NOTE: reading currentTheme.value to trigger recomputation when theme changes
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  currentTheme.value
+  const colors = getThemeColors()
+
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: colors.background,
+      borderColor: colors.axis,
+      textStyle: { color: colors.text },
+    },
+    legend: {
+      top: 0,
+      textStyle: { color: colors.text },
+      inactiveColor: colors.axis,
+    },
+    grid: {
+      top: 50,
+      left: 50,
+      right: 30,
+      bottom: 60,
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      data: demoChartLabels.value,
+      axisLabel: {
+        rotate: 45,
+        color: colors.axis,
+      },
+      axisLine: {
+        lineStyle: { color: colors.axis },
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        formatter: (value: number) => `$${nf.format(Math.round(value))}`,
+        color: colors.axis,
+      },
+      axisLine: {
+        lineStyle: { color: colors.axis },
+      },
+      splitLine: {
+        lineStyle: { color: colors.grid },
+      },
+    },
+    series: [
+      {
+        name: t('chart.balance'),
+        type: 'line',
+        data: demoChartData.balance,
+        smooth: true,
+        lineStyle: { color: colors.primary },
+        itemStyle: { color: colors.primary },
+        symbol: 'circle',
+        symbolSize: 8,
+      },
+      {
+        name: t('chart.income'),
+        type: 'line',
+        data: demoChartData.income,
+        smooth: true,
+        lineStyle: { color: colors.success },
+        itemStyle: { color: colors.success },
+        symbol: 'circle',
+        symbolSize: 8,
+      },
+      {
+        name: t('chart.expenses'),
+        type: 'line',
+        data: demoChartData.expenses,
+        smooth: true,
+        lineStyle: { color: colors.error },
+        itemStyle: { color: colors.error },
+        symbol: 'circle',
+        symbolSize: 8,
+      },
+    ],
+  }
+})
+
+const entryTableLabels = computed((): EntryTableLabels => ({
+  description: t('entry.description'),
+  amount: t('entry.amount'),
+  currency: t('entry.currency'),
+  date: t('entry.date'),
+  optional: t('entry.optional'),
+}))
+
+const demoEntries = computed((): EntryTableEntry[] => {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+
+  return [
+    {
+      id: '1',
+      description: t('home.demoEntry.rent'),
+      amount: 1500,
+      currency: 'USD',
+      date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`,
+      isOptional: false,
+    },
+    {
+      id: '2',
+      description: t('home.demoEntry.utilities'),
+      amount: 180,
+      currency: 'USD',
+      date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-05`,
+      isOptional: false,
+    },
+    {
+      id: '3',
+      description: t('home.demoEntry.subscription'),
+      amount: 15,
+      currency: 'USD',
+      date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-10`,
+      isOptional: true,
+    },
+    {
+      id: '4',
+      description: t('home.demoEntry.insurance'),
+      amount: 350,
+      currency: 'USD',
+      date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-15`,
+      isOptional: false,
+    },
+  ]
+})
+
+const formatDemoDate = (date: string | null | undefined): string => {
+  if (!date) {
+    return ''
+  }
+  const d = new Date(date)
+  return d.toLocaleDateString()
+}
 </script>
 
 <style scoped>

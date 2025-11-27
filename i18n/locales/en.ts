@@ -103,6 +103,16 @@ export default {
       currencyTooltip: 'Profit or loss from currency rate changes',
       optionalTooltip: 'Optional expenses that could have been avoided',
     },
+    demoChartTitle: 'Financial Dynamics',
+    demoChartSubtitle: 'Clear chart showing balance, income, and expense trends',
+    demoEntriesTitle: 'Expense Details',
+    demoEntriesSubtitle: 'All transactions in one place with the ability to mark optional expenses',
+    demoEntry: {
+      rent: 'Apartment Rent',
+      utilities: 'Utilities',
+      subscription: 'Netflix Subscription',
+      insurance: 'Car Insurance',
+    },
   },
 
   budget: {

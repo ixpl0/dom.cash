@@ -103,6 +103,16 @@ export default {
       currencyTooltip: 'Прибыль или убыток от изменения курсов валют',
       optionalTooltip: 'Необязательные расходы, от которых можно было бы отказаться',
     },
+    demoChartTitle: 'Динамика финансов',
+    demoChartSubtitle: 'Наглядный график изменения баланса, доходов и расходов',
+    demoEntriesTitle: 'Детализация расходов',
+    demoEntriesSubtitle: 'Все операции в одном месте с возможностью пометить необязательные расходы',
+    demoEntry: {
+      rent: 'Аренда квартиры',
+      utilities: 'Коммунальные услуги',
+      subscription: 'Подписка Netflix',
+      insurance: 'Страховка авто',
+    },
   },
 
   budget: {
