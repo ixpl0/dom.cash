@@ -183,9 +183,8 @@ test.describe('Authentication', () => {
       await page.waitForTimeout(500)
     }
 
-    await expect(page.getByTestId('auth-error')).toBeVisible()
-    const errorText = await page.getByTestId('auth-error').textContent()
-    expect(errorText).toContain('Too many failed attempts')
+    const errorToast = page.getByTestId('toast-error').filter({ hasText: 'Too many failed attempts' })
+    await expect(errorToast).toBeVisible()
   })
 
   test('correct code works after failed attempts within limit', async ({ page }) => {

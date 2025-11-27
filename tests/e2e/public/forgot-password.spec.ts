@@ -258,9 +258,8 @@ test.describe('Forgot Password', () => {
       await page.waitForTimeout(500)
     }
 
-    await expect(page.getByTestId('auth-error')).toBeVisible()
-    const errorText = await page.getByTestId('auth-error').textContent()
-    expect(errorText).toContain('Too many failed attempts')
+    const errorToast = page.getByTestId('toast-error').filter({ hasText: 'Too many failed attempts' })
+    await expect(errorToast).toBeVisible()
   })
 
   test('password reset works after failed attempts within limit', async ({ page }) => {

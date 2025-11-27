@@ -11,8 +11,8 @@ test.describe('Home page (unauthenticated)', () => {
     await expect(page.getByTestId('home-title')).toBeVisible()
     await expect(page.getByTestId('home-subtitle')).toBeVisible()
     await expect(page.getByTestId('home-description')).toBeVisible()
-    await expect(page.getByTestId('register-btn')).toBeVisible()
-    await expect(page.getByTestId('login-btn')).toBeVisible()
+    await expect(page.getByTestId('hero-register-btn')).toBeVisible()
+    await expect(page.getByTestId('hero-login-btn')).toBeVisible()
   })
 
   test('demo timeline section renders', async ({ page }) => {
@@ -26,12 +26,12 @@ test.describe('Home page (unauthenticated)', () => {
   })
 
   test('register button navigates to auth page', async ({ page }) => {
-    await page.getByTestId('register-btn').click()
+    await page.getByTestId('hero-register-btn').click()
     await page.waitForURL(url => url.pathname === '/auth')
   })
 
   test('login button navigates to auth page', async ({ page }) => {
-    await page.getByTestId('login-btn').click()
+    await page.getByTestId('hero-login-btn').click()
     await page.waitForURL(url => url.pathname === '/auth')
   })
 })

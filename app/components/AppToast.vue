@@ -4,6 +4,7 @@
       v-for="toast in toasts"
       :key="toast.id"
       :class="getToastClass(toast.type)"
+      :data-testid="`toast-${toast.type}`"
       class="alert shadow-lg cursor-pointer"
       @click="removeToast(toast.id)"
     >

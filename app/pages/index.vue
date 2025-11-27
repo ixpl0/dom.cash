@@ -45,7 +45,7 @@
               <NuxtLink
                 to="/auth"
                 class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
-                data-testid="register-btn"
+                data-testid="hero-register-btn"
               >
                 <Icon
                   name="heroicons:rocket-launch"
@@ -57,7 +57,7 @@
               <NuxtLink
                 to="/auth"
                 class="btn btn-outline btn-lg gap-2"
-                data-testid="login-btn"
+                data-testid="hero-login-btn"
               >
                 <Icon
                   name="heroicons:arrow-right-on-rectangle"

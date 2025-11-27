@@ -17,7 +17,7 @@ test.describe('Header', () => {
   })
 
   test('unauthenticated header shows Login button leading to /auth', async ({ page }) => {
-    const loginBtn = page.getByTestId('login-btn')
+    const loginBtn = page.getByTestId('desktop-user-menu').getByTestId('login-btn')
     await expect(loginBtn).toBeVisible()
     await loginBtn.click()
     await expect(page).toHaveURL('/auth')
