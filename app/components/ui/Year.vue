@@ -319,6 +319,7 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
+import { timelineColumnsSyncKey } from '~/types/timeline'
 
 export interface UiYearStats {
   averageBalance: number
@@ -386,10 +387,7 @@ interface Props {
 
 defineProps<Props>()
 
-const emit = defineEmits<{
-  headerRefsReady: [refs: HTMLElement[]]
-  headerRefsRemoved: [refs: HTMLElement[]]
-}>()
+const columnsSync = inject(timelineColumnsSyncKey, null)
 
 const headerRefs = ref<HTMLElement[]>([])
 
@@ -402,16 +400,16 @@ const setHeaderRef = (index: number) => (el: Element | ComponentPublicInstance |
 onMounted(() => {
   nextTick(() => {
     const validRefs = headerRefs.value.filter(Boolean)
-    if (validRefs.length) {
-      emit('headerRefsReady', validRefs)
+    if (validRefs.length && columnsSync) {
+      columnsSync.registerRow(validRefs)
     }
   })
 })
 
 onUnmounted(() => {
   const validRefs = headerRefs.value.filter(Boolean)
-  if (validRefs.length) {
-    emit('headerRefsRemoved', validRefs)
+  if (validRefs.length && columnsSync) {
+    columnsSync.unregisterRow(validRefs)
   }
 })
 </script>

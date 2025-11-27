@@ -166,8 +166,8 @@
       </div>
 
       <div class="overflow-x-auto py-6">
-        <ul
-          class="timeline timeline-vertical [--timeline-col-start:23ch]"
+        <UiTimeline
+          class="[--timeline-col-start:23ch]"
           data-testid="budget-timeline"
         >
           <BudgetTimelineAddButton
@@ -184,7 +184,6 @@
             :year="year"
             :months="groupedData[year] || []"
             :month-names="monthNames"
-            :budget-columns-sync="budgetColumnsSyncInstance"
           />
 
           <BudgetTimelineAddButton
@@ -222,7 +221,7 @@
             </div>
             <hr>
           </li>
-        </ul>
+        </UiTimeline>
       </div>
     </div>
 
@@ -244,7 +243,6 @@
 <script setup lang="ts">
 import { getErrorMessage } from '~~/shared/utils/errors'
 import { findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
-import { useBudgetColumnsSync } from '~/composables/useBudgetColumnsSync'
 import { useBudgetStore } from '~/stores/budget'
 import { useModalsStore } from '~/stores/modals'
 
@@ -429,8 +427,6 @@ const handleImported = async (): Promise<void> => {
   }
 }
 
-const budgetColumnsSyncInstance = useBudgetColumnsSync()
-
 const refreshBudget = async (username?: string) => {
   const currentUsername = budgetStore.data?.user.username
   const isChangingUser = (currentUsername && currentUsername !== username) || (!currentUsername && username)
@@ -440,9 +436,6 @@ const refreshBudget = async (username?: string) => {
   }
 
   await budgetStore.refresh(username)
-
-  await nextTick()
-  budgetColumnsSyncInstance.forceSync()
 }
 
 onMounted(async () => {

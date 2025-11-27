@@ -240,6 +240,7 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
+import { timelineColumnsSyncKey } from '~/types/timeline'
 
 export interface UiMonthData {
   startBalance: number
@@ -282,15 +283,15 @@ const props = withDefaults(defineProps<Props>(), {
   canDelete: false,
 })
 
-const emit = defineEmits<{
+defineEmits<{
   balanceClick: []
   incomeClick: []
   expenseClick: []
   currencyRatesClick: []
   deleteClick: []
-  cardRefsReady: [refs: HTMLElement[]]
-  cardRefsRemoved: [refs: HTMLElement[]]
 }>()
+
+const columnsSync = inject(timelineColumnsSyncKey, null)
 
 const cardRefs = ref<HTMLElement[]>([])
 
@@ -303,16 +304,16 @@ const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | n
 onMounted(() => {
   nextTick(() => {
     const validRefs = cardRefs.value.filter(Boolean)
-    if (validRefs.length) {
-      emit('cardRefsReady', validRefs)
+    if (validRefs.length && columnsSync) {
+      columnsSync.registerRow(validRefs)
     }
   })
 })
 
 onUnmounted(() => {
   const validRefs = cardRefs.value.filter(Boolean)
-  if (validRefs.length) {
-    emit('cardRefsRemoved', validRefs)
+  if (validRefs.length && columnsSync) {
+    columnsSync.unregisterRow(validRefs)
   }
 })
 </script>

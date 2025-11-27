@@ -21,8 +21,6 @@
     @expense-click="openExpenseModal"
     @currency-rates-click="openCurrencyRatesModal"
     @delete-click="handleDeleteMonth"
-    @card-refs-ready="registerRow"
-    @card-refs-removed="unregisterRow"
   />
 </template>
 
@@ -37,7 +35,6 @@ import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
 
 interface Props {
   monthId: string
-  budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
 const props = defineProps<Props>()
@@ -60,8 +57,6 @@ const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.dat
 
 const isCurrentMonthValue = ref(false)
 
-const { registerRow, unregisterRow, forceSync } = props.budgetColumnsSync
-
 onMounted(() => {
   isCurrentMonthValue.value = isCurrentMonth(monthData.value)
 })
@@ -73,21 +68,6 @@ const averageMonthlyExpenses = computed(() => {
   }
   return Math.ceil(yearSummary.avgAllExpenses || 3500)
 })
-
-watch([
-  () => monthData.value.startBalance,
-  () => monthData.value.totalIncome,
-  () => monthData.value.totalExpenses,
-  () => monthData.value.totalOptionalExpenses,
-  () => monthData.value.calculatedBalanceChange,
-  () => monthData.value.calculatedPocketExpenses,
-  () => monthData.value.currencyProfitLoss,
-  () => monthData.value.totalAllExpenses,
-], () => {
-  nextTick(() => {
-    forceSync()
-  })
-}, { flush: 'post' })
 
 const uiMonthData = computed((): UiMonthData => ({
   startBalance: monthData.value.startBalance,

@@ -3,82 +3,6 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "kekdark";
-  color-scheme: dark;
-  --color-base-100: #2c2d30;
-  --color-base-200: #3a3d40;
-  --color-base-300: #494c50;
-  --color-base-content: #fff;
-  --color-primary: #3592C4;
-  --color-primary-content: #fff;
-  --color-secondary: #ab44ff;
-  --color-secondary-content: #f8f3fd;
-  --color-accent: #00ba7b;
-  --color-accent-content: #e9faf2;
-  --color-neutral: #494c50;
-  --color-neutral-content: #f8f8f8;
-  --color-info: #3592C4;
-  --color-info-content: #fff;
-  --color-success: #A9DC76;
-  --color-success-content: #234700;
-  --color-warning: #FFD866;
-  --color-warning-content: #4d3c00;
-  --color-error: #FF6661;
-  --color-error-content: #fff;
-  --radius-selector: 0.45rem;
-  --radius-field: 0.55rem;
-  --radius-box: 1.5rem;
-  --size-selector: 0.3rem;
-  --size-field: 0.24rem;
-  --border: 1.5px;
-  --depth: 1;
-  --noise: 0;
-  --logo-contours: var(--color-base-100);
-  --logo-face: var(--color-base-content);
-  --logo-cheeks: var(--color-error);
-  --logo-roof: var(--color-error);
-  --logo-pipe: var(--color-success);
-}
-
-@plugin "daisyui/theme" {
-  name: "keklight";
-  color-scheme: light;
-  --color-base-100: #fffcf4;
-  --color-base-200: #fff3dd;
-  --color-base-300: #ffdc9d;
-  --color-base-content: #5e4a29;
-  --color-primary: #2e96ce;
-  --color-primary-content: #fff;
-  --color-secondary: #ab44ff;
-  --color-secondary-content: #f8f3fd;
-  --color-accent: #00ba7b;
-  --color-accent-content: #e9faf2;
-  --color-neutral: #a8a195;
-  --color-neutral-content: #f8f8f8;
-  --color-info: #2e96ce;
-  --color-info-content: #fff;
-  --color-success: #58ae00;
-  --color-success-content: #fff;
-  --color-warning: #ffb200;
-  --color-warning-content: #fff;
-  --color-error: #ff4943;
-  --color-error-content: #fff;
-  --radius-selector: 0.45rem;
-  --radius-field: 0.55rem;
-  --radius-box: 1.5rem;
-  --size-selector: 0.3rem;
-  --size-field: 0.24rem;
-  --border: 1.5px;
-  --depth: 1;
-  --noise: 0;
-  --logo-contours: var(--color-base-content);
-  --logo-face: var(--color-base-100);
-  --logo-cheeks: var(--color-error);
-  --logo-roof: var(--color-primary);
-  --logo-pipe: var(--color-warning);
-}
-
-@plugin "daisyui/theme" {
   name: "kekdarker";
   prefersdark: true;
   color-scheme: dark;
@@ -88,7 +12,7 @@
   --color-base-content: #fff;
   --color-primary: #3592C4;
   --color-primary-content: #fff;
-  --color-secondary: #ab44ff;
+  --color-secondary: #a9ebff;
   --color-secondary-content: #f8f3fd;
   --color-accent: #00ba7b;
   --color-accent-content: #e9faf2;
@@ -127,11 +51,87 @@
   --color-base-content: #5e4a29;
   --color-primary: #2e96ce;
   --color-primary-content: #fff;
-  --color-secondary: #ab44ff;
+  --color-secondary: #ffc06d;
   --color-secondary-content: #f8f3fd;
   --color-accent: #00ba7b;
   --color-accent-content: #e9faf2;
   --color-neutral: #aca69b;
+  --color-neutral-content: #f8f8f8;
+  --color-info: #2e96ce;
+  --color-info-content: #fff;
+  --color-success: #58ae00;
+  --color-success-content: #fff;
+  --color-warning: #ffb200;
+  --color-warning-content: #fff;
+  --color-error: #ff4943;
+  --color-error-content: #fff;
+  --radius-selector: 0.45rem;
+  --radius-field: 0.55rem;
+  --radius-box: 1.5rem;
+  --size-selector: 0.3rem;
+  --size-field: 0.24rem;
+  --border: 1.5px;
+  --depth: 1;
+  --noise: 0;
+  --logo-contours: var(--color-base-content);
+  --logo-face: var(--color-base-100);
+  --logo-cheeks: var(--color-error);
+  --logo-roof: var(--color-primary);
+  --logo-pipe: var(--color-warning);
+}
+
+@plugin "daisyui/theme" {
+  name: "kekdark";
+  color-scheme: dark;
+  --color-base-100: #2c2d30;
+  --color-base-200: #3a3d40;
+  --color-base-300: #494c50;
+  --color-base-content: #fff;
+  --color-primary: #3592C4;
+  --color-primary-content: #fff;
+  --color-secondary: #a9ebff;
+  --color-secondary-content: #f8f3fd;
+  --color-accent: #00ba7b;
+  --color-accent-content: #e9faf2;
+  --color-neutral: #494c50;
+  --color-neutral-content: #f8f8f8;
+  --color-info: #3592C4;
+  --color-info-content: #fff;
+  --color-success: #A9DC76;
+  --color-success-content: #234700;
+  --color-warning: #FFD866;
+  --color-warning-content: #4d3c00;
+  --color-error: #FF6661;
+  --color-error-content: #fff;
+  --radius-selector: 0.45rem;
+  --radius-field: 0.55rem;
+  --radius-box: 1.5rem;
+  --size-selector: 0.3rem;
+  --size-field: 0.24rem;
+  --border: 1.5px;
+  --depth: 1;
+  --noise: 0;
+  --logo-contours: var(--color-base-100);
+  --logo-face: var(--color-base-content);
+  --logo-cheeks: var(--color-error);
+  --logo-roof: var(--color-error);
+  --logo-pipe: var(--color-success);
+}
+
+@plugin "daisyui/theme" {
+  name: "keklight";
+  color-scheme: light;
+  --color-base-100: #fffcf4;
+  --color-base-200: #fff3dd;
+  --color-base-300: #ffdc9d;
+  --color-base-content: #5e4a29;
+  --color-primary: #2e96ce;
+  --color-primary-content: #fff;
+  --color-secondary: #ffc06d;
+  --color-secondary-content: #f8f3fd;
+  --color-accent: #00ba7b;
+  --color-accent-content: #e9faf2;
+  --color-neutral: #a8a195;
   --color-neutral-content: #f8f8f8;
   --color-info: #2e96ce;
   --color-info-content: #fff;
@@ -165,7 +165,7 @@
   --color-base-content: #2859cb;
   --color-primary: #ff5f8a;
   --color-primary-content: #fff;
-  --color-secondary: #ff9bb6;
+  --color-secondary: #8aa7e9;
   --color-secondary-content: #fff;
   --color-accent: #06b6d4;
   --color-accent-content: #fff;
@@ -241,7 +241,7 @@
   --color-base-content: #1e293b;
   --color-primary: #3b82f6;
   --color-primary-content: #fff;
-  --color-secondary: #8b5cf6;
+  --color-secondary: #a0e790;
   --color-secondary-content: #fff;
   --color-accent: #95e1ff;
   --color-accent-content: #fff;
@@ -279,7 +279,7 @@
   --color-base-content: #333;
   --color-primary: #666;
   --color-primary-content: #fff;
-  --color-secondary: #a3a3a3;
+  --color-secondary: #ddd;
   --color-secondary-content: #fff;
   --color-accent: #808080;
   --color-accent-content: #fff;
@@ -317,7 +317,7 @@
   --color-base-content: #e5e5e5;
   --color-primary: #dcdcdc;
   --color-primary-content: #1a1a1a;
-  --color-secondary: #989898;
+  --color-secondary: #555;
   --color-secondary-content: #fff;
   --color-accent: #606060;
   --color-accent-content: #fff;

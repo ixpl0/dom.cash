@@ -4,14 +4,11 @@
     :stats="yearStats"
     :labels="labels"
     :format-amount="formatAmountForDisplay"
-    @header-refs-ready="registerRow"
-    @header-refs-removed="unregisterRow"
   >
     <BudgetMonth
       v-for="monthData in months"
       :key="`${monthData.year}-${monthData.month}`"
       :month-id="createMonthId(monthData.year, monthData.month)"
-      :budget-columns-sync="budgetColumnsSync"
     />
   </UiYear>
 </template>
@@ -27,20 +24,14 @@ interface Props {
   year: number
   months: MonthData[]
   monthNames: string[]
-  budgetColumnsSync: ReturnType<typeof useBudgetColumnsSync>
 }
 
 const props = defineProps<Props>()
-defineEmits<{
-  refresh: []
-}>()
 
 const { t } = useI18n()
 const { mainCurrency: userMainCurrency } = useUser()
 const budgetStore = useBudgetStore()
 const mainCurrency = computed(() => budgetStore.data?.user?.mainCurrency || userMainCurrency.value)
-
-const { registerRow, unregisterRow } = props.budgetColumnsSync
 
 const yearStats = computed((): UiYearStats => {
   const summary = budgetStore.getYearSummary(props.year)
