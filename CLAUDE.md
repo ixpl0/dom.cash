@@ -24,6 +24,14 @@
 * UI:
   * DaisyUI (https://daisyui.com/). All UI components should be based on DaisyUI.
   * Tailwind CSS (https://tailwindcss.com/). Try to avoid custom styles, use Tailwind classes instead.
+* **State Management**: Pinia
+* **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `locales/` directory.
+* **Charts**: ECharts via vue-echarts
+* **Linting**: Husky + lint-staged for pre-commit hooks
+* Commands:
+  * `pnpm typecheck` — run TypeScript type checking
+  * `pnpm lint` / `pnpm lint:fix` — run ESLint
+  * `pnpm test:e2e` — run Playwright tests
 
 ## Code Style (required)
 

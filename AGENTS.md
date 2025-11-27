@@ -1,19 +1,56 @@
-# Repository Guidelines
+# AGENTS README
 
-## Project Structure & Module Organization
-The Nuxt 4 client lives in `app/` with pages, components, composables, and Pinia stores organized by feature. Place shared UI assets in `public/`, while scoped styles stay in `app/assets/`. Server API handlers reside in `server/api/` (named `<route>.<method>.ts`); keep business logic in `server/services/` and shared types/utilities in `shared/`. Database schema belongs in `server/db/schema.ts`, and SQL migrations in `migrations/`.
+## Setup & Infrastructure
 
-## Build, Test, and Development Commands
-`pnpm build` compiles client and server into `.output/`, and `pnpm preview` serves that bundle for smoke testing. Run `pnpm typecheck` to execute the Nuxt TypeScript pipeline, and `pnpm lint` or `pnpm lint:fix` to enforce formatting.
+* **Node**: 20.16.0 (pinned in `package.json` → `engines`).
+* **Package manager**: pnpm 10.
+* **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
+* **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
+* **Deployment**: Cloudflare Workers with D1 database.
+* Commands:
+  * `pnpm i`
+  * `pnpm run db:migrate` (local) / `pnpm run db:migrate:test` (remote)
+  * `pnpm run dev` (local) / `pnpm run deploy:test` (deploy)
+* **Data layer**:
+  * Cloudflare D1 (SQLite) for production
+  * Local SQLite emulation via Wrangler for development
+  * Drizzle ORM for type-safe queries
+  * Zod for validation
+* **Migrations**: Use Wrangler D1 migrations (`wrangler d1 migrations create`), NOT Drizzle-kit
+* **API Calls**:
+  * Use `useFetch` for SSR-compatible GET requests that need cookie/header forwarding
+  * Use `$fetch` for client-only operations (POST/PUT/DELETE)
+  * In Cloudflare Workers, `$fetch` doesn't properly forward cookies during SSR
+* UI:
+  * DaisyUI (https://daisyui.com/). All UI components should be based on DaisyUI.
+  * Tailwind CSS (https://tailwindcss.com/). Try to avoid custom styles, use Tailwind classes instead.
+* **State Management**: Pinia
+* **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `locales/` directory.
+* **Charts**: ECharts via vue-echarts
+* **Linting**: Husky + lint-staged for pre-commit hooks
+* Commands:
+  * `pnpm typecheck` — run TypeScript type checking
+  * `pnpm lint` / `pnpm lint:fix` — run ESLint
+  * `pnpm test:e2e` — run Playwright tests
 
-## Coding Style & Naming Conventions
-All code is TypeScript under strict mode; avoid `any` except where ESLint explicitly permits it in tests. Follow Nuxt conventions for file names, including dynamic routes like `server/api/budget/[username].get.ts`. Services should expose framework-free functions and keep request handlers thin.
+## Code Style (required)
 
-## Testing Guidelines
-Automated tests are currently minimal; validate behaviors through targeted unit helpers colocated with the logic they cover. When adding tests, mirror the structure of the source (e.g., `server/services/__tests__/account.spec.ts`) and use descriptive titles reflecting the business rule. Always run `pnpm typecheck` and `pnpm lint` before submitting as a baseline gate.
+* Rules:
+  * Always use `const` where possible. Arrow functions.
+  * Max immutability: don't mutate objects/arrays; avoid `push`/`pop`/`splice`, etc. Use `map`, `filter`, `reduce`, `concat`, `slice` instead.
+  * **Never** use `any`. If needed, use `unknown` and narrow. Prefer generics when possible.
+  * Destructure where appropriate. Prefer `map`/`filter`/`reduce` over `for/forEach` when suitable.
+  * Every `if`/`else`/`for` must have a block (no one-liners).
+  * **NEVER USE COMMENTS**. NEVER. Only use comments for disabling ESLint rules, or for TODOs.
+  * Variables and functions should be simple and in simple English, but meaningful, self-explanatory and no abbreviations.
+  * Add an empty line to the end of every new file.
+  * Use Vue 3, Composition API, `<script setup lang="ts">`. Prefer `ref` over `reactive`.
+  * Follow the existing ESLint and TS config.
+  * Use `git mv` and `git rm` to keep git history.
 
-## Commit & Pull Request Guidelines
-Commits follow Conventional Commit prefixes (`feat:`, `fix:`, `refactor:`, etc.) and should isolate coherent changes. Pull requests must include a clear summary, reproduction steps, linked issues, screenshots for visual updates, and note any DB migrations. Confirm `pnpm typecheck` and `pnpm lint` pass locally and mention any manual verification performed.
+## Testing
 
-## Security & Configuration Tips
-Use `pnpm db:migrate` to apply schema updates. `pnpm db:reset` irreversibly wipes local data, so take backups with `pnpm db:backup`, `pnpm db:backup:test`, or `pnpm db:backup:prod` as needed.
+* **E2E Tests**: Use Playwright with TypeScript
+* **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
+  * Use `page.getByTestId('element-id')` instead of text-based selectors
+  * Never use `getByRole`, `getByText`, or other text-dependent selectors
