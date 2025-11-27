@@ -225,4 +225,91 @@ test.describe('Forgot Password', () => {
 
     await expect(page).toHaveURL('/auth')
   })
+
+  test('blocks password reset after 3 failed code attempts', async ({ page }) => {
+    const testUsername = `test_${Date.now()}@example.com`
+    const testPassword = 'TestPassword123!'
+    const wrongCode = '000000'
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(testPassword)
+    await page.getByTestId('register-btn').click()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
+    await page.waitForURL('/')
+
+    const userDropdown = page.getByTestId('user-dropdown')
+    await userDropdown.click()
+    await page.getByTestId('logout-btn').click()
+    await page.waitForURL('/')
+
+    await page.goto('/auth')
+    await waitForHydration(page)
+    await page.getByTestId('forgot-password-link').click()
+    await page.getByTestId('forgot-password-email-input').fill(testUsername)
+    await page.getByTestId('send-reset-code-btn').click()
+
+    await expect(page.getByTestId('reset-code-input')).toBeVisible()
+
+    for (let i = 0; i < 3; i++) {
+      await page.getByTestId('reset-code-input').fill(wrongCode)
+      await page.getByTestId('new-password-input').fill('NewPassword123!')
+      await page.getByTestId('reset-password-btn').click()
+      await page.waitForTimeout(500)
+    }
+
+    await expect(page.getByTestId('auth-error')).toBeVisible()
+    const errorText = await page.getByTestId('auth-error').textContent()
+    expect(errorText).toContain('Too many failed attempts')
+  })
+
+  test('password reset works after failed attempts within limit', async ({ page }) => {
+    const testUsername = `test_${Date.now()}@example.com`
+    const testPassword = 'TestPassword123!'
+    const newPassword = 'NewPassword456!'
+    const wrongCode = '000000'
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(testPassword)
+    await page.getByTestId('register-btn').click()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
+    await page.waitForURL('/')
+
+    const userDropdown = page.getByTestId('user-dropdown')
+    await userDropdown.click()
+    await page.getByTestId('logout-btn').click()
+    await page.waitForURL('/')
+
+    await page.goto('/auth')
+    await waitForHydration(page)
+    await page.getByTestId('forgot-password-link').click()
+    await page.getByTestId('forgot-password-email-input').fill(testUsername)
+    await page.getByTestId('send-reset-code-btn').click()
+
+    await expect(page.getByTestId('reset-code-input')).toBeVisible()
+
+    await page.getByTestId('reset-code-input').fill(wrongCode)
+    await page.getByTestId('new-password-input').fill(newPassword)
+    await page.getByTestId('reset-password-btn').click()
+    await page.waitForTimeout(500)
+
+    await page.getByTestId('reset-code-input').fill(wrongCode)
+    await page.getByTestId('new-password-input').fill(newPassword)
+    await page.getByTestId('reset-password-btn').click()
+    await page.waitForTimeout(500)
+
+    await page.getByTestId('reset-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('new-password-input').fill(newPassword)
+    await page.getByTestId('reset-password-btn').click()
+
+    await expect(page.getByTestId('email-input')).toBeVisible()
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(newPassword)
+    await page.getByTestId('login-btn').click()
+
+    await page.waitForURL('/')
+    await expect(page.getByTestId('user-dropdown')).toBeVisible()
+  })
 })

@@ -1,11 +1,12 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { emailVerificationCode, user } from '~~/server/db/schema'
-import { eq, and, gt } from 'drizzle-orm'
+import { user } from '~~/server/db/schema'
+import { eq } from 'drizzle-orm'
 import { createSession, setAuthCookie, hashPassword, createUserInDb } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
+import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 
 const verifyCodeSchema = z.object({
   email: emailSchema,
@@ -16,7 +17,6 @@ const verifyCodeSchema = z.object({
 export default defineEventHandler(async (event) => {
   const { email, code, password } = await parseBody(event, verifyCodeSchema)
   const db = useDatabase(event)
-  const now = new Date()
 
   const existingUser = await db.query.user.findFirst({
     where: eq(user.username, email),
@@ -29,19 +29,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const verificationRecord = await db.query.emailVerificationCode.findFirst({
-    where: and(
-      eq(emailVerificationCode.email, email),
-      eq(emailVerificationCode.code, code),
-      gt(emailVerificationCode.expiresAt, now),
-    ),
+  const verifyResult = await verifyCode({
+    event,
+    email,
+    code,
+    config: VERIFICATION_CONFIG.registration,
   })
 
-  if (!verificationRecord) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid or expired verification code',
-    })
+  if (!verifyResult.valid) {
+    return throwVerifyCodeError(verifyResult.reason)
   }
 
   const passwordHash = await hashPassword(password)
@@ -51,11 +47,9 @@ export default defineEventHandler(async (event) => {
     { username: email, passwordHash, emailVerified: true },
   )
 
-  await db
-    .delete(emailVerificationCode)
-    .where(eq(emailVerificationCode.email, email))
+  await deleteVerificationCode(event, email)
 
-  const token = await createSession(newUser.id, now, event)
+  const token = await createSession(newUser.id, new Date(), event)
   setAuthCookie(event, token)
 
   return {

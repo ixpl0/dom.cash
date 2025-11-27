@@ -165,4 +165,52 @@ test.describe('Authentication', () => {
 
     await expect(page).toHaveURL('/auth')
   })
+
+  test('blocks verification after 3 failed attempts', async ({ page }) => {
+    const testUsername = `test_${Date.now()}@example.com`
+    const testPassword = 'TestPassword123!'
+    const wrongCode = '000000'
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(testPassword)
+    await page.getByTestId('register-btn').click()
+
+    await expect(page.getByTestId('verification-code-input')).toBeVisible()
+
+    for (let i = 0; i < 3; i++) {
+      await page.getByTestId('verification-code-input').fill(wrongCode)
+      await page.getByTestId('verify-code-btn').click()
+      await page.waitForTimeout(500)
+    }
+
+    await expect(page.getByTestId('auth-error')).toBeVisible()
+    const errorText = await page.getByTestId('auth-error').textContent()
+    expect(errorText).toContain('Too many failed attempts')
+  })
+
+  test('correct code works after failed attempts within limit', async ({ page }) => {
+    const testUsername = `test_${Date.now()}@example.com`
+    const testPassword = 'TestPassword123!'
+    const wrongCode = '000000'
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(testPassword)
+    await page.getByTestId('register-btn').click()
+
+    await expect(page.getByTestId('verification-code-input')).toBeVisible()
+
+    await page.getByTestId('verification-code-input').fill(wrongCode)
+    await page.getByTestId('verify-code-btn').click()
+    await page.waitForTimeout(500)
+
+    await page.getByTestId('verification-code-input').fill(wrongCode)
+    await page.getByTestId('verify-code-btn').click()
+    await page.waitForTimeout(500)
+
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
+
+    await page.waitForURL('/')
+    await expect(page.getByTestId('user-dropdown')).toBeVisible()
+  })
 })

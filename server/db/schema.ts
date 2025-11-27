@@ -133,6 +133,7 @@ export const emailVerificationCode = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     attemptCount: integer('attempt_count').notNull().default(0),
     lastSentAt: integer('last_sent_at', { mode: 'timestamp' }),
+    verifyAttemptCount: integer('verify_attempt_count').notNull().default(0),
   },
   t => [
     index('idx_verification_email').on(t.email),

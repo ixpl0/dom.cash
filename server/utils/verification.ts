@@ -20,6 +20,7 @@ type VerificationConfig = {
   readonly maxAttempts: number
   readonly expirationMinutes: number
   readonly cooldownMinutes?: number
+  readonly maxVerifyAttempts: number
 }
 
 export const VERIFICATION_CONFIG = {
@@ -28,12 +29,14 @@ export const VERIFICATION_CONFIG = {
     maxAttempts: 5,
     expirationMinutes: 60,
     cooldownMinutes: 60,
+    maxVerifyAttempts: 3,
   },
   passwordReset: {
     rateLimits: [],
     maxAttempts: 5,
     expirationMinutes: 60,
     cooldownMinutes: 60,
+    maxVerifyAttempts: 3,
   },
 } as const satisfies Record<string, VerificationConfig>
 
@@ -186,4 +189,76 @@ export const prepareVerificationCode = (
       : new Date(now.getTime() + config.expirationMinutes * 60 * 1000),
     attemptCount: isExistingCodeValid ? existingCode.attemptCount + 1 : 1,
   }
+}
+
+type VerifyCodeErrorReason = 'not_found' | 'expired' | 'invalid_code' | 'max_attempts_exceeded'
+
+type VerifyCodeSuccess = { readonly valid: true, readonly record: { id: string, email: string } }
+type VerifyCodeFailure = { readonly valid: false, readonly reason: VerifyCodeErrorReason }
+type VerifyCodeResult = VerifyCodeSuccess | VerifyCodeFailure
+
+type VerifyCodeParams = {
+  readonly event: H3Event
+  readonly email: string
+  readonly code: string
+  readonly config: VerificationConfig
+}
+
+export const verifyCode = async (params: VerifyCodeParams): Promise<VerifyCodeResult> => {
+  const { event, email, code, config } = params
+  const db = useDatabase(event)
+  const now = new Date()
+
+  const record = await db.query.emailVerificationCode.findFirst({
+    where: eq(emailVerificationCode.email, email),
+  })
+
+  if (!record) {
+    return { valid: false, reason: 'not_found' }
+  }
+
+  if (record.expiresAt <= now) {
+    return { valid: false, reason: 'expired' }
+  }
+
+  if (record.verifyAttemptCount >= config.maxVerifyAttempts) {
+    return { valid: false, reason: 'max_attempts_exceeded' }
+  }
+
+  if (record.code !== code) {
+    await db
+      .update(emailVerificationCode)
+      .set({ verifyAttemptCount: record.verifyAttemptCount + 1 })
+      .where(eq(emailVerificationCode.id, record.id))
+
+    if (record.verifyAttemptCount + 1 >= config.maxVerifyAttempts) {
+      return { valid: false, reason: 'max_attempts_exceeded' }
+    }
+
+    return { valid: false, reason: 'invalid_code' }
+  }
+
+  return { valid: true, record: { id: record.id, email: record.email } }
+}
+
+export const throwVerifyCodeError = (reason: VerifyCodeErrorReason): never => {
+  if (reason === 'max_attempts_exceeded') {
+    throw createError({
+      statusCode: 429,
+      message: 'Too many failed attempts. Please request a new code.',
+    })
+  }
+
+  throw createError({
+    statusCode: 400,
+    message: 'Invalid or expired verification code',
+  })
+}
+
+export const deleteVerificationCode = async (event: H3Event, email: string): Promise<void> => {
+  const db = useDatabase(event)
+
+  await db
+    .delete(emailVerificationCode)
+    .where(eq(emailVerificationCode.email, email))
 }

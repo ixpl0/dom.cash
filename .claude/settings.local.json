@@ -30,7 +30,8 @@
       "WebFetch(domain:next.i18n.nuxtjs.org)",
       "Bash(git rm:*)",
       "Bash(pnpm test:e2e:*)",
-      "Bash(pnpm outdated:*)"
+      "Bash(pnpm outdated:*)",
+      "Bash(pnpm lint:check:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

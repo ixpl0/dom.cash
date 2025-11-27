@@ -1,11 +1,12 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { emailVerificationCode, user, session } from '~~/server/db/schema'
-import { eq, and, gt } from 'drizzle-orm'
+import { user, session } from '~~/server/db/schema'
+import { eq } from 'drizzle-orm'
 import { hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
+import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 
 const resetPasswordSchema = z.object({
   email: emailSchema,
@@ -13,28 +14,19 @@ const resetPasswordSchema = z.object({
   newPassword: z.string().min(8).max(100),
 })
 
-const throwInvalidCodeError = (): never => {
-  throw createError({
-    statusCode: 400,
-    message: 'Invalid or expired verification code',
-  })
-}
-
 export default defineEventHandler(async (event) => {
   const { email, code, newPassword } = await parseBody(event, resetPasswordSchema)
   const db = useDatabase(event)
-  const now = new Date()
 
-  const verificationRecord = await db.query.emailVerificationCode.findFirst({
-    where: and(
-      eq(emailVerificationCode.email, email),
-      eq(emailVerificationCode.code, code),
-      gt(emailVerificationCode.expiresAt, now),
-    ),
+  const verifyResult = await verifyCode({
+    event,
+    email,
+    code,
+    config: VERIFICATION_CONFIG.passwordReset,
   })
 
-  if (!verificationRecord) {
-    return throwInvalidCodeError()
+  if (!verifyResult.valid) {
+    return throwVerifyCodeError(verifyResult.reason)
   }
 
   const existingUser = await db.query.user.findFirst({
@@ -42,7 +34,10 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!existingUser) {
-    return throwInvalidCodeError()
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid or expired verification code',
+    })
   }
 
   const passwordHash = await hashPassword(newPassword)
@@ -56,9 +51,7 @@ export default defineEventHandler(async (event) => {
     .delete(session)
     .where(eq(session.userId, existingUser.id))
 
-  await db
-    .delete(emailVerificationCode)
-    .where(eq(emailVerificationCode.email, email))
+  await deleteVerificationCode(event, email)
 
   return { success: true }
 })
