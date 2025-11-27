@@ -3,6 +3,8 @@ import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { createMonth, findUserByUsername, checkWritePermission } from '~~/server/services/months'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { createNotification } from '~~/server/services/notifications'
+import { findUserById } from '~~/server/services/users'
 
 const createMonthSchema = z.object({
   year: z.number().int().min(2020).max(2100),
@@ -48,14 +50,16 @@ export default defineEventHandler(async (event) => {
     }, event)
 
     try {
-      const { createNotification } = await import('~~/server/services/notifications')
+      const budgetOwner = await findUserById(targetUserId, event)
       const monthNames = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
       await createNotification({
         sourceUserId: currentUser.id,
+        sourceUsername: currentUser.username,
         budgetOwnerId: targetUserId,
+        budgetOwnerUsername: budgetOwner?.username || 'unknown',
         type: 'budget_month_added',
         message: `${currentUser.username} добавил ${monthNames[monthNumber]} ${year} в бюджет`,
-      })
+      }, event)
     }
     catch (error) {
       secureLog.error('Error creating notification:', error)

@@ -18,6 +18,7 @@ export interface YearsData {
 
 export interface BudgetData {
   user: {
+    id: string
     username: string
     mainCurrency: string
   }

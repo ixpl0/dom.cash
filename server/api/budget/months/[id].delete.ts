@@ -4,6 +4,8 @@ import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { createNotification } from '~~/server/services/notifications'
+import { findUserById } from '~~/server/services/users'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -44,14 +46,16 @@ export default defineEventHandler(async (event) => {
     await deleteMonth(monthId, event)
 
     try {
-      const { createNotification } = await import('~~/server/services/notifications')
+      const budgetOwner = await findUserById(monthData.userId, event)
       const monthNames = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
       await createNotification({
         sourceUserId: user.id,
+        sourceUsername: user.username,
         budgetOwnerId: monthData.userId,
+        budgetOwnerUsername: budgetOwner?.username || 'unknown',
         type: 'budget_month_deleted',
         message: `${user.username} удалил ${monthNames[monthData.month]} ${monthData.year} из бюджета`,
-      })
+      }, event)
     }
     catch (error) {
       secureLog.error('Error creating notification:', error)

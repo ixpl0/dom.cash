@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     user: {
+      id: user.id,
       username: user.username,
       mainCurrency: user.mainCurrency,
     },

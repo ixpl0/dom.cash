@@ -3,6 +3,7 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { createNotification } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -54,14 +55,14 @@ export default defineEventHandler(async (event) => {
     ))
 
   try {
-    const { createNotification } = await import('~~/server/services/notifications')
     await createNotification({
       sourceUserId: currentUser.id,
-      budgetOwnerId: currentUser.id,
+      sourceUsername: currentUser.username,
+      budgetOwnerId: shareData.userId,
+      budgetOwnerUsername: shareData.username,
       type: 'budget_share_updated',
       message: `${currentUser.username} отозвал у вас доступ к бюджету`,
-      targetUserId: shareData.userId,
-    })
+    }, event)
   }
   catch (error) {
     secureLog.error('Error creating notification:', error)

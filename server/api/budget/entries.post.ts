@@ -4,6 +4,8 @@ import { parseBody } from '~~/server/utils/validation'
 import { getMonthOwner, checkWritePermissionForMonth, createEntry } from '~~/server/services/entries'
 import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { createNotification } from '~~/server/services/notifications'
+import { findUserById } from '~~/server/services/users'
 
 const createEntrySchema = z.object({
   monthId: z.uuid(),
@@ -46,14 +48,16 @@ export default defineEventHandler(async (event) => {
   }, event)
 
   try {
-    const { createNotification } = await import('~~/server/services/notifications')
+    const budgetOwner = await findUserById(monthOwner.userId, event)
     const kindNames = { balance: 'баланс', income: 'доход', expense: 'расход' }
     await createNotification({
       sourceUserId: user.id,
+      sourceUsername: user.username,
       budgetOwnerId: monthOwner.userId,
+      budgetOwnerUsername: budgetOwner?.username || 'unknown',
       type: 'budget_entry_created',
       message: `${user.username} добавил запись "${data.description}" (${kindNames[data.kind]}: ${data.amount} ${data.currency})`,
-    })
+    }, event)
   }
   catch (error) {
     secureLog.error('Error creating notification:', error)
