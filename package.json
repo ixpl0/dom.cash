@@ -59,7 +59,7 @@
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
     "vue-tsc": "^3.0.6",
-    "wrangler": "^4.33.2"
+    "wrangler": "^4.51.0"
   },
   "lint-staged": {
     "*.{ts,vue,js}": [
