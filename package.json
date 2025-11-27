@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build && node scripts/inject-durable-objects.mjs",
+    "build": "nuxt build",
     "preview": "nuxt preview",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
@@ -46,7 +46,6 @@
     "zod": "^4.0.14"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251127.0",
     "@iconify-json/heroicons": "^1.2.2",
     "@nuxt/eslint": "1.7.1",
     "@pinia/nuxt": "^0.11.2",

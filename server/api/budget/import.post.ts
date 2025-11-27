@@ -5,8 +5,6 @@ import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/types/e
 import { findUserByUsername, checkWritePermission } from '~~/server/services/months'
 import { z } from 'zod'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { createNotification } from '~~/server/services/notifications'
-import { findUserById } from '~~/server/services/users'
 
 const importRequestSchema = z.object({
   data: budgetExportSchema,
@@ -62,15 +60,13 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      const budgetOwner = await findUserById(targetUserId, event)
+      const { createNotification } = await import('~~/server/services/notifications')
       await createNotification({
         sourceUserId: currentUser.id,
-        sourceUsername: currentUser.username,
         budgetOwnerId: targetUserId,
-        budgetOwnerUsername: budgetOwner?.username || 'unknown',
         type: 'budget_imported',
         message: `${currentUser.username} импортировал бюджет (месяцев: ${result.importedMonths}, записей: ${result.importedEntries})`,
-      }, event)
+      })
     }
     catch (error) {
       secureLog.error('Error creating notification:', error)

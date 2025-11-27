@@ -33,46 +33,18 @@ export const checkReadPermission = async (targetUserId: string, requesterId: str
   return shareRecord.length > 0
 }
 
-export const getShareAccess = async (ownerId: string, requesterId: string, event: H3Event) => {
-  if (ownerId === requesterId) {
-    return 'owner' as const
-  }
-
-  const db = useDatabase(event)
-  const shareRecord = await db
-    .select({ access: budgetShare.access })
-    .from(budgetShare)
-    .where(and(
-      eq(budgetShare.ownerId, ownerId),
-      eq(budgetShare.sharedWithId, requesterId),
-    ))
-    .limit(1)
-
-  return shareRecord[0]?.access || null
-}
-
 export const getUserBudgetData = async (username: string, requesterId: string, event: H3Event) => {
   const targetUser = await findUserByUsername(username, event)
   if (!targetUser) {
     throw new Error('User not found')
   }
 
-  const access = await getShareAccess(targetUser.id, requesterId, event)
-  if (!access) {
+  const hasReadPermission = await checkReadPermission(targetUser.id, requesterId, event)
+  if (!hasReadPermission) {
     throw new Error('Insufficient permissions to view budget')
   }
 
-  const months = await getUserMonths(targetUser.id, event)
-
-  return {
-    user: {
-      id: targetUser.id,
-      username: targetUser.username,
-      mainCurrency: targetUser.mainCurrency,
-    },
-    access,
-    months,
-  }
+  return await getUserMonths(targetUser.id, event)
 }
 
 export const updateUserCurrency = async (userId: string, currency: string, event: H3Event): Promise<void> => {
@@ -81,15 +53,4 @@ export const updateUserCurrency = async (userId: string, currency: string, event
     .update(user)
     .set({ mainCurrency: currency })
     .where(eq(user.id, userId))
-}
-
-export const findUserById = async (userId: string, event: H3Event) => {
-  const db = useDatabase(event)
-  const users = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, userId))
-    .limit(1)
-
-  return users[0] || null
 }

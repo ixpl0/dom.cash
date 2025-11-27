@@ -5,7 +5,6 @@ import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { accessSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { createNotification } from '~~/server/services/notifications'
 
 const updateShareSchema = z.object({
   access: accessSchema,
@@ -71,15 +70,15 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const { createNotification } = await import('~~/server/services/notifications')
     const accessNames: Record<string, string> = { read: 'только чтение', write: 'чтение и редактирование' }
     await createNotification({
       sourceUserId: currentUser.id,
-      sourceUsername: currentUser.username,
-      budgetOwnerId: shareData.userId,
-      budgetOwnerUsername: shareData.username,
+      budgetOwnerId: currentUser.id,
       type: 'budget_share_updated',
       message: `${currentUser.username} изменил ваши права доступа к бюджету на "${accessNames[access] || access}"`,
-    }, event)
+      targetUserId: shareData.userId,
+    })
   }
   catch (error) {
     secureLog.error('Error creating notification:', error)

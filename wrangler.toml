@@ -9,14 +9,6 @@ binding = "DB"
 database_name = "dom-test"
 database_id = "49fe35ce-d40a-4d38-8f8d-32bd57bb5588"
 
-[[durable_objects.bindings]]
-name = "BUDGET_NOTIFICATIONS"
-class_name = "BudgetNotificationRoom"
-
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["BudgetNotificationRoom"]
-
 # production
 [env.production]
 name = "dom-cash"
@@ -28,11 +20,3 @@ routes = [
 binding = "DB"
 database_name = "dom-prod"
 database_id = "5c1aab4d-72d5-4919-a800-274f6e11ed26"
-
-[[env.production.durable_objects.bindings]]
-name = "BUDGET_NOTIFICATIONS"
-class_name = "BudgetNotificationRoom"
-
-[[env.production.migrations]]
-tag = "v1"
-new_sqlite_classes = ["BudgetNotificationRoom"]

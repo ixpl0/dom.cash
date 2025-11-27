@@ -2,44 +2,33 @@ export interface NotificationEvent {
   id: string
   type: string
   message: string
-  sourceUserId: string
   sourceUsername: string
   budgetOwnerUsername: string
   createdAt: string
 }
 
 export const useNotifications = () => {
-  let websocket: WebSocket | null = null
-  let currentBudgetOwnerId: string | null = null
-  let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+  let eventSource: EventSource | null = null
+  let currentBudgetOwner: string | null = null
   const isConnected = ref(false)
 
   const { toast } = useToast()
   const { showWarningBanner } = useOutdatedBanner()
 
-  const connect = (budgetOwnerId: string) => {
-    if (websocket) {
+  const connect = () => {
+    if (eventSource) {
       disconnect()
     }
 
-    currentBudgetOwnerId = budgetOwnerId
+    eventSource = new EventSource('/api/notifications/events')
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const url = `${protocol}//${window.location.host}/api/notifications/ws/${budgetOwnerId}`
-
-    websocket = new WebSocket(url)
-
-    websocket.onopen = () => {
+    eventSource.onopen = () => {
       isConnected.value = true
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout)
-        reconnectTimeout = null
-      }
     }
 
-    websocket.onmessage = (event) => {
+    eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data as string) as { type: string, message?: string }
+        const data = JSON.parse(event.data)
 
         if (data.type === 'connected') {
           isConnected.value = true
@@ -50,61 +39,77 @@ export const useNotifications = () => {
           return
         }
 
-        if (data.message) {
-          toast({ message: data.message })
-        }
+        toast({ message: data.message })
         showWarningBanner()
       }
       catch (error) {
-        console.error('Error parsing WebSocket message:', error)
+        console.error('Error parsing event data:', error)
       }
     }
 
-    websocket.onclose = () => {
+    eventSource.onerror = (error) => {
+      console.error('Error connecting to event source:', error)
       isConnected.value = false
-      websocket = null
+      eventSource?.close()
 
-      if (currentBudgetOwnerId && !reconnectTimeout) {
-        reconnectTimeout = setTimeout(() => {
-          reconnectTimeout = null
-          if (currentBudgetOwnerId) {
-            connect(currentBudgetOwnerId)
-          }
-        }, 5000)
-      }
-    }
-
-    websocket.onerror = (error) => {
-      console.error('WebSocket error:', error)
-      isConnected.value = false
+      setTimeout(() => {
+        if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+          connect()
+        }
+      }, 5000)
     }
   }
 
   const disconnect = () => {
-    if (reconnectTimeout) {
-      clearTimeout(reconnectTimeout)
-      reconnectTimeout = null
-    }
-
-    if (websocket) {
-      websocket.close()
-      websocket = null
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
       isConnected.value = false
     }
-
-    currentBudgetOwnerId = null
   }
 
-  const subscribeToBudget = (budgetOwnerId: string) => {
-    if (currentBudgetOwnerId === budgetOwnerId && websocket?.readyState === WebSocket.OPEN) {
+  const subscribeToBudgetByUsername = async (username: string) => {
+    if (currentBudgetOwner === username) {
       return
     }
-    connect(budgetOwnerId)
+
+    try {
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      await $fetch(`/api/notifications/subscribe/${username}`, {
+        method: 'POST',
+        headers,
+      })
+      currentBudgetOwner = username
+    }
+    catch (error) {
+      console.error('Error subscribing to budget:', error)
+    }
   }
 
-  const unsubscribeFromBudget = () => {
-    disconnect()
+  const unsubscribeFromBudgetByUsername = async (username: string) => {
+    if (currentBudgetOwner !== username) {
+      return
+    }
+
+    try {
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      await $fetch(`/api/notifications/unsubscribe/${username}`, {
+        method: 'POST',
+        headers,
+      })
+      currentBudgetOwner = null
+    }
+    catch (error) {
+      console.error('Error unsubscribing from budget:', error)
+    }
   }
+
+  const subscribeToBudget = subscribeToBudgetByUsername
+  const unsubscribeFromBudget = unsubscribeFromBudgetByUsername
+
+  onMounted(() => {
+    connect()
+  })
 
   onUnmounted(() => {
     disconnect()
@@ -112,7 +117,11 @@ export const useNotifications = () => {
 
   return {
     isConnected,
+    connect,
+    disconnect,
     subscribeToBudget,
     unsubscribeFromBudget,
+    subscribeToBudgetByUsername,
+    unsubscribeFromBudgetByUsername,
   }
 }

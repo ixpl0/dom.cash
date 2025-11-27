@@ -31,9 +31,7 @@
       "Bash(git rm:*)",
       "Bash(pnpm test:e2e:*)",
       "Bash(pnpm outdated:*)",
-      "Bash(pnpm lint:check:*)",
-      "WebFetch(domain:nuxflare.com)",
-      "WebFetch(domain:nitro.build)"
+      "Bash(pnpm lint:check:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

@@ -1,9 +1,7 @@
-import { updateUserCurrency, findUserById } from '~~/server/services/users'
+import { updateUserCurrency } from '~~/server/services/users'
 import { requireAuth } from '~~/server/utils/session'
 import { z } from 'zod'
 import { currencySchema } from '~~/shared/schemas/common'
-import { createNotification } from '~~/server/services/notifications'
-import { secureLog } from '~~/server/utils/secure-logger'
 
 const UpdateCurrencySchema = z.object({
   currency: currencySchema,
@@ -55,23 +53,23 @@ export default defineEventHandler(async (event) => {
     await updateUserCurrency(targetUserId, currency, event)
 
     try {
-      const budgetOwner = await findUserById(targetUserId, event)
+      const { createNotification } = await import('~~/server/services/notifications')
       await createNotification({
         sourceUserId: user.id,
-        sourceUsername: user.username,
         budgetOwnerId: targetUserId,
-        budgetOwnerUsername: budgetOwner?.username || 'unknown',
         type: 'budget_currency_changed',
         message: `${user.username} изменил основную валюту бюджета на ${currency}`,
-      }, event)
+      })
     }
     catch (error) {
+      const { secureLog } = await import('~~/server/utils/secure-logger')
       secureLog.error('Error creating notification:', error)
     }
 
     return { success: true }
   }
   catch (error) {
+    const { secureLog } = await import('~~/server/utils/secure-logger')
     secureLog.error('Update currency error:', error)
 
     if (error instanceof Error && error.message.includes('User not found')) {

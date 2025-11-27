@@ -81,7 +81,6 @@ export const useBudget = (targetUsername?: MaybeRef<string | undefined>) => {
 
         budgetState.value.data = {
           user: {
-            id: userData.id,
             username: userData.username,
             mainCurrency: userData.mainCurrency,
           },
