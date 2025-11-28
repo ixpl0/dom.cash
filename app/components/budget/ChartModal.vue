@@ -41,11 +41,11 @@
 </template>
 
 <script setup lang="ts">
+import type { TooltipComponentOption } from 'echarts/components'
 import { useBudgetStore } from '~/stores/budget'
 import { useModalsStore } from '~/stores/modals'
-import type { ComposeOption } from 'echarts/core'
-import type { LineSeriesOption } from 'echarts/charts'
-import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, DataZoomComponentOption } from 'echarts/components'
+import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/useChartConfig'
+import { getChartThemeColors, type ChartThemeColors } from '~/composables/useChartTheme'
 
 type TooltipParams = Parameters<Exclude<TooltipComponentOption['formatter'], string | undefined>>[0]
 
@@ -70,14 +70,6 @@ const toNumber = (v: TooltipItem['value']): number => {
   }
   return typeof v === 'number' ? v : Number(v ?? 0)
 }
-
-type ECOption = ComposeOption<
-  | LineSeriesOption
-  | GridComponentOption
-  | LegendComponentOption
-  | TooltipComponentOption
-  | DataZoomComponentOption
->
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
@@ -117,52 +109,7 @@ const chartData = computed(() => {
 
 const nf = computed(() => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }))
 
-const getThemeUIColors = () => {
-  if (!import.meta.client) {
-    return {
-      text: '#6b7280',
-      legend: '#374151',
-      axis: '#9ca3af',
-      grid: '#e5e7eb',
-      background: '#f3f4f6',
-      primary: '#3b82f6',
-      success: '#22c55e',
-      error: '#ef4444',
-      warning: '#f59e0b',
-      secondary: '#a855f7',
-      accent: '#6b7280',
-      info: '#06b6d4',
-    }
-  }
-
-  const style = getComputedStyle(document.documentElement)
-  const baseContent = style.getPropertyValue('--color-base-content').trim()
-  const base200 = style.getPropertyValue('--color-base-200').trim()
-  const primary = style.getPropertyValue('--color-primary').trim()
-  const success = style.getPropertyValue('--color-success').trim()
-  const error = style.getPropertyValue('--color-error').trim()
-  const warning = style.getPropertyValue('--color-warning').trim()
-  const secondary = style.getPropertyValue('--color-secondary').trim()
-  const accent = style.getPropertyValue('--color-accent').trim()
-  const info = style.getPropertyValue('--color-info').trim()
-
-  return {
-    text: baseContent || '#6b7280',
-    legend: baseContent || '#374151',
-    axis: `color-mix(in srgb, ${baseContent || '#9ca3af'} 70%, transparent)`,
-    grid: `color-mix(in srgb, ${baseContent || '#e5e7eb'} 10%, transparent)`,
-    background: base200 || '#f3f4f6',
-    primary: primary || '#3b82f6',
-    success: success || '#22c55e',
-    error: error || '#ef4444',
-    warning: warning || '#f59e0b',
-    secondary: secondary || '#a855f7',
-    accent: accent || '#6b7280',
-    info: info || '#06b6d4',
-  }
-}
-
-const themeUIColors = ref(getThemeUIColors())
+const themeColors = ref<ChartThemeColors>(getChartThemeColors())
 
 const LEGEND_STORAGE_KEY = 'budget-chart-legend-selected'
 
@@ -208,190 +155,54 @@ const saveLegendSelected = (selected: Record<string, boolean>) => {
 
 const legendSelected = ref(loadLegendSelected())
 
-const chartOption = computed(() => ({
-  backgroundColor: 'transparent',
-  tooltip: {
-    trigger: 'axis' as const,
-    backgroundColor: themeUIColors.value.background,
-    borderColor: themeUIColors.value.axis,
-    textStyle: { color: themeUIColors.value.text },
-    formatter: (p: TooltipParams) => {
-      const list = toList(p)
+const seriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => [
+  { name: t('chart.balance'), data: chartData.value.datasets.startBalance, colorKey: 'primary' },
+  { name: t('chart.income'), data: chartData.value.datasets.totalIncome, colorKey: 'success' },
+  { name: t('chart.expenses'), data: chartData.value.datasets.allExpenses, colorKey: 'error' },
+  { name: t('chart.pocketExpenses'), data: chartData.value.datasets.calculatedPocketExpenses, colorKey: 'warning' },
+  { name: t('chart.majorExpenses'), data: chartData.value.datasets.totalExpenses, colorKey: 'secondary' },
+  { name: t('chart.currencyFluctuations'), data: chartData.value.datasets.currencyProfitLoss, colorKey: 'accent' },
+  { name: t('chart.optionalExpenses'), data: chartData.value.datasets.totalOptionalExpenses, colorKey: 'info' },
+])
 
-      const idx = list[0]?.dataIndex
-      const head = typeof idx === 'number' ? chartData.value.labels[idx] : (list[0]?.name ?? '')
+const tooltipFormatter = (p: TooltipParams): string => {
+  const list = toList(p)
+  const idx = list[0]?.dataIndex
+  const head = typeof idx === 'number' ? chartData.value.labels[idx] : (list[0]?.name ?? '')
+  const currency = budgetStore.effectiveMainCurrency
 
-      const currency = budgetStore.effectiveMainCurrency
+  const body = list
+    .map(({ marker = '', seriesName = '', value }) =>
+      `${marker}${seriesName}: ${nf.value.format(toNumber(value))} ${currency}`)
+    .join('<br/>')
 
-      const body = list
-        .map(({ marker = '', seriesName = '', value }) =>
-          `${marker}${seriesName}: ${nf.value.format(toNumber(value))} ${currency}`)
-        .join('<br/>')
+  return `<strong>${head}</strong><br/>${body}`
+}
 
-      return `<strong>${head}</strong><br/>${body}`
+const yAxisFormatter = (value: number): string =>
+  `${nf.value.format(Math.round(value))} ${budgetStore.effectiveMainCurrency}`
+
+const chartOption = computed((): ChartOption => {
+  const baseOption = buildChartOption({
+    colors: themeColors.value,
+    labels: chartData.value.labels,
+    series: seriesConfigs.value,
+    legendSelected: legendSelected.value,
+    tooltipFormatter: tooltipFormatter as unknown as (params: unknown) => string,
+    yAxisFormatter,
+    enableDataZoom: true,
+    gridTop: 80,
+    legendTop: 30,
+  })
+
+  return {
+    ...baseOption,
+    grid: {
+      ...baseOption.grid,
+      right: 50,
     },
-  },
-  legend: {
-    type: 'scroll' as const,
-    top: 30,
-    textStyle: { color: themeUIColors.value.legend },
-    inactiveColor: themeUIColors.value.axis,
-    selected: legendSelected.value,
-    lineStyle: { inactiveColor: 'transparent' },
-  },
-  grid: {
-    top: 80,
-    left: 50,
-    right: 50,
-    bottom: 60,
-    containLabel: true,
-  },
-  xAxis: {
-    type: 'category' as const,
-    data: chartData.value.labels,
-    axisLabel: {
-      rotate: 45,
-      color: themeUIColors.value.axis,
-    },
-    axisLine: {
-      lineStyle: { color: themeUIColors.value.axis },
-    },
-  },
-  yAxis: {
-    type: 'value' as const,
-    axisLabel: {
-      formatter: (value: number) => `${nf.value.format(Math.round(value))} ${budgetStore.effectiveMainCurrency}`,
-      color: themeUIColors.value.axis,
-    },
-    axisLine: {
-      lineStyle: { color: themeUIColors.value.axis },
-    },
-    splitLine: {
-      lineStyle: { color: themeUIColors.value.grid },
-    },
-  },
-  dataZoom: [
-    {
-      type: 'inside' as const,
-      start: 0,
-      end: 100,
-    },
-  ],
-  series: [
-    {
-      name: t('chart.balance'),
-      type: 'line' as const,
-      data: chartData.value.datasets.startBalance,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.primary },
-      itemStyle: { color: themeUIColors.value.primary },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.primary },
-        itemStyle: { color: themeUIColors.value.primary },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: t('chart.income'),
-      type: 'line' as const,
-      data: chartData.value.datasets.totalIncome,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.success },
-      itemStyle: { color: themeUIColors.value.success },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.success },
-        itemStyle: { color: themeUIColors.value.success },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: t('chart.expenses'),
-      type: 'line' as const,
-      data: chartData.value.datasets.allExpenses,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.error },
-      itemStyle: { color: themeUIColors.value.error },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.error },
-        itemStyle: { color: themeUIColors.value.error },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: t('chart.pocketExpenses'),
-      type: 'line' as const,
-      data: chartData.value.datasets.calculatedPocketExpenses,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.warning },
-      itemStyle: { color: themeUIColors.value.warning },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.warning },
-        itemStyle: { color: themeUIColors.value.warning },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: t('chart.majorExpenses'),
-      type: 'line' as const,
-      data: chartData.value.datasets.totalExpenses,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.secondary },
-      itemStyle: { color: themeUIColors.value.secondary },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.secondary },
-        itemStyle: { color: themeUIColors.value.secondary },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: t('chart.currencyFluctuations'),
-      type: 'line' as const,
-      data: chartData.value.datasets.currencyProfitLoss,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.accent },
-      itemStyle: { color: themeUIColors.value.accent },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.accent },
-        itemStyle: { color: themeUIColors.value.accent },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-    {
-      name: t('chart.optionalExpenses'),
-      type: 'line' as const,
-      data: chartData.value.datasets.totalOptionalExpenses,
-      smooth: true,
-      lineStyle: { color: themeUIColors.value.info },
-      itemStyle: { color: themeUIColors.value.info },
-      emphasis: {
-        lineStyle: { color: themeUIColors.value.info },
-        itemStyle: { color: themeUIColors.value.info },
-      },
-      symbol: 'circle',
-      symbolSize: 8,
-      sampling: 'lttb' as const,
-      connectNulls: true,
-    },
-  ],
-} satisfies ECOption))
+  }
+})
 
 const handleLegendSelectChanged = (selected: Record<string, boolean>) => {
   legendSelected.value = selected
@@ -404,7 +215,7 @@ const hide = () => {
 
 watch(isOpen, (open) => {
   if (open && import.meta.client) {
-    themeUIColors.value = getThemeUIColors()
+    themeColors.value = getChartThemeColors()
   }
 })
 </script>

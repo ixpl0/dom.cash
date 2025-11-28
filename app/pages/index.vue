@@ -254,20 +254,11 @@
 </template>
 
 <script setup lang="ts">
-import type { ComposeOption } from 'echarts/core'
-import type { LineSeriesOption } from 'echarts/charts'
-import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, DataZoomComponentOption } from 'echarts/components'
 import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
 import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 import type { EntryTableEntry, EntryTableLabels } from '~/components/ui/EntryTable.vue'
-
-type ECOption = ComposeOption<
-  | LineSeriesOption
-  | GridComponentOption
-  | LegendComponentOption
-  | TooltipComponentOption
-  | DataZoomComponentOption
->
+import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/useChartConfig'
+import { getChartThemeColors } from '~/composables/useChartTheme'
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
@@ -416,37 +407,6 @@ const demoData = computed((): DemoData => {
   }
 })
 
-const getThemeColors = () => {
-  if (!import.meta.client) {
-    return {
-      text: '#6b7280',
-      axis: '#9ca3af',
-      grid: '#e5e7eb',
-      background: '#f3f4f6',
-      primary: '#3b82f6',
-      success: '#22c55e',
-      error: '#ef4444',
-    }
-  }
-
-  const style = getComputedStyle(document.documentElement)
-  const baseContent = style.getPropertyValue('--color-base-content').trim()
-  const base200 = style.getPropertyValue('--color-base-200').trim()
-  const primary = style.getPropertyValue('--color-primary').trim()
-  const success = style.getPropertyValue('--color-success').trim()
-  const error = style.getPropertyValue('--color-error').trim()
-
-  return {
-    text: baseContent || '#6b7280',
-    axis: `color-mix(in srgb, ${baseContent || '#9ca3af'} 70%, transparent)`,
-    grid: `color-mix(in srgb, ${baseContent || '#e5e7eb'} 10%, transparent)`,
-    background: base200 || '#f3f4f6',
-    primary: primary || '#3b82f6',
-    success: success || '#22c55e',
-    error: error || '#ef4444',
-  }
-}
-
 const demoChartLabels = computed(() => {
   const currentDate = new Date()
   const result: string[] = []
@@ -467,89 +427,23 @@ const demoChartData = {
 
 const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
-const demoChartOption = computed((): ECOption => {
-  // NOTE: reading currentTheme.value to trigger recomputation when theme changes
+const demoChartSeriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => [
+  { name: t('chart.balance'), data: demoChartData.balance, colorKey: 'primary' },
+  { name: t('chart.income'), data: demoChartData.income, colorKey: 'success' },
+  { name: t('chart.expenses'), data: demoChartData.expenses, colorKey: 'error' },
+])
+
+const demoChartOption = computed((): ChartOption => {
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   currentTheme.value
-  const colors = getThemeColors()
+  const colors = getChartThemeColors()
 
-  return {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: colors.background,
-      borderColor: colors.axis,
-      textStyle: { color: colors.text },
-    },
-    legend: {
-      top: 0,
-      textStyle: { color: colors.text },
-      inactiveColor: colors.axis,
-    },
-    grid: {
-      top: 50,
-      left: 50,
-      right: 30,
-      bottom: 60,
-      containLabel: true,
-    },
-    xAxis: {
-      type: 'category',
-      data: demoChartLabels.value,
-      axisLabel: {
-        rotate: 45,
-        color: colors.axis,
-      },
-      axisLine: {
-        lineStyle: { color: colors.axis },
-      },
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: {
-        formatter: (value: number) => `$${nf.format(Math.round(value))}`,
-        color: colors.axis,
-      },
-      axisLine: {
-        lineStyle: { color: colors.axis },
-      },
-      splitLine: {
-        lineStyle: { color: colors.grid },
-      },
-    },
-    series: [
-      {
-        name: t('chart.balance'),
-        type: 'line',
-        data: demoChartData.balance,
-        smooth: true,
-        lineStyle: { color: colors.primary },
-        itemStyle: { color: colors.primary },
-        symbol: 'circle',
-        symbolSize: 8,
-      },
-      {
-        name: t('chart.income'),
-        type: 'line',
-        data: demoChartData.income,
-        smooth: true,
-        lineStyle: { color: colors.success },
-        itemStyle: { color: colors.success },
-        symbol: 'circle',
-        symbolSize: 8,
-      },
-      {
-        name: t('chart.expenses'),
-        type: 'line',
-        data: demoChartData.expenses,
-        smooth: true,
-        lineStyle: { color: colors.error },
-        itemStyle: { color: colors.error },
-        symbol: 'circle',
-        symbolSize: 8,
-      },
-    ],
-  }
+  return buildChartOption({
+    colors,
+    labels: demoChartLabels.value,
+    series: demoChartSeriesConfigs.value,
+    yAxisFormatter: (value: number) => `$${nf.format(Math.round(value))}`,
+  })
 })
 
 const entryTableLabels = computed((): EntryTableLabels => ({
