@@ -31,7 +31,9 @@
       "Bash(git rm:*)",
       "Bash(pnpm test:e2e:*)",
       "Bash(pnpm outdated:*)",
-      "Bash(pnpm lint:check:*)"
+      "Bash(pnpm lint:check:*)",
+      "Bash(find:*)",
+      "Bash(sort:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

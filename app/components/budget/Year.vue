@@ -29,9 +29,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { t } = useI18n()
-const { mainCurrency: userMainCurrency } = useUser()
 const budgetStore = useBudgetStore()
-const mainCurrency = computed(() => budgetStore.data?.user?.mainCurrency || userMainCurrency.value)
 
 const yearStats = computed((): UiYearStats => {
   const summary = budgetStore.getYearSummary(props.year)
@@ -114,6 +112,6 @@ const labels = computed((): UiYearLabels => ({
 }))
 
 const formatAmountForDisplay = (amount: number): string => {
-  return formatAmountRounded(amount, mainCurrency.value)
+  return formatAmountRounded(amount, budgetStore.effectiveMainCurrency)
 }
 </script>
