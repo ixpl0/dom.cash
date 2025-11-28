@@ -45,12 +45,16 @@ export default defineEventHandler(async (event) => {
 
     try {
       const { createNotification } = await import('~~/server/services/notifications')
-      const monthNames = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+      const { MONTH_KEYS } = await import('~~/shared/types/i18n')
       await createNotification({
         sourceUserId: user.id,
         budgetOwnerId: monthData.userId,
         type: 'budget_month_deleted',
-        message: `${user.username} удалил ${monthNames[monthData.month]} ${monthData.year} из бюджета`,
+        params: {
+          username: user.username,
+          month: MONTH_KEYS[monthData.month],
+          year: monthData.year,
+        },
       })
     }
     catch (error) {

@@ -33,12 +33,17 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    const kindNames = { balance: 'баланс', income: 'доход', expense: 'расход' }
     await createNotification({
       sourceUserId: user.id,
       budgetOwnerId: entryRecord.month.userId,
       type: 'budget_entry_deleted',
-      message: `${user.username} удалил запись "${entryRecord.entry.description}" (${kindNames[entryRecord.entry.kind]}: ${entryRecord.entry.amount} ${entryRecord.entry.currency})`,
+      params: {
+        username: user.username,
+        description: entryRecord.entry.description,
+        kind: entryRecord.entry.kind,
+        amount: entryRecord.entry.amount,
+        entryCurrency: entryRecord.entry.currency,
+      },
     })
   }
   catch (error) {

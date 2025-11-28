@@ -47,12 +47,17 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    const kindNames = { balance: 'баланс', income: 'доход', expense: 'расход' }
     await createNotification({
       sourceUserId: user.id,
       budgetOwnerId: monthOwner.userId,
       type: 'budget_entry_created',
-      message: `${user.username} добавил запись "${data.description}" (${kindNames[data.kind]}: ${data.amount} ${data.currency})`,
+      params: {
+        username: user.username,
+        description: data.description,
+        kind: data.kind,
+        amount: data.amount,
+        entryCurrency: data.currency,
+      },
     })
   }
   catch (error) {

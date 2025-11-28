@@ -71,12 +71,14 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    const accessNames: Record<string, string> = { read: 'только чтение', write: 'чтение и редактирование' }
     await createNotification({
       sourceUserId: currentUser.id,
       budgetOwnerId: currentUser.id,
       type: 'budget_share_updated',
-      message: `${currentUser.username} изменил ваши права доступа к бюджету на "${accessNames[access] || access}"`,
+      params: {
+        username: currentUser.username,
+        access,
+      },
       targetUserId: shareData.userId,
     })
   }

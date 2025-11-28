@@ -33,7 +33,9 @@
       "Bash(pnpm outdated:*)",
       "Bash(pnpm lint:check:*)",
       "Bash(find:*)",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(dir /s /b *.ts)",
+      "Bash(findstr:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",

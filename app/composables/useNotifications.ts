@@ -1,10 +1,55 @@
+import type { NotificationType, NotificationParams } from '~~/shared/types/i18n'
+
 export interface NotificationEvent {
   id: string
-  type: string
-  message: string
-  sourceUsername: string
-  budgetOwnerUsername: string
+  type: NotificationType
+  params: NotificationParams
   createdAt: string
+}
+
+const formatNotificationMessage = (
+  event: NotificationEvent,
+  t: ReturnType<typeof useI18n>['t'],
+): string => {
+  const { type, params } = event
+
+  const translatedParams: Record<string, string | number> = {}
+
+  if (params.username) {
+    translatedParams.username = params.username
+  }
+  if (params.currency) {
+    translatedParams.currency = params.currency
+  }
+  if (params.year !== undefined) {
+    translatedParams.year = params.year
+  }
+  if (params.description) {
+    translatedParams.description = params.description
+  }
+  if (params.amount !== undefined) {
+    translatedParams.amount = params.amount
+  }
+  if (params.entryCurrency) {
+    translatedParams.entryCurrency = params.entryCurrency
+  }
+  if (params.monthsCount !== undefined) {
+    translatedParams.monthsCount = params.monthsCount
+  }
+  if (params.entriesCount !== undefined) {
+    translatedParams.entriesCount = params.entriesCount
+  }
+  if (params.month) {
+    translatedParams.month = t(`month.${params.month}`)
+  }
+  if (params.kind) {
+    translatedParams.kind = t(`entryKind.${params.kind}`)
+  }
+  if (params.access) {
+    translatedParams.access = t(`accessLevel.${params.access}`)
+  }
+
+  return t(`notifications.${type}`, translatedParams)
 }
 
 export const useNotifications = () => {
@@ -14,6 +59,7 @@ export const useNotifications = () => {
 
   const { toast } = useToast()
   const { showWarningBanner } = useOutdatedBanner()
+  const { t } = useI18n()
 
   const connect = () => {
     if (eventSource) {
@@ -28,7 +74,7 @@ export const useNotifications = () => {
 
     eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data)
+        const data = JSON.parse(event.data) as NotificationEvent | { type: 'connected' | 'ping' }
 
         if (data.type === 'connected') {
           isConnected.value = true
@@ -39,7 +85,9 @@ export const useNotifications = () => {
           return
         }
 
-        toast({ message: data.message })
+        const notificationEvent = data as NotificationEvent
+        const message = formatNotificationMessage(notificationEvent, t)
+        toast({ message })
         showWarningBanner()
       }
       catch (error) {

@@ -1,19 +1,19 @@
-export type NotificationType = 'budget_currency_changed' | 'budget_month_added' | 'budget_month_deleted' | 'budget_entry_created' | 'budget_entry_updated' | 'budget_entry_deleted' | 'budget_share_updated' | 'budget_imported'
+import type { NotificationType, NotificationParams } from '~~/shared/types/i18n'
+
+export type { NotificationType }
 
 export interface CreateNotificationParams {
   sourceUserId: string
   budgetOwnerId: string
   type: NotificationType
-  message: string
+  params: NotificationParams
   targetUserId?: string
 }
 
 export interface NotificationEvent {
   id: string
   type: NotificationType
-  message: string
-  sourceUsername: string
-  budgetOwnerUsername: string
+  params: NotificationParams
   createdAt: Date
 }
 
@@ -76,19 +76,19 @@ export const sendNotificationToUser = (userId: string, notification: Notificatio
   }
 }
 
-export const createNotification = async (params: CreateNotificationParams): Promise<void> => {
+export const createNotification = async (notificationParams: CreateNotificationParams): Promise<void> => {
   let targetUsers: string[]
 
-  if (params.targetUserId) {
-    targetUsers = [params.targetUserId]
+  if (notificationParams.targetUserId) {
+    targetUsers = [notificationParams.targetUserId]
   }
   else {
-    const subscribers = getBudgetSubscribers(params.budgetOwnerId)
+    const subscribers = getBudgetSubscribers(notificationParams.budgetOwnerId)
     targetUsers = [...subscribers]
-    if (!targetUsers.includes(params.budgetOwnerId)) {
-      targetUsers.push(params.budgetOwnerId)
+    if (!targetUsers.includes(notificationParams.budgetOwnerId)) {
+      targetUsers.push(notificationParams.budgetOwnerId)
     }
-    targetUsers = targetUsers.filter(userId => userId !== params.sourceUserId)
+    targetUsers = targetUsers.filter(userId => userId !== notificationParams.sourceUserId)
   }
 
   if (targetUsers.length === 0) {
@@ -97,10 +97,8 @@ export const createNotification = async (params: CreateNotificationParams): Prom
 
   const notificationEvent: NotificationEvent = {
     id: crypto.randomUUID(),
-    type: params.type,
-    message: params.message,
-    sourceUsername: 'unknown',
-    budgetOwnerUsername: 'unknown',
+    type: notificationParams.type,
+    params: notificationParams.params,
     createdAt: new Date(),
   }
 

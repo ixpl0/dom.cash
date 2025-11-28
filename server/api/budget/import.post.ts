@@ -65,7 +65,11 @@ export default defineEventHandler(async (event) => {
         sourceUserId: currentUser.id,
         budgetOwnerId: targetUserId,
         type: 'budget_imported',
-        message: `${currentUser.username} импортировал бюджет (месяцев: ${result.importedMonths}, записей: ${result.importedEntries})`,
+        params: {
+          username: currentUser.username,
+          monthsCount: result.importedMonths,
+          entriesCount: result.importedEntries,
+        },
       })
     }
     catch (error) {

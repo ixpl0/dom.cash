@@ -58,8 +58,10 @@ export default defineEventHandler(async (event) => {
     await createNotification({
       sourceUserId: currentUser.id,
       budgetOwnerId: currentUser.id,
-      type: 'budget_share_updated',
-      message: `${currentUser.username} отозвал у вас доступ к бюджету`,
+      type: 'budget_share_revoked',
+      params: {
+        username: currentUser.username,
+      },
       targetUserId: shareData.userId,
     })
   }

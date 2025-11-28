@@ -58,7 +58,10 @@ export default defineEventHandler(async (event) => {
         sourceUserId: user.id,
         budgetOwnerId: targetUserId,
         type: 'budget_currency_changed',
-        message: `${user.username} изменил основную валюту бюджета на ${currency}`,
+        params: {
+          username: user.username,
+          currency,
+        },
       })
     }
     catch (error) {
