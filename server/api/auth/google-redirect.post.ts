@@ -42,7 +42,30 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const origin = getHeader(event, 'origin') || getHeader(event, 'referer')?.replace(/\/.*$/, '')
+    const originHeader = getHeader(event, 'origin')
+    const refererHeader = getHeader(event, 'referer')
+
+    let origin: string | undefined
+    if (originHeader) {
+      origin = originHeader
+    }
+    else if (refererHeader) {
+      try {
+        const refererUrl = new URL(refererHeader)
+        origin = refererUrl.origin
+      }
+      catch {
+        origin = undefined
+      }
+    }
+
+    if (!origin) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Unable to determine origin for redirect URI',
+      })
+    }
+
     const redirectUri = `${origin}/auth`
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -137,6 +160,8 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
+
+    secureLog.error('Google authentication error:', error instanceof Error ? error.message : error)
 
     throw createError({
       statusCode: 500,
