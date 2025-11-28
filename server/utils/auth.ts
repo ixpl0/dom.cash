@@ -3,6 +3,7 @@ import { createError, setCookie, getCookie, type H3Event } from 'h3'
 import { eq, gt, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const SESSION_LIFETIME = 60 * 60 * 24 * 365 * 420
 
@@ -155,7 +156,7 @@ export const createUserInDb = async (event: H3Event, params: CreateUserParams) =
   const created = await findUser(params.username, event)
 
   if (!created) {
-    throw createError({ statusCode: 500, message: 'Failed to create user' })
+    throw createError({ statusCode: 500, message: ERROR_KEYS.FAILED_TO_CREATE_USER })
   }
 
   return created
@@ -187,13 +188,13 @@ export const ensureUser = async (username: string, password: string, event: H3Ev
   }
 
   if (!existing.passwordHash) {
-    throw createError({ statusCode: 401, message: 'Account exists with Google OAuth. Please use Google sign-in.' })
+    throw createError({ statusCode: 401, message: ERROR_KEYS.ACCOUNT_EXISTS_GOOGLE })
   }
 
   const isPasswordValid = await verifyPassword(password, existing.passwordHash)
 
   if (!isPasswordValid) {
-    throw createError({ statusCode: 401, message: 'Invalid credentials' })
+    throw createError({ statusCode: 401, message: ERROR_KEYS.INVALID_CREDENTIALS })
   }
 
   return existing

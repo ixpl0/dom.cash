@@ -1,5 +1,6 @@
 import { defineEventHandler, createError } from 'h3'
 import { getGoogleClientId } from '~~/server/utils/google-oauth'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async () => {
   try {
@@ -12,7 +13,7 @@ export default defineEventHandler(async () => {
   catch {
     throw createError({
       statusCode: 503,
-      message: 'Google OAuth not configured',
+      message: ERROR_KEYS.GOOGLE_OAUTH_NOT_CONFIGURED,
     })
   }
 })

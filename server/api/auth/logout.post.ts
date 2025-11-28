@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'auth-token')
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
       secureLog.error('Database error during logout:', error)
       throw createError({
         statusCode: 500,
-        message: 'Internal server error during logout',
+        message: ERROR_KEYS.LOGOUT_ERROR,
       })
     }
   }

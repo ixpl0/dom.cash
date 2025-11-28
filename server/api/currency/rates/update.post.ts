@@ -1,6 +1,7 @@
 import { requireAuth } from '~~/server/utils/session'
 import { saveHistoricalRatesForCurrentMonth } from '~~/server/utils/rates/database'
 import { clearRatesCache } from '~~/server/services/months'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   await requireAuth(event)
@@ -8,19 +9,12 @@ export default defineEventHandler(async (event) => {
   try {
     await saveHistoricalRatesForCurrentMonth(event)
     clearRatesCache()
-    return { success: true, message: 'Currency rates updated successfully' }
+    return { success: true }
   }
-  catch (error) {
-    if (error instanceof Error) {
-      throw createError({
-        statusCode: 500,
-        message: `Failed to update currency rates: ${error.message}`,
-      })
-    }
-
+  catch {
     throw createError({
       statusCode: 500,
-      message: 'Unknown error occurred while updating currency rates',
+      message: ERROR_KEYS.FAILED_TO_UPDATE_RATES,
     })
   }
 })

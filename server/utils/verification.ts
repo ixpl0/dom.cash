@@ -2,6 +2,7 @@ import { createError, type H3Event } from 'h3'
 import { eq, lt } from 'drizzle-orm'
 import { emailVerificationCode } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export const DEV_VERIFICATION_CODE = '111111'
 
@@ -94,14 +95,14 @@ export const throwRateLimitError = (result: RateLimitCheckResult): never => {
   if (result.waitSeconds) {
     throw createError({
       statusCode: 429,
-      message: `Please wait ${result.waitSeconds} seconds before requesting a new code`,
-      data: { waitSeconds: result.waitSeconds, attemptCount: result.attemptCount },
+      message: ERROR_KEYS.RATE_LIMIT_WAIT,
+      data: { params: { seconds: result.waitSeconds }, attemptCount: result.attemptCount },
     })
   }
 
   throw createError({
     statusCode: 429,
-    message: 'Maximum attempts exceeded',
+    message: ERROR_KEYS.RATE_LIMIT_EXCEEDED,
   })
 }
 
@@ -245,13 +246,13 @@ export const throwVerifyCodeError = (reason: VerifyCodeErrorReason): never => {
   if (reason === 'max_attempts_exceeded') {
     throw createError({
       statusCode: 429,
-      message: 'Too many failed attempts. Please request a new code.',
+      message: ERROR_KEYS.RATE_LIMIT_TOO_MANY_FAILED,
     })
   }
 
   throw createError({
     statusCode: 400,
-    message: 'Invalid or expired verification code',
+    message: ERROR_KEYS.INVALID_VERIFICATION_CODE,
   })
 }
 

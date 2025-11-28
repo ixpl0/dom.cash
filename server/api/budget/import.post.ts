@@ -5,6 +5,7 @@ import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/types/e
 import { findUserByUsername, checkWritePermission } from '~~/server/services/months'
 import { z } from 'zod'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const importRequestSchema = z.object({
   data: budgetExportSchema,
@@ -13,11 +14,11 @@ const importRequestSchema = z.object({
 }).refine((data) => {
   const jsonSize = JSON.stringify(data).length
   if (jsonSize > 1 * 1024 * 1024) {
-    throw new Error('Import file too large. Maximum size is 1MB.')
+    throw new Error(ERROR_KEYS.IMPORT_FILE_TOO_LARGE)
   }
   return true
 }, {
-  message: 'Import validation failed',
+  message: ERROR_KEYS.IMPORT_VALIDATION_FAILED,
 })
 
 export default defineEventHandler(async (event) => {
@@ -31,7 +32,7 @@ export default defineEventHandler(async (event) => {
     if (!targetUser) {
       throw createError({
         statusCode: 404,
-        message: 'Target user not found',
+        message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
       })
     }
 
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
       if (!hasPermission) {
         throw createError({
           statusCode: 403,
-          message: 'Insufficient permissions to import budget',
+          message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_IMPORT,
         })
       }
     }
@@ -54,7 +55,7 @@ export default defineEventHandler(async (event) => {
     if (!result.success) {
       throw createError({
         statusCode: 400,
-        message: 'Import failed',
+        message: ERROR_KEYS.IMPORT_FAILED,
         data: result,
       })
     }
@@ -85,7 +86,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      message: 'Failed to import budget',
+      message: ERROR_KEYS.FAILED_TO_IMPORT_BUDGET,
     })
   }
 })

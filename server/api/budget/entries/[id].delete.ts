@@ -1,6 +1,7 @@
 import { requireAuth } from '~~/server/utils/session'
 import { getEntryWithMonth, checkWritePermissionForMonth, deleteEntry } from '~~/server/services/entries'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -9,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!entryId) {
     throw createError({
       statusCode: 400,
-      message: 'Entry ID is required',
+      message: ERROR_KEYS.ENTRY_ID_REQUIRED,
     })
   }
 
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
   if (!entryRecord || !entryRecord.month) {
     throw createError({
       statusCode: 404,
-      message: 'Entry not found',
+      message: ERROR_KEYS.ENTRY_NOT_FOUND,
     })
   }
 
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   if (!hasPermission) {
     throw createError({
       statusCode: 403,
-      message: 'Insufficient permissions to delete entries',
+      message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_DELETE,
     })
   }
 

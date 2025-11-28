@@ -372,8 +372,6 @@
 </template>
 
 <script setup lang="ts">
-import { getErrorMessage } from '~~/shared/utils/errors'
-
 interface FormData {
   username: string
   password: string
@@ -389,6 +387,7 @@ const { login } = useAuth()
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
+const { formatError } = useServerError()
 
 const formData = ref<FormData>({
   username: '',
@@ -479,7 +478,7 @@ const handleSubmit = async (): Promise<void> => {
     await navigateAfterLogin()
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -532,7 +531,7 @@ const handleRegister = async (): Promise<void> => {
     }
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -567,7 +566,7 @@ const handleVerifyCode = async (): Promise<void> => {
     await navigateAfterLogin()
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -598,7 +597,7 @@ const handleResendCode = async (): Promise<void> => {
     }
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -644,7 +643,7 @@ const handleForgotPassword = async (): Promise<void> => {
     }
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -681,7 +680,7 @@ const handleResetPassword = async (): Promise<void> => {
     backToLoginFromForgot()
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.unexpectedError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
   }
   finally {
     isLoading.value = false
@@ -703,7 +702,7 @@ const handleGoogleLogin = async (): Promise<void> => {
     await navigateAfterLogin()
   }
   catch (error) {
-    toast({ type: 'error', message: getErrorMessage(error, t('auth.googleError')) })
+    toast({ type: 'error', message: formatError(error, t('auth.googleError')) })
   }
   finally {
     isGoogleLoading.value = false
@@ -771,7 +770,7 @@ onMounted(async () => {
     }
     catch (error) {
       console.error('Google OAuth redirect failed:', error)
-      toast({ type: 'error', message: getErrorMessage(error, t('auth.googleOAuthError')) })
+      toast({ type: 'error', message: formatError(error, t('auth.googleOAuthError')) })
     }
     finally {
       isGoogleLoading.value = false

@@ -4,6 +4,7 @@ import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { count, desc, asc, sql } from 'drizzle-orm'
 import type { AdminUsersResponse } from '~~/shared/types'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 10
@@ -17,7 +18,7 @@ const escapeLikePattern = (pattern: string): string => {
 export default defineEventHandler(async (event): Promise<AdminUsersResponse> => {
   const currentUser = await requireAuth(event)
   if (!currentUser.isAdmin) {
-    throw createError({ statusCode: 403, message: 'Forbidden' })
+    throw createError({ statusCode: 403, message: ERROR_KEYS.FORBIDDEN })
   }
 
   const query = getQuery(event)

@@ -2,6 +2,7 @@ import { getQuery, createError } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { getUserMonthsByYears, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/months'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -15,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid query parameters',
+      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
     })
   }
 

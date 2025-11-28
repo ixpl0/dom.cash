@@ -7,6 +7,7 @@ import { hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
 import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const resetPasswordSchema = z.object({
   email: emailSchema,
@@ -36,7 +37,7 @@ export default defineEventHandler(async (event) => {
   if (!existingUser) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid or expired verification code',
+      message: ERROR_KEYS.INVALID_VERIFICATION_CODE,
     })
   }
 

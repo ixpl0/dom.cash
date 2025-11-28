@@ -7,6 +7,7 @@ import { createSession, setAuthCookie, hashPassword, createUserInDb } from '~~/s
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
 import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const registerSchema = z.object({
   email: emailSchema,
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
   if (!isEmailVerificationDisabled()) {
     throw createError({
       statusCode: 403,
-      message: 'Direct registration is disabled. Use email verification instead.',
+      message: ERROR_KEYS.DIRECT_REGISTRATION_DISABLED,
     })
   }
 
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event) => {
   if (existingUser) {
     throw createError({
       statusCode: 400,
-      message: 'User already exists',
+      message: ERROR_KEYS.USER_ALREADY_EXISTS,
     })
   }
 

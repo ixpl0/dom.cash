@@ -1,5 +1,6 @@
 import { requireAuth } from '~~/server/utils/session'
 import { getUserBudgetData } from '~~/server/services/users'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -8,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!username) {
     throw createError({
       statusCode: 400,
-      message: 'Username is required',
+      message: ERROR_KEYS.USERNAME_REQUIRED,
     })
   }
 
@@ -20,13 +21,13 @@ export default defineEventHandler(async (event) => {
       if (error.message === 'User not found') {
         throw createError({
           statusCode: 404,
-          message: 'User not found',
+          message: ERROR_KEYS.USER_NOT_FOUND,
         })
       }
       if (error.message === 'Insufficient permissions to view budget') {
         throw createError({
           statusCode: 403,
-          message: 'Insufficient permissions to view budget',
+          message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_VIEW,
         })
       }
     }

@@ -3,6 +3,7 @@ import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { createMonth, findUserByUsername, checkWritePermission } from '~~/server/services/months'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const createMonthSchema = z.object({
   year: z.number().int().min(2020).max(2100),
@@ -22,7 +23,7 @@ export default defineEventHandler(async (event) => {
     if (!targetUser) {
       throw createError({
         statusCode: 404,
-        message: 'Target user not found',
+        message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
       })
     }
 
@@ -31,7 +32,7 @@ export default defineEventHandler(async (event) => {
       if (!hasPermission) {
         throw createError({
           statusCode: 403,
-          message: 'Insufficient permissions to create months',
+          message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_CREATE_MONTHS,
         })
       }
     }
@@ -72,17 +73,17 @@ export default defineEventHandler(async (event) => {
       if (error.message === 'Month already exists') {
         throw createError({
           statusCode: 409,
-          message: 'Month already exists',
+          message: ERROR_KEYS.MONTH_ALREADY_EXISTS,
         })
       }
       throw createError({
         statusCode: 500,
-        message: error.message,
+        message: ERROR_KEYS.FAILED_TO_CREATE_MONTH,
       })
     }
     throw createError({
       statusCode: 500,
-      message: 'Failed to create month',
+      message: ERROR_KEYS.FAILED_TO_CREATE_MONTH,
     })
   }
 })

@@ -4,6 +4,7 @@ import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event) => {
     if (!monthId) {
       throw createError({
         statusCode: 400,
-        message: 'Month ID is required',
+        message: ERROR_KEYS.MONTH_ID_REQUIRED,
       })
     }
 
@@ -27,7 +28,7 @@ export default defineEventHandler(async (event) => {
     if (monthRecord.length === 0) {
       throw createError({
         statusCode: 404,
-        message: 'Month not found',
+        message: ERROR_KEYS.MONTH_NOT_FOUND,
       })
     }
 
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
     if (!hasPermission) {
       throw createError({
         statusCode: 403,
-        message: 'No permission to delete this month',
+        message: ERROR_KEYS.NO_PERMISSION_DELETE_MONTH,
       })
     }
 
@@ -67,22 +68,22 @@ export default defineEventHandler(async (event) => {
     secureLog.error('Delete month error:', error)
 
     if (error instanceof Error) {
-      if (error.message === 'Month not found') {
+      if (error.message === 'Month not found' || error.message === ERROR_KEYS.MONTH_NOT_FOUND) {
         throw createError({
           statusCode: 404,
-          message: 'Month not found',
+          message: ERROR_KEYS.MONTH_NOT_FOUND,
         })
       }
 
       throw createError({
         statusCode: 500,
-        message: `Failed to delete month: ${error.message}`,
+        message: ERROR_KEYS.FAILED_TO_DELETE_MONTH,
       })
     }
 
     throw createError({
       statusCode: 500,
-      message: 'Failed to delete month',
+      message: ERROR_KEYS.FAILED_TO_DELETE_MONTH,
     })
   }
 })

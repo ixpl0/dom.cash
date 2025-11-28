@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { getAvailableYears, getInitialYearsToLoad, findUserByUsername } from '~~/server/services/months'
 import { checkReadPermission } from '~~/server/services/users'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -15,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid query parameters',
+      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
     })
   }
 
@@ -28,7 +29,7 @@ export default defineEventHandler(async (event) => {
     if (!targetUser) {
       throw createError({
         statusCode: 404,
-        message: 'User not found',
+        message: ERROR_KEYS.USER_NOT_FOUND,
       })
     }
     targetUserId = targetUser.id
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
     if (!hasReadPermission) {
       throw createError({
         statusCode: 403,
-        message: 'Insufficient permissions to view budget',
+        message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_VIEW,
       })
     }
   }

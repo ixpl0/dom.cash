@@ -7,6 +7,7 @@ import { createSession, setAuthCookie, hashPassword, createUserInDb } from '~~/s
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/server/schemas/auth'
 import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const verifyCodeSchema = z.object({
   email: emailSchema,
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   if (existingUser) {
     throw createError({
       statusCode: 400,
-      message: 'User already exists',
+      message: ERROR_KEYS.USER_ALREADY_EXISTS,
     })
   }
 

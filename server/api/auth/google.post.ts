@@ -6,6 +6,7 @@ import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, fin
 import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const googleAuthSchema = z.object({
   token: z.string().min(1, 'Google ID token is required'),
@@ -28,7 +29,7 @@ export default defineEventHandler(async (event) => {
         if (existingUserByEmail.passwordHash) {
           throw createError({
             statusCode: 409,
-            message: 'Account already exists with password. Please sign in with your password first.',
+            message: ERROR_KEYS.ACCOUNT_EXISTS_PASSWORD,
           })
         }
         else {
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
     if (!authenticatedUser) {
       throw createError({
         statusCode: 500,
-        message: 'Failed to authenticate user',
+        message: ERROR_KEYS.FAILED_TO_AUTHENTICATE,
       })
     }
 
@@ -74,7 +75,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 401,
-      message: 'Google authentication failed',
+      message: ERROR_KEYS.GOOGLE_AUTH_FAILED,
     })
   }
 })

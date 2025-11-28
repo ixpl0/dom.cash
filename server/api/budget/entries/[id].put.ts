@@ -4,6 +4,7 @@ import { parseBody } from '~~/server/utils/validation'
 import { getEntryWithMonth, checkWritePermissionForMonth, updateEntry } from '~~/server/services/entries'
 import { currencySchema, descriptionSchema, amountSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const updateEntrySchema = z.object({
   description: descriptionSchema,
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
   if (!entryId) {
     throw createError({
       statusCode: 400,
-      message: 'Entry ID is required',
+      message: ERROR_KEYS.ENTRY_ID_REQUIRED,
     })
   }
 
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event) => {
   if (!entryRecord || !entryRecord.month) {
     throw createError({
       statusCode: 404,
-      message: 'Entry not found',
+      message: ERROR_KEYS.ENTRY_NOT_FOUND,
     })
   }
 
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
   if (!hasPermission) {
     throw createError({
       statusCode: 403,
-      message: 'Insufficient permissions to update entries',
+      message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE,
     })
   }
 

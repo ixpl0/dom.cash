@@ -6,6 +6,7 @@ import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 type GoogleTokenResponse = {
   access_token?: string
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Missing authorization code',
+      message: ERROR_KEYS.MISSING_AUTHORIZATION_CODE,
     })
   }
   const { code, state } = parsed.data
@@ -38,7 +39,7 @@ export default defineEventHandler(async (event) => {
     if (!clientId || !clientSecret) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Google OAuth not configured',
+        message: ERROR_KEYS.GOOGLE_OAUTH_NOT_CONFIGURED,
       })
     }
 
@@ -62,7 +63,7 @@ export default defineEventHandler(async (event) => {
     if (!origin) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Unable to determine origin for redirect URI',
+        message: ERROR_KEYS.UNABLE_TO_DETERMINE_ORIGIN,
       })
     }
 
@@ -87,7 +88,7 @@ export default defineEventHandler(async (event) => {
       secureLog.error('Token exchange failed:', errorText)
       throw createError({
         statusCode: 400,
-        statusMessage: 'Failed to exchange authorization code',
+        message: ERROR_KEYS.FAILED_TO_EXCHANGE_CODE,
       })
     }
 
@@ -97,7 +98,7 @@ export default defineEventHandler(async (event) => {
     if (!id_token) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'No ID token received',
+        message: ERROR_KEYS.NO_ID_TOKEN_RECEIVED,
       })
     }
 
@@ -114,7 +115,7 @@ export default defineEventHandler(async (event) => {
         if (existingUserByEmail.passwordHash) {
           throw createError({
             statusCode: 409,
-            statusMessage: 'Account already exists with password. Please sign in with your password first.',
+            message: ERROR_KEYS.ACCOUNT_EXISTS_PASSWORD,
           })
         }
         else {
@@ -139,7 +140,7 @@ export default defineEventHandler(async (event) => {
     if (!authenticatedUser) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Failed to authenticate user',
+        message: ERROR_KEYS.FAILED_TO_AUTHENTICATE,
       })
     }
 
@@ -165,7 +166,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Google authentication failed',
+      message: ERROR_KEYS.GOOGLE_AUTH_FAILED,
     })
   }
 })

@@ -1,7 +1,5 @@
 import type { EntryKind } from '~~/server/db/schema'
 
-export type { EntryKind }
-
 export type NotificationType
   = | 'budget_currency_changed'
     | 'budget_month_added'
@@ -62,9 +60,4 @@ export interface NotificationParams {
 export interface NotificationPayload {
   type: NotificationType
   params: NotificationParams
-}
-
-export interface ServerErrorData {
-  errorKey?: string
-  params?: Record<string, string | number>
 }

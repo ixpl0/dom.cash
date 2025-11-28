@@ -14,6 +14,7 @@ import {
   VERIFICATION_CONFIG,
 } from '~~/server/utils/verification'
 import { sendVerificationEmail } from '~~/server/utils/email'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const sendCodeSchema = z.object({
   email: emailSchema,
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event) => {
   })
 
   if (existingUser) {
-    throw createError({ statusCode: 400, message: 'User already exists' })
+    throw createError({ statusCode: 400, message: ERROR_KEYS.USER_ALREADY_EXISTS })
   }
 
   const existingCode = await getExistingCode(event, email)

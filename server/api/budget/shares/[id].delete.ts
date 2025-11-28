@@ -3,6 +3,7 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -10,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: ERROR_KEYS.UNAUTHORIZED,
     })
   }
 
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
   if (!shareId) {
     throw createError({
       statusCode: 400,
-      message: 'Share ID is required',
+      message: ERROR_KEYS.SHARE_ID_REQUIRED,
     })
   }
 
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
   if (existingShare.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'Share not found',
+      message: ERROR_KEYS.SHARE_NOT_FOUND,
     })
   }
 

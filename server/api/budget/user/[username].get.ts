@@ -6,6 +6,7 @@ import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { getExchangeRatesForMonth, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/months'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -13,7 +14,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: ERROR_KEYS.UNAUTHORIZED,
     })
   }
 
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
   if (!username) {
     throw createError({
       statusCode: 400,
-      message: 'Username is required',
+      message: ERROR_KEYS.USERNAME_REQUIRED,
     })
   }
 
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
   if (targetUser.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: ERROR_KEYS.USER_NOT_FOUND,
     })
   }
 
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
   if (!targetUserData) {
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: ERROR_KEYS.USER_NOT_FOUND,
     })
   }
 
@@ -62,7 +63,7 @@ export default defineEventHandler(async (event) => {
     if (shareRecord.length === 0) {
       throw createError({
         statusCode: 403,
-        message: 'Access denied',
+        message: ERROR_KEYS.ACCESS_DENIED,
       })
     }
 
@@ -70,7 +71,7 @@ export default defineEventHandler(async (event) => {
     if (!shareData) {
       throw createError({
         statusCode: 403,
-        message: 'Access denied',
+        message: ERROR_KEYS.ACCESS_DENIED,
       })
     }
     access = shareData.access
@@ -84,7 +85,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid query parameters',
+      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
     })
   }
   const yearsParam = parsed.data.years

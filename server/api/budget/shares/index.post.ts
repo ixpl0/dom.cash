@@ -5,6 +5,7 @@ import { budgetShare, user } from '~~/server/db/schema'
 import type { NewBudgetShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { accessSchema } from '~~/shared/schemas/common'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const createShareSchema = z.object({
   username: z.string().min(1),
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
   if (!currentUser) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: ERROR_KEYS.UNAUTHORIZED,
     })
   }
 
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
   if (targetUser.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: ERROR_KEYS.USER_NOT_FOUND,
     })
   }
 
@@ -41,14 +42,14 @@ export default defineEventHandler(async (event) => {
   if (!targetUserData) {
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: ERROR_KEYS.USER_NOT_FOUND,
     })
   }
 
   if (targetUserData.id === currentUser.id) {
     throw createError({
       statusCode: 400,
-      message: 'Cannot share with yourself',
+      message: ERROR_KEYS.CANNOT_SHARE_WITH_YOURSELF,
     })
   }
 
@@ -64,7 +65,7 @@ export default defineEventHandler(async (event) => {
   if (existingShare.length > 0) {
     throw createError({
       statusCode: 409,
-      message: 'Budget is already shared with this user',
+      message: ERROR_KEYS.ALREADY_SHARED,
     })
   }
 

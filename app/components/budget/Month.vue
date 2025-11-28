@@ -25,7 +25,6 @@
 </template>
 
 <script setup lang="ts">
-import { getErrorMessage } from '~~/shared/utils/errors'
 import { formatAmountRounded } from '~~/shared/utils/budget'
 import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/month-helpers'
 import { useModalsStore } from '~/stores/modals'
@@ -42,6 +41,7 @@ const props = defineProps<Props>()
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const { t } = useI18n()
+const { formatError } = useServerError()
 const { toast } = useToast()
 
 const monthData = computed(() => {
@@ -221,7 +221,7 @@ const handleDeleteMonth = async (): Promise<void> => {
     }
     catch (error) {
       console.error('Error deleting month:', error)
-      toast({ type: 'error', message: getErrorMessage(error, t('budget.month.deleteError')) })
+      toast({ type: 'error', message: formatError(error, t('budget.month.deleteError')) })
     }
   }
 }

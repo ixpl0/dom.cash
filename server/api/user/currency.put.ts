@@ -2,6 +2,7 @@ import { updateUserCurrency } from '~~/server/services/users'
 import { requireAuth } from '~~/server/utils/session'
 import { z } from 'zod'
 import { currencySchema } from '~~/shared/schemas/common'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const UpdateCurrencySchema = z.object({
   currency: currencySchema,
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
     if (!validation.success) {
       throw createError({
         statusCode: 400,
-        message: 'Invalid currency format',
+        message: ERROR_KEYS.INVALID_CURRENCY_FORMAT,
       })
     }
 
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
       if (!targetUser) {
         throw createError({
           statusCode: 404,
-          message: 'Target user not found',
+          message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
         })
       }
 
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
         if (!share || share.access !== 'write') {
           throw createError({
             statusCode: 403,
-            message: 'No permission to update this user currency',
+            message: ERROR_KEYS.NO_PERMISSION_UPDATE_CURRENCY,
           })
         }
       }
@@ -78,13 +79,13 @@ export default defineEventHandler(async (event) => {
     if (error instanceof Error && error.message.includes('User not found')) {
       throw createError({
         statusCode: 404,
-        message: 'User not found',
+        message: ERROR_KEYS.USER_NOT_FOUND,
       })
     }
 
     throw createError({
       statusCode: 500,
-      message: 'Failed to update currency',
+      message: ERROR_KEYS.FAILED_TO_UPDATE_CURRENCY,
     })
   }
 })

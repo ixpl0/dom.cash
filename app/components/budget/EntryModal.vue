@@ -39,7 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { getErrorMessage } from '~~/shared/utils/errors'
 import { formatAmount } from '~~/shared/utils/budget'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
@@ -49,6 +48,7 @@ import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
 const { t } = useI18n()
+const { formatError } = useServerError()
 const { toast } = useToast()
 const entryModal = computed(() => modalsStore.entryModal)
 const isOpen = computed(() => entryModal.value.isOpen)
@@ -189,7 +189,7 @@ const addEntry = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error adding entry:', error)
-    toast({ type: 'error', message: getErrorMessage(error, t('entry.errors.addFailed')) })
+    toast({ type: 'error', message: formatError(error, t('entry.errors.addFailed')) })
   }
   finally {
     isAdding.value = false
@@ -244,7 +244,7 @@ const deleteEntry = async (entryId: string): Promise<void> => {
   }
   catch (error) {
     console.error('Error deleting entry:', error)
-    toast({ type: 'error', message: getErrorMessage(error, t('entry.errors.deleteFailed')) })
+    toast({ type: 'error', message: formatError(error, t('entry.errors.deleteFailed')) })
   }
   finally {
     isDeleting.value = null
@@ -347,7 +347,7 @@ const saveEntry = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error updating entry:', error)
-    toast({ type: 'error', message: getErrorMessage(error, t('entry.errors.updateFailed')) })
+    toast({ type: 'error', message: formatError(error, t('entry.errors.updateFailed')) })
   }
   finally {
     isSaving.value = false

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { AdminUsersResponse, AdminUser } from '~~/shared/types'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
-import { getErrorMessage } from '~~/shared/utils/errors'
 
 const { t } = useI18n()
+const { formatError } = useServerError()
 const { user: currentUser } = useAuth()
 const { confirm } = useConfirmation()
 const { toast } = useToast()
@@ -122,7 +122,7 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
     toast({ type: 'success', message: t('metrics.deleteSuccess') })
   }
   catch (error: unknown) {
-    toast({ type: 'error', message: getErrorMessage(error, t('metrics.deleteError')) })
+    toast({ type: 'error', message: formatError(error, t('metrics.deleteError')) })
   }
   finally {
     deletingUserId.value = null

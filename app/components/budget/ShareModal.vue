@@ -211,7 +211,6 @@
 </template>
 
 <script setup lang="ts">
-import { getErrorMessage } from '~~/shared/utils/errors'
 import { useModalsStore } from '~/stores/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 
@@ -229,6 +228,7 @@ const isOpen = computed(() => modalsStore.shareModal.isOpen)
 const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
 const { toast } = useToast()
 const { t } = useI18n()
+const { formatError } = useServerError()
 
 const isAddingNew = ref(false)
 const isAdding = ref(false)
@@ -270,7 +270,7 @@ const addShare = async (): Promise<void> => {
     toast({ type: 'success', message: t('share.accessGranted') })
   }
   catch (error: unknown) {
-    toast({ type: 'error', message: getErrorMessage(error, t('share.accessGrantError')) })
+    toast({ type: 'error', message: formatError(error, t('share.accessGrantError')) })
   }
   finally {
     isAdding.value = false
@@ -329,7 +329,7 @@ const saveShare = async (): Promise<void> => {
     toast({ type: 'success', message: t('share.changesSaved') })
   }
   catch (error: unknown) {
-    toast({ type: 'error', message: getErrorMessage(error, t('share.changesError')) })
+    toast({ type: 'error', message: formatError(error, t('share.changesError')) })
   }
   finally {
     isSaving.value = false
@@ -369,7 +369,7 @@ const deleteShare = async (id: string): Promise<void> => {
   }
   catch (error) {
     console.error('Error deleting share:', error)
-    toast({ type: 'error', message: getErrorMessage(error, t('share.deleteError')) })
+    toast({ type: 'error', message: formatError(error, t('share.deleteError')) })
   }
   finally {
     isDeleting.value = null
@@ -395,7 +395,7 @@ const loadShares = async (): Promise<void> => {
   }
   catch (error) {
     console.error('Error loading shares:', error)
-    toast({ type: 'error', message: getErrorMessage(error, t('share.loadError')) })
+    toast({ type: 'error', message: formatError(error, t('share.loadError')) })
   }
   finally {
     isLoading.value = false

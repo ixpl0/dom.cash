@@ -1,6 +1,7 @@
 import { defineEventHandler, getMethod, getHeaders, createError } from 'h3'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
-const MAX_REQUEST_SIZE = 1 * 1024 * 1024 // 1MB
+const MAX_REQUEST_SIZE = 1 * 1024 * 1024
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -24,7 +25,7 @@ export default defineEventHandler(async (event) => {
           throw createError({
             statusCode: 400,
             statusMessage: 'Bad Request',
-            message: 'Content-Type must be application/json',
+            message: ERROR_KEYS.CONTENT_TYPE_REQUIRED,
           })
         }
       }
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 413,
         statusMessage: 'Payload Too Large',
-        message: 'Request body too large. Maximum size is 1MB.',
+        message: ERROR_KEYS.PAYLOAD_TOO_LARGE,
       })
     }
   }
