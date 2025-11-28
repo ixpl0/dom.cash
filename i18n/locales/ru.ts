@@ -422,6 +422,12 @@ export default {
     roleAdmin: 'Администратор',
     roleUser: 'Пользователь',
     pageInfo: 'Страница {page} из {total}',
+    deleteConfirmTitle: 'Удаление пользователя',
+    deleteConfirmMessage: 'Пользователь ',
+    deleteConfirmMessageEnd: ' и все его данные бюджета будут безвозвратно удалены.',
+    deleteConfirmButton: 'Удалить пользователя',
+    deleteSuccess: 'Пользователь успешно удалён',
+    deleteError: 'Не удалось удалить пользователя',
   },
 
   currencies: currenciesRu,

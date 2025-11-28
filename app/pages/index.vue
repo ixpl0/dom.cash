@@ -271,7 +271,7 @@ type ECOption = ComposeOption<
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
 const { currentTheme } = useTheme()
@@ -606,7 +606,11 @@ const formatDemoDate = (date: string | null | undefined): string => {
     return ''
   }
   const d = new Date(date)
-  return d.toLocaleDateString()
+  return d.toLocaleDateString(locale.value, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
 </script>
 

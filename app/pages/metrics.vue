@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import type { AdminUsersResponse } from '~~/shared/types'
+import type { AdminUsersResponse, AdminUser } from '~~/shared/types'
+import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
+import { getErrorMessage } from '~~/shared/utils/errors'
 
 const { t } = useI18n()
 const { user: currentUser } = useAuth()
+const { confirm } = useConfirmation()
+const { toast } = useToast()
 
 if (!currentUser.value) {
   throw createError({
@@ -72,9 +76,57 @@ const toggleSort = (column: string) => {
   }
 }
 
+const { locale } = useI18n()
+
 const formatDate = (dateStr: string | Date) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString()
+  if (!dateStr) {
+    return '-'
+  }
+  return new Date(dateStr).toLocaleDateString(locale.value, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+}
+
+const deletingUserId = ref<string | null>(null)
+
+const deleteUser = async (targetUser: AdminUser): Promise<void> => {
+  const message: ConfirmationModalMessage = [
+    t('metrics.deleteConfirmMessage'),
+    { text: targetUser.username, isBold: true },
+    t('metrics.deleteConfirmMessageEnd'),
+  ]
+
+  const confirmed = await confirm({
+    title: t('metrics.deleteConfirmTitle'),
+    message,
+    variant: 'danger',
+    confirmText: t('metrics.deleteConfirmButton'),
+    cancelText: t('common.cancel'),
+    icon: 'heroicons:trash',
+  })
+
+  if (!confirmed) {
+    return
+  }
+
+  deletingUserId.value = targetUser.id
+
+  try {
+    await $fetch(`/api/admin/users/${targetUser.id}`, {
+      method: 'DELETE',
+    })
+
+    await refreshNuxtData()
+    toast({ type: 'success', message: t('metrics.deleteSuccess') })
+  }
+  catch (error: unknown) {
+    toast({ type: 'error', message: getErrorMessage(error, t('metrics.deleteError')) })
+  }
+  finally {
+    deletingUserId.value = null
+  }
 }
 </script>
 
@@ -152,12 +204,15 @@ const formatDate = (dateStr: string | Date) => {
                   class="text-xs ml-1"
                 >{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
               </th>
+              <th class="w-1">
+                {{ t('common.actions') }}
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="pending && !users.length">
               <td
-                colspan="4"
+                colspan="5"
                 class="text-center py-4"
               >
                 {{ t('metrics.loading') }}
@@ -165,7 +220,7 @@ const formatDate = (dateStr: string | Date) => {
             </tr>
             <tr v-else-if="users.length === 0">
               <td
-                colspan="4"
+                colspan="5"
                 class="text-center py-4"
               >
                 {{ t('metrics.noUsersFound') }}
@@ -175,28 +230,50 @@ const formatDate = (dateStr: string | Date) => {
               v-for="user in users"
               :key="user.id"
             >
-              <td>
-                <div class="font-bold">
+              <td class="max-w-[350px]">
+                <div
+                  class="font-bold truncate"
+                  :title="user.username"
+                >
                   {{ user.username }}
                 </div>
               </td>
               <td>
                 <div
-                  class="badge"
-                  :class="user.emailVerified ? 'badge-success' : 'badge-warning'"
+                  class="badge whitespace-nowrap"
+                  :class="user.emailVerified ? 'badge-success' : 'badge-error'"
                 >
                   {{ user.emailVerified ? t('metrics.statusVerified') : t('metrics.statusUnverified') }}
                 </div>
               </td>
               <td>
                 <div
-                  class="badge"
+                  class="badge whitespace-nowrap"
                   :class="user.isAdmin ? 'badge-primary' : 'badge-ghost'"
                 >
                   {{ user.isAdmin ? t('metrics.roleAdmin') : t('metrics.roleUser') }}
                 </div>
               </td>
               <td>{{ formatDate(user.createdAt) }}</td>
+              <td class="w-1">
+                <button
+                  v-if="!user.isAdmin"
+                  class="btn btn-sm btn-error"
+                  :disabled="deletingUserId === user.id"
+                  data-testid="delete-user-button"
+                  @click="deleteUser(user)"
+                >
+                  <span
+                    v-if="deletingUserId === user.id"
+                    class="loading loading-spinner loading-xs"
+                  />
+                  <Icon
+                    v-else
+                    name="heroicons:trash"
+                    size="16"
+                  />
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>

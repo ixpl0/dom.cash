@@ -422,6 +422,12 @@ export default {
     roleAdmin: 'Admin',
     roleUser: 'User',
     pageInfo: 'Page {page} of {total}',
+    deleteConfirmTitle: 'Delete user',
+    deleteConfirmMessage: 'User ',
+    deleteConfirmMessageEnd: ' and all their budget data will be permanently deleted.',
+    deleteConfirmButton: 'Delete user',
+    deleteSuccess: 'User deleted successfully',
+    deleteError: 'Failed to delete user',
   },
 
   currencies: currenciesEn,
