@@ -25,6 +25,7 @@
     :amount-placeholder="t('entryEdit.amountPlaceholder')"
     :format-date="formatDate"
     :get-amount-tooltip="getAmountTooltip"
+    :total-amount="totalAmount"
     @close="hide"
     @start-new="startAdd"
     @save-new="addEntry"
@@ -58,7 +59,7 @@ const currentMonth = computed(() => {
   if (!entryModal.value.monthId) {
     return null
   }
-  return budgetStore.getMonthById(entryModal.value.monthId)
+  return budgetStore.computedMonths.find(m => m.id === entryModal.value.monthId)
 })
 
 const mainCurrency = computed(() => budgetStore.effectiveMainCurrency)
@@ -85,6 +86,29 @@ const currentEntries = computed(() => {
   }
 
   return budgetStore.getEntriesByMonthAndKind(entryModal.value.monthId, entryModal.value.entryKind)
+})
+
+const totalAmount = computed(() => {
+  const month = currentMonth.value
+  const baseCurrency = mainCurrency.value
+  const entryKind = entryModal.value.entryKind
+
+  if (!month || !baseCurrency || !entryKind) {
+    return undefined
+  }
+
+  const totalMap: Record<string, number> = {
+    balance: month.startBalance,
+    income: month.totalIncome,
+    expense: month.totalExpenses,
+  }
+
+  const total = totalMap[entryKind]
+  if (total === undefined) {
+    return undefined
+  }
+
+  return formatAmountRounded(total, baseCurrency)
 })
 
 const emit = defineEmits<{

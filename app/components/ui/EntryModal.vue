@@ -18,7 +18,9 @@
     </button>
 
     <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      {{ title }}
+      {{ title }}<template v-if="totalAmount">
+        : {{ totalAmount }}
+      </template>
     </h3>
 
     <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
@@ -228,6 +230,7 @@ export interface UiEntryModalProps {
   amountPlaceholder?: string
   formatDate: (date: string | null | undefined) => string
   getAmountTooltip?: (entry: BudgetEntry) => string | undefined
+  totalAmount?: string
 }
 
 const props = withDefaults(defineProps<UiEntryModalProps>(), {
@@ -235,6 +238,7 @@ const props = withDefaults(defineProps<UiEntryModalProps>(), {
   descriptionPlaceholder: '',
   amountPlaceholder: '',
   getAmountTooltip: undefined,
+  totalAmount: undefined,
 })
 
 const emit = defineEmits<{
