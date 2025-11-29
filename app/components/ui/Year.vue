@@ -23,7 +23,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-primary': stats.averageBalance > 0,
                 'text-base-content': stats.averageBalance === 0,
@@ -49,7 +49,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-success': stats.totalIncome > 0,
                 'text-base-content': stats.totalIncome === 0,
@@ -62,7 +62,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-success/80': stats.averageIncome > 0,
                 'text-base-content/80': stats.averageIncome === 0,
@@ -87,7 +87,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-error': stats.totalExpenses > 0,
                 'text-base-content': stats.totalExpenses === 0,
@@ -100,7 +100,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-error/80': stats.averageExpenses > 0,
                 'text-base-content/80': stats.averageExpenses === 0,
@@ -125,7 +125,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-warning': stats.totalPocketExpenses < 0,
                 'text-error': stats.totalPocketExpenses > 0,
@@ -139,7 +139,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-warning/80': stats.averagePocketExpenses < 0,
                 'text-error/80': stats.averagePocketExpenses > 0,
@@ -164,7 +164,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-warning': stats.totalAllExpenses < 0,
                 'text-error': stats.totalAllExpenses > 0,
@@ -178,7 +178,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-warning/80': stats.averageAllExpenses < 0,
                 'text-error/80': stats.averageAllExpenses > 0,
@@ -204,7 +204,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-success': stats.totalBalanceChange > 0,
                 'text-error': stats.totalBalanceChange < 0,
@@ -218,7 +218,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-success/80': stats.averageBalanceChange > 0,
                 'text-error/80': stats.averageBalanceChange < 0,
@@ -244,7 +244,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-success': stats.totalCurrencyProfitLoss > 0,
                 'text-error': stats.totalCurrencyProfitLoss < 0,
@@ -258,7 +258,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-success/80': stats.averageCurrencyProfitLoss > 0,
                 'text-error/80': stats.averageCurrencyProfitLoss < 0,
@@ -284,7 +284,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              class="tooltip tooltip-bottom"
+              class="tooltip tooltip-top"
               :class="{
                 'text-error': stats.totalOptionalExpenses > 0,
                 'text-base-content': stats.totalOptionalExpenses === 0,
@@ -297,7 +297,7 @@
               </div>
             </div>
             <div
-              class="text-sm tooltip tooltip-bottom"
+              class="text-sm tooltip tooltip-top"
               :class="{
                 'text-error/80': stats.averageOptionalExpenses > 0,
                 'text-base-content/80': stats.averageOptionalExpenses === 0,
