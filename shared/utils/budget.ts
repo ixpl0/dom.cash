@@ -1,26 +1,12 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
+import { formatCurrency, formatCurrencyRounded } from './currency-formatter'
 
 export const formatAmount = (amount: number, currency: string): string => {
-  const formatter = new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })
-
-  return formatter.format(amount)
+  return formatCurrency(amount, currency)
 }
 
 export const formatAmountRounded = (amount: number, currency: string): string => {
-  const roundedAmount = Math.round(amount)
-  const formatter = new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-
-  return formatter.format(roundedAmount)
+  return formatCurrencyRounded(amount, currency)
 }
 
 export const calculateTotalBalance = (

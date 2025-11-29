@@ -83,8 +83,7 @@ test.describe('Budget page isolated tests', () => {
       await expect(row).toContainText(balanceEntries[i].description)
       const rowText = await row.textContent()
       expect(rowText).toContain(balanceEntries[i].description)
-      expect(rowText?.replace(/\s/g, '')).toContain(balanceEntries[i].amount)
-      expect(rowText).toContain(balanceEntries[i].currency)
+      expect(rowText?.replace(/[\s,.']/g, '')).toContain(balanceEntries[i].amount)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')
@@ -138,8 +137,7 @@ test.describe('Budget page isolated tests', () => {
       await expect(row).toContainText(incomeEntries[i].description)
       const rowText = await row.textContent()
       expect(rowText).toContain(incomeEntries[i].description)
-      expect(rowText?.replace(/\s/g, '')).toContain(incomeEntries[i].amount)
-      expect(rowText).toContain(incomeEntries[i].currency)
+      expect(rowText?.replace(/[\s,.']/g, '')).toContain(incomeEntries[i].amount)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')
@@ -193,8 +191,7 @@ test.describe('Budget page isolated tests', () => {
       await expect(row).toContainText(expenseEntries[i].description)
       const rowText = await row.textContent()
       expect(rowText).toContain(expenseEntries[i].description)
-      expect(rowText?.replace(/\s/g, '')).toContain(expenseEntries[i].amount)
-      expect(rowText).toContain(expenseEntries[i].currency)
+      expect(rowText?.replace(/[\s,.']/g, '')).toContain(expenseEntries[i].amount)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')

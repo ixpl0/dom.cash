@@ -23,7 +23,7 @@ test.describe('Modal tests with budget fixtures', () => {
     const month = months.first()
     const balanceButton = month.getByTestId('balance-button')
     await expect(balanceButton).toBeVisible()
-    await expect(balanceButton).toContainText('1 000')
+    await expect(balanceButton).toContainText('$1,000')
   })
 
   test('should open EntryModal after importing budget', async ({ page }) => {
@@ -38,7 +38,7 @@ test.describe('Modal tests with budget fixtures', () => {
     const entries = modal.getByTestId('entry-row')
     await expect(entries).toHaveCount(1)
     await expect(entries.first()).toContainText('Cash')
-    await expect(entries.first()).toContainText('1 000')
+    await expect(entries.first()).toContainText('$1,000')
 
     const editButton = entries.first().getByTestId('entry-edit-button')
     await editButton.click()

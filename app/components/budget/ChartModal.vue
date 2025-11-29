@@ -46,6 +46,7 @@ import { useBudgetStore } from '~/stores/budget'
 import { useModalsStore } from '~/stores/modals'
 import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/useChartConfig'
 import { getChartThemeColors, type ChartThemeColors } from '~/composables/useChartTheme'
+import { formatCurrencyRounded } from '~~/shared/utils/currency-formatter'
 
 type TooltipParams = Parameters<Exclude<TooltipComponentOption['formatter'], string | undefined>>[0]
 
@@ -107,7 +108,8 @@ const chartData = computed(() => {
   return { labels, datasets }
 })
 
-const nf = computed(() => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }))
+const formatChartValue = (value: number): string =>
+  formatCurrencyRounded(value, budgetStore.effectiveMainCurrency)
 
 const themeColors = ref<ChartThemeColors>(getChartThemeColors())
 
@@ -169,18 +171,16 @@ const tooltipFormatter = (p: TooltipParams): string => {
   const list = toList(p)
   const idx = list[0]?.dataIndex
   const head = typeof idx === 'number' ? chartData.value.labels[idx] : (list[0]?.name ?? '')
-  const currency = budgetStore.effectiveMainCurrency
 
   const body = list
     .map(({ marker = '', seriesName = '', value }) =>
-      `${marker}${seriesName}: ${nf.value.format(toNumber(value))} ${currency}`)
+      `${marker}${seriesName}: ${formatChartValue(toNumber(value))}`)
     .join('<br/>')
 
   return `<strong>${head}</strong><br/>${body}`
 }
 
-const yAxisFormatter = (value: number): string =>
-  `${nf.value.format(Math.round(value))} ${budgetStore.effectiveMainCurrency}`
+const yAxisFormatter = (value: number): string => formatChartValue(value)
 
 const chartOption = computed((): ChartOption => {
   const baseOption = buildChartOption({

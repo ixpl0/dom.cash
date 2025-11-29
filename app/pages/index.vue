@@ -259,6 +259,7 @@ import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 import type { EntryTableEntry, EntryTableLabels } from '~/components/ui/EntryTable.vue'
 import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/useChartConfig'
 import { getChartThemeColors } from '~/composables/useChartTheme'
+import { formatCurrencyRounded } from '~~/shared/utils/currency-formatter'
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
@@ -267,13 +268,10 @@ const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
 const { currentTheme } = useTheme()
 
+const DEMO_CURRENCY = 'USD'
+
 const formatDemoAmount = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
+  return formatCurrencyRounded(amount, DEMO_CURRENCY)
 }
 
 const monthLabels = computed((): UiMonthLabels => ({
@@ -425,8 +423,6 @@ const demoChartData = {
   expenses: [7500, 5200, 7800, 5600, 5800, 4900],
 }
 
-const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-
 const demoChartSeriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => [
   { name: t('chart.balance'), data: demoChartData.balance, colorKey: 'primary' },
   { name: t('chart.income'), data: demoChartData.income, colorKey: 'success' },
@@ -442,7 +438,7 @@ const demoChartOption = computed((): ChartOption => {
     colors,
     labels: demoChartLabels.value,
     series: demoChartSeriesConfigs.value,
-    yAxisFormatter: (value: number) => `$${nf.format(Math.round(value))}`,
+    yAxisFormatter: (value: number) => formatCurrencyRounded(value, DEMO_CURRENCY),
   })
 })
 

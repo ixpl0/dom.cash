@@ -42,7 +42,7 @@
         v-if="isDropdownOpen && filteredOptions.length > 0"
         ref="dropdownRef"
         popover="manual"
-        class="menu bg-base-100 rounded-lg max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap m-0 p-2"
+        class="menu bg-base-100 rounded-lg max-h-60 overflow-y-auto shadow-lg border border-base-300 flex-nowrap m-0 p-2 z-10"
         data-testid="currency-picker-dropdown"
         :style="dropdownStyle"
       >

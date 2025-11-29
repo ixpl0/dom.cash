@@ -35,7 +35,8 @@
       "Bash(find:*)",
       "Bash(sort:*)",
       "Bash(dir /s /b *.ts)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(tree:*)"
     ],
     "deny": [
       "Bash(pnpm run dev)",
