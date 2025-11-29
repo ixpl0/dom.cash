@@ -24,6 +24,7 @@
     :description-placeholder="t('entryEdit.descriptionPlaceholder')"
     :amount-placeholder="t('entryEdit.amountPlaceholder')"
     :format-date="formatDate"
+    :get-amount-tooltip="getAmountTooltip"
     @close="hide"
     @start-new="startAdd"
     @save-new="addEntry"
@@ -39,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount } from '~~/shared/utils/budget'
+import { formatAmount, formatAmountRounded } from '~~/shared/utils/budget'
 import { useModalsStore } from '~/stores/modals'
 import { useBudgetStore } from '~/stores/budget'
 import type { BudgetEntry } from '~~/shared/types/budget'
@@ -52,6 +53,31 @@ const { formatError } = useServerError()
 const { toast } = useToast()
 const entryModal = computed(() => modalsStore.entryModal)
 const isOpen = computed(() => entryModal.value.isOpen)
+
+const currentMonth = computed(() => {
+  if (!entryModal.value.monthId) {
+    return null
+  }
+  return budgetStore.getMonthById(entryModal.value.monthId)
+})
+
+const mainCurrency = computed(() => budgetStore.effectiveMainCurrency)
+const exchangeRates = computed(() => currentMonth.value?.exchangeRates)
+
+const getAmountTooltip = (entry: BudgetEntry): string | undefined => {
+  const rates = exchangeRates.value
+  const baseCurrency = mainCurrency.value
+
+  if (!rates || !baseCurrency || entry.currency === baseCurrency) {
+    return undefined
+  }
+
+  const fromRate = rates[entry.currency] || 1
+  const toRate = rates[baseCurrency] || 1
+  const converted = (entry.amount / fromRate) * toRate
+
+  return formatAmountRounded(converted, baseCurrency)
+}
 
 const currentEntries = computed(() => {
   if (!entryModal.value.monthId || !entryModal.value.entryKind) {

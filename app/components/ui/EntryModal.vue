@@ -70,18 +70,27 @@
                   <span>{{ entry.description }}</span>
                 </td>
                 <td
+                  class="p-0"
                   :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
                   @click="handleCellClick(entry, 'amount')"
                 >
-                  <span
-                    :class="{
-                      'text-success': entryKind === 'income' && entry.amount > 0,
-                      'text-error': entryKind === 'expense' && entry.amount > 0,
-                      'text-primary': entryKind === 'balance' && entry.amount > 0,
-                      'text-base-content': entry.amount === 0,
-                      'text-warning': entry.amount < 0,
-                    }"
-                  >{{ formatAmount(entry.amount, entry.currency) }}</span>
+                  <div
+                    :class="[
+                      'w-full h-full px-4 py-3',
+                      props.getAmountTooltip?.(entry) ? 'tooltip tooltip-top' : '',
+                    ]"
+                    :data-tip="props.getAmountTooltip?.(entry)"
+                  >
+                    <span
+                      :class="{
+                        'text-success': entryKind === 'income' && entry.amount > 0,
+                        'text-error': entryKind === 'expense' && entry.amount > 0,
+                        'text-primary': entryKind === 'balance' && entry.amount > 0,
+                        'text-base-content': entry.amount === 0,
+                        'text-warning': entry.amount < 0,
+                      }"
+                    >{{ formatAmount(entry.amount, entry.currency) }}</span>
+                  </div>
                 </td>
                 <td
                   :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
@@ -218,12 +227,14 @@ export interface UiEntryModalProps {
   descriptionPlaceholder?: string
   amountPlaceholder?: string
   formatDate: (date: string | null | undefined) => string
+  getAmountTooltip?: (entry: BudgetEntry) => string | undefined
 }
 
 const props = withDefaults(defineProps<UiEntryModalProps>(), {
   isReadOnly: false,
   descriptionPlaceholder: '',
   amountPlaceholder: '',
+  getAmountTooltip: undefined,
 })
 
 const emit = defineEmits<{
