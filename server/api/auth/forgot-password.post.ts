@@ -4,7 +4,7 @@ import { parseBody } from '~~/server/utils/validation'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { emailSchema } from '~~/server/schemas/auth'
+import { emailSchema } from '~~/shared/schemas/auth'
 import {
   cleanupExpiredCodes,
   getExistingCode,

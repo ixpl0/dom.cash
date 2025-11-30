@@ -5,7 +5,7 @@ import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { createSession, setAuthCookie, hashPassword, createUserInDb } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
-import { emailSchema } from '~~/server/schemas/auth'
+import { emailSchema } from '~~/shared/schemas/auth'
 import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 

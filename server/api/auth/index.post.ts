@@ -1,5 +1,5 @@
 import { defineEventHandler, createError } from 'h3'
-import { authSchema } from '~~/server/schemas/auth'
+import { authSchema } from '~~/shared/schemas/auth'
 import { findUser, createSession, setAuthCookie, verifyPassword } from '~~/server/utils/auth'
 import { parseBody } from '~~/server/utils/validation'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
