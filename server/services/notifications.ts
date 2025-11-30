@@ -18,10 +18,7 @@ export interface NotificationEvent {
 }
 
 const activeConnections = new Map<string, { write: (data: string) => void, close: () => void }>()
-const budgetSubscriptions = new Map<string, Set<string>>() // budgetOwnerId -> Set<subscribedUserId>
-
-export const getActiveConnections = () => activeConnections
-export const getBudgetSubscriptions = () => budgetSubscriptions
+const budgetSubscriptions = new Map<string, Set<string>>()
 
 export const addConnection = (userId: string, connection: { write: (data: string) => void, close: () => void }) => {
   activeConnections.set(userId, connection)
@@ -57,12 +54,12 @@ export const unsubscribeFromBudget = (userId: string, budgetOwnerId: string) => 
   }
 }
 
-export const getBudgetSubscribers = (budgetOwnerId: string): string[] => {
+const getBudgetSubscribers = (budgetOwnerId: string): string[] => {
   const subscribers = budgetSubscriptions.get(budgetOwnerId)
   return subscribers ? Array.from(subscribers) : []
 }
 
-export const sendNotificationToUser = (userId: string, notification: NotificationEvent) => {
+const sendNotificationToUser = (userId: string, notification: NotificationEvent) => {
   const connection = activeConnections.get(userId)
   if (connection) {
     try {

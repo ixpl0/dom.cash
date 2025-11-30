@@ -243,7 +243,7 @@ export interface CreateMonthParams {
   targetUserId: string
 }
 
-export const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string, event: H3Event): Promise<void> => {
+const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string, event: H3Event): Promise<void> => {
   const db = useDatabase(event)
 
   const balanceEntriesToCopy = await db
