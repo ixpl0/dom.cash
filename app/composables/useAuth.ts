@@ -31,26 +31,17 @@ export const useAuth = () => {
   }
 
   const restoreSession = async (): Promise<void> => {
-    if (user.value) return
+    if (user.value) {
+      return
+    }
 
     if (import.meta.client && !localStorage.getItem('hasSession')) {
       return
     }
 
     try {
-      const { data: userData, error } = await useFetch<User>('/api/auth/me', {
-        key: 'restore-session',
-        server: true,
-      })
-
-      if (error.value) {
-        throw new Error(error.value.message || 'Authentication failed')
-      }
-
-      const authenticatedUser = userData.value
-      if (!authenticatedUser) {
-        throw new Error('Authentication failed')
-      }
+      const requestFetch = useRequestFetch()
+      const authenticatedUser = await requestFetch<User>('/api/auth/me')
       setUser(authenticatedUser)
 
       if (import.meta.client) {
