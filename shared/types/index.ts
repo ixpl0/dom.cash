@@ -20,6 +20,7 @@ export interface AdminUser {
   emailVerified: boolean
   isAdmin: boolean
   createdAt: Date
+  lastActivityAt: Date | null
 }
 
 export interface AdminUsersResponse {

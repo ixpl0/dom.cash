@@ -14,6 +14,7 @@ export const user = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
     isAdmin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
+    lastActivityAt: integer('last_activity_at', { mode: 'timestamp' }),
   },
   t => [
     check('ck_user_currency_3_upper', sql`${t.mainCurrency} GLOB '[A-Z][A-Z][A-Z]'`),

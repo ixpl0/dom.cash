@@ -2,7 +2,6 @@ import { eq, and } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { user, budgetShare } from '~~/server/db/schema'
-import { getUserMonths } from './months'
 
 export const findUserByUsername = async (username: string, event: H3Event) => {
   const db = useDatabase(event)
@@ -33,24 +32,18 @@ export const checkReadPermission = async (targetUserId: string, requesterId: str
   return shareRecord.length > 0
 }
 
-export const getUserBudgetData = async (username: string, requesterId: string, event: H3Event) => {
-  const targetUser = await findUserByUsername(username, event)
-  if (!targetUser) {
-    throw new Error('User not found')
-  }
-
-  const hasReadPermission = await checkReadPermission(targetUser.id, requesterId, event)
-  if (!hasReadPermission) {
-    throw new Error('Insufficient permissions to view budget')
-  }
-
-  return await getUserMonths(targetUser.id, event)
-}
-
 export const updateUserCurrency = async (userId: string, currency: string, event: H3Event): Promise<void> => {
   const db = useDatabase(event)
   await db
     .update(user)
     .set({ mainCurrency: currency })
+    .where(eq(user.id, userId))
+}
+
+export const updateUserActivity = async (userId: string, event: H3Event): Promise<void> => {
+  const db = useDatabase(event)
+  await db
+    .update(user)
+    .set({ lastActivityAt: new Date() })
     .where(eq(user.id, userId))
 }

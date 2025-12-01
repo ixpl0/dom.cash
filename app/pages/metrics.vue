@@ -89,6 +89,19 @@ const formatDate = (dateStr: string | Date) => {
   })
 }
 
+const formatDateTime = (dateStr: string | Date | null) => {
+  if (!dateStr) {
+    return '-'
+  }
+  return new Date(dateStr).toLocaleString(locale.value, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 const deletingUserId = ref<string | null>(null)
 
 const deleteUser = async (targetUser: AdminUser): Promise<void> => {
@@ -204,6 +217,17 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
                   class="text-xs ml-1"
                 >{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
               </th>
+              <th
+                class="cursor-pointer hover:bg-base-200"
+                data-testid="sort-last-activity"
+                @click="toggleSort('lastActivityAt')"
+              >
+                {{ t('metrics.lastActivityColumn') }}
+                <span
+                  v-if="sortBy === 'lastActivityAt'"
+                  class="text-xs ml-1"
+                >{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+              </th>
               <th class="w-1">
                 {{ t('common.actions') }}
               </th>
@@ -212,7 +236,7 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
           <tbody>
             <tr v-if="pending && !users.length">
               <td
-                colspan="5"
+                colspan="6"
                 class="text-center py-4"
               >
                 {{ t('metrics.loading') }}
@@ -220,7 +244,7 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
             </tr>
             <tr v-else-if="users.length === 0">
               <td
-                colspan="5"
+                colspan="6"
                 class="text-center py-4"
               >
                 {{ t('metrics.noUsersFound') }}
@@ -255,6 +279,7 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
                 </div>
               </td>
               <td>{{ formatDate(user.createdAt) }}</td>
+              <td>{{ formatDateTime(user.lastActivityAt) }}</td>
               <td class="w-1">
                 <button
                   v-if="!user.isAdmin"

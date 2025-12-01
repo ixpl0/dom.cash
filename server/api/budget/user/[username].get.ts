@@ -6,6 +6,7 @@ import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { getExchangeRatesForMonth, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/months'
+import { updateUserActivity } from '~~/server/services/users'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
@@ -184,6 +185,8 @@ export default defineEventHandler(async (event) => {
       exchangeRatesSource: exchangeRatesData.source,
     }
   }))
+
+  await updateUserActivity(currentUser.id, event)
 
   return {
     user: {

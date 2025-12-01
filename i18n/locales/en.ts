@@ -415,6 +415,7 @@ export default {
     statusColumn: 'Status',
     roleColumn: 'Role',
     registeredColumn: 'Registered',
+    lastActivityColumn: 'Last Activity',
     loading: 'Loading...',
     noUsersFound: 'No users found',
     statusVerified: 'Verified',

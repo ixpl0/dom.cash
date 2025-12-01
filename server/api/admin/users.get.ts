@@ -8,7 +8,7 @@ import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 10
-const ALLOWED_SORT_FIELDS = ['username', 'email', 'role', 'status', 'createdAt'] as const
+const ALLOWED_SORT_FIELDS = ['username', 'email', 'role', 'status', 'createdAt', 'lastActivityAt'] as const
 const ALLOWED_SORT_ORDERS = ['asc', 'desc'] as const
 
 const escapeLikePattern = (pattern: string): string => {
@@ -57,6 +57,9 @@ export default defineEventHandler(async (event): Promise<AdminUsersResponse> => 
     case 'status':
       orderBy = sortOrder === 'asc' ? asc(user.emailVerified) : desc(user.emailVerified)
       break
+    case 'lastActivityAt':
+      orderBy = sortOrder === 'asc' ? asc(user.lastActivityAt) : desc(user.lastActivityAt)
+      break
     case 'createdAt':
     default:
       orderBy = sortOrder === 'asc' ? asc(user.createdAt) : desc(user.createdAt)
@@ -69,6 +72,7 @@ export default defineEventHandler(async (event): Promise<AdminUsersResponse> => 
       emailVerified: user.emailVerified,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt,
+      lastActivityAt: user.lastActivityAt,
     })
       .from(user)
       .where(whereClause)

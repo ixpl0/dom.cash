@@ -415,6 +415,7 @@ export default {
     statusColumn: 'Статус',
     roleColumn: 'Роль',
     registeredColumn: 'Дата регистрации',
+    lastActivityColumn: 'Последняя активность',
     loading: 'Загрузка...',
     noUsersFound: 'Пользователи не найдены',
     statusVerified: 'Подтверждён',
