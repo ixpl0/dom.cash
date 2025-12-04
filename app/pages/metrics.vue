@@ -278,8 +278,16 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
                   {{ user.isAdmin ? t('metrics.roleAdmin') : t('metrics.roleUser') }}
                 </div>
               </td>
-              <td>{{ formatDate(user.createdAt) }}</td>
-              <td>{{ formatDateTime(user.lastActivityAt) }}</td>
+              <td>
+                <ClientOnly>
+                  {{ formatDate(user.createdAt) }}
+                </ClientOnly>
+              </td>
+              <td>
+                <ClientOnly>
+                  {{ formatDateTime(user.lastActivityAt) }}
+                </ClientOnly>
+              </td>
               <td class="w-1">
                 <button
                   v-if="!user.isAdmin"
