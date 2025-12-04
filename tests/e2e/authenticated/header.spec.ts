@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Authenticated Header', () => {
@@ -27,8 +27,10 @@ test.describe('Authenticated Header', () => {
 
   test('should show language and theme pickers in main header on large screens', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 })
+    await waitForHydration(page)
 
     const mainHeaderControls = page.getByTestId('desktop-header-actions')
+    await expect(mainHeaderControls).toBeVisible()
 
     await expect(mainHeaderControls.getByTestId('theme-picker-label')).toBeVisible()
     await expect(mainHeaderControls.getByTestId('language-picker-label')).toBeVisible()
@@ -43,6 +45,7 @@ test.describe('Authenticated Header', () => {
 
   test('should move language and theme pickers to user dropdown on tablet screens', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 })
+    await waitForHydration(page)
 
     const mainHeaderControls = page.getByTestId('desktop-header-actions')
 

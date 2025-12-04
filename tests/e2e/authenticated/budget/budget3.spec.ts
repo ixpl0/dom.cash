@@ -1,10 +1,8 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
 import { cleanupUserData } from '../../helpers/auth'
-
-const DOWNLOAD_DIRECTORY = './test-results'
 
 test.describe('Budget page historical testing', () => {
   test.beforeEach(async ({ page }) => {
@@ -94,7 +92,7 @@ test.describe('Budget page historical testing', () => {
     await expect(chartModal).not.toBeVisible()
   })
 
-  test('should export budget data as JSON file', async ({ page }) => {
+  test('should export budget data as JSON file', async ({ page }, testInfo) => {
     await initBudget(page, 'two-months-clp')
     await waitForHydration(page)
 
@@ -110,7 +108,7 @@ test.describe('Budget page historical testing', () => {
     const downloadPath = await download.path()
     expect(downloadPath).toBeTruthy()
 
-    const savedPath = `${DOWNLOAD_DIRECTORY}/test-export.json`
+    const savedPath = testInfo.outputPath('test-export.json')
     await download.saveAs(savedPath)
 
     const fs = await import('fs/promises')
@@ -124,7 +122,7 @@ test.describe('Budget page historical testing', () => {
     await fs.unlink(savedPath).catch(() => {})
   })
 
-  test('should import budget data and restore months', async ({ page }) => {
+  test('should import budget data and restore months', async ({ page }, testInfo) => {
     await initBudget(page, 'two-months-clp')
 
     const yearElements = page.getByTestId('budget-year')
@@ -137,7 +135,7 @@ test.describe('Budget page historical testing', () => {
     const exportButton = page.getByTestId('export-button')
     await exportButton.click()
     const download = await downloadPromise
-    const exportPath = `${DOWNLOAD_DIRECTORY}/budget-for-import.json`
+    const exportPath = testInfo.outputPath('budget-for-import.json')
     await download.saveAs(exportPath)
 
     while (true) {

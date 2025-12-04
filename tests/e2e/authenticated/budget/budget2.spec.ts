@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { initBudget } from '../../helpers/budget-setup'
 import { cleanupUserData } from '../../helpers/auth'
