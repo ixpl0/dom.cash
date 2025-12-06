@@ -20,6 +20,11 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/app.css'],
+  runtimeConfig: {
+    public: {
+      environment: process.env.NUXT_PUBLIC_ENVIRONMENT || 'production',
+    },
+  },
   compatibilityDate: '2025-10-10',
   nitro: {
     preset: 'cloudflare-module',

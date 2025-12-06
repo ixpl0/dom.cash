@@ -14,12 +14,25 @@
 <script setup lang="ts">
 const { confirmationState, handleConfirm, handleCancel } = useConfirmation()
 const { t, locale } = useI18n()
+const config = useRuntimeConfig()
+
+const titlePrefix = computed(() => {
+  if (import.meta.dev) {
+    return '🔧 local - '
+  }
+
+  if (config.public.environment === 'test') {
+    return '🧪 test - '
+  }
+
+  return ''
+})
 
 useHead({
   htmlAttrs: {
     lang: locale,
   },
-  title: () => t('meta.title'),
+  title: () => `${titlePrefix.value}${t('meta.title')}`,
   meta: [
     { name: 'description', content: () => t('meta.description') },
     { name: 'keywords', content: () => t('meta.keywords') },
