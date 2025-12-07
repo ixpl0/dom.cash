@@ -7,6 +7,7 @@ const { formatError } = useServerError()
 const { user: currentUser } = useAuth()
 const { confirm } = useConfirmation()
 const { toast } = useToast()
+const preferencesStore = usePreferencesStore()
 
 if (!currentUser.value) {
   throw createError({
@@ -29,8 +30,8 @@ useHead({
 const page = ref(1)
 const limit = ref(10)
 const search = ref('')
-const sortBy = ref('createdAt')
-const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortBy = computed(() => preferencesStore.metricsSort.sortBy)
+const sortOrder = computed(() => preferencesStore.metricsSort.sortOrder)
 const debouncedSearch = ref('')
 
 let searchTimeout: NodeJS.Timeout
@@ -68,11 +69,11 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit.valu
 
 const toggleSort = (column: string) => {
   if (sortBy.value === column) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+    const newOrder = sortOrder.value === 'asc' ? 'desc' : 'asc'
+    preferencesStore.setMetricsSort(column, newOrder)
   }
   else {
-    sortBy.value = column
-    sortOrder.value = 'asc'
+    preferencesStore.setMetricsSort(column, 'asc')
   }
 }
 
