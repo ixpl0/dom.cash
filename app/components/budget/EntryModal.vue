@@ -151,7 +151,7 @@ const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) =
 
 const performAddEntry = async (entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
   if (!entryModal.value.monthId || !entryModal.value.entryKind) {
-    throw new Error('Month ID and entry kind are required')
+    throw new Error(t('entry.monthIdRequired'))
   }
 
   await budgetStore.addEntry(

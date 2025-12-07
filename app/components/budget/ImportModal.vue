@@ -197,7 +197,7 @@ const importResult = ref<BudgetImportResult | null>(null)
 type ImportMode = 'skip' | 'overwrite'
 
 const importMode = ref<ImportMode>('skip')
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const options = computed<BudgetImportOptions>(() => ({
   strategy: importMode.value,
@@ -287,6 +287,6 @@ const hide = async () => {
 }
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString('ru-RU')
+  return new Date(dateString).toLocaleString(locale.value)
 }
 </script>

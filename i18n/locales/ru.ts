@@ -155,6 +155,7 @@ export default {
     },
 
     month: {
+      notFound: 'Месяц не найден: {monthId}',
       currentMonth: 'Текущий месяц',
       clickForRates: 'Нажмите для просмотра курсов валют',
       balanceTooltip: 'Сумма всех сбережений на начало месяца. Этого хватило бы на',
@@ -235,6 +236,7 @@ export default {
   },
 
   entry: {
+    monthIdRequired: 'Требуется ID месяца и тип записи',
     modalTitleBalance: 'Баланс',
     modalTitleIncome: 'Доходы',
     modalTitleExpenses: 'Расходы',
@@ -393,6 +395,10 @@ export default {
 
   theme: {
     label: 'Выбрать тему',
+  },
+
+  language: {
+    selectLanguage: 'Выбрать язык',
   },
 
   outdated: {

@@ -11,7 +11,7 @@
       id="language-select"
       v-model="currentLocale"
       class="select select-bordered select-sm w-24"
-      aria-label="Select language"
+      :aria-label="t('language.selectLanguage')"
       data-testid="language-select"
     >
       <option
@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-const { locale, locales, setLocale } = useI18n()
+const { locale, locales, setLocale, t } = useI18n()
 
 const availableLocales = computed(() => {
   return locales.value.filter(loc => typeof loc !== 'string')

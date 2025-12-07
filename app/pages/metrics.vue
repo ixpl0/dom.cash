@@ -12,14 +12,14 @@ const preferencesStore = usePreferencesStore()
 if (!currentUser.value) {
   throw createError({
     statusCode: 401,
-    message: 'Authentication required',
+    message: t('serverErrors.unauthorized'),
   })
 }
 
 if (!currentUser.value.isAdmin) {
   throw createError({
     statusCode: 403,
-    message: 'Access denied',
+    message: t('serverErrors.access_denied'),
   })
 }
 

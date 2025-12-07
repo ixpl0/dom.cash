@@ -155,6 +155,7 @@ export default {
     },
 
     month: {
+      notFound: 'Month not found: {monthId}',
       currentMonth: 'Current month',
       clickForRates: 'Click to view exchange rates',
       balanceTooltip: 'Total savings at the beginning of the month. This would be enough for',
@@ -235,6 +236,7 @@ export default {
   },
 
   entry: {
+    monthIdRequired: 'Month ID and entry kind are required',
     modalTitleBalance: 'Balance',
     modalTitleIncome: 'Income',
     modalTitleExpenses: 'Expenses',
@@ -393,6 +395,10 @@ export default {
 
   theme: {
     label: 'Select theme',
+  },
+
+  language: {
+    selectLanguage: 'Select language',
   },
 
   outdated: {

@@ -47,7 +47,7 @@ const { toast } = useToast()
 const monthData = computed(() => {
   const computed = budgetStore.getComputedMonthById(props.monthId)
   if (!computed) {
-    throw new Error(`Month not found: ${props.monthId}`)
+    throw new Error(t('budget.month.notFound', { monthId: props.monthId }))
   }
   return computed
 })
