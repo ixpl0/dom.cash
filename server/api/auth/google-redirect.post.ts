@@ -147,6 +147,8 @@ export default defineEventHandler(async (event) => {
     const sessionToken = await createSession(authenticatedUser.id, now, event)
     setAuthCookie(event, sessionToken)
 
+    const safeRedirectTo = (state && state.startsWith('/') && !state.startsWith('//')) ? state : '/'
+
     return {
       user: {
         id: authenticatedUser.id,
@@ -154,7 +156,7 @@ export default defineEventHandler(async (event) => {
         mainCurrency: authenticatedUser.mainCurrency,
         isAdmin: authenticatedUser.isAdmin,
       },
-      redirectTo: state || '/',
+      redirectTo: safeRedirectTo,
     }
   }
   catch (error) {

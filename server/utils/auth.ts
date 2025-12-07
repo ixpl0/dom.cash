@@ -22,17 +22,14 @@ const fromBase64 = (data: string): Uint8Array => {
 }
 
 const timingSafeCompare = (a: Uint8Array, b: Uint8Array): boolean => {
+  if (a.length !== b.length) {
+    return false
+  }
+
   let diff = 0
 
-  for (let i = 0; i < a.length; i += 1) {
-    const aByte = a[i]
-    const bByte = b[i]
-
-    if (aByte === undefined || bByte === undefined) {
-      return false
-    }
-
-    diff |= aByte ^ bByte
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i]! ^ b[i]!
   }
 
   return diff === 0
