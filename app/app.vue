@@ -16,6 +16,8 @@ const { confirmationState, handleConfirm, handleCancel } = useConfirmation()
 const { t, locale } = useI18n()
 const config = useRuntimeConfig()
 
+useTheme()
+
 const titlePrefix = computed(() => {
   if (import.meta.dev) {
     return '🔧 local - '

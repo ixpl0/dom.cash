@@ -15,11 +15,11 @@
       data-testid="theme-select"
     >
       <option
-        v-for="t in options"
-        :key="t"
-        :value="t"
+        v-for="theme in options"
+        :key="theme"
+        :value="theme"
       >
-        {{ formatTheme(t) }}
+        {{ formatTheme(theme) }}
       </option>
     </select>
   </label>
@@ -29,11 +29,7 @@
 import { useTheme } from '~/composables/useTheme'
 
 const { t } = useI18n()
-const { themes, currentTheme, setTheme, initTheme } = useTheme()
-
-onMounted(() => {
-  initTheme()
-})
+const { themes, currentTheme, setTheme } = useTheme()
 
 const model = computed({
   get: () => currentTheme.value,

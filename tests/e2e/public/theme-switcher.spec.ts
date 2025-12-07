@@ -2,15 +2,9 @@ import { test, expect } from '@playwright/test'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Theme Switcher', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
+    await context.clearCookies()
     await page.goto('/')
-
-    await page.evaluate(() => {
-      localStorage.removeItem('theme')
-      document.cookie = 'theme=; Path=/; Max-Age=0'
-    })
-
-    await page.reload()
     await waitForHydration(page)
   })
 
@@ -35,14 +29,15 @@ test.describe('Theme Switcher', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'summerhaze')
   })
 
-  test('theme selection persists in localStorage', async ({ page }) => {
+  test('theme selection persists in cookies', async ({ page, context }) => {
     const themeSelect = page.getByTestId('theme-select').first()
 
     await themeSelect.selectOption('ritualhabitual')
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'ritualhabitual')
 
-    const storedTheme = await page.evaluate(() => localStorage.getItem('theme'))
-    expect(storedTheme).toBe('ritualhabitual')
+    const cookies = await context.cookies()
+    const themeCookie = cookies.find(c => c.name === 'theme')
+    expect(themeCookie?.value).toBe('ritualhabitual')
 
     await page.reload()
     await waitForHydration(page)
@@ -52,18 +47,7 @@ test.describe('Theme Switcher', () => {
     expect(selectedValue).toBe('ritualhabitual')
   })
 
-  test('theme selection persists in cookies', async ({ page, context }) => {
-    const themeSelect = page.getByTestId('theme-select').first()
-
-    await themeSelect.selectOption('crystalclear')
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'crystalclear')
-
-    const cookies = await context.cookies()
-    const themeCookie = cookies.find(c => c.name === 'theme')
-    expect(themeCookie?.value).toBe('crystalclear')
-  })
-
-  test('auto option removes theme attributes and storage', async ({ page }) => {
+  test('auto option removes theme attributes', async ({ page, context }) => {
     const themeSelect = page.getByTestId('theme-select').first()
 
     await themeSelect.selectOption('grayscale')
@@ -73,18 +57,20 @@ test.describe('Theme Switcher', () => {
 
     await expect(page.locator('html')).not.toHaveAttribute('data-theme')
 
-    const storedTheme = await page.evaluate(() => localStorage.getItem('theme'))
-    expect(storedTheme).toBeNull()
+    const cookies = await context.cookies()
+    const themeCookie = cookies.find(c => c.name === 'theme')
+    expect(themeCookie?.value).toBe('auto')
   })
 
-  test('theme persists across different pages', async ({ page }) => {
+  test('theme persists across different pages', async ({ page, context }) => {
     const themeSelect = page.getByTestId('theme-select').first()
 
     await themeSelect.selectOption('grayscaledark')
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'grayscaledark')
 
-    const storedTheme = await page.evaluate(() => localStorage.getItem('theme'))
-    expect(storedTheme).toBe('grayscaledark')
+    const cookies = await context.cookies()
+    const themeCookie = cookies.find(c => c.name === 'theme')
+    expect(themeCookie?.value).toBe('grayscaledark')
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -98,10 +84,13 @@ test.describe('Theme Switcher', () => {
     expect(selectedValue).toBe('grayscaledark')
   })
 
-  test('invalid theme defaults to auto', async ({ page }) => {
-    await page.evaluate(() => {
-      localStorage.setItem('theme', 'invalid-theme-name')
-    })
+  test('invalid theme cookie defaults to auto', async ({ page, context }) => {
+    await context.addCookies([{
+      name: 'theme',
+      value: 'invalid-theme-name',
+      domain: 'localhost',
+      path: '/',
+    }])
     await page.reload()
     await waitForHydration(page)
 
@@ -154,7 +143,7 @@ test.describe('Theme Switcher', () => {
     await expect(page.locator('body')).toHaveAttribute('data-theme', 'summerhaze')
   })
 
-  test('switching themes rapidly works correctly', async ({ page }) => {
+  test('switching themes rapidly works correctly', async ({ page, context }) => {
     const themeSelect = page.getByTestId('theme-select').first()
     const themes = ['kekdark', 'keklight', 'summerhaze', 'ritualhabitual', 'crystalclear']
 
@@ -164,7 +153,33 @@ test.describe('Theme Switcher', () => {
     }
 
     const finalTheme = themes[themes.length - 1]
-    const storedTheme = await page.evaluate(() => localStorage.getItem('theme'))
-    expect(storedTheme).toBe(finalTheme)
+    const cookies = await context.cookies()
+    const themeCookie = cookies.find(c => c.name === 'theme')
+    expect(themeCookie?.value).toBe(finalTheme)
+  })
+
+  test('SSR renders correct theme from cookie without flash', async ({ page, context }) => {
+    await context.addCookies([{
+      name: 'theme',
+      value: 'kekdarker',
+      domain: 'localhost',
+      path: '/',
+    }])
+
+    const themeOnLoad = await page.evaluate(() => {
+      return new Promise<string | null>((resolve) => {
+        const observer = new MutationObserver(() => {})
+        observer.disconnect()
+        resolve(document.documentElement.getAttribute('data-theme'))
+      })
+    })
+
+    await page.goto('/')
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'kekdarker')
+
+    const themeSelect = page.getByTestId('theme-select').first()
+    const selectedValue = await themeSelect.inputValue()
+    expect(selectedValue).toBe('kekdarker')
   })
 })

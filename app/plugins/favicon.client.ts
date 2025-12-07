@@ -1,7 +1,15 @@
 import type { FaviconColors } from '~/utils/favicon'
 import { generateFaviconSvg } from '~/utils/favicon'
 
+const COOKIE_NAME = 'favicon-colors'
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+
 export default defineNuxtPlugin(() => {
+  const faviconColorsCookie = useCookie<FaviconColors | null>(COOKIE_NAME, {
+    maxAge: COOKIE_MAX_AGE,
+    default: () => null,
+  })
+
   const updateFavicon = () => {
     const colors: FaviconColors = {
       contours: getComputedStyle(document.documentElement).getPropertyValue('--logo-contours').trim(),
@@ -11,12 +19,7 @@ export default defineNuxtPlugin(() => {
       pipe: getComputedStyle(document.documentElement).getPropertyValue('--logo-pipe').trim(),
     }
 
-    try {
-      const isHttps = typeof location !== 'undefined' && location.protocol === 'https:'
-      document.cookie = `favicon-colors=${encodeURIComponent(JSON.stringify(colors))}; Path=/; Max-Age=31536000; SameSite=Lax${isHttps ? '; Secure' : ''}`
-    }
-    // eslint-disable-next-line no-empty
-    catch {}
+    faviconColorsCookie.value = colors
 
     const svg = generateFaviconSvg(colors)
     const blob = new Blob([svg], { type: 'image/svg+xml' })

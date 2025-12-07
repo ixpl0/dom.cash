@@ -419,4 +419,4 @@ The application supports multiple DaisyUI themes:
 
 ### Theme Switching
 
-Theme preference is stored in localStorage and applied via the `data-theme` attribute on the HTML element. Users can switch themes using the theme switcher in the header.
+Theme preference is stored in cookies (for SSR support) and applied via the `data-theme` attribute on the HTML element. Users can switch themes using the theme switcher in the header.
