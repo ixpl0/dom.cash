@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { eq, and, gt } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
+import { SESSION_LIFETIME_SECONDS, REFRESH_INTERVAL_SECONDS, setAuthCookie } from '~~/server/utils/auth'
 
 import type { User } from '~~/shared/types'
 
@@ -24,9 +25,11 @@ export const validateAuthToken = async (event: H3Event): Promise<ValidateTokenRe
     const now = new Date()
 
     const db = useDatabase(event)
-    const [userRecord] = await db
+    const [record] = await db
       .select({
-        id: user.id,
+        sessionId: session.id,
+        sessionExpiresAt: session.expiresAt,
+        userId: user.id,
         username: user.username,
         mainCurrency: user.mainCurrency,
         isAdmin: user.isAdmin,
@@ -39,11 +42,32 @@ export const validateAuthToken = async (event: H3Event): Promise<ValidateTokenRe
       ))
       .limit(1)
 
-    if (!userRecord) {
+    if (!record) {
       return { user: null, error: 'Invalid or expired token' }
     }
 
-    return { user: userRecord }
+    const lastRefreshed = record.sessionExpiresAt.getTime() - SESSION_LIFETIME_SECONDS * 1000
+    const timeSinceRefresh = now.getTime() - lastRefreshed
+
+    if (timeSinceRefresh > REFRESH_INTERVAL_SECONDS * 1000) {
+      const newExpiresAt = new Date(now.getTime() + SESSION_LIFETIME_SECONDS * 1000)
+
+      await db
+        .update(session)
+        .set({ expiresAt: newExpiresAt })
+        .where(eq(session.id, record.sessionId))
+
+      setAuthCookie(event, token)
+    }
+
+    return {
+      user: {
+        id: record.userId,
+        username: record.username,
+        mainCurrency: record.mainCurrency,
+        isAdmin: record.isAdmin,
+      },
+    }
   }
   catch (error) {
     return {

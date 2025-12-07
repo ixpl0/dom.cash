@@ -5,7 +5,8 @@ import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
-const SESSION_LIFETIME = 60 * 60 * 24 * 365 * 420
+export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90
+export const REFRESH_INTERVAL_SECONDS = 60 * 60 * 24
 
 const toBase64 = (data: Uint8Array): string => {
   if (typeof Buffer !== 'undefined') {
@@ -201,7 +202,7 @@ export const createSession = async (userId: string, now: Date, event: H3Event): 
   const database = useDatabase(event)
   const token = generateSessionToken()
   const tokenHash = createHash('sha256').update(token).digest('hex')
-  const expiresAt = new Date(now.getTime() + SESSION_LIFETIME * 1000)
+  const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_SECONDS * 1000)
 
   await database.insert(session).values({
     id: crypto.randomUUID(),
@@ -214,7 +215,7 @@ export const createSession = async (userId: string, now: Date, event: H3Event): 
   return token
 }
 
-export const setAuthCookie = (event: H3Event, token: string) => {
+export const setAuthCookie = (event: H3Event, token: string, maxAge: number = SESSION_LIFETIME_SECONDS) => {
   const isProduction = process.env.NODE_ENV === 'production'
   const isLocalhost = event.node?.req?.headers?.host?.includes('localhost')
 
@@ -223,7 +224,7 @@ export const setAuthCookie = (event: H3Event, token: string) => {
     sameSite: 'lax',
     secure: isProduction && !isLocalhost,
     path: '/',
-    maxAge: SESSION_LIFETIME,
+    maxAge,
   })
 }
 
