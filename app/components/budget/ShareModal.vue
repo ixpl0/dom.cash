@@ -40,15 +40,7 @@
               :key="share.id"
             >
               <td>
-                <input
-                  v-if="editingId === share.id"
-                  v-model="editingShare.username"
-                  type="text"
-                  class="input input-bordered w-full"
-                  @keyup.enter="saveShare()"
-                  @keyup.esc="cancelEdit()"
-                >
-                <span v-else>{{ share.username }}</span>
+                <span>{{ share.username }}</span>
               </td>
               <td>
                 <select
@@ -298,11 +290,6 @@ const resetForm = (): void => {
 
 const saveShare = async (): Promise<void> => {
   if (!editingId.value) {
-    return
-  }
-
-  if (!editingShare.value.username.trim()) {
-    toast({ type: 'error', message: t('share.enterUsername') })
     return
   }
 
