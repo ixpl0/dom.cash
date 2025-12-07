@@ -1,12 +1,10 @@
 import type { FaviconColors } from '~/utils/favicon'
+import { COOKIE_NAMES, UI_COOKIE_OPTIONS } from '~/utils/cookies'
 import { generateFaviconSvg } from '~/utils/favicon'
 
-const COOKIE_NAME = 'favicon-colors'
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-
 export default defineNuxtPlugin(() => {
-  const faviconColorsCookie = useCookie<FaviconColors | null>(COOKIE_NAME, {
-    maxAge: COOKIE_MAX_AGE,
+  const faviconColorsCookie = useCookie<FaviconColors | null>(COOKIE_NAMES.faviconColors, {
+    ...UI_COOKIE_OPTIONS,
     default: () => null,
   })
 

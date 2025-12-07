@@ -1,3 +1,5 @@
+import { COOKIE_NAMES, UI_COOKIE_OPTIONS } from '~/utils/cookies'
+
 type SortOrder = 'asc' | 'desc'
 
 interface MetricsSort {
@@ -16,12 +18,9 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   },
 }
 
-const COOKIE_NAME = 'user-preferences'
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-
 export const usePreferencesStore = defineStore('preferences', () => {
-  const cookie = useCookie<UserPreferences>(COOKIE_NAME, {
-    maxAge: COOKIE_MAX_AGE,
+  const cookie = useCookie<UserPreferences>(COOKIE_NAMES.userPreferences, {
+    ...UI_COOKIE_OPTIONS,
     default: () => DEFAULT_PREFERENCES,
   })
 

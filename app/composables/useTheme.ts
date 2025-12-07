@@ -1,4 +1,5 @@
 import type { FaviconColors } from '~/utils/favicon'
+import { COOKIE_NAMES, UI_COOKIE_OPTIONS } from '~/utils/cookies'
 import { generateFaviconDataUrl } from '~/utils/favicon'
 import { migrateThemeFromLocalStorage } from '~/utils/theme-migration'
 
@@ -17,9 +18,6 @@ export const DAISY_THEMES = [
 type DaisyTheme = typeof DAISY_THEMES[number]
 type ThemeSelection = DaisyTheme | 'auto'
 
-const THEME_COOKIE_NAME = 'theme'
-const FAVICON_COOKIE_NAME = 'favicon-colors'
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 const AUTO = 'auto'
 
 const DEFAULT_FAVICON_COLORS: FaviconColors = {
@@ -52,13 +50,13 @@ const parseFaviconColors = (value: FaviconColors | string | null): FaviconColors
 }
 
 export const useTheme = () => {
-  const themeCookie = useCookie<ThemeSelection>(THEME_COOKIE_NAME, {
-    maxAge: COOKIE_MAX_AGE,
+  const themeCookie = useCookie<ThemeSelection>(COOKIE_NAMES.theme, {
+    ...UI_COOKIE_OPTIONS,
     default: () => AUTO,
   })
 
-  const faviconColorsCookie = useCookie<FaviconColors | string | null>(FAVICON_COOKIE_NAME, {
-    maxAge: COOKIE_MAX_AGE,
+  const faviconColorsCookie = useCookie<FaviconColors | string | null>(COOKIE_NAMES.faviconColors, {
+    ...UI_COOKIE_OPTIONS,
     default: () => null,
   })
 
