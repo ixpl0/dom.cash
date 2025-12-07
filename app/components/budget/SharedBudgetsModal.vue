@@ -144,13 +144,7 @@ const loadSharedBudgets = async (): Promise<void> => {
 
   isLoading.value = true
   try {
-    const response = await fetch('/api/budget/shared')
-    if (response.ok) {
-      sharedBudgets.value = await response.json()
-    }
-    else {
-      throw new Error('Failed to load shared budgets')
-    }
+    sharedBudgets.value = await $fetch<SharedBudget[]>('/api/budget/shared')
   }
   catch (error) {
     console.error('Error loading shared budgets:', error)

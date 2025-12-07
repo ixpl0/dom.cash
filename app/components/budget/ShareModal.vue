@@ -385,13 +385,7 @@ const loadShares = async (): Promise<void> => {
 
   isLoading.value = true
   try {
-    const response = await fetch('/api/budget/shares')
-    if (response.ok) {
-      shares.value = await response.json()
-    }
-    else {
-      throw new Error('Failed to load shares')
-    }
+    shares.value = await $fetch<ShareEntry[]>('/api/budget/shares')
   }
   catch (error) {
     console.error('Error loading shares:', error)
