@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { eq, and, gt } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
-import { SESSION_LIFETIME_SECONDS, REFRESH_INTERVAL_SECONDS, setAuthCookie } from '~~/server/utils/auth'
+import { SESSION_LIFETIME_MS, REFRESH_INTERVAL_MS, setAuthCookie } from '~~/server/utils/auth'
 
 import type { User } from '~~/shared/types'
 
@@ -46,11 +46,15 @@ export const validateAuthToken = async (event: H3Event): Promise<ValidateTokenRe
       return { user: null, error: 'Invalid or expired token' }
     }
 
-    const lastRefreshed = record.sessionExpiresAt.getTime() - SESSION_LIFETIME_SECONDS * 1000
-    const timeSinceRefresh = now.getTime() - lastRefreshed
+    const timeUntilExpiry = record.sessionExpiresAt.getTime() - now.getTime()
+    const isLegacySession = timeUntilExpiry > SESSION_LIFETIME_MS
 
-    if (timeSinceRefresh > REFRESH_INTERVAL_SECONDS * 1000) {
-      const newExpiresAt = new Date(now.getTime() + SESSION_LIFETIME_SECONDS * 1000)
+    const lastRefreshed = record.sessionExpiresAt.getTime() - SESSION_LIFETIME_MS
+    const timeSinceRefresh = now.getTime() - lastRefreshed
+    const needsRefresh = timeSinceRefresh > REFRESH_INTERVAL_MS
+
+    if (isLegacySession || needsRefresh) {
+      const newExpiresAt = new Date(now.getTime() + SESSION_LIFETIME_MS)
 
       await db
         .update(session)

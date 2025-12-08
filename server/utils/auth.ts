@@ -6,7 +6,9 @@ import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90
+export const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000
 export const REFRESH_INTERVAL_SECONDS = 60 * 60 * 24
+export const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_SECONDS * 1000
 
 const toBase64 = (data: Uint8Array): string => {
   if (typeof Buffer !== 'undefined') {
