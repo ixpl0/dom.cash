@@ -5,15 +5,7 @@ export const createMonthId = (year: number, month: number): string => {
   return `${year}-${String(month).padStart(2, '0')}`
 }
 
-export const parseMonthId = (monthId: string): { year: number, month: number } => {
-  const [yearStr, monthStr] = monthId.split('-')
-  return {
-    year: parseInt(yearStr || '0', 10),
-    month: parseInt(monthStr || '0', 10),
-  }
-}
-
-export const findNextMonth = (monthData: MonthData, allMonths: MonthData[]): MonthData | null => {
+const findNextMonth = (monthData: MonthData, allMonths: MonthData[]): MonthData | null => {
   const nextMonth = monthData.month === 11 ? 0 : monthData.month + 1
   const nextYear = monthData.month === 11 ? monthData.year + 1 : monthData.year
 

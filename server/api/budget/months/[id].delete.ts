@@ -1,5 +1,6 @@
 import { requireAuth } from '~~/server/utils/session'
-import { deleteMonth, checkWritePermission } from '~~/server/services/months'
+import { deleteMonth } from '~~/server/services/months'
+import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const monthData = monthRecord[0]!
-    const hasPermission = await checkWritePermission(monthData.userId, user.id, event)
+    const hasPermission = await checkBudgetWritePermission(monthData.userId, user.id, event)
 
     if (!hasPermission) {
       throw createError({

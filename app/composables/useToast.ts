@@ -42,14 +42,9 @@ export const useToast = () => {
     return addToast(options)
   }
 
-  const clearAllToasts = () => {
-    toasts.value = []
-  }
-
   return {
     toasts: readonly(toasts),
     toast,
     removeToast,
-    clearAllToasts,
   }
 }

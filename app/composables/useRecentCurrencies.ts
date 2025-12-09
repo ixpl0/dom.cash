@@ -55,10 +55,6 @@ export const useRecentCurrencies = () => {
     return readonly(recentCurrencies)
   }
 
-  const clearRecentCurrencies = () => {
-    recentCurrencies.value = []
-  }
-
   if (recentCurrencies.value.length === 0) {
     loadRecentCurrencies()
   }
@@ -66,6 +62,5 @@ export const useRecentCurrencies = () => {
   return {
     addRecentCurrency,
     getRecentCurrencies,
-    clearRecentCurrencies,
   }
 }

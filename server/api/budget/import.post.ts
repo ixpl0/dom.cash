@@ -2,7 +2,8 @@ import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { importBudget } from '~~/server/services/import-export'
 import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/types/export-import'
-import { findUserByUsername, checkWritePermission } from '~~/server/services/months'
+import { findUserByUsername } from '~~/server/services/months'
+import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { z } from 'zod'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (targetUser.id !== currentUser.id) {
-      const hasPermission = await checkWritePermission(targetUser.id, currentUser.id, event)
+      const hasPermission = await checkBudgetWritePermission(targetUser.id, currentUser.id, event)
       if (!hasPermission) {
         throw createError({
           statusCode: 403,

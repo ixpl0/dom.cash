@@ -170,7 +170,7 @@
           class="[--timeline-col-start:23ch]"
           data-testid="budget-timeline"
         >
-          <BudgetTimelineAddButton
+          <UiTimelineAddButton
             v-if="budgetStore.canEdit"
             direction="next"
             :month-text="getNextMonthText()"
@@ -186,7 +186,7 @@
             :month-names="monthNames"
           />
 
-          <BudgetTimelineAddButton
+          <UiTimelineAddButton
             v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
             direction="previous"
             :month-text="getPreviousMonthText()"

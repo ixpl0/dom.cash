@@ -69,6 +69,8 @@ export interface ExpenseEntryData extends BaseBudgetEntry {
 
 export type BudgetEntry = BalanceSourceData | IncomeEntryData | ExpenseEntryData
 
-export interface UserSettings {
-  baseCurrency: string
+export interface YearInfo {
+  year: number
+  monthCount: number
+  months: number[]
 }

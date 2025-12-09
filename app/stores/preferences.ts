@@ -33,24 +33,8 @@ export const usePreferencesStore = defineStore('preferences', () => {
     }
   }
 
-  const updatePreference = <K extends keyof UserPreferences>(
-    key: K,
-    value: UserPreferences[K],
-  ) => {
-    cookie.value = {
-      ...cookie.value,
-      [key]: value,
-    }
-  }
-
-  const resetPreferences = () => {
-    cookie.value = DEFAULT_PREFERENCES
-  }
-
   return {
     metricsSort,
     setMetricsSort,
-    updatePreference,
-    resetPreferences,
   }
 })

@@ -201,35 +201,3 @@ export const formatCurrency = (
 export const formatCurrencyRounded = (amount: number, currency: string): string => {
   return formatCurrency(amount, currency, { rounded: true })
 }
-
-const numberFormatterCache = new Map<string, Intl.NumberFormat>()
-
-const getNumberFormatter = (locale: string, maxFractionDigits: number): Intl.NumberFormat => {
-  const key = `${locale}-${maxFractionDigits}`
-  const cached = numberFormatterCache.get(key)
-
-  if (cached) {
-    return cached
-  }
-
-  const formatter = new Intl.NumberFormat(locale, {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: maxFractionDigits,
-  })
-
-  numberFormatterCache.set(key, formatter)
-  return formatter
-}
-
-export const formatNumber = (
-  amount: number,
-  currency?: string,
-  options?: { maxFractionDigits?: number },
-): string => {
-  const locale = currency ? getLocaleForCurrency(currency) : DEFAULT_LOCALE
-  const maxFraction = options?.maxFractionDigits ?? 2
-
-  const formatter = getNumberFormatter(locale, maxFraction)
-  return formatter.format(amount)
-}

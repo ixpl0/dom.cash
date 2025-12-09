@@ -1,8 +1,8 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, currency, entry, month, user } from '~~/server/db/schema'
-import type { MonthData } from '~~/shared/types/budget'
+import { currency, entry, month, user } from '~~/server/db/schema'
+import type { MonthData, YearInfo } from '~~/shared/types/budget'
 
 const ratesCache = new Map<string, { rates: Record<string, number>, source: string }>()
 
@@ -13,10 +13,6 @@ const groupEntriesByMonthId = (entries: (typeof entry.$inferSelect)[]): Map<stri
     map.set(e.monthId, [...list, e])
   }
   return map
-}
-
-export const clearRatesCache = () => {
-  ratesCache.clear()
 }
 
 const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Event): Promise<boolean> => {
@@ -376,24 +372,6 @@ export const findUserByUsername = async (username: string, event: H3Event) => {
   return users[0] || null
 }
 
-export const checkWritePermission = async (ownerId: string, requesterId: string, event: H3Event): Promise<boolean> => {
-  if (ownerId === requesterId) {
-    return true
-  }
-
-  const db = useDatabase(event)
-  const shareRecord = await db
-    .select({ access: budgetShare.access })
-    .from(budgetShare)
-    .where(and(
-      eq(budgetShare.ownerId, ownerId),
-      eq(budgetShare.sharedWithId, requesterId),
-    ))
-    .limit(1)
-
-  return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
-}
-
 export const deleteMonth = async (monthId: string, event: H3Event): Promise<void> => {
   const db = useDatabase(event)
   const monthToDelete = await db
@@ -412,12 +390,6 @@ export const deleteMonth = async (monthId: string, event: H3Event): Promise<void
     { sql: 'DELETE FROM entry WHERE month_id = ?', params: [monthId] },
     { sql: 'DELETE FROM month WHERE id = ?', params: [monthId] },
   ])
-}
-
-export interface YearInfo {
-  year: number
-  monthCount: number
-  months: number[]
 }
 
 export const getAvailableYears = async (userId: string, event: H3Event): Promise<YearInfo[]> => {

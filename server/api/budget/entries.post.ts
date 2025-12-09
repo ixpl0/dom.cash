@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { getMonthOwner, checkWritePermissionForMonth, createEntry } from '~~/server/services/entries'
+import { getMonthOwner, createEntry } from '~~/server/services/entries'
+import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
@@ -28,7 +29,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hasPermission = await checkWritePermissionForMonth(monthOwner.userId, user.id, event)
+  const hasPermission = await checkBudgetWritePermission(monthOwner.userId, user.id, event)
   if (!hasPermission) {
     throw createError({
       statusCode: 403,

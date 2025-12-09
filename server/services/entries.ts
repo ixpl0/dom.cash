@@ -1,7 +1,7 @@
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { entry, month, budgetShare } from '~~/server/db/schema'
+import { entry, month } from '~~/server/db/schema'
 import type { EntryKind } from '~~/server/db/schema'
 
 export interface CreateEntryParams {
@@ -47,24 +47,6 @@ export const getEntryWithMonth = async (entryId: string, event: H3Event) => {
 
   const result = entryData[0]
   return result?.month ? result : null
-}
-
-export const checkWritePermissionForMonth = async (monthOwnerId: string, userId: string, event: H3Event): Promise<boolean> => {
-  if (monthOwnerId === userId) {
-    return true
-  }
-
-  const db = useDatabase(event)
-  const shareRecord = await db
-    .select({ access: budgetShare.access })
-    .from(budgetShare)
-    .where(and(
-      eq(budgetShare.ownerId, monthOwnerId),
-      eq(budgetShare.sharedWithId, userId),
-    ))
-    .limit(1)
-
-  return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
 }
 
 export const createEntry = async (params: CreateEntryParams, event: H3Event) => {

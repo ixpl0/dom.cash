@@ -128,24 +128,9 @@ export const useBudgetColumnsSync = () => {
     registeredRows.value = []
   })
 
-  const forceSync = () => {
-    if (isUnmounting.value) {
-      return
-    }
-
-    if (isProcessing.value) {
-      isProcessing.value = false
-    }
-
-    if (mounted.value) {
-      syncColumnWidths()
-    }
-  }
-
   return {
     registerRow,
     unregisterRow,
     syncColumnWidths,
-    forceSync,
   }
 }
