@@ -20,6 +20,9 @@ routes = [
   { pattern = "dom.cash", custom_domain = true }
 ]
 
+[env.production.vars]
+NUXT_PUBLIC_ENVIRONMENT = "production"
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "dom-prod"

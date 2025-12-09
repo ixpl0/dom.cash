@@ -4,6 +4,7 @@ import { eq, gt, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { timingSafeCompare } from '~~/server/utils/crypto'
 
 export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90
 export const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000
@@ -22,20 +23,6 @@ const fromBase64 = (data: string): Uint8Array => {
     return new Uint8Array(Buffer.from(data, 'base64'))
   }
   return new Uint8Array(atob(data).split('').map(c => c.charCodeAt(0)))
-}
-
-const timingSafeCompare = (a: Uint8Array, b: Uint8Array): boolean => {
-  if (a.length !== b.length) {
-    return false
-  }
-
-  let diff = 0
-
-  for (let i = 0; i < a.length; i++) {
-    diff |= a[i]! ^ b[i]!
-  }
-
-  return diff === 0
 }
 
 export const hashPassword = async (password: string): Promise<string> => {
@@ -219,12 +206,11 @@ export const createSession = async (userId: string, now: Date, event: H3Event): 
 
 export const setAuthCookie = (event: H3Event, token: string, maxAge: number = SESSION_LIFETIME_SECONDS) => {
   const isProduction = process.env.NODE_ENV === 'production'
-  const isLocalhost = event.node?.req?.headers?.host?.includes('localhost')
 
   setCookie(event, 'auth-token', token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: isProduction && !isLocalhost,
+    secure: isProduction,
     path: '/',
     maxAge,
   })

@@ -3,6 +3,16 @@ import { user, month, entry, budgetShare } from '~~/server/db/schema'
 import { like, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  const cloudflareEnv = event.context.cloudflare?.env?.NUXT_PUBLIC_ENVIRONMENT
+  const isCloudflareProduction = cloudflareEnv === 'production'
+
+  if (isCloudflareProduction) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not found',
+    })
+  }
+
   const isDevelopment = process.env.NODE_ENV === 'development'
   const isTest = process.env.NODE_ENV === 'test'
   const isE2E = process.env.E2E_TESTING === 'true'

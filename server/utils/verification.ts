@@ -3,6 +3,7 @@ import { eq, lt } from 'drizzle-orm'
 import { emailVerificationCode } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { timingSafeCompareStrings } from '~~/server/utils/crypto'
 
 export const DEV_VERIFICATION_CODE = '111111'
 
@@ -226,7 +227,7 @@ export const verifyCode = async (params: VerifyCodeParams): Promise<VerifyCodeRe
     return { valid: false, reason: 'max_attempts_exceeded' }
   }
 
-  if (record.code !== code) {
+  if (!timingSafeCompareStrings(record.code, code)) {
     await db
       .update(emailVerificationCode)
       .set({ verifyAttemptCount: record.verifyAttemptCount + 1 })
