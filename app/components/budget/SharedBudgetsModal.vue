@@ -2,11 +2,13 @@
   <UiDialog
     :is-open="isOpen"
     content-class="modal-box w-[calc(100vw-2rem)] max-w-xl max-h-[90vh] flex flex-col"
+    data-testid="shared-budgets-modal"
     @close="hide"
   >
     <button
       type="button"
       class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      data-testid="shared-budgets-modal-close"
       @click="hide()"
     >
       <Icon
@@ -24,7 +26,10 @@
         v-if="sharedBudgets.length"
         class="min-w-[400px]"
       >
-        <table class="table">
+        <table
+          class="table"
+          data-testid="shared-budgets-table"
+        >
           <thead>
             <tr>
               <th>{{ t('sharedBudgets.user') }}</th>
@@ -37,11 +42,13 @@
             <tr
               v-for="budget in sharedBudgets"
               :key="budget.id"
+              data-testid="shared-budget-row"
             >
               <td>
                 <NuxtLink
                   :to="`/budget/${budget.username}`"
                   class="btn btn-sm btn-ghost"
+                  data-testid="shared-budget-link"
                   @click="hide()"
                 >
                   {{ t('sharedBudgets.goToBudget') }} {{ budget.username }}
@@ -51,6 +58,7 @@
                 <button
                   class="btn btn-sm btn-error"
                   :disabled="isRevoking === budget.id"
+                  data-testid="shared-budget-revoke-button"
                   @click="revokeAccess(budget.id)"
                 >
                   <span
@@ -71,6 +79,7 @@
       <div
         v-else
         class="text-center py-8 text-base-content/60"
+        data-testid="shared-budgets-empty-state"
       >
         {{ t('sharedBudgets.empty') }}
       </div>

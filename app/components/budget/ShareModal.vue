@@ -2,11 +2,13 @@
   <UiDialog
     :is-open="isOpen"
     content-class="modal-box w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] flex flex-col"
+    data-testid="share-modal"
     @close="hide"
   >
     <button
       type="button"
       class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      data-testid="share-modal-close"
       @click="hide()"
     >
       <Icon
@@ -24,7 +26,10 @@
         v-if="shares.length || isAddingNew"
         class="min-w-[500px]"
       >
-        <table class="table">
+        <table
+          class="table"
+          data-testid="share-table"
+        >
           <thead>
             <tr>
               <th>{{ t('share.username') }}</th>
@@ -38,15 +43,17 @@
             <tr
               v-for="share in shares"
               :key="share.id"
+              data-testid="share-row"
             >
               <td>
-                <span>{{ share.username }}</span>
+                <span data-testid="share-username">{{ share.username }}</span>
               </td>
               <td>
                 <select
                   v-if="editingId === share.id"
                   v-model="editingShare.access"
                   class="select select-sm select-bordered w-full max-w-xs"
+                  data-testid="share-edit-access-select"
                 >
                   <option value="read">
                     {{ t('share.accessRead') }}
@@ -55,7 +62,10 @@
                     {{ t('share.accessWrite') }}
                   </option>
                 </select>
-                <span v-else>{{ getAccessText(share.access) }}</span>
+                <span
+                  v-else
+                  data-testid="share-access"
+                >{{ getAccessText(share.access) }}</span>
               </td>
               <td class="w-1">
                 <div class="flex gap-2">
@@ -63,6 +73,7 @@
                     <button
                       class="btn btn-sm btn-success"
                       :disabled="isSaving"
+                      data-testid="share-save-button"
                       @click="saveShare()"
                     >
                       <span
@@ -77,6 +88,7 @@
                     </button>
                     <button
                       class="btn btn-sm btn-ghost"
+                      data-testid="share-cancel-edit-button"
                       @click="cancelEdit()"
                     >
                       <Icon
@@ -88,6 +100,7 @@
                   <template v-else>
                     <button
                       class="btn btn-sm btn-warning"
+                      data-testid="share-edit-button"
                       @click="startEdit(share)"
                     >
                       <Icon
@@ -98,6 +111,7 @@
                     <button
                       class="btn btn-sm btn-error"
                       :disabled="isDeleting === share.id"
+                      data-testid="share-delete-button"
                       @click="deleteShare(share.id)"
                     >
                       <span
@@ -114,13 +128,17 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="isAddingNew">
+            <tr
+              v-if="isAddingNew"
+              data-testid="share-new-row"
+            >
               <td>
                 <input
                   v-model="newShare.username"
                   type="text"
                   :placeholder="t('share.usernamePlaceholder')"
                   class="input input-bordered w-full"
+                  data-testid="share-username-input"
                   @keyup.enter="addShare()"
                   @keyup.esc="cancelAdd()"
                 >
@@ -129,6 +147,7 @@
                 <select
                   v-model="newShare.access"
                   class="select select-sm select-bordered w-full max-w-xs"
+                  data-testid="share-access-select"
                 >
                   <option value="read">
                     {{ t('share.accessRead') }}
@@ -144,6 +163,7 @@
                     type="button"
                     class="btn btn-sm btn-success"
                     :disabled="isAdding"
+                    data-testid="share-confirm-add-button"
                     @click="addShare()"
                   >
                     <span
@@ -159,6 +179,7 @@
                   <button
                     type="button"
                     class="btn btn-sm btn-ghost"
+                    data-testid="share-cancel-add-button"
                     @click="cancelAdd()"
                   >
                     <Icon
@@ -176,6 +197,7 @@
           <button
             v-if="!isAddingNew"
             class="btn btn-primary btn-sm"
+            data-testid="share-add-new-button"
             @click="startAdd()"
           >
             {{ t('share.addNew') }}
@@ -185,6 +207,7 @@
       <div
         v-else
         class="text-center py-8 text-base-content/60"
+        data-testid="share-empty-state"
       >
         <div class="mb-4">
           {{ t('share.empty') }}
@@ -193,6 +216,7 @@
           v-if="!isAddingNew"
           type="button"
           class="btn btn-primary btn-sm"
+          data-testid="share-add-first-button"
           @click="startAdd()"
         >
           {{ t('share.addNew') }}
