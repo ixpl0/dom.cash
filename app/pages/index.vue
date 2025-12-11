@@ -71,7 +71,7 @@
       </div>
     </section>
 
-    <section class="py-16 px-4 bg-base-200/50">
+    <section class="py-16 px-4 bg-base-200">
       <div class="max-w-7xl mx-auto">
         <h2
           class="text-3xl font-bold text-center mb-4"
@@ -152,7 +152,7 @@
       </div>
     </section>
 
-    <section class="py-16 px-4 bg-base-200/50">
+    <section class="py-16 px-4 bg-base-200">
       <div class="max-w-4xl mx-auto">
         <h2
           class="text-3xl font-bold text-center mb-4"

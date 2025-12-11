@@ -5,12 +5,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
-      title: 'dom.cash - Budget Tracker',
       meta: [
-        { name: 'description', content: 'Прозрачность домашних финансов. Трекинг личного бюджета с поддержкой множественных валют.' },
-        { name: 'keywords', content: 'budget, finance, tracker, домашние финансы, бюджет, трекер' },
-        { property: 'og:title', content: 'dom.cash - Budget Tracker' },
-        { property: 'og:description', content: 'Прозрачность домашних финансов. Трекинг личного бюджета с поддержкой множественных валют.' },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', content: 'https://dom.cash' },
       ],
