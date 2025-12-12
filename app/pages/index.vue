@@ -74,19 +74,24 @@
     <section class="py-16 px-4 bg-base-200">
       <div class="max-w-7xl mx-auto">
         <h2
+          v-animate-on-scroll="'animate-fade-in'"
           class="text-3xl font-bold text-center mb-4"
           data-testid="demo-title"
         >
           {{ t('home.demoTitle') }}
         </h2>
         <p
+          v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 100 }"
           class="text-center opacity-60 mb-12 max-w-xl mx-auto"
           data-testid="demo-subtitle"
         >
           {{ t('home.demoSubtitle') }}
         </p>
 
-        <div class="overflow-x-auto animate-slide-up">
+        <div
+          v-animate-on-scroll="{ animation: 'animate-slide-up', delay: 200 }"
+          class="overflow-x-auto"
+        >
           <UiTimeline class="[--timeline-col-start:12ch] pointer-events-none select-none">
             <UiYear
               :year="demoData.year"
@@ -123,19 +128,24 @@
     <section class="py-16 px-4">
       <div class="max-w-5xl mx-auto">
         <h2
+          v-animate-on-scroll="'animate-fade-in'"
           class="text-3xl font-bold text-center mb-4"
           data-testid="demo-chart-title"
         >
           {{ t('home.demoChartTitle') }}
         </h2>
         <p
+          v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 100 }"
           class="text-center opacity-60 mb-12 max-w-xl mx-auto"
           data-testid="demo-chart-subtitle"
         >
           {{ t('home.demoChartSubtitle') }}
         </p>
 
-        <div class="animate-slide-up pointer-events-none select-none">
+        <div
+          v-animate-on-scroll="{ animation: 'animate-slide-up', delay: 200 }"
+          class="pointer-events-none select-none"
+        >
           <UiChart chart-height="400px">
             <ClientOnly>
               <BudgetChartClient
@@ -155,19 +165,24 @@
     <section class="py-16 px-4 bg-base-200">
       <div class="max-w-4xl mx-auto">
         <h2
+          v-animate-on-scroll="'animate-fade-in'"
           class="text-3xl font-bold text-center mb-4"
           data-testid="demo-entries-title"
         >
           {{ t('home.demoEntriesTitle') }}
         </h2>
         <p
+          v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 100 }"
           class="text-center opacity-60 mb-12 max-w-xl mx-auto"
           data-testid="demo-entries-subtitle"
         >
           {{ t('home.demoEntriesSubtitle') }}
         </p>
 
-        <div class="animate-slide-up pointer-events-none select-none">
+        <div
+          v-animate-on-scroll="{ animation: 'animate-slide-up', delay: 200 }"
+          class="pointer-events-none select-none"
+        >
           <UiEntryTable
             :entries="demoEntries"
             :entry-kind="'expense'"
@@ -181,6 +196,7 @@
     <section class="pt-16 pb-40 px-4">
       <div class="max-w-4xl mx-auto text-center">
         <h2
+          v-animate-on-scroll="'animate-fade-in'"
           class="text-3xl font-bold mb-8"
           data-testid="cta-title"
         >
@@ -188,7 +204,10 @@
         </h2>
 
         <div class="grid md:grid-cols-3 gap-6 mb-12">
-          <div class="card bg-base-200 shadow-lg animate-fade-in-delay-1">
+          <div
+            v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 100 }"
+            class="card bg-base-200 shadow-lg"
+          >
             <div class="card-body items-center text-center">
               <Icon
                 name="heroicons:chart-bar"
@@ -204,7 +223,10 @@
             </div>
           </div>
 
-          <div class="card bg-base-200 shadow-lg animate-fade-in-delay-2">
+          <div
+            v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 200 }"
+            class="card bg-base-200 shadow-lg"
+          >
             <div class="card-body items-center text-center">
               <Icon
                 name="heroicons:currency-dollar"
@@ -220,7 +242,10 @@
             </div>
           </div>
 
-          <div class="card bg-base-200 shadow-lg animate-fade-in-delay-3">
+          <div
+            v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 300 }"
+            class="card bg-base-200 shadow-lg"
+          >
             <div class="card-body items-center text-center">
               <Icon
                 name="heroicons:users"
@@ -238,6 +263,7 @@
         </div>
 
         <NuxtLink
+          v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 400 }"
           :to="isAuthenticated ? '/budget' : '/auth'"
           class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
           data-testid="cta-register-btn"
@@ -536,35 +562,19 @@ const formatDemoDate = (date: string | null | undefined): string => {
   }
 }
 
+.animate-on-scroll-initial {
+  opacity: 0;
+}
+
 .animate-fade-in {
   animation: fade-in 0.8s ease-out forwards;
 }
 
 .animate-slide-up {
   animation: slide-up 1s ease-out forwards;
-  animation-delay: 0.3s;
-  opacity: 0;
 }
 
 .animate-bounce-slow {
   animation: bounce-slow 3s ease-in-out infinite;
-}
-
-.animate-fade-in-delay-1 {
-  animation: fade-in 0.8s ease-out forwards;
-  animation-delay: 0.5s;
-  opacity: 0;
-}
-
-.animate-fade-in-delay-2 {
-  animation: fade-in 0.8s ease-out forwards;
-  animation-delay: 0.7s;
-  opacity: 0;
-}
-
-.animate-fade-in-delay-3 {
-  animation: fade-in 0.8s ease-out forwards;
-  animation-delay: 0.9s;
-  opacity: 0;
 }
 </style>
