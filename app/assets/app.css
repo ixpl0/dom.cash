@@ -38,3 +38,8 @@ html {
     --btn-noise: transparent;
   }
 }
+
+/* Animation utilities */
+.animate-on-scroll-initial {
+  opacity: 0;
+}

@@ -561,10 +561,6 @@ const formatDemoDate = (date: string | null | undefined): string => {
   }
 }
 
-.animate-on-scroll-initial {
-  opacity: 0;
-}
-
 .animate-fade-in {
   animation: fade-in 0.6s ease-out both;
 }
