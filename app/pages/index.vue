@@ -566,11 +566,11 @@ const formatDemoDate = (date: string | null | undefined): string => {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
+  animation: fade-in 0.6s ease-out both;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.8s ease-out forwards;
+  animation: slide-up 0.8s ease-out both;
 }
 
 .animate-bounce-slow {
