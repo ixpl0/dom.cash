@@ -1,5 +1,5 @@
 import { requireAuth } from '~~/server/utils/session'
-import { getEntryWithMonth, deleteEntry } from '~~/server/services/entries'
+import { getEntryWithMonth, deleteEntry } from '~~/server/services/budget/entries'
 import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'

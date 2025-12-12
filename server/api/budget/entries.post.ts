@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { getMonthOwner, createEntry } from '~~/server/services/entries'
+import { getMonthOwner, createEntry } from '~~/server/services/budget/entries'
 import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'

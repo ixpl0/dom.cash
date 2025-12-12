@@ -1,5 +1,5 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
-import { getEntryConfig } from '~~/shared/utils/entry-strategies'
+import { getEntryConfig } from '~~/shared/utils/budget/entry-strategies'
 
 export interface EntryFormData {
   description: string

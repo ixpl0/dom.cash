@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBudgetStore } from '~/stores/budget'
+import { useBudgetStore } from '~/stores/budget/budget'
 
 const route = useRoute()
 const targetUsername = Array.isArray(route.params.username)

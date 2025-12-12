@@ -1,4 +1,4 @@
-import { updateUserCurrency } from '~~/server/services/users'
+import { updateUserCurrency } from '~~/server/services/auth/users'
 import { requireAuth } from '~~/server/utils/session'
 import { z } from 'zod'
 import { currencySchema } from '~~/shared/schemas/common'
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     let targetUserId = user.id
 
     if (targetUsername) {
-      const { findUserByUsername, getExistingShare } = await import('~~/server/services/sharing')
+      const { findUserByUsername, getExistingShare } = await import('~~/server/services/budget/sharing')
 
       const targetUser = await findUserByUsername(targetUsername, event)
       if (!targetUser) {

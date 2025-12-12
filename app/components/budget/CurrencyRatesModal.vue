@@ -78,8 +78,8 @@
 </template>
 
 <script setup lang="ts">
-import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
-import { useModalsStore } from '~/stores/modals'
+import { useRecentCurrencies } from '~~/app/composables/budget/useRecentCurrencies'
+import { useModalsStore } from '~/stores/budget/modals'
 
 interface CurrencyRate {
   code: string

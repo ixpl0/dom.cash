@@ -1,6 +1,6 @@
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { unsubscribeFromBudget } from '~~/server/services/notifications'
-import { findUserByUsername } from '~~/server/services/users'
+import { findUserByUsername } from '~~/server/services/auth/users'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {

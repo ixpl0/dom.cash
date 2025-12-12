@@ -5,8 +5,8 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user, month, entry } from '~~/server/db/schema'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
-import { getExchangeRatesForMonth, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/months'
-import { updateUserActivity } from '~~/server/services/users'
+import { getExchangeRatesForMonth, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/budget/months'
+import { updateUserActivity } from '~~/server/services/auth/users'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {

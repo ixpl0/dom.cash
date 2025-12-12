@@ -1,4 +1,4 @@
-import type { MonthData, ComputedMonthData, YearSummary } from '../types/budget'
+import type { MonthData, ComputedMonthData, YearSummary } from '../../types/budget'
 import { calculateTotalBalance } from './budget'
 
 export const createMonthId = (year: number, month: number): string => {

@@ -1,5 +1,5 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
-import { formatCurrency, formatCurrencyRounded } from './currency-formatter'
+import { formatCurrency, formatCurrencyRounded } from '../shared/currency-formatter'
 
 export const formatAmount = (amount: number, currency: string): string => {
   return formatCurrency(amount, currency)

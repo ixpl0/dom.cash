@@ -1,5 +1,5 @@
 import { requireAuth } from '~~/server/utils/session'
-import { deleteMonth } from '~~/server/services/months'
+import { deleteMonth } from '~~/server/services/budget/months'
 import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'

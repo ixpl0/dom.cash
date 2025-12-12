@@ -42,11 +42,11 @@
 
 <script setup lang="ts">
 import type { TooltipComponentOption } from 'echarts/components'
-import { useBudgetStore } from '~/stores/budget'
-import { useModalsStore } from '~/stores/modals'
-import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/useChartConfig'
-import { getChartThemeColors, type ChartThemeColors } from '~/composables/useChartTheme'
-import { formatCurrencyRounded } from '~~/shared/utils/currency-formatter'
+import { useBudgetStore } from '~/stores/budget/budget'
+import { useModalsStore } from '~/stores/budget/modals'
+import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/shared/useChartConfig'
+import { getChartThemeColors, type ChartThemeColors } from '~/composables/shared/useChartTheme'
+import { formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
 
 type TooltipParams = Parameters<Exclude<TooltipComponentOption['formatter'], string | undefined>>[0]
 

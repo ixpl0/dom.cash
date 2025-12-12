@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { useModalsStore } from '~/stores/modals'
+import { useModalsStore } from '~/stores/budget/modals'
 
 interface SharedBudget {
   id: string

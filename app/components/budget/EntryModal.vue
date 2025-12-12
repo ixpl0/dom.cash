@@ -41,9 +41,9 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount, formatAmountRounded } from '~~/shared/utils/budget'
-import { useModalsStore } from '~/stores/modals'
-import { useBudgetStore } from '~/stores/budget'
+import { formatAmount, formatAmountRounded } from '~~/shared/utils/budget/budget'
+import { useBudgetStore } from '~/stores/budget/budget'
+import { useModalsStore } from '~/stores/budget/modals'
 import type { BudgetEntry } from '~~/shared/types/budget'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 

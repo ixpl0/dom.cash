@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import type { EntryFormData } from '~/composables/useEntryForm'
+import type { EntryFormData } from '~/composables/budget/useEntryForm'
 
 export interface UiEntryEditRowProps {
   modelValue: EntryFormData

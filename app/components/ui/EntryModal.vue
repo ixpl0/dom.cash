@@ -201,9 +201,9 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount } from '~~/shared/utils/budget'
+import { formatAmount } from '~~/shared/utils/budget/budget'
 import type { BudgetEntry } from '~~/shared/types/budget'
-import type { EntryFormData } from '~/composables/useEntryForm'
+import type { EntryFormData } from '~/composables/budget/useEntryForm'
 
 export interface UiEntryModalProps {
   isOpen: boolean

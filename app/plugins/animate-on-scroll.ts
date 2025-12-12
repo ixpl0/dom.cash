@@ -42,11 +42,17 @@ const handleIntersect = (
 
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.directive('animate-on-scroll', {
+    getSSRProps() {
+      return { class: 'animate-on-scroll-initial' }
+    },
+
+    created(element: HTMLElement) {
+      element.classList.add('animate-on-scroll-initial')
+    },
+
     mounted(element: HTMLElement, binding: DirectiveBinding) {
       const options = parseBinding(binding)
       const threshold = options.threshold ?? 0.1
-
-      element.classList.add('animate-on-scroll-initial')
 
       const observer = new IntersectionObserver(
         entries => handleIntersect(entries, element, options),

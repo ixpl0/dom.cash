@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { useModalsStore } from '~/stores/modals'
+import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 
 interface ShareEntry {

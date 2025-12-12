@@ -78,8 +78,8 @@
 </template>
 
 <script setup lang="ts">
-import type { CurrencyOption } from '~~/shared/utils/currencies'
-import { useRecentCurrencies } from '~~/app/composables/useRecentCurrencies'
+import type { CurrencyOption } from '~~/shared/utils/shared/currencies'
+import { useRecentCurrencies } from '~~/app/composables/budget/useRecentCurrencies'
 
 interface Props {
   modelValue: string

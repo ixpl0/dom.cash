@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount } from '~~/shared/utils/budget'
+import { formatAmount } from '~~/shared/utils/budget/budget'
 
 export interface EntryTableEntry {
   id: string

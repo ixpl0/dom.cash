@@ -15,9 +15,9 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmountRounded } from '~~/shared/utils/budget'
-import { createMonthId } from '~~/shared/utils/budget-calculations'
-import { useBudgetStore } from '~/stores/budget'
+import { formatAmountRounded } from '~~/shared/utils/budget/budget'
+import { createMonthId } from '~~/shared/utils/budget/budget-calculations'
+import { useBudgetStore } from '~/stores/budget/budget'
 import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 
 interface Props {

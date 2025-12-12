@@ -1,4 +1,4 @@
-import { CURRENCY_CODES, type CurrencyOption } from '~~/shared/utils/currencies'
+import { CURRENCY_CODES, type CurrencyOption } from '~~/shared/utils/shared/currencies'
 
 export const useCurrencies = () => {
   const { t } = useI18n()

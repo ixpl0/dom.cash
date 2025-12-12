@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { createMonth, findUserByUsername } from '~~/server/services/months'
+import { createMonth, findUserByUsername } from '~~/server/services/budget/months'
 import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'

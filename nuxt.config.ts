@@ -2,6 +2,12 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@pinia/nuxt', '@nuxt/icon', '@nuxtjs/i18n'],
+  imports: {
+    dirs: [
+      'composables/**',
+      'stores/**',
+    ],
+  },
   devtools: { enabled: true },
   app: {
     head: {

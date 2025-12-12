@@ -241,9 +241,9 @@
 </template>
 
 <script setup lang="ts">
-import { findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
-import { useBudgetStore } from '~/stores/budget'
-import { useModalsStore } from '~/stores/modals'
+import { findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
+import { useBudgetStore } from '~/stores/budget/budget'
+import { useModalsStore } from '~/stores/budget/modals'
 
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()

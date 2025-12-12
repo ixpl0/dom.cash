@@ -1,9 +1,9 @@
 import type { MonthData, ComputedMonthData, YearSummary, YearInfo } from '~~/shared/types/budget'
 import type { BudgetShareAccess } from '~~/server/db/schema'
-import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/month-helpers'
-import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/entry-strategies'
-import { toMutable } from '~~/shared/utils/immutable'
-import { computeMonthData, computeYearSummary, createMonthId } from '~~/shared/utils/budget-calculations'
+import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
+import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/budget/entry-strategies'
+import { toMutable } from '~~/shared/utils/shared/immutable'
+import { computeMonthData, computeYearSummary, createMonthId } from '~~/shared/utils/budget/budget-calculations'
 
 export interface YearsData {
   availableYears: YearInfo[]

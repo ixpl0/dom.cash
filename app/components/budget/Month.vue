@@ -25,10 +25,10 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmountRounded } from '~~/shared/utils/budget'
-import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/month-helpers'
-import { useModalsStore } from '~/stores/modals'
-import { useBudgetStore } from '~/stores/budget'
+import { formatAmountRounded } from '~~/shared/utils/budget/budget'
+import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/budget/month-helpers'
+import { useBudgetStore } from '~/stores/budget/budget'
+import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
 

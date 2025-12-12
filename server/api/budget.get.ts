@@ -1,8 +1,8 @@
 import { getQuery, createError } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
-import { getUserMonthsByYears, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/months'
-import { updateUserActivity } from '~~/server/services/users'
+import { getUserMonthsByYears, getAvailableYears, getInitialYearsToLoad } from '~~/server/services/budget/months'
+import { updateUserActivity } from '~~/server/services/auth/users'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
