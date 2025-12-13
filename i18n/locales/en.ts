@@ -574,8 +574,8 @@ export default {
       save: 'Save',
     },
     card: {
-      author: 'Author',
-      sharedWith: 'Shared with',
+      author: 'This person shared with you',
+      sharedWith: 'You shared with this person',
       ownedBy: 'By',
       plannedFor: 'Planned for',
       completed: 'Completed',

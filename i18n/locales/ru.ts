@@ -574,8 +574,8 @@ export default {
       save: 'Сохранить',
     },
     card: {
-      author: 'Автор',
-      sharedWith: 'Доступно',
+      author: 'Этот персонаж с вами поделился',
+      sharedWith: 'Вы поделились с этим персонажем',
       ownedBy: 'Автор',
       plannedFor: 'Запланировано на',
       completed: 'Выполнено',
