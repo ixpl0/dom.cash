@@ -4,7 +4,7 @@
       <div class="hero-content text-center py-16">
         <div class="max-w-2xl animate-fade-in">
           <div class="flex items-center justify-center gap-4 mb-6">
-            <UiLogo class="w-16 h-16 animate-bounce-slow" />
+            <UiLogo class="w-13 h-13 animate-bounce-slow" />
             <h1
               class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
               data-testid="home-title"
@@ -553,11 +553,24 @@ const formatDemoDate = (date: string | null | undefined): string => {
 }
 
 @keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
+  0% {
+    transform: translateY(5px) scaleY(0.9) scaleX(1.1);
+    animation-timing-function: ease-out;
   }
-  50% {
-    transform: translateY(-10px);
+  12% {
+    transform: translateY(-5px) scaleY(1.1) scaleX(0.9);
+    animation-timing-function: ease-out;
+  }
+  45% {
+    transform: translateY(-25px) scaleY(1) scaleX(1);
+    animation-timing-function: ease-in;
+  }
+  94% {
+    transform: translateY(5px) scaleY(1) scaleX(1);
+    animation-timing-function: linear;
+  }
+  100% {
+    transform: translateY(5px) scaleY(0.9) scaleX(1.1);
   }
 }
 
@@ -570,6 +583,6 @@ const formatDemoDate = (date: string | null | undefined): string => {
 }
 
 .animate-bounce-slow {
-  animation: bounce-slow 3s ease-in-out infinite;
+  animation: bounce-slow 1.5s ease-in-out infinite;
 }
 </style>
