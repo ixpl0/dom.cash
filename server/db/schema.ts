@@ -144,3 +144,43 @@ export const emailVerificationCode = sqliteTable(
 
 export type EmailVerificationCode = typeof emailVerificationCode.$inferSelect
 export type NewEmailVerificationCode = typeof emailVerificationCode.$inferInsert
+
+export const memo = sqliteTable(
+  'memo',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: ['todo', 'memo', 'plan'] }).notNull(),
+    content: text('content').notNull(),
+    isCompleted: integer('is_completed', { mode: 'boolean' }).default(false),
+    plannedDate: text('planned_date'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  },
+  t => [
+    index('idx_memo_user').on(t.userId),
+    index('idx_memo_type').on(t.type),
+  ],
+)
+
+export type Memo = typeof memo.$inferSelect
+export type NewMemo = typeof memo.$inferInsert
+export type MemoType = Memo['type']
+
+export const memoShare = sqliteTable(
+  'memo_share',
+  {
+    id: text('id').primaryKey(),
+    memoId: text('memo_id').notNull().references(() => memo.id, { onDelete: 'cascade' }),
+    sharedWithId: text('shared_with_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  },
+  t => [
+    unique('uq_memo_shared_with').on(t.memoId, t.sharedWithId),
+    index('idx_memo_share_memo').on(t.memoId),
+    index('idx_memo_share_user').on(t.sharedWithId),
+  ],
+)
+
+export type MemoShare = typeof memoShare.$inferSelect
+export type NewMemoShare = typeof memoShare.$inferInsert

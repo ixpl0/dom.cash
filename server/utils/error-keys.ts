@@ -65,6 +65,9 @@ export const ERROR_KEYS = {
   UNABLE_TO_DETERMINE_ORIGIN: 'serverErrors.unable_to_determine_origin',
   FAILED_TO_EXCHANGE_CODE: 'serverErrors.failed_to_exchange_code',
   NO_ID_TOKEN_RECEIVED: 'serverErrors.no_id_token_received',
+  MEMO_NOT_FOUND: 'serverErrors.memo_not_found',
+  MEMO_ID_REQUIRED: 'serverErrors.memo_id_required',
+  MEMO_NOT_TODO: 'serverErrors.memo_not_todo',
 } as const
 
 export type ErrorKey = typeof ERROR_KEYS[keyof typeof ERROR_KEYS]

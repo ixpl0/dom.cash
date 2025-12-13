@@ -29,6 +29,17 @@
           />
           <span class="hidden xl:inline">{{ t('header.metrics') }}</span>
         </NuxtLink>
+        <NuxtLink
+          to="/memo"
+          class="btn btn-outline btn-sm"
+          data-testid="memo-btn"
+        >
+          <Icon
+            name="heroicons:document-text"
+            size="16"
+          />
+          <span class="hidden xl:inline">{{ t('header.memo') }}</span>
+        </NuxtLink>
         <button
           class="btn btn-outline btn-sm"
           data-testid="shared-budgets-btn"
@@ -144,6 +155,18 @@
                   size="16"
                 />
                 {{ t('header.metrics') }}
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                to="/memo"
+                data-testid="mobile-memo-btn"
+              >
+                <Icon
+                  name="heroicons:document-text"
+                  size="16"
+                />
+                {{ t('header.memo') }}
               </NuxtLink>
             </li>
             <li>
