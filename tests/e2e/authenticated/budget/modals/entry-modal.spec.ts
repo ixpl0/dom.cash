@@ -39,8 +39,8 @@ test.describe('Entry Modal functionality', () => {
     test('should show error toast when trying to save entry with empty amount', async ({ page }) => {
       await initBudget(page, 'one-month-empty')
 
-      const balanceButton = page.getByTestId('balance-button').first()
-      await balanceButton.click()
+      const incomeButton = page.getByTestId('incomes-button').first()
+      await incomeButton.click()
 
       const modal = page.getByTestId('entry-modal')
       await expect(modal).toBeVisible()
@@ -245,8 +245,9 @@ test.describe('Entry Modal functionality', () => {
       await amountInput.fill('100')
 
       const optionalCheckbox = modal.getByTestId('entry-optional-checkbox')
-      await optionalCheckbox.check()
+      await optionalCheckbox.click()
       await expect(optionalCheckbox).toBeChecked()
+      await page.waitForTimeout(100)
 
       const saveButton = modal.getByTestId('entry-save-button')
       await saveButton.click()
@@ -254,7 +255,7 @@ test.describe('Entry Modal functionality', () => {
       const entryRows = modal.getByTestId('entry-row')
       await expect(entryRows).toHaveCount(1)
 
-      const checkIcon = entryRows.first().locator('svg.text-success')
+      const checkIcon = entryRows.first().locator('.text-success')
       await expect(checkIcon).toBeVisible()
     })
 
@@ -285,7 +286,7 @@ test.describe('Entry Modal functionality', () => {
       const entryRows = modal.getByTestId('entry-row')
       await expect(entryRows).toHaveCount(1)
 
-      const checkIcon = entryRows.first().locator('svg.text-success')
+      const checkIcon = entryRows.first().locator('.text-success')
       await expect(checkIcon).not.toBeVisible()
     })
 
@@ -308,7 +309,8 @@ test.describe('Entry Modal functionality', () => {
       await amountInput.fill('150')
 
       const optionalCheckbox = modal.getByTestId('entry-optional-checkbox')
-      await optionalCheckbox.check()
+      await optionalCheckbox.click()
+      await page.waitForTimeout(100)
 
       const saveButton = modal.getByTestId('entry-save-button')
       await saveButton.click()
@@ -330,7 +332,7 @@ test.describe('Entry Modal functionality', () => {
       const entryRowsAfterReload = modalAfterReload.getByTestId('entry-row')
       await expect(entryRowsAfterReload).toHaveCount(1)
 
-      const checkIcon = entryRowsAfterReload.first().locator('svg.text-success')
+      const checkIcon = entryRowsAfterReload.first().locator('.text-success')
       await expect(checkIcon).toBeVisible()
     })
   })

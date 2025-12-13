@@ -49,7 +49,7 @@
         type="checkbox"
         class="checkbox checkbox-sm"
         data-testid="entry-optional-checkbox"
-        @change="updateField('isOptional', ($event.target as HTMLInputElement).checked)"
+        @input="updateField('isOptional', ($event.target as HTMLInputElement).checked)"
       >
     </td>
     <td class="w-1">
