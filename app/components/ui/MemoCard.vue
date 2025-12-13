@@ -35,14 +35,14 @@
               <Icon
                 :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
                 size="14"
-                :class="isOverdue ? 'animate-pulse' : ''"
+                :class="isOverdue ? 'animate-blink' : ''"
               />
               {{ formattedDateTime }}
             </span>
 
             <span
               v-if="!isOwner"
-              class="tooltip badge badge-primary badge-outline badge-sm gap-1"
+              class="tooltip badge badge-info badge-outline badge-sm gap-1"
               :data-tip="authorTooltip"
             >
               <Icon
@@ -55,7 +55,7 @@
             <span
               v-for="user in sharedWith"
               :key="user.id"
-              class="tooltip badge badge-secondary badge-outline badge-sm gap-1"
+              class="tooltip badge badge-success badge-outline badge-sm gap-1"
               :data-tip="sharedWithTooltip"
               data-testid="memo-card-shared-badge"
             >
@@ -135,3 +135,13 @@ const formattedDateTime = computed(() => {
   })
 })
 </script>
+
+<style scoped>
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+</style>
