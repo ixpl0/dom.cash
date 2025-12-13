@@ -5,6 +5,7 @@ import { memo, memoShare } from '~~/server/db/schema'
 import type { NewMemoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const updateMemoSchema = z.object({
   content: z.string().min(1).max(10000).optional(),
@@ -91,6 +92,11 @@ export default defineEventHandler(async (event) => {
 
   const isOwner = existingMemo.userId === currentUser.id
 
+  const currentShares = await db
+    .select({ sharedWithId: memoShare.sharedWithId })
+    .from(memoShare)
+    .where(eq(memoShare.memoId, memoId))
+
   const updates: Partial<typeof memo.$inferInsert> = {
     updatedAt: new Date(),
   }
@@ -119,6 +125,40 @@ export default defineEventHandler(async (event) => {
       }))
       await db.insert(memoShare).values(shares)
     }
+  }
+
+  try {
+    const { createNotification } = await import('~~/server/services/notifications')
+    const memoContent = content ?? existingMemo.content
+    const truncatedContent = memoContent.length > 50 ? `${memoContent.slice(0, 50)}...` : memoContent
+
+    const targetUserIds: string[] = []
+
+    if (!isOwner) {
+      targetUserIds.push(existingMemo.userId)
+    }
+
+    for (const share of currentShares) {
+      if (share.sharedWithId !== currentUser.id && !targetUserIds.includes(share.sharedWithId)) {
+        targetUserIds.push(share.sharedWithId)
+      }
+    }
+
+    for (const targetUserId of targetUserIds) {
+      await createNotification({
+        sourceUserId: currentUser.id,
+        budgetOwnerId: existingMemo.userId,
+        targetUserId,
+        type: 'memo_updated',
+        params: {
+          username: currentUser.username,
+          memoContent: truncatedContent,
+        },
+      })
+    }
+  }
+  catch (error) {
+    secureLog.error('Error creating memo update notification:', error)
   }
 
   return { success: true }

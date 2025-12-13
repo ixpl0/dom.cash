@@ -3,6 +3,7 @@ import { useDatabase } from '~~/server/db'
 import { memo, memoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const canEditMemo = async (
   db: ReturnType<typeof useDatabase>,
@@ -86,6 +87,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const newIsCompleted = !existingMemo.isCompleted
+  const isOwner = existingMemo.userId === currentUser.id
+
+  const sharedWithUsers = await db
+    .select({ sharedWithId: memoShare.sharedWithId })
+    .from(memoShare)
+    .where(eq(memoShare.memoId, memoId))
 
   await db
     .update(memo)
@@ -94,6 +101,42 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date(),
     })
     .where(eq(memo.id, memoId))
+
+  try {
+    const { createNotification } = await import('~~/server/services/notifications')
+    const truncatedContent = existingMemo.content.length > 50
+      ? `${existingMemo.content.slice(0, 50)}...`
+      : existingMemo.content
+
+    const targetUserIds: string[] = []
+
+    if (!isOwner) {
+      targetUserIds.push(existingMemo.userId)
+    }
+
+    for (const share of sharedWithUsers) {
+      if (share.sharedWithId !== currentUser.id && !targetUserIds.includes(share.sharedWithId)) {
+        targetUserIds.push(share.sharedWithId)
+      }
+    }
+
+    for (const targetUserId of targetUserIds) {
+      await createNotification({
+        sourceUserId: currentUser.id,
+        budgetOwnerId: existingMemo.userId,
+        targetUserId,
+        type: 'memo_toggled',
+        params: {
+          username: currentUser.username,
+          memoContent: truncatedContent,
+          isCompleted: newIsCompleted,
+        },
+      })
+    }
+  }
+  catch (error) {
+    secureLog.error('Error creating memo toggle notification:', error)
+  }
 
   return { isCompleted: newIsCompleted }
 })

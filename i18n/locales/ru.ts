@@ -451,6 +451,11 @@ export default {
     write: 'чтение и редактирование',
   },
 
+  memoStatus: {
+    completed: 'выполнено',
+    incomplete: 'не выполнено',
+  },
+
   notifications: {
     budget_currency_changed: '{username} изменил основную валюту бюджета на {currency}',
     budget_month_added: '{username} добавил {month} {year} в бюджет',
@@ -462,6 +467,10 @@ export default {
     budget_share_revoked: '{username} отозвал у вас доступ к бюджету',
     budget_share_updated: '{username} изменил ваши права доступа на "{access}"',
     budget_imported: '{username} импортировал бюджет (месяцев: {monthsCount}, записей: {entriesCount})',
+    memo_created: '{username} поделился заметкой: "{memoContent}"',
+    memo_updated: '{username} изменил заметку: "{memoContent}"',
+    memo_deleted: '{username} удалил заметку: "{memoContent}"',
+    memo_toggled: '{username} отметил "{memoContent}" как {isCompleted}',
   },
 
   serverErrors: {

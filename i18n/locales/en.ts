@@ -451,6 +451,11 @@ export default {
     write: 'read and write',
   },
 
+  memoStatus: {
+    completed: 'completed',
+    incomplete: 'incomplete',
+  },
+
   notifications: {
     budget_currency_changed: '{username} changed the budget main currency to {currency}',
     budget_month_added: '{username} added {month} {year} to the budget',
@@ -462,6 +467,10 @@ export default {
     budget_share_revoked: '{username} revoked your access to their budget',
     budget_share_updated: '{username} changed your access level to "{access}"',
     budget_imported: '{username} imported budget ({monthsCount} months, {entriesCount} entries)',
+    memo_created: '{username} shared a note with you: "{memoContent}"',
+    memo_updated: '{username} updated note: "{memoContent}"',
+    memo_deleted: '{username} deleted note: "{memoContent}"',
+    memo_toggled: '{username} marked "{memoContent}" as {isCompleted}',
   },
 
   serverErrors: {

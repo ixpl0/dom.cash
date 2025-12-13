@@ -7,5 +7,7 @@
 <script setup lang="ts">
 const memoStore = useMemoStore()
 
+useNotifications()
+
 await memoStore.refresh()
 </script>

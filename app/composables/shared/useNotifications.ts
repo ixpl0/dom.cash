@@ -48,6 +48,12 @@ const formatNotificationMessage = (
   if (params.access) {
     translatedParams.access = t(`accessLevel.${params.access}`)
   }
+  if (params.memoContent) {
+    translatedParams.memoContent = params.memoContent
+  }
+  if (params.isCompleted !== undefined) {
+    translatedParams.isCompleted = t(`memoStatus.${params.isCompleted ? 'completed' : 'incomplete'}`)
+  }
 
   return t(`notifications.${type}`, translatedParams)
 }

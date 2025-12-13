@@ -4,6 +4,7 @@ import { memo, memoShare } from '~~/server/db/schema'
 import type { NewMemo, NewMemoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 const createMemoSchema = z.object({
   type: z.enum(['todo', 'memo', 'plan']),
@@ -47,6 +48,26 @@ export default defineEventHandler(async (event) => {
       createdAt: now,
     }))
     await db.insert(memoShare).values(shares)
+
+    try {
+      const { createNotification } = await import('~~/server/services/notifications')
+      const truncatedContent = content.length > 50 ? `${content.slice(0, 50)}...` : content
+      for (const targetUserId of sharedWithUserIds) {
+        await createNotification({
+          sourceUserId: currentUser.id,
+          budgetOwnerId: currentUser.id,
+          targetUserId,
+          type: 'memo_created',
+          params: {
+            username: currentUser.username,
+            memoContent: truncatedContent,
+          },
+        })
+      }
+    }
+    catch (error) {
+      secureLog.error('Error creating memo notification:', error)
+    }
   }
 
   return {
