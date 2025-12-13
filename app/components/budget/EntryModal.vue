@@ -135,7 +135,7 @@ const {
   startEdit,
   cancelEdit,
   resetForm,
-} = useEntryForm(computed(() => entryModal.value.entryKind))
+} = useEntryForm(computed(() => entryModal.value.entryKind), mainCurrency)
 
 const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) => {
   if (event === 'added') {

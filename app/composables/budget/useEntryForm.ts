@@ -19,7 +19,10 @@ export interface EntryFormState {
   newEntry: Ref<EntryFormData>
 }
 
-export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>) => {
+export const useEntryForm = (
+  entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>,
+  defaultCurrency: MaybeRef<string> = '',
+) => {
   const { locale, t } = useI18n()
   const isAdding = ref(false)
   const isDeleting = ref<string | null>(null)
@@ -30,7 +33,7 @@ export const useEntryForm = (entryKind: MaybeRef<'balance' | 'income' | 'expense
   const createDefaultFormData = (): EntryFormData => ({
     description: '',
     amount: 0,
-    currency: '',
+    currency: unref(defaultCurrency),
     date: new Date().toISOString().split('T')[0] || '',
     isOptional: false,
   })
