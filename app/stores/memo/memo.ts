@@ -9,6 +9,13 @@ export const useMemoStore = defineStore('memo', () => {
   const isLoading = ref(false)
   const filter = ref<MemoFilter>('all')
 
+  const isOverdue = (item: MemoListItem): boolean => {
+    if (!item.plannedDate || item.isCompleted) {
+      return false
+    }
+    return new Date(item.plannedDate) <= new Date()
+  }
+
   const filteredItems = computed((): MemoListItem[] => {
     if (!data.value) {
       return []
@@ -17,6 +24,37 @@ export const useMemoStore = defineStore('memo', () => {
       return data.value.items
     }
     return data.value.items.filter(item => item.type === filter.value)
+  })
+
+  const sortedItems = computed((): MemoListItem[] => {
+    const items = [...filteredItems.value]
+    return items.sort((a, b) => {
+      const aOverdue = isOverdue(a)
+      const bOverdue = isOverdue(b)
+      if (aOverdue && !bOverdue) {
+        return -1
+      }
+      if (!aOverdue && bOverdue) {
+        return 1
+      }
+      if (a.plannedDate && b.plannedDate) {
+        return new Date(a.plannedDate).getTime() - new Date(b.plannedDate).getTime()
+      }
+      if (a.plannedDate) {
+        return -1
+      }
+      if (b.plannedDate) {
+        return 1
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  })
+
+  const overdueCount = computed((): number => {
+    if (!data.value) {
+      return 0
+    }
+    return data.value.items.filter(isOverdue).length
   })
 
   const getMemoById = (id: string): MemoListItem | undefined => {
@@ -174,6 +212,8 @@ export const useMemoStore = defineStore('memo', () => {
     isLoading,
     filter,
     filteredItems,
+    sortedItems,
+    overdueCount,
     getMemoById,
     refresh,
     forceRefresh,

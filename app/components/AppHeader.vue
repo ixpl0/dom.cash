@@ -29,17 +29,25 @@
           />
           <span class="hidden xl:inline">{{ t('header.metrics') }}</span>
         </NuxtLink>
-        <NuxtLink
-          to="/memo"
-          class="btn btn-outline btn-sm"
-          data-testid="memo-btn"
-        >
-          <Icon
-            name="heroicons:document-text"
-            size="16"
-          />
-          <span class="hidden xl:inline">{{ t('header.memo') }}</span>
-        </NuxtLink>
+        <div class="indicator">
+          <span
+            v-if="memoStore.overdueCount > 0"
+            class="indicator-item badge badge-error badge-xs"
+          >
+            {{ memoStore.overdueCount }}
+          </span>
+          <NuxtLink
+            to="/memo"
+            class="btn btn-outline btn-sm"
+            data-testid="memo-btn"
+          >
+            <Icon
+              name="heroicons:document-text"
+              size="16"
+            />
+            <span class="hidden xl:inline">{{ t('header.memo') }}</span>
+          </NuxtLink>
+        </div>
         <button
           class="btn btn-outline btn-sm"
           data-testid="shared-budgets-btn"
@@ -160,13 +168,22 @@
             <li>
               <NuxtLink
                 to="/memo"
+                class="flex items-center justify-between"
                 data-testid="mobile-memo-btn"
               >
-                <Icon
-                  name="heroicons:document-text"
-                  size="16"
-                />
-                {{ t('header.memo') }}
+                <span class="flex items-center gap-2">
+                  <Icon
+                    name="heroicons:document-text"
+                    size="16"
+                  />
+                  {{ t('header.memo') }}
+                </span>
+                <span
+                  v-if="memoStore.overdueCount > 0"
+                  class="badge badge-error badge-xs"
+                >
+                  {{ memoStore.overdueCount }}
+                </span>
               </NuxtLink>
             </li>
             <li>
@@ -241,5 +258,6 @@
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
 const modalsStore = useModalsStore()
+const memoStore = useMemoStore()
 const { t } = useI18n()
 </script>

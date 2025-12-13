@@ -1,6 +1,7 @@
 <template>
   <div
-    class="card bg-base-100 shadow-sm border border-base-300"
+    class="card bg-base-100 shadow-sm border"
+    :class="isOverdue ? 'border-error border-2' : 'border-base-300'"
     data-testid="memo-card"
   >
     <div class="card-body p-4">
@@ -28,11 +29,13 @@
             <span
               v-if="plannedDate"
               class="flex items-center gap-1"
+              :class="isOverdue ? 'text-error font-medium' : ''"
               data-testid="memo-card-date"
             >
               <Icon
-                name="heroicons:calendar"
+                :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
                 size="14"
+                :class="isOverdue ? 'animate-pulse' : ''"
               />
               {{ formattedDateTime }}
             </span>
@@ -111,6 +114,13 @@ defineEmits<{
   edit: []
   delete: []
 }>()
+
+const isOverdue = computed(() => {
+  if (!props.plannedDate || props.isCompleted) {
+    return false
+  }
+  return new Date(props.plannedDate) <= new Date()
+})
 
 const formattedDateTime = computed(() => {
   if (!props.plannedDate) {

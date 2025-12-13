@@ -34,7 +34,7 @@
 
     <MemoList
       v-else
-      :items="memoStore.filteredItems"
+      :items="memoStore.sortedItems"
       :empty-message="emptyMessage"
     />
 
