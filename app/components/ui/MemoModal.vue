@@ -24,8 +24,8 @@
         </div>
 
         <form @submit.prevent="handleSubmit">
-          <div class="form-control mb-4">
-            <label class="label">
+          <div class="form-control mb-6">
+            <label class="label pb-1">
               <span class="label-text">{{ contentLabel }}</span>
             </label>
             <textarea
@@ -37,8 +37,8 @@
             />
           </div>
 
-          <div class="form-control mb-4">
-            <label class="label">
+          <div class="form-control mb-6">
+            <label class="label pb-1">
               <span class="label-text">{{ dateLabel }}</span>
             </label>
             <input
@@ -51,9 +51,9 @@
 
           <div
             v-if="isOwner && connections.length > 0"
-            class="form-control mb-4"
+            class="form-control mb-6"
           >
-            <label class="label">
+            <label class="label pb-1">
               <span class="label-text">{{ shareLabel }}</span>
             </label>
             <div
@@ -74,7 +74,7 @@
                 <span>{{ connection.username }}</span>
               </label>
             </div>
-            <label class="label">
+            <label class="label pt-1">
               <span class="label-text-alt text-base-content/60">
                 {{ form.sharedWithUserIds.length === 0 ? sharePrivate : '' }}
               </span>
