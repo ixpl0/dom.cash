@@ -71,13 +71,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (existingMemo.type !== 'todo') {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.MEMO_NOT_TODO,
-    })
-  }
-
   const canEdit = await canEditMemo(db, memoId, currentUser.id)
   if (!canEdit) {
     throw createError({

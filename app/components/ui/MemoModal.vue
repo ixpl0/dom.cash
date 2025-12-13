@@ -43,7 +43,7 @@
             </label>
             <input
               v-model="form.plannedDate"
-              type="date"
+              type="datetime-local"
               class="input input-bordered w-full"
               data-testid="memo-modal-date-input"
             >

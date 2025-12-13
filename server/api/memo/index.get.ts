@@ -71,7 +71,7 @@ export default defineEventHandler(async (event): Promise<MemoData> => {
     updatedAt: m.updatedAt.toISOString(),
     isOwner: m.userId === currentUser.id,
     ownerUsername: m.ownerUsername,
-    sharedWith: sharesByMemoId.get(m.id) ?? [],
+    sharedWith: (sharesByMemoId.get(m.id) ?? []).filter(s => s.id !== currentUser.id),
   }))
 
   return { items }

@@ -5,10 +5,7 @@
   >
     <div class="card-body p-4">
       <div class="flex items-start gap-3">
-        <div
-          v-if="type === 'todo'"
-          class="pt-1"
-        >
+        <div class="pt-1">
           <input
             type="checkbox"
             class="checkbox checkbox-primary"
@@ -18,21 +15,10 @@
           >
         </div>
 
-        <div
-          v-else
-          class="pt-1"
-        >
-          <Icon
-            :name="typeIcon"
-            size="20"
-            class="text-base-content/60"
-          />
-        </div>
-
         <div class="flex-1 min-w-0">
           <p
             class="whitespace-pre-wrap break-words"
-            :class="{ 'line-through text-base-content/50': type === 'todo' && isCompleted }"
+            :class="{ 'line-through text-base-content/50': isCompleted }"
             data-testid="memo-card-content"
           >
             {{ content }}
@@ -40,7 +26,7 @@
 
           <div class="flex flex-wrap items-center gap-2 mt-2 text-sm text-base-content/60">
             <span
-              v-if="type === 'plan' && plannedDate"
+              v-if="plannedDate"
               class="flex items-center gap-1"
               data-testid="memo-card-date"
             >
@@ -48,16 +34,17 @@
                 name="heroicons:calendar"
                 size="14"
               />
-              {{ formattedDate }}
+              {{ formattedDateTime }}
             </span>
 
             <span
               v-if="!isOwner"
-              class="flex items-center gap-1"
+              class="tooltip badge badge-outline badge-sm gap-1"
+              :data-tip="authorTooltip"
             >
               <Icon
-                name="heroicons:user"
-                size="14"
+                name="heroicons:at-symbol"
+                size="12"
               />
               {{ ownerUsername }}
             </span>
@@ -65,9 +52,14 @@
             <span
               v-for="user in sharedWith"
               :key="user.id"
-              class="badge badge-outline badge-sm"
+              class="tooltip badge badge-outline badge-sm gap-1"
+              :data-tip="sharedWithTooltip"
               data-testid="memo-card-shared-badge"
             >
+              <Icon
+                name="heroicons:user-plus"
+                size="12"
+              />
               {{ user.username }}
             </span>
           </div>
@@ -101,16 +93,15 @@
 </template>
 
 <script setup lang="ts">
-import type { MemoType } from '~~/shared/types/memo'
-
 interface Props {
-  type: MemoType
   content: string
   isCompleted: boolean
   plannedDate: string | null
   isOwner: boolean
   ownerUsername: string
   sharedWith: Array<{ id: string, username: string }>
+  authorTooltip: string
+  sharedWithTooltip: string
 }
 
 const props = defineProps<Props>()
@@ -121,23 +112,16 @@ defineEmits<{
   delete: []
 }>()
 
-const typeIcon = computed(() => {
-  switch (props.type) {
-    case 'todo':
-      return 'heroicons:check-circle'
-    case 'memo':
-      return 'heroicons:document-text'
-    case 'plan':
-      return 'heroicons:calendar-days'
-    default:
-      return 'heroicons:document'
-  }
-})
-
-const formattedDate = computed(() => {
+const formattedDateTime = computed(() => {
   if (!props.plannedDate) {
     return ''
   }
-  return new Date(props.plannedDate).toLocaleDateString()
+  const date = new Date(props.plannedDate)
+  return date.toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 })
 </script>

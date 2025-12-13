@@ -9,7 +9,7 @@ import { secureLog } from '~~/server/utils/secure-logger'
 
 const updateMemoSchema = z.object({
   content: z.string().min(1).max(10000).optional(),
-  plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).nullable().optional(),
   sharedWithUserIds: z.array(z.string()).optional(),
 })
 

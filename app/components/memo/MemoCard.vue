@@ -1,12 +1,13 @@
 <template>
   <UiMemoCard
-    :type="memo.type"
     :content="memo.content"
     :is-completed="memo.isCompleted"
     :planned-date="memo.plannedDate"
     :is-owner="memo.isOwner"
     :owner-username="memo.ownerUsername"
     :shared-with="memo.sharedWith"
+    :author-tooltip="t('memo.card.author')"
+    :shared-with-tooltip="t('memo.card.sharedWith')"
     @toggle="handleToggle"
     @edit="handleEdit"
     @delete="handleDelete"

@@ -9,7 +9,7 @@ import { secureLog } from '~~/server/utils/secure-logger'
 const createMemoSchema = z.object({
   type: z.enum(['todo', 'memo', 'plan']),
   content: z.string().min(1).max(10000),
-  plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).optional(),
   sharedWithUserIds: z.array(z.string()).optional(),
 })
 
