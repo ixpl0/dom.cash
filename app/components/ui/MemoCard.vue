@@ -39,7 +39,7 @@
 
             <span
               v-if="!isOwner"
-              class="tooltip badge badge-outline badge-sm gap-1"
+              class="tooltip badge badge-primary badge-outline badge-sm gap-1"
               :data-tip="authorTooltip"
             >
               <Icon
@@ -52,12 +52,12 @@
             <span
               v-for="user in sharedWith"
               :key="user.id"
-              class="tooltip badge badge-outline badge-sm gap-1"
+              class="tooltip badge badge-secondary badge-outline badge-sm gap-1"
               :data-tip="sharedWithTooltip"
               data-testid="memo-card-shared-badge"
             >
               <Icon
-                name="heroicons:user-plus"
+                name="heroicons:user"
                 size="12"
               />
               {{ user.username }}
