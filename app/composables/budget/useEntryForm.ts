@@ -53,6 +53,10 @@ export const useEntryForm = (
   }
 
   const startAdd = (): void => {
+    if (editingEntryId.value) {
+      editingEntryId.value = null
+      editingEntry.value = createDefaultFormData()
+    }
     isAddingNewEntry.value = true
     newEntry.value = createDefaultFormData()
   }
@@ -63,6 +67,10 @@ export const useEntryForm = (
   }
 
   const startEdit = (entry: BudgetEntry): void => {
+    if (isAddingNewEntry.value) {
+      isAddingNewEntry.value = false
+      newEntry.value = createDefaultFormData()
+    }
     editingEntryId.value = entry.id
     editingEntry.value = {
       description: entry.description,
