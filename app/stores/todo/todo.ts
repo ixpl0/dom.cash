@@ -1,4 +1,5 @@
-import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection } from '~~/shared/types/todo'
+import type { DateReference } from '~~/shared/types/recurrence'
+import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult } from '~~/shared/types/todo'
 
 const HIDE_COMPLETED_KEY = 'todo-hide-completed'
 
@@ -16,6 +17,7 @@ export const useTodoStore = defineStore('todo', () => {
   const error = ref<string | null>(null)
   const isLoading = ref(false)
   const hideCompleted = ref(getInitialHideCompleted())
+  const togglingIds = ref<Set<string>>(new Set())
 
   const isOverdue = (item: TodoListItem): boolean => {
     if (!item.plannedDate || item.isCompleted) {
@@ -177,6 +179,10 @@ export const useTodoStore = defineStore('todo', () => {
                 .filter((c): c is { id: string, username: string } => c !== null)
             }
 
+            if (payload.recurrence !== undefined) {
+              updatedItem.recurrence = payload.recurrence
+            }
+
             return updatedItem
           }),
         }
@@ -208,13 +214,20 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
-  const toggleTodo = async (id: string): Promise<boolean> => {
+  const toggleTodo = async (id: string, reference?: DateReference): Promise<boolean> => {
     const item = data.value?.items.find(i => i.id === id)
     if (!item) {
       return false
     }
 
-    if (data.value) {
+    const isRecurring = item.recurrence !== null
+    const originalIsCompleted = item.isCompleted
+    const originalPlannedDate = item.plannedDate
+
+    if (isRecurring) {
+      togglingIds.value = new Set([...togglingIds.value, id])
+    }
+    else if (data.value) {
       data.value = {
         items: data.value.items.map(i =>
           i.id === id ? { ...i, isCompleted: !i.isCompleted } : i,
@@ -223,16 +236,42 @@ export const useTodoStore = defineStore('todo', () => {
     }
 
     try {
-      await $fetch(`/api/todo/${id}/toggle`, {
+      const result = await $fetch<ToggleResult>(`/api/todo/${id}/toggle`, {
         method: 'PUT',
+        body: reference ? { reference } : undefined,
       })
-      return true
-    }
-    catch (e) {
+
+      if (isRecurring) {
+        await new Promise(resolve => setTimeout(resolve, 400))
+        togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
+      }
+
       if (data.value) {
         data.value = {
           items: data.value.items.map(i =>
-            i.id === id ? { ...i, isCompleted: !i.isCompleted } : i,
+            i.id === id
+              ? {
+                  ...i,
+                  isCompleted: result.isCompleted,
+                  plannedDate: result.plannedDate ?? i.plannedDate,
+                }
+              : i,
+          ),
+        }
+      }
+
+      return true
+    }
+    catch (e) {
+      if (isRecurring) {
+        togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
+      }
+      else if (data.value) {
+        data.value = {
+          items: data.value.items.map(i =>
+            i.id === id
+              ? { ...i, isCompleted: originalIsCompleted, plannedDate: originalPlannedDate }
+              : i,
           ),
         }
       }
@@ -254,6 +293,11 @@ export const useTodoStore = defineStore('todo', () => {
     error.value = null
     isLoading.value = false
     hideCompleted.value = true
+    togglingIds.value = new Set()
+  }
+
+  const isToggling = (id: string): boolean => {
+    return togglingIds.value.has(id)
   }
 
   return {
@@ -266,6 +310,7 @@ export const useTodoStore = defineStore('todo', () => {
     sortedItems,
     overdueCount,
     getTodoById,
+    isToggling,
     refresh,
     forceRefresh,
     createTodo,

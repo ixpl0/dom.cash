@@ -1,5 +1,6 @@
 import { sqliteTable, integer, text, unique, index, check } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm'
+import type { RecurrencePattern } from '~~/shared/types/recurrence'
 
 type Rates = Record<string, number>
 
@@ -153,6 +154,7 @@ export const todo = sqliteTable(
     content: text('content').notNull(),
     isCompleted: integer('is_completed', { mode: 'boolean' }).default(false),
     plannedDate: text('planned_date'),
+    recurrence: text('recurrence', { mode: 'json' }).$type<RecurrencePattern | null>(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   },

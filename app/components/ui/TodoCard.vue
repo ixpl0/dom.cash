@@ -26,17 +26,33 @@
           </p>
 
           <div
-            v-if="plannedDate"
-            class="flex items-center gap-1 mt-2 text-sm text-base-content/60"
+            v-if="plannedDate || recurrence"
+            class="flex items-center gap-2 mt-2 text-sm text-base-content/60"
             :class="isOverdue ? 'text-error font-medium' : ''"
             data-testid="todo-card-date"
           >
-            <Icon
-              :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
-              size="14"
-              :class="isOverdue ? 'animate-blink' : ''"
-            />
-            {{ formattedDate }}
+            <div
+              v-if="plannedDate"
+              class="flex items-center gap-1"
+            >
+              <Icon
+                :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
+                size="14"
+                :class="isOverdue ? 'animate-blink' : ''"
+              />
+              {{ formattedDate }}
+            </div>
+            <span
+              v-if="recurrence"
+              class="tooltip badge badge-secondary badge-outline badge-sm gap-1"
+              :data-tip="recurrenceTooltip"
+              data-testid="todo-card-recurrence-badge"
+            >
+              <Icon
+                name="heroicons:arrow-path"
+                size="12"
+              />
+            </span>
           </div>
 
           <div
@@ -99,15 +115,19 @@
 </template>
 
 <script setup lang="ts">
+import type { RecurrencePattern } from '~~/shared/types/recurrence'
+
 interface Props {
   content: string
   isCompleted: boolean
   plannedDate: string | null
+  recurrence: RecurrencePattern | null
   isOwner: boolean
   ownerUsername: string
   sharedWith: Array<{ id: string, username: string }>
   authorTooltip: string
   sharedWithTooltip: string
+  recurrenceTooltip: string
 }
 
 const props = defineProps<Props>()

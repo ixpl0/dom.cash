@@ -3,6 +3,7 @@ import { useDatabase } from '~~/server/db'
 import { todo, todoShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import type { TodoListItem, TodoData } from '~~/shared/types/todo'
 
 export default defineEventHandler(async (event): Promise<TodoData> => {
@@ -28,6 +29,7 @@ export default defineEventHandler(async (event): Promise<TodoData> => {
       content: todo.content,
       isCompleted: todo.isCompleted,
       plannedDate: todo.plannedDate,
+      recurrence: todo.recurrence,
       createdAt: todo.createdAt,
       updatedAt: todo.updatedAt,
       userId: todo.userId,
@@ -65,6 +67,7 @@ export default defineEventHandler(async (event): Promise<TodoData> => {
     content: t.content,
     isCompleted: t.isCompleted ?? false,
     plannedDate: t.plannedDate,
+    recurrence: (t.recurrence as RecurrencePattern | null) ?? null,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
     isOwner: t.userId === currentUser.id,

@@ -1,9 +1,18 @@
 import { eq, and } from 'drizzle-orm'
+import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
 import { todo, todoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { dateReferenceSchema } from '~~/shared/schemas/recurrence'
+import type { RecurrencePattern } from '~~/shared/types/recurrence'
+import type { ToggleResult } from '~~/shared/types/todo'
+import { calculateNextDate, formatDateForDb } from '~~/shared/utils/recurrence'
+
+const toggleTodoSchema = z.object({
+  reference: dateReferenceSchema.optional(),
+})
 
 const canEditTodo = async (
   db: ReturnType<typeof useDatabase>,
@@ -79,13 +88,85 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const newIsCompleted = !existingTodo.isCompleted
+  const body = await readBody(event)
+  const { reference } = toggleTodoSchema.parse(body ?? {})
+
   const isOwner = existingTodo.userId === currentUser.id
 
   const sharedWithUsers = await db
     .select({ sharedWithId: todoShare.sharedWithId })
     .from(todoShare)
     .where(eq(todoShare.todoId, todoId))
+
+  const recurrence = existingTodo.recurrence as RecurrencePattern | null
+
+  if (recurrence) {
+    const baseDate = existingTodo.plannedDate
+      ? new Date(existingTodo.plannedDate)
+      : new Date()
+
+    const nextDate = calculateNextDate(
+      recurrence,
+      baseDate,
+      reference ?? 'planned',
+    )
+
+    const newPlannedDate = formatDateForDb(nextDate)
+
+    await db
+      .update(todo)
+      .set({
+        plannedDate: newPlannedDate,
+        updatedAt: new Date(),
+      })
+      .where(eq(todo.id, todoId))
+
+    try {
+      const { createNotification } = await import('~~/server/services/notifications')
+      const truncatedContent = existingTodo.content.length > 50
+        ? `${existingTodo.content.slice(0, 50)}...`
+        : existingTodo.content
+
+      const targetUserIds: string[] = []
+
+      if (!isOwner) {
+        targetUserIds.push(existingTodo.userId)
+      }
+
+      for (const share of sharedWithUsers) {
+        if (share.sharedWithId !== currentUser.id && !targetUserIds.includes(share.sharedWithId)) {
+          targetUserIds.push(share.sharedWithId)
+        }
+      }
+
+      for (const targetUserId of targetUserIds) {
+        await createNotification({
+          sourceUserId: currentUser.id,
+          budgetOwnerId: existingTodo.userId,
+          targetUserId,
+          type: 'todo_toggled',
+          params: {
+            username: currentUser.username,
+            todoContent: truncatedContent,
+            isCompleted: false,
+          },
+        })
+      }
+    }
+    catch (error) {
+      secureLog.error('Error creating todo toggle notification:', error)
+    }
+
+    const result: ToggleResult = {
+      isCompleted: false,
+      plannedDate: newPlannedDate,
+      isRecurring: true,
+    }
+
+    return result
+  }
+
+  const newIsCompleted = !existingTodo.isCompleted
 
   await db
     .update(todo)
@@ -131,5 +212,10 @@ export default defineEventHandler(async (event) => {
     secureLog.error('Error creating todo toggle notification:', error)
   }
 
-  return { isCompleted: newIsCompleted }
+  const result: ToggleResult = {
+    isCompleted: newIsCompleted,
+    isRecurring: false,
+  }
+
+  return result
 })

@@ -7,10 +7,12 @@ import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { getTodoRecipientIds } from '~~/server/utils/todo-permissions'
+import { recurrencePatternSchema } from '~~/shared/schemas/recurrence'
 
 const updateTodoSchema = z.object({
   content: z.string().min(1).max(10000).optional(),
   plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).nullable().optional(),
+  recurrence: recurrencePatternSchema.nullable().optional(),
   sharedWithUserIds: z.array(z.string()).optional(),
 })
 
@@ -81,7 +83,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { content, plannedDate, sharedWithUserIds } = updateTodoSchema.parse(body)
+  const { content, plannedDate, recurrence, sharedWithUserIds } = updateTodoSchema.parse(body)
 
   const existingTodo = todoRecord[0]
   if (!existingTodo) {
@@ -126,6 +128,10 @@ export default defineEventHandler(async (event) => {
 
   if (plannedDate !== undefined) {
     updates.plannedDate = plannedDate
+  }
+
+  if (recurrence !== undefined) {
+    updates.recurrence = recurrence
   }
 
   await db.update(todo).set(updates).where(eq(todo.id, todoId))
