@@ -560,6 +560,8 @@ export default {
       dateLabel: 'Reminder date',
       shareLabel: 'Share with',
       sharePrivate: 'Nobody selected (Private task)',
+      shareHint: 'You can send tasks to users who shared their budget with you',
+      noConnections: 'To share tasks, ask the person to share their budget with you first',
       cancel: 'Cancel',
       save: 'Save',
     },

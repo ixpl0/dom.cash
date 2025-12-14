@@ -1,39 +1,13 @@
-import { eq, inArray, or } from 'drizzle-orm'
+import { inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, todo, todoShare, user } from '~~/server/db/schema'
+import { todo, todoShare, user } from '~~/server/db/schema'
 import type { NewTodo, NewTodoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { getTodoRecipientIds } from '~~/server/utils/todo-permissions'
 import type { TodoListItem } from '~~/shared/types/todo'
-
-const getConnectionUserIds = async (
-  db: ReturnType<typeof useDatabase>,
-  userId: string,
-): Promise<Set<string>> => {
-  const shares = await db
-    .select({
-      ownerId: budgetShare.ownerId,
-      sharedWithId: budgetShare.sharedWithId,
-    })
-    .from(budgetShare)
-    .where(or(
-      eq(budgetShare.ownerId, userId),
-      eq(budgetShare.sharedWithId, userId),
-    ))
-
-  const connectedUserIds = new Set<string>()
-  for (const share of shares) {
-    if (share.ownerId !== userId) {
-      connectedUserIds.add(share.ownerId)
-    }
-    if (share.sharedWithId !== userId) {
-      connectedUserIds.add(share.sharedWithId)
-    }
-  }
-  return connectedUserIds
-}
 
 const createTodoSchema = z.object({
   content: z.string().min(1).max(10000),
@@ -55,8 +29,8 @@ export default defineEventHandler(async (event) => {
   const { content, plannedDate, sharedWithUserIds } = createTodoSchema.parse(body)
 
   if (sharedWithUserIds && sharedWithUserIds.length > 0) {
-    const connectionIds = await getConnectionUserIds(db, currentUser.id)
-    const invalidUserIds = sharedWithUserIds.filter(id => !connectionIds.has(id))
+    const recipientIds = await getTodoRecipientIds(db, currentUser.id)
+    const invalidUserIds = sharedWithUserIds.filter(id => !recipientIds.has(id))
     if (invalidUserIds.length > 0) {
       throw createError({
         statusCode: 400,

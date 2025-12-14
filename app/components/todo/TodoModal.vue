@@ -11,6 +11,7 @@
     :date-label="t('todo.modal.dateLabel')"
     :share-label="t('todo.modal.shareLabel')"
     :share-private="t('todo.modal.sharePrivate')"
+    :share-hint="todoStore.connections.length > 0 ? t('todo.modal.shareHint') : t('todo.modal.noConnections')"
     :cancel-text="t('todo.modal.cancel')"
     :save-text="t('todo.modal.save')"
     :connections="todoStore.connections"

@@ -57,13 +57,17 @@
           </div>
 
           <div
-            v-if="isOwner && connections.length > 0"
+            v-if="isOwner"
             class="form-control mb-6"
           >
-            <label class="label pb-1">
+            <label
+              v-if="connections.length > 0"
+              class="label pb-1"
+            >
               <span class="label-text">{{ shareLabel }}</span>
             </label>
             <div
+              v-if="connections.length > 0"
               class="flex flex-col gap-2"
               data-testid="todo-modal-share-select"
             >
@@ -81,11 +85,17 @@
                 <span>{{ connection.username }}</span>
               </label>
             </div>
-            <label class="label pt-1">
+            <label
+              v-if="connections.length > 0 && form.sharedWithUserIds.length === 0"
+              class="label pt-1"
+            >
               <span class="label-text-alt text-base-content/60">
-                {{ form.sharedWithUserIds.length === 0 ? sharePrivate : '' }}
+                {{ sharePrivate }}
               </span>
             </label>
+            <p class="text-xs text-base-content/50 pt-1">
+              {{ shareHint }}
+            </p>
           </div>
 
           <div class="flex justify-end gap-2 mt-6">
@@ -133,6 +143,7 @@ interface Props {
   dateLabel: string
   shareLabel: string
   sharePrivate: string
+  shareHint: string
   cancelText: string
   saveText: string
   connections: TodoConnection[]

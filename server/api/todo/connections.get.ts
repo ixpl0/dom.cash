@@ -1,4 +1,4 @@
-import { eq, or } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
@@ -16,38 +16,23 @@ export default defineEventHandler(async (event): Promise<TodoConnection[]> => {
   }
 
   const shares = await db
-    .select({
-      ownerId: budgetShare.ownerId,
-      sharedWithId: budgetShare.sharedWithId,
-    })
+    .select({ ownerId: budgetShare.ownerId })
     .from(budgetShare)
-    .where(or(
-      eq(budgetShare.ownerId, currentUser.id),
-      eq(budgetShare.sharedWithId, currentUser.id),
-    ))
+    .where(eq(budgetShare.sharedWithId, currentUser.id))
 
-  const connectedUserIds = new Set<string>()
-  shares.forEach((share) => {
-    if (share.ownerId !== currentUser.id) {
-      connectedUserIds.add(share.ownerId)
-    }
-    if (share.sharedWithId !== currentUser.id) {
-      connectedUserIds.add(share.sharedWithId)
-    }
-  })
+  const recipientIds = shares.map(share => share.ownerId)
 
-  if (connectedUserIds.size === 0) {
+  if (recipientIds.length === 0) {
     return []
   }
 
-  const userIds = [...connectedUserIds]
   const users = await db
     .select({
       id: user.id,
       username: user.username,
     })
     .from(user)
-    .where(or(...userIds.map(id => eq(user.id, id))))
+    .where(inArray(user.id, recipientIds))
 
   return users
 })
