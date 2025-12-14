@@ -44,14 +44,14 @@
             </div>
             <span
               v-if="recurrence"
-              class="tooltip badge badge-secondary badge-outline badge-sm gap-1"
-              :data-tip="recurrenceTooltip"
+              class="badge badge-secondary badge-outline badge-sm gap-1"
               data-testid="todo-card-recurrence-badge"
             >
               <Icon
                 name="heroicons:arrow-path"
                 size="12"
               />
+              {{ recurrenceText }}
             </span>
           </div>
 
@@ -127,7 +127,7 @@ interface Props {
   sharedWith: Array<{ id: string, username: string }>
   authorTooltip: string
   sharedWithTooltip: string
-  recurrenceTooltip: string
+  recurrenceText: string
 }
 
 const props = defineProps<Props>()
