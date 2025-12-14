@@ -1,23 +1,9 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { memo, memoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
-
-const isOwner = async (
-  db: ReturnType<typeof useDatabase>,
-  memoId: string,
-  userId: string,
-): Promise<boolean> => {
-  const memoRecord = await db
-    .select({ userId: memo.userId })
-    .from(memo)
-    .where(eq(memo.id, memoId))
-    .limit(1)
-
-  return memoRecord.length > 0 && memoRecord[0]?.userId === userId
-}
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -50,15 +36,27 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const ownerCheck = await isOwner(db, memoId, currentUser.id)
-  if (!ownerCheck) {
+  const existingMemo = memoRecord[0]
+  const isOwner = existingMemo?.userId === currentUser.id
+
+  const shareRecord = await db
+    .select()
+    .from(memoShare)
+    .where(and(
+      eq(memoShare.memoId, memoId),
+      eq(memoShare.sharedWithId, currentUser.id),
+    ))
+    .limit(1)
+
+  const hasAccess = isOwner || shareRecord.length > 0
+
+  if (!hasAccess) {
     throw createError({
       statusCode: 403,
       message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_DELETE,
     })
   }
 
-  const existingMemo = memoRecord[0]
   const sharedWithUsers = await db
     .select({ sharedWithId: memoShare.sharedWithId })
     .from(memoShare)
@@ -66,18 +64,22 @@ export default defineEventHandler(async (event) => {
 
   await db.delete(memo).where(eq(memo.id, memoId))
 
-  if (existingMemo && sharedWithUsers.length > 0) {
+  const usersToNotify = isOwner
+    ? sharedWithUsers.map(s => s.sharedWithId)
+    : [existingMemo?.userId, ...sharedWithUsers.map(s => s.sharedWithId)].filter((id): id is string => id !== undefined && id !== currentUser.id)
+
+  if (existingMemo && usersToNotify.length > 0) {
     try {
       const { createNotification } = await import('~~/server/services/notifications')
       const truncatedContent = existingMemo.content.length > 50
         ? `${existingMemo.content.slice(0, 50)}...`
         : existingMemo.content
 
-      for (const share of sharedWithUsers) {
+      for (const targetUserId of usersToNotify) {
         await createNotification({
           sourceUserId: currentUser.id,
           budgetOwnerId: currentUser.id,
-          targetUserId: share.sharedWithId,
+          targetUserId,
           type: 'memo_deleted',
           params: {
             username: currentUser.username,

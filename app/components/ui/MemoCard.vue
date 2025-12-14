@@ -6,7 +6,7 @@
   >
     <div class="card-body p-4">
       <div class="flex items-start gap-3">
-        <div class="pt-1">
+        <div>
           <input
             type="checkbox"
             class="checkbox checkbox-primary"
@@ -16,7 +16,7 @@
           >
         </div>
 
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 pt-1">
           <p
             class="whitespace-pre-wrap break-words"
             :class="{ 'line-through text-base-content/50': isCompleted }"

@@ -575,7 +575,7 @@ export default {
     },
     card: {
       author: 'Этот персонаж с вами поделился',
-      sharedWith: 'Вы поделились с этим персонажем',
+      sharedWith: 'Доступ предоставлен',
       ownedBy: 'Автор',
       plannedFor: 'Запланировано на',
       completed: 'Выполнено',

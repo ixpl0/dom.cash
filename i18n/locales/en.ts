@@ -575,7 +575,7 @@ export default {
     },
     card: {
       author: 'This person shared with you',
-      sharedWith: 'You shared with this person',
+      sharedWith: 'Shared with this person',
       ownedBy: 'By',
       plannedFor: 'Planned for',
       completed: 'Completed',
