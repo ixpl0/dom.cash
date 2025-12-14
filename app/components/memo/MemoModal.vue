@@ -23,8 +23,6 @@
 </template>
 
 <script setup lang="ts">
-import type { MemoType } from '~~/shared/types/memo'
-
 const memoStore = useMemoStore()
 const memoModalsStore = useMemoModalsStore()
 const { t } = useI18n()
@@ -53,7 +51,6 @@ const handleClose = () => {
 }
 
 const handleSave = async (data: {
-  type: MemoType
   content: string
   plannedDate: string | null
   sharedWithUserIds: string[]
@@ -70,7 +67,6 @@ const handleSave = async (data: {
     }
     else {
       await memoStore.createMemo({
-        type: data.type,
         content: data.content,
         plannedDate: data.plannedDate ?? undefined,
         sharedWithUserIds: data.sharedWithUserIds.length > 0 ? data.sharedWithUserIds : undefined,

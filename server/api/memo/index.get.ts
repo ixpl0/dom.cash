@@ -25,7 +25,6 @@ export default defineEventHandler(async (event): Promise<MemoData> => {
   const memos = await db
     .select({
       id: memo.id,
-      type: memo.type,
       content: memo.content,
       isCompleted: memo.isCompleted,
       plannedDate: memo.plannedDate,
@@ -63,7 +62,6 @@ export default defineEventHandler(async (event): Promise<MemoData> => {
 
   const items: MemoListItem[] = memos.map(m => ({
     id: m.id,
-    type: m.type,
     content: m.content,
     isCompleted: m.isCompleted ?? false,
     plannedDate: m.plannedDate,

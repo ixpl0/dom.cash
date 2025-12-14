@@ -1,8 +1,5 @@
-export type MemoType = 'todo' | 'memo' | 'plan'
-
 export interface MemoListItem {
   id: string
-  type: MemoType
   content: string
   isCompleted: boolean
   plannedDate: string | null
@@ -14,7 +11,6 @@ export interface MemoListItem {
 }
 
 export interface CreateMemoPayload {
-  type: MemoType
   content: string
   plannedDate?: string
   sharedWithUserIds?: string[]

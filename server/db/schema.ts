@@ -150,7 +150,6 @@ export const memo = sqliteTable(
   {
     id: text('id').primaryKey(),
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-    type: text('type', { enum: ['todo', 'memo', 'plan'] }).notNull(),
     content: text('content').notNull(),
     isCompleted: integer('is_completed', { mode: 'boolean' }).default(false),
     plannedDate: text('planned_date'),
@@ -159,13 +158,11 @@ export const memo = sqliteTable(
   },
   t => [
     index('idx_memo_user').on(t.userId),
-    index('idx_memo_type').on(t.type),
   ],
 )
 
 export type Memo = typeof memo.$inferSelect
 export type NewMemo = typeof memo.$inferInsert
-export type MemoType = Memo['type']
 
 export const memoShare = sqliteTable(
   'memo_share',

@@ -7,7 +7,6 @@ import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 
 const createMemoSchema = z.object({
-  type: z.enum(['todo', 'memo', 'plan']),
   content: z.string().min(1).max(10000),
   plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).optional(),
   sharedWithUserIds: z.array(z.string()).optional(),
@@ -24,16 +23,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { type, content, plannedDate, sharedWithUserIds } = createMemoSchema.parse(body)
+  const { content, plannedDate, sharedWithUserIds } = createMemoSchema.parse(body)
 
   const now = new Date()
   const newMemo: NewMemo = {
     id: crypto.randomUUID(),
     userId: currentUser.id,
-    type,
     content,
     isCompleted: false,
-    plannedDate: type === 'plan' ? plannedDate ?? null : null,
+    plannedDate: plannedDate ?? null,
     createdAt: now,
     updatedAt: now,
   }
@@ -72,7 +70,6 @@ export default defineEventHandler(async (event) => {
 
   return {
     id: newMemo.id,
-    type: newMemo.type,
     content: newMemo.content,
     isCompleted: newMemo.isCompleted,
     plannedDate: newMemo.plannedDate,

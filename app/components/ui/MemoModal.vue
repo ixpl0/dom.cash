@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MemoType, MemoConnection } from '~~/shared/types/memo'
+import type { MemoConnection } from '~~/shared/types/memo'
 
 interface Props {
   isOpen: boolean
@@ -141,7 +141,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   close: []
   save: [data: {
-    type: MemoType
     content: string
     plannedDate: string | null
     sharedWithUserIds: string[]
@@ -176,12 +175,9 @@ const handleSubmit = () => {
   if (!isValid.value || props.isSaving) {
     return
   }
-  const plannedDate = form.plannedDate || null
-  const type: MemoType = plannedDate ? 'plan' : 'todo'
   emit('save', {
-    type,
     content: form.content,
-    plannedDate,
+    plannedDate: form.plannedDate || null,
     sharedWithUserIds: form.sharedWithUserIds,
   })
 }

@@ -1,13 +1,11 @@
-import type { MemoData, MemoListItem, MemoType, CreateMemoPayload, UpdateMemoPayload, MemoConnection } from '~~/shared/types/memo'
-
-type MemoFilter = 'all' | MemoType
+import type { MemoData, MemoListItem, CreateMemoPayload, UpdateMemoPayload, MemoConnection } from '~~/shared/types/memo'
 
 export const useMemoStore = defineStore('memo', () => {
   const data = ref<MemoData | null>(null)
   const connections = ref<MemoConnection[]>([])
   const error = ref<string | null>(null)
   const isLoading = ref(false)
-  const filter = ref<MemoFilter>('all')
+  const hideCompleted = ref(true)
 
   const isOverdue = (item: MemoListItem): boolean => {
     if (!item.plannedDate || item.isCompleted) {
@@ -20,10 +18,10 @@ export const useMemoStore = defineStore('memo', () => {
     if (!data.value) {
       return []
     }
-    if (filter.value === 'all') {
-      return data.value.items
+    if (hideCompleted.value) {
+      return data.value.items.filter(item => !item.isCompleted)
     }
-    return data.value.items.filter(item => item.type === filter.value)
+    return data.value.items
   })
 
   const sortedItems = computed((): MemoListItem[] => {
@@ -162,7 +160,7 @@ export const useMemoStore = defineStore('memo', () => {
 
   const toggleTodo = async (id: string): Promise<boolean> => {
     const item = data.value?.items.find(i => i.id === id)
-    if (!item || item.type !== 'todo') {
+    if (!item) {
       return false
     }
 
@@ -193,8 +191,8 @@ export const useMemoStore = defineStore('memo', () => {
     }
   }
 
-  const setFilter = (newFilter: MemoFilter) => {
-    filter.value = newFilter
+  const toggleHideCompleted = () => {
+    hideCompleted.value = !hideCompleted.value
   }
 
   const reset = () => {
@@ -202,7 +200,7 @@ export const useMemoStore = defineStore('memo', () => {
     connections.value = []
     error.value = null
     isLoading.value = false
-    filter.value = 'all'
+    hideCompleted.value = true
   }
 
   return {
@@ -210,7 +208,7 @@ export const useMemoStore = defineStore('memo', () => {
     connections,
     error,
     isLoading,
-    filter,
+    hideCompleted,
     filteredItems,
     sortedItems,
     overdueCount,
@@ -221,7 +219,7 @@ export const useMemoStore = defineStore('memo', () => {
     updateMemo,
     deleteMemo,
     toggleTodo,
-    setFilter,
+    toggleHideCompleted,
     reset,
   }
 })

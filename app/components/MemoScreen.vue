@@ -5,17 +5,32 @@
         {{ t('memo.title') }}
       </h1>
 
-      <button
-        class="btn btn-primary"
-        data-testid="memo-add-button"
-        @click="memoModalsStore.openMemoModal()"
-      >
-        <Icon
-          name="heroicons:plus"
-          size="20"
-        />
-        {{ t('memo.addNew') }}
-      </button>
+      <div class="flex items-center gap-4">
+        <label class="label cursor-pointer gap-2">
+          <span class="label-text text-sm">
+            {{ t('memo.hideCompleted') }}
+          </span>
+          <input
+            type="checkbox"
+            class="toggle toggle-sm"
+            :checked="memoStore.hideCompleted"
+            data-testid="memo-hide-completed-toggle"
+            @change="memoStore.toggleHideCompleted()"
+          >
+        </label>
+
+        <button
+          class="btn btn-primary"
+          data-testid="memo-add-button"
+          @click="memoModalsStore.openMemoModal()"
+        >
+          <Icon
+            name="heroicons:plus"
+            size="20"
+          />
+          {{ t('memo.addNew') }}
+        </button>
+      </div>
     </div>
 
     <div
@@ -36,6 +51,7 @@
       v-else
       :items="memoStore.sortedItems"
       :empty-message="emptyMessage"
+      :animate-items="memoStore.hideCompleted"
     />
 
     <MemoModal />

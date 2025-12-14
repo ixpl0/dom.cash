@@ -107,7 +107,6 @@ export default defineEventHandler(async (event) => {
 
   if (plannedDate !== undefined) {
     updates.plannedDate = plannedDate
-    updates.type = plannedDate ? 'plan' : 'todo'
   }
 
   await db.update(memo).set(updates).where(eq(memo.id, memoId))

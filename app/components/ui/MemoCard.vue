@@ -25,21 +25,24 @@
             {{ content }}
           </p>
 
-          <div class="flex flex-wrap items-center gap-2 mt-2 text-sm text-base-content/60">
-            <span
-              v-if="plannedDate"
-              class="flex items-center gap-1"
-              :class="isOverdue ? 'text-error font-medium' : ''"
-              data-testid="memo-card-date"
-            >
-              <Icon
-                :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
-                size="14"
-                :class="isOverdue ? 'animate-blink' : ''"
-              />
-              {{ formattedDateTime }}
-            </span>
+          <div
+            v-if="plannedDate"
+            class="flex items-center gap-1 mt-2 text-sm text-base-content/60"
+            :class="isOverdue ? 'text-error font-medium' : ''"
+            data-testid="memo-card-date"
+          >
+            <Icon
+              :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
+              size="14"
+              :class="isOverdue ? 'animate-blink' : ''"
+            />
+            {{ formattedDateTime }}
+          </div>
 
+          <div
+            v-if="!isOwner || sharedWith.length > 0"
+            class="flex flex-wrap items-center gap-2 mt-2 text-sm"
+          >
             <span
               v-if="!isOwner"
               class="tooltip badge badge-info badge-outline badge-sm gap-1"

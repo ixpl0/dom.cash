@@ -548,6 +548,7 @@ export default {
   memo: {
     title: 'TODO',
     addNew: 'Add new',
+    hideCompleted: 'Hide completed',
     filterAll: 'All',
     filterTodo: 'Tasks',
     filterMemo: 'Notes',
