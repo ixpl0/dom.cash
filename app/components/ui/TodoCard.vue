@@ -120,6 +120,7 @@ import type { RecurrencePattern } from '~~/shared/types/recurrence'
 interface Props {
   content: string
   isCompleted: boolean
+  isOverdue: boolean
   plannedDate: string | null
   recurrence: RecurrencePattern | null
   isOwner: boolean
@@ -137,13 +138,6 @@ defineEmits<{
   edit: []
   delete: []
 }>()
-
-const isOverdue = computed(() => {
-  if (!props.plannedDate || props.isCompleted) {
-    return false
-  }
-  return new Date(props.plannedDate) <= new Date()
-})
 
 const formattedDate = computed(() => {
   if (!props.plannedDate) {
