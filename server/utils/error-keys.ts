@@ -67,6 +67,8 @@ export const ERROR_KEYS = {
   NO_ID_TOKEN_RECEIVED: 'serverErrors.no_id_token_received',
   TODO_NOT_FOUND: 'serverErrors.todo_not_found',
   TODO_ID_REQUIRED: 'serverErrors.todo_id_required',
+  INVALID_SHARED_USER: 'serverErrors.invalid_shared_user',
+  CANNOT_MODIFY_SHARE_AS_NON_OWNER: 'serverErrors.cannot_modify_share_as_non_owner',
 } as const
 
 export type ErrorKey = typeof ERROR_KEYS[keyof typeof ERROR_KEYS]

@@ -543,6 +543,8 @@ export default {
     no_id_token_received: 'No ID token received',
     todo_not_found: 'Task not found',
     todo_id_required: 'Task ID is required',
+    invalid_shared_user: 'Cannot share with the specified user',
+    cannot_modify_share_as_non_owner: 'Only the owner can modify the share list',
   },
 
   todo: {
@@ -569,6 +571,10 @@ export default {
       title: 'Delete task',
       message: 'This task will be permanently deleted.',
       confirm: 'Delete',
+    },
+    errors: {
+      toggleFailed: 'Failed to update task',
+      deleteFailed: 'Failed to delete task',
     },
   },
 

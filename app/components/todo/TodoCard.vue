@@ -26,10 +26,14 @@ const props = defineProps<Props>()
 const todoStore = useTodoStore()
 const todoModalsStore = useTodoModalsStore()
 const { confirm } = useConfirmation()
+const { toast } = useToast()
 const { t } = useI18n()
 
 const handleToggle = async () => {
-  await todoStore.toggleTodo(props.todo.id)
+  const success = await todoStore.toggleTodo(props.todo.id)
+  if (!success) {
+    toast({ type: 'error', message: t('todo.errors.toggleFailed') })
+  }
 }
 
 const handleEdit = () => {
@@ -46,7 +50,10 @@ const handleDelete = async () => {
   })
 
   if (confirmed) {
-    await todoStore.deleteTodo(props.todo.id)
+    const success = await todoStore.deleteTodo(props.todo.id)
+    if (!success) {
+      toast({ type: 'error', message: t('todo.errors.deleteFailed') })
+    }
   }
 }
 </script>

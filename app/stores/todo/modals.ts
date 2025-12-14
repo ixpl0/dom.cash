@@ -18,8 +18,8 @@ export const useTodoModalsStore = defineStore('todoModals', () => {
 
   const closeTodoModal = () => {
     todoModal.value = {
-      ...todoModal.value,
       isOpen: false,
+      editingTodoId: null,
     }
   }
 

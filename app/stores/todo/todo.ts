@@ -1,11 +1,21 @@
 import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection } from '~~/shared/types/todo'
 
+const HIDE_COMPLETED_KEY = 'todo-hide-completed'
+
+const getInitialHideCompleted = (): boolean => {
+  if (import.meta.server) {
+    return true
+  }
+  const stored = localStorage.getItem(HIDE_COMPLETED_KEY)
+  return stored === null ? true : stored === 'true'
+}
+
 export const useTodoStore = defineStore('todo', () => {
   const data = ref<TodoData | null>(null)
   const connections = ref<TodoConnection[]>([])
   const error = ref<string | null>(null)
   const isLoading = ref(false)
-  const hideCompleted = ref(true)
+  const hideCompleted = ref(getInitialHideCompleted())
 
   const isOverdue = (item: TodoListItem): boolean => {
     if (!item.plannedDate || item.isCompleted) {
@@ -233,6 +243,9 @@ export const useTodoStore = defineStore('todo', () => {
 
   const toggleHideCompleted = () => {
     hideCompleted.value = !hideCompleted.value
+    if (!import.meta.server) {
+      localStorage.setItem(HIDE_COMPLETED_KEY, String(hideCompleted.value))
+    }
   }
 
   const reset = () => {

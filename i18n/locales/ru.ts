@@ -543,6 +543,8 @@ export default {
     no_id_token_received: 'ID токен не получен',
     todo_not_found: 'Задача не найдена',
     todo_id_required: 'Требуется ID задачи',
+    invalid_shared_user: 'Невозможно поделиться с указанным пользователем',
+    cannot_modify_share_as_non_owner: 'Только владелец может изменять список доступа',
   },
 
   todo: {
@@ -569,6 +571,10 @@ export default {
       title: 'Удаление задачи',
       message: 'Эта задача будет удалена безвозвратно.',
       confirm: 'Удалить',
+    },
+    errors: {
+      toggleFailed: 'Не удалось обновить задачу',
+      deleteFailed: 'Не удалось удалить задачу',
     },
   },
 

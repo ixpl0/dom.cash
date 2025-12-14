@@ -27,11 +27,18 @@
           <div class="form-control mb-6">
             <label class="label pb-1">
               <span class="label-text">{{ contentLabel }}</span>
+              <span
+                class="label-text-alt"
+                :class="{ 'text-error': form.content.length > MAX_CONTENT_LENGTH }"
+              >
+                {{ form.content.length }} / {{ MAX_CONTENT_LENGTH }}
+              </span>
             </label>
             <textarea
               ref="contentInput"
               v-model="form.content"
               class="textarea textarea-bordered w-full h-32"
+              :class="{ 'textarea-error': form.content.length > MAX_CONTENT_LENGTH }"
               :placeholder="contentPlaceholder"
               data-testid="todo-modal-content-input"
             />
@@ -112,6 +119,8 @@
 <script setup lang="ts">
 import type { TodoConnection } from '~~/shared/types/todo'
 
+const MAX_CONTENT_LENGTH = 10000
+
 interface Props {
   isOpen: boolean
   isEditing: boolean
@@ -164,6 +173,9 @@ const form = reactive({
 
 const isValid = computed(() => {
   if (!form.content.trim()) {
+    return false
+  }
+  if (form.content.length > MAX_CONTENT_LENGTH) {
     return false
   }
   return true
