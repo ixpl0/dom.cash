@@ -3,9 +3,9 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
-import type { MemoConnection } from '~~/shared/types/memo'
+import type { TodoConnection } from '~~/shared/types/todo'
 
-export default defineEventHandler(async (event): Promise<MemoConnection[]> => {
+export default defineEventHandler(async (event): Promise<TodoConnection[]> => {
   const db = useDatabase(event)
   const currentUser = await getUserFromRequest(event)
   if (!currentUser) {

@@ -1,39 +1,39 @@
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
-import { memo, memoShare } from '~~/server/db/schema'
-import type { NewMemoShare } from '~~/server/db/schema'
+import { todo, todoShare } from '~~/server/db/schema'
+import type { NewTodoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 
-const updateMemoSchema = z.object({
+const updateTodoSchema = z.object({
   content: z.string().min(1).max(10000).optional(),
   plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).nullable().optional(),
   sharedWithUserIds: z.array(z.string()).optional(),
 })
 
-const canEditMemo = async (
+const canEditTodo = async (
   db: ReturnType<typeof useDatabase>,
-  memoId: string,
+  todoId: string,
   userId: string,
 ): Promise<boolean> => {
-  const memoRecord = await db
-    .select({ userId: memo.userId })
-    .from(memo)
-    .where(eq(memo.id, memoId))
+  const todoRecord = await db
+    .select({ userId: todo.userId })
+    .from(todo)
+    .where(eq(todo.id, todoId))
     .limit(1)
 
-  if (memoRecord.length > 0 && memoRecord[0]?.userId === userId) {
+  if (todoRecord.length > 0 && todoRecord[0]?.userId === userId) {
     return true
   }
 
   const shareRecord = await db
-    .select({ id: memoShare.id })
-    .from(memoShare)
+    .select({ id: todoShare.id })
+    .from(todoShare)
     .where(and(
-      eq(memoShare.memoId, memoId),
-      eq(memoShare.sharedWithId, userId),
+      eq(todoShare.todoId, todoId),
+      eq(todoShare.sharedWithId, userId),
     ))
     .limit(1)
 
@@ -50,28 +50,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const memoId = getRouterParam(event, 'id')
-  if (!memoId) {
+  const todoId = getRouterParam(event, 'id')
+  if (!todoId) {
     throw createError({
       statusCode: 400,
-      message: ERROR_KEYS.MEMO_ID_REQUIRED,
+      message: ERROR_KEYS.TODO_ID_REQUIRED,
     })
   }
 
-  const memoRecord = await db
+  const todoRecord = await db
     .select()
-    .from(memo)
-    .where(eq(memo.id, memoId))
+    .from(todo)
+    .where(eq(todo.id, todoId))
     .limit(1)
 
-  if (memoRecord.length === 0) {
+  if (todoRecord.length === 0) {
     throw createError({
       statusCode: 404,
-      message: ERROR_KEYS.MEMO_NOT_FOUND,
+      message: ERROR_KEYS.TODO_NOT_FOUND,
     })
   }
 
-  const canEdit = await canEditMemo(db, memoId, currentUser.id)
+  const canEdit = await canEditTodo(db, todoId, currentUser.id)
   if (!canEdit) {
     throw createError({
       statusCode: 403,
@@ -80,24 +80,24 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { content, plannedDate, sharedWithUserIds } = updateMemoSchema.parse(body)
+  const { content, plannedDate, sharedWithUserIds } = updateTodoSchema.parse(body)
 
-  const existingMemo = memoRecord[0]
-  if (!existingMemo) {
+  const existingTodo = todoRecord[0]
+  if (!existingTodo) {
     throw createError({
       statusCode: 404,
-      message: ERROR_KEYS.MEMO_NOT_FOUND,
+      message: ERROR_KEYS.TODO_NOT_FOUND,
     })
   }
 
-  const isOwner = existingMemo.userId === currentUser.id
+  const isOwner = existingTodo.userId === currentUser.id
 
   const currentShares = await db
-    .select({ sharedWithId: memoShare.sharedWithId })
-    .from(memoShare)
-    .where(eq(memoShare.memoId, memoId))
+    .select({ sharedWithId: todoShare.sharedWithId })
+    .from(todoShare)
+    .where(eq(todoShare.todoId, todoId))
 
-  const updates: Partial<typeof memo.$inferInsert> = {
+  const updates: Partial<typeof todo.$inferInsert> = {
     updatedAt: new Date(),
   }
 
@@ -109,32 +109,32 @@ export default defineEventHandler(async (event) => {
     updates.plannedDate = plannedDate
   }
 
-  await db.update(memo).set(updates).where(eq(memo.id, memoId))
+  await db.update(todo).set(updates).where(eq(todo.id, todoId))
 
   if (isOwner && sharedWithUserIds !== undefined) {
-    await db.delete(memoShare).where(eq(memoShare.memoId, memoId))
+    await db.delete(todoShare).where(eq(todoShare.todoId, todoId))
 
     if (sharedWithUserIds.length > 0) {
       const now = new Date()
-      const shares: NewMemoShare[] = sharedWithUserIds.map(userId => ({
+      const shares: NewTodoShare[] = sharedWithUserIds.map(userId => ({
         id: crypto.randomUUID(),
-        memoId,
+        todoId,
         sharedWithId: userId,
         createdAt: now,
       }))
-      await db.insert(memoShare).values(shares)
+      await db.insert(todoShare).values(shares)
     }
   }
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    const memoContent = content ?? existingMemo.content
-    const truncatedContent = memoContent.length > 50 ? `${memoContent.slice(0, 50)}...` : memoContent
+    const todoContent = content ?? existingTodo.content
+    const truncatedContent = todoContent.length > 50 ? `${todoContent.slice(0, 50)}...` : todoContent
 
     const targetUserIds: string[] = []
 
     if (!isOwner) {
-      targetUserIds.push(existingMemo.userId)
+      targetUserIds.push(existingTodo.userId)
     }
 
     for (const share of currentShares) {
@@ -146,18 +146,18 @@ export default defineEventHandler(async (event) => {
     for (const targetUserId of targetUserIds) {
       await createNotification({
         sourceUserId: currentUser.id,
-        budgetOwnerId: existingMemo.userId,
+        budgetOwnerId: existingTodo.userId,
         targetUserId,
-        type: 'memo_updated',
+        type: 'todo_updated',
         params: {
           username: currentUser.username,
-          memoContent: truncatedContent,
+          todoContent: truncatedContent,
         },
       })
     }
   }
   catch (error) {
-    secureLog.error('Error creating memo update notification:', error)
+    secureLog.error('Error creating todo update notification:', error)
   }
 
   return { success: true }

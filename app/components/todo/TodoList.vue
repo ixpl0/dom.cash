@@ -1,5 +1,5 @@
 <template>
-  <div data-testid="memo-list">
+  <div data-testid="todo-list">
     <div
       v-if="items.length === 0"
       class="text-center py-8 text-base-content/60"
@@ -11,7 +11,7 @@
       class="columns-1 md:columns-2 xl:columns-3 gap-4"
     >
       <TransitionGroup
-        :name="animateItems ? 'memo-card' : ''"
+        :name="animateItems ? 'todo-card' : ''"
         tag="div"
         class="contents"
       >
@@ -20,7 +20,7 @@
           :key="item.id"
           class="break-inside-avoid mb-4"
         >
-          <MemoCard :memo="item" />
+          <TodoCard :todo="item" />
         </div>
       </TransitionGroup>
     </div>
@@ -28,10 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import type { MemoListItem } from '~~/shared/types/memo'
+import type { TodoListItem } from '~~/shared/types/todo'
 
 interface Props {
-  items: MemoListItem[]
+  items: TodoListItem[]
   emptyMessage: string
   animateItems?: boolean
 }
@@ -40,11 +40,11 @@ defineProps<Props>()
 </script>
 
 <style scoped>
-.memo-card-leave-active {
+.todo-card-leave-active {
   transition: all 0.4s ease-out;
 }
 
-.memo-card-leave-to {
+.todo-card-leave-to {
   opacity: 0;
   transform: scale(0.8);
 }

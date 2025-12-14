@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     content-class="w-full max-w-lg"
-    data-testid="memo-modal"
+    data-testid="todo-modal"
     @close="$emit('close')"
   >
     <div class="card bg-base-100">
@@ -13,7 +13,7 @@
           </h2>
           <button
             class="btn btn-ghost btn-sm btn-square"
-            data-testid="memo-modal-close"
+            data-testid="todo-modal-close"
             @click="$emit('close')"
           >
             <Icon
@@ -33,7 +33,7 @@
               v-model="form.content"
               class="textarea textarea-bordered w-full h-32"
               :placeholder="contentPlaceholder"
-              data-testid="memo-modal-content-input"
+              data-testid="todo-modal-content-input"
             />
           </div>
 
@@ -43,9 +43,9 @@
             </label>
             <input
               v-model="form.plannedDate"
-              type="datetime-local"
+              type="date"
               class="input input-bordered w-full"
-              data-testid="memo-modal-date-input"
+              data-testid="todo-modal-date-input"
             >
           </div>
 
@@ -58,7 +58,7 @@
             </label>
             <div
               class="flex flex-col gap-2"
-              data-testid="memo-modal-share-select"
+              data-testid="todo-modal-share-select"
             >
               <label
                 v-for="connection in connections"
@@ -85,7 +85,7 @@
             <button
               type="button"
               class="btn btn-ghost"
-              data-testid="memo-modal-cancel-button"
+              data-testid="todo-modal-cancel-button"
               @click="$emit('close')"
             >
               {{ cancelText }}
@@ -94,7 +94,7 @@
               type="submit"
               class="btn btn-primary"
               :disabled="!isValid || isSaving"
-              data-testid="memo-modal-save-button"
+              data-testid="todo-modal-save-button"
             >
               <span
                 v-if="isSaving"
@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MemoConnection } from '~~/shared/types/memo'
+import type { TodoConnection } from '~~/shared/types/todo'
 
 interface Props {
   isOpen: boolean
@@ -126,7 +126,7 @@ interface Props {
   sharePrivate: string
   cancelText: string
   saveText: string
-  connections: MemoConnection[]
+  connections: TodoConnection[]
   initialContent?: string
   initialPlannedDate?: string | null
   initialSharedWithUserIds?: string[]
@@ -149,9 +149,16 @@ const emit = defineEmits<{
 
 const contentInput = ref<HTMLTextAreaElement | null>(null)
 
+const extractDateOnly = (dateTimeString: string | null | undefined): string => {
+  if (!dateTimeString) {
+    return ''
+  }
+  return dateTimeString.split('T')[0] ?? ''
+}
+
 const form = reactive({
   content: props.initialContent,
-  plannedDate: props.initialPlannedDate ?? '',
+  plannedDate: extractDateOnly(props.initialPlannedDate),
   sharedWithUserIds: [...props.initialSharedWithUserIds],
 })
 
@@ -177,7 +184,7 @@ const handleSubmit = () => {
   }
   emit('save', {
     content: form.content,
-    plannedDate: form.plannedDate || null,
+    plannedDate: form.plannedDate ? `${form.plannedDate}T00:00` : null,
     sharedWithUserIds: form.sharedWithUserIds,
   })
 }
@@ -185,7 +192,7 @@ const handleSubmit = () => {
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
     form.content = props.initialContent
-    form.plannedDate = props.initialPlannedDate ?? ''
+    form.plannedDate = extractDateOnly(props.initialPlannedDate)
     form.sharedWithUserIds = [...props.initialSharedWithUserIds]
 
     nextTick(() => {

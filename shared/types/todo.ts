@@ -1,4 +1,4 @@
-export interface MemoListItem {
+export interface TodoListItem {
   id: string
   content: string
   isCompleted: boolean
@@ -10,23 +10,23 @@ export interface MemoListItem {
   sharedWith: Array<{ id: string, username: string }>
 }
 
-export interface CreateMemoPayload {
+export interface CreateTodoPayload {
   content: string
   plannedDate?: string
   sharedWithUserIds?: string[]
 }
 
-export interface UpdateMemoPayload {
+export interface UpdateTodoPayload {
   content?: string
   plannedDate?: string | null
   sharedWithUserIds?: string[]
 }
 
-export interface MemoConnection {
+export interface TodoConnection {
   id: string
   username: string
 }
 
-export interface MemoData {
-  items: MemoListItem[]
+export interface TodoData {
+  items: TodoListItem[]
 }

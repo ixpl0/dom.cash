@@ -28,18 +28,30 @@
           </p>
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <NuxtLink
-              v-if="isAuthenticated"
-              to="/budget"
-              class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
-              data-testid="go-to-budget-btn"
-            >
-              <Icon
-                name="heroicons:rocket-launch"
-                size="24"
-              />
-              {{ t('home.goToBudget') }}
-            </NuxtLink>
+            <template v-if="isAuthenticated">
+              <NuxtLink
+                to="/budget"
+                class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
+                data-testid="go-to-budget-btn"
+              >
+                <Icon
+                  name="heroicons:rocket-launch"
+                  size="24"
+                />
+                {{ t('home.goToBudget') }}
+              </NuxtLink>
+              <NuxtLink
+                to="/todo"
+                class="btn btn-outline btn-lg gap-2"
+                data-testid="go-to-todo-btn"
+              >
+                <Icon
+                  name="heroicons:document-text"
+                  size="24"
+                />
+                {{ t('home.goToTodo') }}
+              </NuxtLink>
+            </template>
 
             <template v-else>
               <NuxtLink
@@ -262,18 +274,34 @@
           </div>
         </div>
 
-        <NuxtLink
+        <div
           v-animate-on-scroll="{ animation: 'animate-fade-in', delay: 400 }"
-          :to="isAuthenticated ? '/budget' : '/auth'"
-          class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
-          data-testid="cta-register-btn"
+          class="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Icon
-            name="heroicons:rocket-launch"
-            size="24"
-          />
-          {{ isAuthenticated ? t('home.goToBudget') : t('home.getStarted') }}
-        </NuxtLink>
+          <NuxtLink
+            :to="isAuthenticated ? '/budget' : '/auth'"
+            class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-shadow"
+            data-testid="cta-register-btn"
+          >
+            <Icon
+              name="heroicons:rocket-launch"
+              size="24"
+            />
+            {{ isAuthenticated ? t('home.goToBudget') : t('home.getStarted') }}
+          </NuxtLink>
+          <NuxtLink
+            v-if="isAuthenticated"
+            to="/todo"
+            class="btn btn-outline btn-lg gap-2"
+            data-testid="cta-todo-btn"
+          >
+            <Icon
+              name="heroicons:document-text"
+              size="24"
+            />
+            {{ t('home.goToTodo') }}
+          </NuxtLink>
+        </div>
       </div>
     </section>
   </div>

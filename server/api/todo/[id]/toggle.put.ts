@@ -1,31 +1,31 @@
 import { eq, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { memo, memoShare } from '~~/server/db/schema'
+import { todo, todoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 
-const canEditMemo = async (
+const canEditTodo = async (
   db: ReturnType<typeof useDatabase>,
-  memoId: string,
+  todoId: string,
   userId: string,
 ): Promise<boolean> => {
-  const memoRecord = await db
-    .select({ userId: memo.userId })
-    .from(memo)
-    .where(eq(memo.id, memoId))
+  const todoRecord = await db
+    .select({ userId: todo.userId })
+    .from(todo)
+    .where(eq(todo.id, todoId))
     .limit(1)
 
-  if (memoRecord.length > 0 && memoRecord[0]?.userId === userId) {
+  if (todoRecord.length > 0 && todoRecord[0]?.userId === userId) {
     return true
   }
 
   const shareRecord = await db
-    .select({ id: memoShare.id })
-    .from(memoShare)
+    .select({ id: todoShare.id })
+    .from(todoShare)
     .where(and(
-      eq(memoShare.memoId, memoId),
-      eq(memoShare.sharedWithId, userId),
+      eq(todoShare.todoId, todoId),
+      eq(todoShare.sharedWithId, userId),
     ))
     .limit(1)
 
@@ -42,36 +42,36 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const memoId = getRouterParam(event, 'id')
-  if (!memoId) {
+  const todoId = getRouterParam(event, 'id')
+  if (!todoId) {
     throw createError({
       statusCode: 400,
-      message: ERROR_KEYS.MEMO_ID_REQUIRED,
+      message: ERROR_KEYS.TODO_ID_REQUIRED,
     })
   }
 
-  const memoRecord = await db
+  const todoRecord = await db
     .select()
-    .from(memo)
-    .where(eq(memo.id, memoId))
+    .from(todo)
+    .where(eq(todo.id, todoId))
     .limit(1)
 
-  if (memoRecord.length === 0) {
+  if (todoRecord.length === 0) {
     throw createError({
       statusCode: 404,
-      message: ERROR_KEYS.MEMO_NOT_FOUND,
+      message: ERROR_KEYS.TODO_NOT_FOUND,
     })
   }
 
-  const existingMemo = memoRecord[0]
-  if (!existingMemo) {
+  const existingTodo = todoRecord[0]
+  if (!existingTodo) {
     throw createError({
       statusCode: 404,
-      message: ERROR_KEYS.MEMO_NOT_FOUND,
+      message: ERROR_KEYS.TODO_NOT_FOUND,
     })
   }
 
-  const canEdit = await canEditMemo(db, memoId, currentUser.id)
+  const canEdit = await canEditTodo(db, todoId, currentUser.id)
   if (!canEdit) {
     throw createError({
       statusCode: 403,
@@ -79,32 +79,32 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const newIsCompleted = !existingMemo.isCompleted
-  const isOwner = existingMemo.userId === currentUser.id
+  const newIsCompleted = !existingTodo.isCompleted
+  const isOwner = existingTodo.userId === currentUser.id
 
   const sharedWithUsers = await db
-    .select({ sharedWithId: memoShare.sharedWithId })
-    .from(memoShare)
-    .where(eq(memoShare.memoId, memoId))
+    .select({ sharedWithId: todoShare.sharedWithId })
+    .from(todoShare)
+    .where(eq(todoShare.todoId, todoId))
 
   await db
-    .update(memo)
+    .update(todo)
     .set({
       isCompleted: newIsCompleted,
       updatedAt: new Date(),
     })
-    .where(eq(memo.id, memoId))
+    .where(eq(todo.id, todoId))
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    const truncatedContent = existingMemo.content.length > 50
-      ? `${existingMemo.content.slice(0, 50)}...`
-      : existingMemo.content
+    const truncatedContent = existingTodo.content.length > 50
+      ? `${existingTodo.content.slice(0, 50)}...`
+      : existingTodo.content
 
     const targetUserIds: string[] = []
 
     if (!isOwner) {
-      targetUserIds.push(existingMemo.userId)
+      targetUserIds.push(existingTodo.userId)
     }
 
     for (const share of sharedWithUsers) {
@@ -116,19 +116,19 @@ export default defineEventHandler(async (event) => {
     for (const targetUserId of targetUserIds) {
       await createNotification({
         sourceUserId: currentUser.id,
-        budgetOwnerId: existingMemo.userId,
+        budgetOwnerId: existingTodo.userId,
         targetUserId,
-        type: 'memo_toggled',
+        type: 'todo_toggled',
         params: {
           username: currentUser.username,
-          memoContent: truncatedContent,
+          todoContent: truncatedContent,
           isCompleted: newIsCompleted,
         },
       })
     }
   }
   catch (error) {
-    secureLog.error('Error creating memo toggle notification:', error)
+    secureLog.error('Error creating todo toggle notification:', error)
   }
 
   return { isCompleted: newIsCompleted }

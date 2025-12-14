@@ -31,21 +31,21 @@
         </NuxtLink>
         <div class="indicator">
           <span
-            v-if="memoStore.overdueCount > 0"
+            v-if="todoStore.overdueCount > 0"
             class="indicator-item badge badge-error badge-xs"
           >
-            {{ memoStore.overdueCount }}
+            {{ todoStore.overdueCount }}
           </span>
           <NuxtLink
-            to="/memo"
+            to="/todo"
             class="btn btn-outline btn-sm"
-            data-testid="memo-btn"
+            data-testid="todo-btn"
           >
             <Icon
               name="heroicons:document-text"
               size="16"
             />
-            <span class="hidden xl:inline">{{ t('header.memo') }}</span>
+            <span class="hidden xl:inline">{{ t('header.todo') }}</span>
           </NuxtLink>
         </div>
         <button
@@ -167,22 +167,22 @@
             </li>
             <li>
               <NuxtLink
-                to="/memo"
+                to="/todo"
                 class="flex items-center justify-between"
-                data-testid="mobile-memo-btn"
+                data-testid="mobile-todo-btn"
               >
                 <span class="flex items-center gap-2">
                   <Icon
                     name="heroicons:document-text"
                     size="16"
                   />
-                  {{ t('header.memo') }}
+                  {{ t('header.todo') }}
                 </span>
                 <span
-                  v-if="memoStore.overdueCount > 0"
+                  v-if="todoStore.overdueCount > 0"
                   class="badge badge-error badge-xs"
                 >
-                  {{ memoStore.overdueCount }}
+                  {{ todoStore.overdueCount }}
                 </span>
               </NuxtLink>
             </li>
@@ -258,6 +258,6 @@
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
 const modalsStore = useModalsStore()
-const memoStore = useMemoStore()
+const todoStore = useTodoStore()
 const { t } = useI18n()
 </script>

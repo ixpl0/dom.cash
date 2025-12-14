@@ -145,8 +145,8 @@ export const emailVerificationCode = sqliteTable(
 export type EmailVerificationCode = typeof emailVerificationCode.$inferSelect
 export type NewEmailVerificationCode = typeof emailVerificationCode.$inferInsert
 
-export const memo = sqliteTable(
-  'memo',
+export const todo = sqliteTable(
+  'todo',
   {
     id: text('id').primaryKey(),
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
@@ -157,27 +157,27 @@ export const memo = sqliteTable(
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   },
   t => [
-    index('idx_memo_user').on(t.userId),
+    index('idx_todo_user').on(t.userId),
   ],
 )
 
-export type Memo = typeof memo.$inferSelect
-export type NewMemo = typeof memo.$inferInsert
+export type Todo = typeof todo.$inferSelect
+export type NewTodo = typeof todo.$inferInsert
 
-export const memoShare = sqliteTable(
-  'memo_share',
+export const todoShare = sqliteTable(
+  'todo_share',
   {
     id: text('id').primaryKey(),
-    memoId: text('memo_id').notNull().references(() => memo.id, { onDelete: 'cascade' }),
+    todoId: text('todo_id').notNull().references(() => todo.id, { onDelete: 'cascade' }),
     sharedWithId: text('shared_with_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   },
   t => [
-    unique('uq_memo_shared_with').on(t.memoId, t.sharedWithId),
-    index('idx_memo_share_memo').on(t.memoId),
-    index('idx_memo_share_user').on(t.sharedWithId),
+    unique('uq_todo_shared_with').on(t.todoId, t.sharedWithId),
+    index('idx_todo_share_todo').on(t.todoId),
+    index('idx_todo_share_user').on(t.sharedWithId),
   ],
 )
 
-export type MemoShare = typeof memoShare.$inferSelect
-export type NewMemoShare = typeof memoShare.$inferInsert
+export type TodoShare = typeof todoShare.$inferSelect
+export type NewTodoShare = typeof todoShare.$inferInsert

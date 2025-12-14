@@ -1,20 +1,20 @@
-import type { MemoData, MemoListItem, CreateMemoPayload, UpdateMemoPayload, MemoConnection } from '~~/shared/types/memo'
+import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection } from '~~/shared/types/todo'
 
-export const useMemoStore = defineStore('memo', () => {
-  const data = ref<MemoData | null>(null)
-  const connections = ref<MemoConnection[]>([])
+export const useTodoStore = defineStore('todo', () => {
+  const data = ref<TodoData | null>(null)
+  const connections = ref<TodoConnection[]>([])
   const error = ref<string | null>(null)
   const isLoading = ref(false)
   const hideCompleted = ref(true)
 
-  const isOverdue = (item: MemoListItem): boolean => {
+  const isOverdue = (item: TodoListItem): boolean => {
     if (!item.plannedDate || item.isCompleted) {
       return false
     }
     return new Date(item.plannedDate) <= new Date()
   }
 
-  const filteredItems = computed((): MemoListItem[] => {
+  const filteredItems = computed((): TodoListItem[] => {
     if (!data.value) {
       return []
     }
@@ -24,7 +24,7 @@ export const useMemoStore = defineStore('memo', () => {
     return data.value.items
   })
 
-  const sortedItems = computed((): MemoListItem[] => {
+  const sortedItems = computed((): TodoListItem[] => {
     const items = [...filteredItems.value]
     return items.sort((a, b) => {
       const aOverdue = isOverdue(a)
@@ -55,7 +55,7 @@ export const useMemoStore = defineStore('memo', () => {
     return data.value.items.filter(isOverdue).length
   })
 
-  const getMemoById = (id: string): MemoListItem | undefined => {
+  const getTodoById = (id: string): TodoListItem | undefined => {
     return data.value?.items.find(item => item.id === id)
   }
 
@@ -64,26 +64,26 @@ export const useMemoStore = defineStore('memo', () => {
     error.value = null
 
     try {
-      const memoPromise = useFetch<MemoData>('/api/memo', { key: 'memo-list' })
-      const connectionsPromise = useFetch<MemoConnection[]>('/api/memo/connections', { key: 'memo-connections' })
+      const todoPromise = useFetch<TodoData>('/api/todo', { key: 'todo-list' })
+      const connectionsPromise = useFetch<TodoConnection[]>('/api/todo/connections', { key: 'todo-connections' })
 
-      const [{ data: memoData, error: memoError }, { data: connectionsData }] = await Promise.all([
-        memoPromise,
+      const [{ data: todoData, error: todoError }, { data: connectionsData }] = await Promise.all([
+        todoPromise,
         connectionsPromise,
       ])
 
-      if (memoError.value) {
-        error.value = memoError.value.data?.message || 'Failed to load memos'
+      if (todoError.value) {
+        error.value = todoError.value.data?.message || 'Failed to load todos'
         data.value = null
       }
       else {
-        data.value = memoData.value || null
+        data.value = todoData.value || null
       }
 
       connections.value = connectionsData.value || []
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load memos'
+      error.value = e instanceof Error ? e.message : 'Failed to load todos'
     }
     finally {
       isLoading.value = false
@@ -95,24 +95,24 @@ export const useMemoStore = defineStore('memo', () => {
     error.value = null
 
     try {
-      const [memoData, connectionsData] = await Promise.all([
-        $fetch<MemoData>('/api/memo'),
-        $fetch<MemoConnection[]>('/api/memo/connections'),
+      const [todoData, connectionsData] = await Promise.all([
+        $fetch<TodoData>('/api/todo'),
+        $fetch<TodoConnection[]>('/api/todo/connections'),
       ])
-      data.value = memoData
+      data.value = todoData
       connections.value = connectionsData
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load memos'
+      error.value = e instanceof Error ? e.message : 'Failed to load todos'
     }
     finally {
       isLoading.value = false
     }
   }
 
-  const createMemo = async (payload: CreateMemoPayload): Promise<{ id: string } | null> => {
+  const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
     try {
-      const result = await $fetch<{ id: string }>('/api/memo', {
+      const result = await $fetch<{ id: string }>('/api/todo', {
         method: 'POST',
         body: payload,
       })
@@ -120,14 +120,14 @@ export const useMemoStore = defineStore('memo', () => {
       return result
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to create memo'
+      error.value = e instanceof Error ? e.message : 'Failed to create todo'
       return null
     }
   }
 
-  const updateMemo = async (id: string, payload: UpdateMemoPayload): Promise<boolean> => {
+  const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<boolean> => {
     try {
-      await $fetch(`/api/memo/${id}`, {
+      await $fetch(`/api/todo/${id}`, {
         method: 'PUT',
         body: payload,
       })
@@ -135,14 +135,14 @@ export const useMemoStore = defineStore('memo', () => {
       return true
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to update memo'
+      error.value = e instanceof Error ? e.message : 'Failed to update todo'
       return false
     }
   }
 
-  const deleteMemo = async (id: string): Promise<boolean> => {
+  const deleteTodo = async (id: string): Promise<boolean> => {
     try {
-      await $fetch(`/api/memo/${id}`, {
+      await $fetch(`/api/todo/${id}`, {
         method: 'DELETE',
       })
       if (data.value) {
@@ -153,7 +153,7 @@ export const useMemoStore = defineStore('memo', () => {
       return true
     }
     catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to delete memo'
+      error.value = e instanceof Error ? e.message : 'Failed to delete todo'
       return false
     }
   }
@@ -173,7 +173,7 @@ export const useMemoStore = defineStore('memo', () => {
     }
 
     try {
-      await $fetch(`/api/memo/${id}/toggle`, {
+      await $fetch(`/api/todo/${id}/toggle`, {
         method: 'PUT',
       })
       return true
@@ -212,12 +212,12 @@ export const useMemoStore = defineStore('memo', () => {
     filteredItems,
     sortedItems,
     overdueCount,
-    getMemoById,
+    getTodoById,
     refresh,
     forceRefresh,
-    createMemo,
-    updateMemo,
-    deleteMemo,
+    createTodo,
+    updateTodo,
+    deleteTodo,
     toggleTodo,
     toggleHideCompleted,
     reset,

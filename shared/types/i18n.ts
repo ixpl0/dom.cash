@@ -11,10 +11,10 @@ export type NotificationType
     | 'budget_share_revoked'
     | 'budget_share_updated'
     | 'budget_imported'
-    | 'memo_created'
-    | 'memo_updated'
-    | 'memo_deleted'
-    | 'memo_toggled'
+    | 'todo_created'
+    | 'todo_updated'
+    | 'todo_deleted'
+    | 'todo_toggled'
 
 export type AccessLevel = 'read' | 'write'
 
@@ -59,7 +59,7 @@ export interface NotificationParams {
   access?: AccessLevel
   monthsCount?: number
   entriesCount?: number
-  memoContent?: string
+  todoContent?: string
   isCompleted?: boolean
 }
 

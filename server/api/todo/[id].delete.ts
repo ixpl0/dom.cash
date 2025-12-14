@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { memo, memoShare } from '~~/server/db/schema'
+import { todo, todoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
@@ -15,36 +15,36 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const memoId = getRouterParam(event, 'id')
-  if (!memoId) {
+  const todoId = getRouterParam(event, 'id')
+  if (!todoId) {
     throw createError({
       statusCode: 400,
-      message: ERROR_KEYS.MEMO_ID_REQUIRED,
+      message: ERROR_KEYS.TODO_ID_REQUIRED,
     })
   }
 
-  const memoRecord = await db
+  const todoRecord = await db
     .select()
-    .from(memo)
-    .where(eq(memo.id, memoId))
+    .from(todo)
+    .where(eq(todo.id, todoId))
     .limit(1)
 
-  if (memoRecord.length === 0) {
+  if (todoRecord.length === 0) {
     throw createError({
       statusCode: 404,
-      message: ERROR_KEYS.MEMO_NOT_FOUND,
+      message: ERROR_KEYS.TODO_NOT_FOUND,
     })
   }
 
-  const existingMemo = memoRecord[0]
-  const isOwner = existingMemo?.userId === currentUser.id
+  const existingTodo = todoRecord[0]
+  const isOwner = existingTodo?.userId === currentUser.id
 
   const shareRecord = await db
     .select()
-    .from(memoShare)
+    .from(todoShare)
     .where(and(
-      eq(memoShare.memoId, memoId),
-      eq(memoShare.sharedWithId, currentUser.id),
+      eq(todoShare.todoId, todoId),
+      eq(todoShare.sharedWithId, currentUser.id),
     ))
     .limit(1)
 
@@ -58,38 +58,38 @@ export default defineEventHandler(async (event) => {
   }
 
   const sharedWithUsers = await db
-    .select({ sharedWithId: memoShare.sharedWithId })
-    .from(memoShare)
-    .where(eq(memoShare.memoId, memoId))
+    .select({ sharedWithId: todoShare.sharedWithId })
+    .from(todoShare)
+    .where(eq(todoShare.todoId, todoId))
 
-  await db.delete(memo).where(eq(memo.id, memoId))
+  await db.delete(todo).where(eq(todo.id, todoId))
 
   const usersToNotify = isOwner
     ? sharedWithUsers.map(s => s.sharedWithId)
-    : [existingMemo?.userId, ...sharedWithUsers.map(s => s.sharedWithId)].filter((id): id is string => id !== undefined && id !== currentUser.id)
+    : [existingTodo?.userId, ...sharedWithUsers.map(s => s.sharedWithId)].filter((id): id is string => id !== undefined && id !== currentUser.id)
 
-  if (existingMemo && usersToNotify.length > 0) {
+  if (existingTodo && usersToNotify.length > 0) {
     try {
       const { createNotification } = await import('~~/server/services/notifications')
-      const truncatedContent = existingMemo.content.length > 50
-        ? `${existingMemo.content.slice(0, 50)}...`
-        : existingMemo.content
+      const truncatedContent = existingTodo.content.length > 50
+        ? `${existingTodo.content.slice(0, 50)}...`
+        : existingTodo.content
 
       for (const targetUserId of usersToNotify) {
         await createNotification({
           sourceUserId: currentUser.id,
           budgetOwnerId: currentUser.id,
           targetUserId,
-          type: 'memo_deleted',
+          type: 'todo_deleted',
           params: {
             username: currentUser.username,
-            memoContent: truncatedContent,
+            todoContent: truncatedContent,
           },
         })
       }
     }
     catch (error) {
-      secureLog.error('Error creating memo delete notification:', error)
+      secureLog.error('Error creating todo delete notification:', error)
     }
   }
 

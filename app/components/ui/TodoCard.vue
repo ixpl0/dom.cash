@@ -2,7 +2,7 @@
   <div
     class="card bg-base-100 shadow-sm border"
     :class="isOverdue ? 'border-error border-2' : 'border-base-300'"
-    data-testid="memo-card"
+    data-testid="todo-card"
   >
     <div class="card-body p-4">
       <div class="flex items-start gap-3">
@@ -11,7 +11,7 @@
             type="checkbox"
             class="checkbox checkbox-primary"
             :checked="isCompleted"
-            data-testid="memo-card-checkbox"
+            data-testid="todo-card-checkbox"
             @change="$emit('toggle')"
           >
         </div>
@@ -20,7 +20,7 @@
           <p
             class="whitespace-pre-wrap break-words"
             :class="{ 'line-through text-base-content/50': isCompleted }"
-            data-testid="memo-card-content"
+            data-testid="todo-card-content"
           >
             {{ content }}
           </p>
@@ -29,14 +29,14 @@
             v-if="plannedDate"
             class="flex items-center gap-1 mt-2 text-sm text-base-content/60"
             :class="isOverdue ? 'text-error font-medium' : ''"
-            data-testid="memo-card-date"
+            data-testid="todo-card-date"
           >
             <Icon
               :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
               size="14"
               :class="isOverdue ? 'animate-blink' : ''"
             />
-            {{ formattedDateTime }}
+            {{ formattedDate }}
           </div>
 
           <div
@@ -60,7 +60,7 @@
               :key="user.id"
               class="tooltip badge badge-success badge-outline badge-sm gap-1"
               :data-tip="sharedWithTooltip"
-              data-testid="memo-card-shared-badge"
+              data-testid="todo-card-shared-badge"
             >
               <Icon
                 name="heroicons:user"
@@ -74,7 +74,7 @@
         <div class="flex items-center gap-1">
           <button
             class="btn btn-ghost btn-sm btn-square"
-            data-testid="memo-card-edit-button"
+            data-testid="todo-card-edit-button"
             @click="$emit('edit')"
           >
             <Icon
@@ -84,7 +84,7 @@
           </button>
           <button
             class="btn btn-ghost btn-sm btn-square text-error"
-            data-testid="memo-card-delete-button"
+            data-testid="todo-card-delete-button"
             @click="$emit('delete')"
           >
             <Icon
@@ -125,16 +125,25 @@ const isOverdue = computed(() => {
   return new Date(props.plannedDate) <= new Date()
 })
 
-const formattedDateTime = computed(() => {
+const formattedDate = computed(() => {
   if (!props.plannedDate) {
     return ''
   }
   const date = new Date(props.plannedDate)
-  return date.toLocaleString(undefined, {
+  const currentYear = new Date().getFullYear()
+  const dateYear = date.getFullYear()
+
+  if (dateYear !== currentYear) {
+    return date.toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  return date.toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
   })
 })
 </script>

@@ -1,13 +1,13 @@
 <template>
   <div class="container mx-auto px-4 py-6">
-    <MemoScreen />
+    <TodoScreen />
   </div>
 </template>
 
 <script setup lang="ts">
-const memoStore = useMemoStore()
+const todoStore = useTodoStore()
 
 useNotifications()
 
-await memoStore.refresh()
+await todoStore.refresh()
 </script>
