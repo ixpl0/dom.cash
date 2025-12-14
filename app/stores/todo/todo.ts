@@ -112,12 +112,18 @@ export const useTodoStore = defineStore('todo', () => {
 
   const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
     try {
-      const result = await $fetch<{ id: string }>('/api/todo', {
+      const result = await $fetch<TodoListItem>('/api/todo', {
         method: 'POST',
         body: payload,
       })
-      await forceRefresh()
-      return result
+
+      if (data.value) {
+        data.value = {
+          items: [result, ...data.value.items],
+        }
+      }
+
+      return { id: result.id }
     }
     catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to create todo'
@@ -131,7 +137,41 @@ export const useTodoStore = defineStore('todo', () => {
         method: 'PUT',
         body: payload,
       })
-      await forceRefresh()
+
+      if (data.value) {
+        data.value = {
+          items: data.value.items.map((item) => {
+            if (item.id !== id) {
+              return item
+            }
+
+            const updatedItem: TodoListItem = {
+              ...item,
+              updatedAt: new Date().toISOString(),
+            }
+
+            if (payload.content !== undefined) {
+              updatedItem.content = payload.content
+            }
+
+            if (payload.plannedDate !== undefined) {
+              updatedItem.plannedDate = payload.plannedDate
+            }
+
+            if (payload.sharedWithUserIds !== undefined && item.isOwner) {
+              updatedItem.sharedWith = payload.sharedWithUserIds
+                .map((userId) => {
+                  const connection = connections.value.find(c => c.id === userId)
+                  return connection ? { id: connection.id, username: connection.username } : null
+                })
+                .filter((c): c is { id: string, username: string } => c !== null)
+            }
+
+            return updatedItem
+          }),
+        }
+      }
+
       return true
     }
     catch (e) {

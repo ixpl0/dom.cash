@@ -1,10 +1,12 @@
+import { inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
-import { todo, todoShare } from '~~/server/db/schema'
+import { todo, todoShare, user } from '~~/server/db/schema'
 import type { NewTodo, NewTodoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
+import type { TodoListItem } from '~~/shared/types/todo'
 
 const createTodoSchema = z.object({
   content: z.string().min(1).max(10000),
@@ -68,12 +70,26 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return {
-    id: newTodo.id,
-    content: newTodo.content,
-    isCompleted: newTodo.isCompleted,
-    plannedDate: newTodo.plannedDate,
-    createdAt: newTodo.createdAt.toISOString(),
-    updatedAt: newTodo.updatedAt.toISOString(),
+  let sharedWithUsers: Array<{ id: string, username: string }> = []
+  if (sharedWithUserIds && sharedWithUserIds.length > 0) {
+    const users = await db
+      .select({ id: user.id, username: user.username })
+      .from(user)
+      .where(inArray(user.id, sharedWithUserIds))
+    sharedWithUsers = users
   }
+
+  const response: TodoListItem = {
+    id: newTodo.id,
+    content,
+    isCompleted: false,
+    plannedDate: plannedDate ?? null,
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    isOwner: true,
+    ownerUsername: currentUser.username,
+    sharedWith: sharedWithUsers,
+  }
+
+  return response
 })
