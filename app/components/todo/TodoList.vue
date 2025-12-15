@@ -40,12 +40,12 @@ defineProps<Props>()
 
 <style scoped>
 .todo-card-leave-active {
-  transition: all 0.4s ease-out;
+  transition: all 0.35s ease-out;
 }
 
 .todo-card-leave-to {
   opacity: 0;
-  transform: scale(0.8);
+  transform: translateY(-8px);
 }
 
 .empty-fade-enter-active {

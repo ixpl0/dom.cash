@@ -1,23 +1,25 @@
 <template>
-  <div
-    v-if="isOpen"
-    class="modal modal-open"
-    :style="{ zIndex }"
-    v-bind="$attrs"
-  >
+  <Transition name="modal">
     <div
-      class="modal-backdrop"
-      @click="handleBackdropClick"
-    />
-
-    <div
-      ref="contentRef"
-      :class="contentClass"
-      @click.stop
+      v-if="isOpen"
+      class="modal modal-open"
+      :style="{ zIndex }"
+      v-bind="$attrs"
     >
-      <slot />
+      <div
+        class="modal-backdrop"
+        @click="handleBackdropClick"
+      />
+
+      <div
+        ref="contentRef"
+        :class="contentClass"
+        @click.stop
+      >
+        <slot />
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -74,3 +76,30 @@ watch(() => props.isOpen, (open) => {
   }
 })
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.35s ease-out;
+}
+
+.modal-enter-active :deep(.modal-box),
+.modal-leave-active :deep(.modal-box) {
+  transition: all 0.35s ease-out;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from :deep(.modal-box) {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.modal-leave-to :deep(.modal-box) {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>
