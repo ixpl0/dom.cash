@@ -3,7 +3,7 @@ import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 
-export const findUserByUsername = async (username: string, event: H3Event) => {
+export const findUserByUsername = async (username: string, event: H3Event): Promise<typeof user.$inferSelect | null> => {
   const db = useDatabase(event)
   const users = await db
     .select()
@@ -11,10 +11,10 @@ export const findUserByUsername = async (username: string, event: H3Event) => {
     .where(eq(user.username, username))
     .limit(1)
 
-  return users[0] || null
+  return users[0] ?? null
 }
 
-export const getExistingShare = async (ownerId: string, sharedWithId: string, event: H3Event) => {
+export const getExistingShare = async (ownerId: string, sharedWithId: string, event: H3Event): Promise<typeof budgetShare.$inferSelect | null> => {
   const db = useDatabase(event)
   const shares = await db
     .select()
@@ -25,5 +25,5 @@ export const getExistingShare = async (ownerId: string, sharedWithId: string, ev
     ))
     .limit(1)
 
-  return shares[0] || null
+  return shares[0] ?? null
 }

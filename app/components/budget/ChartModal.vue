@@ -41,14 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import type { TooltipComponentOption } from 'echarts/components'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
-import { type ChartOption, buildChartOption, type ChartSeriesConfig } from '~/composables/shared/useChartConfig'
+import { type ChartOption, type TooltipFormatter, buildChartOption, type ChartSeriesConfig } from '~/composables/shared/useChartConfig'
 import { getChartThemeColors, type ChartThemeColors } from '~/composables/shared/useChartTheme'
 import { formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
 
-type TooltipParams = Parameters<Exclude<TooltipComponentOption['formatter'], string | undefined>>[0]
+type TooltipParams = Parameters<TooltipFormatter>[0]
 
 type SingleParam = TooltipParams extends readonly (infer U)[] ? U : TooltipParams
 
@@ -188,7 +187,7 @@ const chartOption = computed((): ChartOption => {
     labels: chartData.value.labels,
     series: seriesConfigs.value,
     legendSelected: legendSelected.value,
-    tooltipFormatter: tooltipFormatter as unknown as (params: unknown) => string,
+    tooltipFormatter,
     yAxisFormatter,
     enableDataZoom: true,
     gridTop: 80,

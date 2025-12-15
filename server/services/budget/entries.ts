@@ -22,7 +22,7 @@ export interface UpdateEntryParams {
   isOptional?: boolean
 }
 
-export const getMonthOwner = async (monthId: string, event: H3Event) => {
+export const getMonthOwner = async (monthId: string, event: H3Event): Promise<typeof month.$inferSelect | null> => {
   const db = useDatabase(event)
   const monthData = await db
     .select()
@@ -30,10 +30,15 @@ export const getMonthOwner = async (monthId: string, event: H3Event) => {
     .where(eq(month.id, monthId))
     .limit(1)
 
-  return monthData[0] || null
+  return monthData[0] ?? null
 }
 
-export const getEntryWithMonth = async (entryId: string, event: H3Event) => {
+interface EntryWithMonth {
+  entry: typeof entry.$inferSelect
+  month: typeof month.$inferSelect
+}
+
+export const getEntryWithMonth = async (entryId: string, event: H3Event): Promise<EntryWithMonth | null> => {
   const db = useDatabase(event)
   const entryData = await db
     .select({
@@ -46,10 +51,10 @@ export const getEntryWithMonth = async (entryId: string, event: H3Event) => {
     .limit(1)
 
   const result = entryData[0]
-  return result?.month ? result : null
+  return result?.month ? result as EntryWithMonth : null
 }
 
-export const createEntry = async (params: CreateEntryParams, event: H3Event) => {
+export const createEntry = async (params: CreateEntryParams, event: H3Event): Promise<typeof entry.$inferSelect | undefined> => {
   const db = useDatabase(event)
   const newEntry = await db
     .insert(entry)
@@ -60,15 +65,15 @@ export const createEntry = async (params: CreateEntryParams, event: H3Event) => 
       description: params.description,
       amount: params.amount,
       currency: params.currency,
-      date: params.date || null,
-      isOptional: params.isOptional || false,
+      date: params.date ?? null,
+      isOptional: params.isOptional ?? false,
     })
     .returning()
 
   return newEntry[0]
 }
 
-export const updateEntry = async (entryId: string, params: UpdateEntryParams, event: H3Event) => {
+export const updateEntry = async (entryId: string, params: UpdateEntryParams, event: H3Event): Promise<typeof entry.$inferSelect | undefined> => {
   const db = useDatabase(event)
   const updatedEntry = await db
     .update(entry)
@@ -76,7 +81,7 @@ export const updateEntry = async (entryId: string, params: UpdateEntryParams, ev
       description: params.description,
       amount: params.amount,
       currency: params.currency,
-      date: params.date || null,
+      date: params.date ?? null,
       isOptional: params.isOptional !== undefined ? params.isOptional : undefined,
     })
     .where(eq(entry.id, entryId))
@@ -85,7 +90,7 @@ export const updateEntry = async (entryId: string, params: UpdateEntryParams, ev
   return updatedEntry[0]
 }
 
-export const deleteEntry = async (entryId: string, event: H3Event) => {
+export const deleteEntry = async (entryId: string, event: H3Event): Promise<typeof entry.$inferSelect | undefined> => {
   const db = useDatabase(event)
   const deletedEntry = await db
     .delete(entry)
