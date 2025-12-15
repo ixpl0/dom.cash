@@ -18,6 +18,7 @@ export const useTodoStore = defineStore('todo', () => {
   const isLoading = ref(false)
   const hideCompleted = ref(getInitialHideCompleted())
   const togglingIds = ref<Set<string>>(new Set())
+  const leavingIds = ref<Set<string>>(new Set())
 
   const isOverdue = (item: TodoListItem): boolean => {
     if (!item.plannedDate || item.isCompleted) {
@@ -35,7 +36,7 @@ export const useTodoStore = defineStore('todo', () => {
       return []
     }
     if (hideCompleted.value) {
-      return data.value.items.filter(item => !item.isCompleted)
+      return data.value.items.filter(item => !item.isCompleted || leavingIds.value.has(item.id))
     }
     return data.value.items
   })
@@ -210,7 +211,17 @@ export const useTodoStore = defineStore('todo', () => {
     const isRecurring = item.recurrence !== null
     const originalIsCompleted = item.isCompleted
     const originalPlannedDate = item.plannedDate
+    const willBeCompleted = !item.isCompleted
+    const shouldAnimateLeave = !isRecurring && willBeCompleted && hideCompleted.value
+    const animationDuration = 400
     const startTime = Date.now()
+
+    if (shouldAnimateLeave) {
+      leavingIds.value = new Set([...leavingIds.value, id])
+    }
+    else if (!willBeCompleted) {
+      leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
+    }
 
     if (isRecurring) {
       togglingIds.value = new Set([...togglingIds.value, id])
@@ -229,14 +240,21 @@ export const useTodoStore = defineStore('todo', () => {
         body: reference ? { reference } : undefined,
       })
 
-      if (isRecurring) {
-        const minDisplayTime = 400
-        const elapsed = Date.now() - startTime
-        const remainingDelay = Math.max(0, minDisplayTime - elapsed)
+      const elapsed = Date.now() - startTime
+      const remainingDelay = Math.max(0, animationDuration - elapsed)
+
+      if (isRecurring || shouldAnimateLeave) {
         if (remainingDelay > 0) {
           await new Promise(resolve => setTimeout(resolve, remainingDelay))
         }
+      }
+
+      if (isRecurring) {
         togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
+      }
+
+      if (shouldAnimateLeave) {
+        leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
       }
 
       if (data.value) {
@@ -259,7 +277,12 @@ export const useTodoStore = defineStore('todo', () => {
       if (isRecurring) {
         togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
       }
-      else if (data.value) {
+
+      if (shouldAnimateLeave) {
+        leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
+      }
+
+      if (!isRecurring && data.value) {
         data.value = {
           items: data.value.items.map(i =>
             i.id === id
@@ -268,6 +291,7 @@ export const useTodoStore = defineStore('todo', () => {
           ),
         }
       }
+
       error.value = e instanceof Error ? e.message : 'Failed to toggle todo'
       return false
     }
@@ -287,10 +311,15 @@ export const useTodoStore = defineStore('todo', () => {
     isLoading.value = false
     hideCompleted.value = true
     togglingIds.value = new Set()
+    leavingIds.value = new Set()
   }
 
   const isToggling = (id: string): boolean => {
     return togglingIds.value.has(id)
+  }
+
+  const isLeaving = (id: string): boolean => {
+    return leavingIds.value.has(id)
   }
 
   return {
@@ -304,6 +333,7 @@ export const useTodoStore = defineStore('todo', () => {
     overdueCount,
     getTodoById,
     isToggling,
+    isLeaving,
     refresh,
     createTodo,
     updateTodo,
