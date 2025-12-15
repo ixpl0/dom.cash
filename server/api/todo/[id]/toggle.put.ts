@@ -1,10 +1,11 @@
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
 import { todo, todoShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { canEditTodo } from '~~/server/utils/todo-permissions'
 import { dateReferenceSchema } from '~~/shared/schemas/recurrence'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import type { ToggleResult } from '~~/shared/types/todo'
@@ -13,33 +14,6 @@ import { calculateNextDate, formatDateForDb } from '~~/shared/utils/recurrence'
 const toggleTodoSchema = z.object({
   reference: dateReferenceSchema.optional(),
 })
-
-const canEditTodo = async (
-  db: ReturnType<typeof useDatabase>,
-  todoId: string,
-  userId: string,
-): Promise<boolean> => {
-  const todoRecord = await db
-    .select({ userId: todo.userId })
-    .from(todo)
-    .where(eq(todo.id, todoId))
-    .limit(1)
-
-  if (todoRecord.length > 0 && todoRecord[0]?.userId === userId) {
-    return true
-  }
-
-  const shareRecord = await db
-    .select({ id: todoShare.id })
-    .from(todoShare)
-    .where(and(
-      eq(todoShare.todoId, todoId),
-      eq(todoShare.sharedWithId, userId),
-    ))
-    .limit(1)
-
-  return shareRecord.length > 0
-}
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)

@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
       for (const targetUserId of usersToNotify) {
         await createNotification({
           sourceUserId: currentUser.id,
-          budgetOwnerId: currentUser.id,
+          budgetOwnerId: existingTodo.userId,
           targetUserId,
           type: 'todo_deleted',
           params: {

@@ -78,7 +78,11 @@ const isOverdue = computed(() => {
   if (!props.todo.plannedDate || props.todo.isCompleted) {
     return false
   }
-  return new Date(props.todo.plannedDate) <= new Date()
+  const plannedDate = new Date(props.todo.plannedDate)
+  const today = new Date()
+  plannedDate.setHours(0, 0, 0, 0)
+  today.setHours(0, 0, 0, 0)
+  return plannedDate < today
 })
 
 const handleToggle = async () => {

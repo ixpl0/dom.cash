@@ -23,7 +23,11 @@ export const useTodoStore = defineStore('todo', () => {
     if (!item.plannedDate || item.isCompleted) {
       return false
     }
-    return new Date(item.plannedDate) <= new Date()
+    const plannedDate = new Date(item.plannedDate)
+    const today = new Date()
+    plannedDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+    return plannedDate < today
   }
 
   const filteredItems = computed((): TodoListItem[] => {
@@ -102,27 +106,8 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
-  const forceRefresh = async () => {
-    isLoading.value = true
-    error.value = null
-
-    try {
-      const [todoData, connectionsData] = await Promise.all([
-        $fetch<TodoData>('/api/todo'),
-        $fetch<TodoConnection[]>('/api/todo/connections'),
-      ])
-      data.value = todoData
-      connections.value = connectionsData
-    }
-    catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load todos'
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
-
   const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
+    error.value = null
     try {
       const result = await $fetch<TodoListItem>('/api/todo', {
         method: 'POST',
@@ -144,6 +129,7 @@ export const useTodoStore = defineStore('todo', () => {
   }
 
   const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<boolean> => {
+    error.value = null
     try {
       await $fetch(`/api/todo/${id}`, {
         method: 'PUT',
@@ -197,6 +183,7 @@ export const useTodoStore = defineStore('todo', () => {
   }
 
   const deleteTodo = async (id: string): Promise<boolean> => {
+    error.value = null
     try {
       await $fetch(`/api/todo/${id}`, {
         method: 'DELETE',
@@ -223,6 +210,7 @@ export const useTodoStore = defineStore('todo', () => {
     const isRecurring = item.recurrence !== null
     const originalIsCompleted = item.isCompleted
     const originalPlannedDate = item.plannedDate
+    const startTime = Date.now()
 
     if (isRecurring) {
       togglingIds.value = new Set([...togglingIds.value, id])
@@ -242,7 +230,12 @@ export const useTodoStore = defineStore('todo', () => {
       })
 
       if (isRecurring) {
-        await new Promise(resolve => setTimeout(resolve, 400))
+        const minDisplayTime = 400
+        const elapsed = Date.now() - startTime
+        const remainingDelay = Math.max(0, minDisplayTime - elapsed)
+        if (remainingDelay > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingDelay))
+        }
         togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
       }
 
@@ -312,7 +305,6 @@ export const useTodoStore = defineStore('todo', () => {
     getTodoById,
     isToggling,
     refresh,
-    forceRefresh,
     createTodo,
     updateTodo,
     deleteTodo,
