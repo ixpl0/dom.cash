@@ -1,25 +1,29 @@
 <template>
   <div
-    class="card bg-base-100 shadow-sm border"
-    :class="isOverdue ? 'border-error border-2' : 'border-base-300'"
+    class="group rounded-box bg-base-200/50 hover:bg-base-200 border-2 transition-all duration-200"
+    :class="isOverdue ? 'border-error' : 'border-transparent'"
     data-testid="todo-card"
   >
-    <div class="card-body p-4">
+    <div class="p-4">
       <div class="flex items-start gap-3">
-        <div>
-          <input
-            type="checkbox"
-            class="checkbox checkbox-primary"
-            :checked="isCompleted"
-            data-testid="todo-card-checkbox"
-            @change="$emit('toggle')"
-          >
-        </div>
+        <button
+          class="todo-check flex-shrink-0 mt-0.5"
+          :class="{ 'is-completed': isCompleted, 'is-overdue': isOverdue && !isCompleted }"
+          data-testid="todo-card-checkbox"
+          @click="$emit('toggle')"
+        >
+          <Icon
+            v-if="isCompleted"
+            name="heroicons:check"
+            class="todo-check-icon"
+            size="14"
+          />
+        </button>
 
-        <div class="flex-1 min-w-0 pt-1">
+        <div class="flex-1 min-w-0">
           <p
-            class="whitespace-pre-wrap break-words"
-            :class="{ 'line-through text-base-content/50': isCompleted }"
+            class="whitespace-pre-wrap break-words leading-relaxed transition-all duration-200"
+            :class="isCompleted ? 'line-through text-base-content/40' : 'text-base-content'"
             data-testid="todo-card-content"
           >
             {{ content }}
@@ -27,13 +31,13 @@
 
           <div
             v-if="plannedDate || recurrence"
-            class="flex items-center gap-2 mt-2 text-sm text-base-content/60"
-            :class="isOverdue ? 'text-error font-medium' : ''"
+            class="flex flex-wrap items-center gap-2 mt-2 text-sm"
             data-testid="todo-card-date"
           >
-            <div
+            <span
               v-if="plannedDate"
-              class="flex items-center gap-1"
+              class="inline-flex items-center gap-1 transition-colors duration-200"
+              :class="isOverdue ? 'text-error' : 'text-base-content/50'"
             >
               <Icon
                 :name="isOverdue ? 'heroicons:bell-alert' : 'heroicons:calendar'"
@@ -41,10 +45,10 @@
                 :class="isOverdue ? 'animate-blink' : ''"
               />
               {{ formattedDate }}
-            </div>
+            </span>
             <span
               v-if="recurrence"
-              class="badge badge-secondary badge-outline badge-sm gap-1"
+              class="inline-flex items-center gap-1 text-secondary"
               data-testid="todo-card-recurrence-badge"
             >
               <Icon
@@ -61,7 +65,7 @@
           >
             <span
               v-if="!isOwner"
-              class="tooltip badge badge-info badge-outline badge-sm gap-1"
+              class="tooltip inline-flex items-center gap-1 text-info"
               :data-tip="authorTooltip"
             >
               <Icon
@@ -74,7 +78,7 @@
             <span
               v-for="user in sharedWith"
               :key="user.id"
-              class="tooltip badge badge-success badge-outline badge-sm gap-1"
+              class="tooltip inline-flex items-center gap-1 text-success"
               :data-tip="sharedWithTooltip"
               data-testid="todo-card-shared-badge"
             >
@@ -87,9 +91,9 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
-            class="btn btn-ghost btn-sm btn-square"
+            class="btn btn-ghost btn-sm btn-square text-base-content/60 hover:text-base-content transition-colors duration-200"
             data-testid="todo-card-edit-button"
             @click="$emit('edit')"
           >
@@ -99,7 +103,7 @@
             />
           </button>
           <button
-            class="btn btn-ghost btn-sm btn-square text-error"
+            class="btn btn-ghost btn-sm btn-square text-base-content/60 hover:text-error transition-colors duration-200"
             data-testid="todo-card-delete-button"
             @click="$emit('delete')"
           >
@@ -163,10 +167,52 @@ const formattedDate = computed(() => {
 </script>
 
 <style scoped>
+.todo-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-base-content);
+  opacity: 0.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.todo-check:hover {
+  opacity: 0.6;
+  border-color: var(--color-primary);
+}
+
+.todo-check.is-completed {
+  opacity: 1;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.todo-check.is-overdue {
+  border-color: var(--color-error);
+  opacity: 0.8;
+}
+
+.todo-check.is-overdue:hover {
+  opacity: 1;
+  background: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.todo-check-icon {
+  color: var(--color-primary-content);
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
 .animate-blink {
   animation: blink 1s step-end infinite;
 }
