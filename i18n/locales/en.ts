@@ -17,12 +17,11 @@ export default {
   },
 
   header: {
-    sharedBudgets: 'Shared Budgets',
+    budget: 'Budget',
+    todo: 'TODO',
     metrics: 'Metrics',
-    share: 'Share',
     logout: 'Logout',
     login: 'Login',
-    todo: 'TODO',
   },
 
   auth: {
@@ -124,11 +123,14 @@ export default {
     chart: 'Chart',
     export: 'Export',
     import: 'Import',
+    sharedBudgets: 'Shared',
+    share: 'Share',
     toOwnBudget: 'To My Budget',
     backToOwnBudget: 'Return to My Budget',
     accessError: 'Access Error',
     loadError: 'Failed to load budget',
     noBudgetYet: 'No budget data yet',
+    noBudgetYetUser: 'No budget data yet for user {username}',
     userNoMonths: 'This user hasn\'t created any budget months yet',
     startWithMonth: 'Start by creating a month and adding balance sources or import data',
     createFirstMonth: 'Create',

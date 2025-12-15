@@ -1,19 +1,21 @@
 import { test, expect } from '../../../fixtures'
 import { waitForHydration } from '../../../helpers/wait-for-hydration'
 import { cleanupUserData } from '../../../helpers/auth'
+import { initBudget } from '../../../helpers/budget-setup'
 
 test.describe('Share Modal', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/budget')
     await waitForHydration(page)
+    await initBudget(page, 'simple')
   })
 
   test.afterEach(async ({ request }) => {
     await cleanupUserData(request)
   })
 
-  test('should open share modal from header button', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+  test('should open share modal from budget page button', async ({ page }) => {
+    const shareButton = page.getByTestId('share-button')
     await expect(shareButton).toBeVisible()
     await shareButton.click()
 
@@ -22,7 +24,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should show empty state when no shares exist', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const modal = page.getByTestId('share-modal')
@@ -36,7 +38,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should close modal via close button', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const modal = page.getByTestId('share-modal')
@@ -49,7 +51,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should close modal via Escape key', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const modal = page.getByTestId('share-modal')
@@ -61,7 +63,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should show add new share form when clicking add button', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const modal = page.getByTestId('share-modal')
@@ -81,7 +83,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should cancel adding new share', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const addFirstButton = page.getByTestId('share-add-first-button')
@@ -98,7 +100,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should have default read access selected', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const addFirstButton = page.getByTestId('share-add-first-button')
@@ -109,7 +111,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should allow selecting write access', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const addFirstButton = page.getByTestId('share-add-first-button')
@@ -121,7 +123,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should have username input with placeholder', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const addFirstButton = page.getByTestId('share-add-first-button')
@@ -132,7 +134,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should have confirm and cancel buttons in add form', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const addFirstButton = page.getByTestId('share-add-first-button')
@@ -146,7 +148,7 @@ test.describe('Share Modal', () => {
   })
 
   test('should cancel add form via Escape key', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
+    const shareButton = page.getByTestId('share-button')
     await shareButton.click()
 
     const addFirstButton = page.getByTestId('share-add-first-button')

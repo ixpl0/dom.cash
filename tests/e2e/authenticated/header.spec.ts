@@ -15,17 +15,17 @@ test.describe('Authenticated Header', () => {
     await expect(logoutButton).toBeVisible()
   })
 
-  test('should have share button in header', async ({ page }) => {
-    const shareButton = page.getByTestId('share-btn')
-    await expect(shareButton).toBeVisible()
+  test('should have budget button in header', async ({ page }) => {
+    const budgetButton = page.getByTestId('budget-btn')
+    await expect(budgetButton).toBeVisible()
   })
 
-  test('should have shared budgets button in header', async ({ page }) => {
-    const sharedBudgetsButton = page.getByTestId('shared-budgets-btn')
-    await expect(sharedBudgetsButton).toBeVisible()
+  test('should have todo button in header', async ({ page }) => {
+    const todoButton = page.getByTestId('todo-btn')
+    await expect(todoButton).toBeVisible()
   })
 
-  test('should show language and theme pickers in main header on large screens', async ({ page }) => {
+  test('should show language and theme pickers in main header on xl screens', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 })
     await waitForHydration(page)
 
@@ -34,21 +34,13 @@ test.describe('Authenticated Header', () => {
 
     await expect(mainHeaderControls.getByTestId('theme-picker-label')).toBeVisible()
     await expect(mainHeaderControls.getByTestId('language-picker-label')).toBeVisible()
-
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-
-    const dropdownMenu = page.getByTestId('user-dropdown-content')
-    await expect(dropdownMenu.getByTestId('theme-picker-label')).toBeHidden()
-    await expect(dropdownMenu.getByTestId('language-picker-label')).toBeHidden()
   })
 
-  test('should move language and theme pickers to user dropdown on tablet screens', async ({ page }) => {
+  test('should move language and theme pickers to user dropdown on md-lg screens', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 })
     await waitForHydration(page)
 
     const mainHeaderControls = page.getByTestId('desktop-header-actions')
-
     await expect(mainHeaderControls.getByTestId('theme-picker-label')).toBeHidden()
     await expect(mainHeaderControls.getByTestId('language-picker-label')).toBeHidden()
 

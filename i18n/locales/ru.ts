@@ -17,12 +17,11 @@ export default {
   },
 
   header: {
-    sharedBudgets: 'Общие бюджеты',
+    budget: 'Бюджет',
+    todo: 'TODO',
     metrics: 'Метрики',
-    share: 'Поделиться',
     logout: 'Выйти',
     login: 'Войти',
-    todo: 'TODO',
   },
 
   auth: {
@@ -124,11 +123,14 @@ export default {
     chart: 'График',
     export: 'Экспорт',
     import: 'Импорт',
+    sharedBudgets: 'Общие',
+    share: 'Поделиться',
     toOwnBudget: 'К своему бюджету',
     backToOwnBudget: 'Вернуться к своему бюджету',
     accessError: 'Ошибка доступа',
     loadError: 'Не удалось загрузить бюджет',
     noBudgetYet: 'Пока нет данных о бюджете',
+    noBudgetYetUser: 'Пока нет данных о бюджете пользователя {username}',
     userNoMonths: 'Этот пользователь ещё не создал месяцы бюджета',
     startWithMonth: 'Начните с создания месяца и добавления источников баланса или импортируйте данные',
     createFirstMonth: 'Создать',

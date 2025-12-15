@@ -13,21 +13,17 @@
       class="hidden md:flex items-center gap-2"
       data-testid="desktop-header-actions"
     >
-      <UiLanguagePicker :class="isAuthenticated ? 'hidden xl:flex' : ''" />
-      <UiThemePicker :class="isAuthenticated ? 'hidden xl:flex' : ''" />
-
       <template v-if="isAuthenticated">
         <NuxtLink
-          v-if="user?.isAdmin"
-          to="/metrics"
+          to="/budget"
           class="btn btn-outline btn-sm"
-          data-testid="metrics-btn"
+          data-testid="budget-btn"
         >
           <Icon
-            name="heroicons:chart-bar"
+            name="heroicons:banknotes"
             size="16"
           />
-          <span class="hidden xl:inline">{{ t('header.metrics') }}</span>
+          {{ t('header.budget') }}
         </NuxtLink>
         <div class="indicator">
           <span
@@ -45,32 +41,25 @@
               name="heroicons:document-text"
               size="16"
             />
-            <span class="hidden xl:inline">{{ t('header.todo') }}</span>
+            {{ t('header.todo') }}
           </NuxtLink>
         </div>
-        <button
+        <NuxtLink
+          v-if="user?.isAdmin"
+          to="/metrics"
           class="btn btn-outline btn-sm"
-          data-testid="shared-budgets-btn"
-          @click="modalsStore.openSharedBudgetsModal"
+          data-testid="metrics-btn"
         >
           <Icon
-            name="heroicons:users"
+            name="heroicons:chart-bar"
             size="16"
           />
-          <span class="hidden xl:inline">{{ t('header.sharedBudgets') }}</span>
-        </button>
-        <button
-          class="btn btn-outline btn-sm"
-          data-testid="share-btn"
-          @click="modalsStore.openShareModal('')"
-        >
-          <Icon
-            name="heroicons:share"
-            size="16"
-          />
-          <span class="hidden xl:inline">{{ t('header.share') }}</span>
-        </button>
+          {{ t('header.metrics') }}
+        </NuxtLink>
       </template>
+
+      <UiLanguagePicker class="hidden xl:flex" />
+      <UiThemePicker class="hidden xl:flex" />
     </div>
 
     <div
@@ -153,16 +142,16 @@
           class="dropdown-content menu bg-base-100 rounded-box z-[1] p-2 shadow mt-3"
         >
           <template v-if="isAuthenticated">
-            <li v-if="user?.isAdmin">
+            <li>
               <NuxtLink
-                to="/metrics"
-                data-testid="mobile-metrics-btn"
+                to="/budget"
+                data-testid="mobile-budget-btn"
               >
                 <Icon
-                  name="heroicons:chart-bar"
+                  name="heroicons:banknotes"
                   size="16"
                 />
-                {{ t('header.metrics') }}
+                {{ t('header.budget') }}
               </NuxtLink>
             </li>
             <li>
@@ -186,29 +175,17 @@
                 </span>
               </NuxtLink>
             </li>
-            <li>
-              <button
-                data-testid="mobile-shared-budgets-btn"
-                @click="modalsStore.openSharedBudgetsModal"
+            <li v-if="user?.isAdmin">
+              <NuxtLink
+                to="/metrics"
+                data-testid="mobile-metrics-btn"
               >
                 <Icon
-                  name="heroicons:users"
+                  name="heroicons:chart-bar"
                   size="16"
                 />
-                {{ t('header.sharedBudgets') }}
-              </button>
-            </li>
-            <li>
-              <button
-                data-testid="mobile-share-btn"
-                @click="modalsStore.openShareModal('')"
-              >
-                <Icon
-                  name="heroicons:share"
-                  size="16"
-                />
-                {{ t('header.share') }}
-              </button>
+                {{ t('header.metrics') }}
+              </NuxtLink>
             </li>
           </template>
 
@@ -257,7 +234,6 @@
 
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
-const modalsStore = useModalsStore()
 const todoStore = useTodoStore()
 const { t } = useI18n()
 </script>

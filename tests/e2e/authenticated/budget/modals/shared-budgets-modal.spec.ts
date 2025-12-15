@@ -1,19 +1,21 @@
 import { test, expect } from '../../../fixtures'
 import { waitForHydration } from '../../../helpers/wait-for-hydration'
 import { cleanupUserData } from '../../../helpers/auth'
+import { initBudget } from '../../../helpers/budget-setup'
 
 test.describe('Shared Budgets Modal', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/budget')
     await waitForHydration(page)
+    await initBudget(page, 'simple')
   })
 
   test.afterEach(async ({ request }) => {
     await cleanupUserData(request)
   })
 
-  test('should open shared budgets modal from header button', async ({ page }) => {
-    const sharedBudgetsButton = page.getByTestId('shared-budgets-btn')
+  test('should open shared budgets modal from budget page button', async ({ page }) => {
+    const sharedBudgetsButton = page.getByTestId('shared-budgets-button')
     await expect(sharedBudgetsButton).toBeVisible()
     await sharedBudgetsButton.click()
 
@@ -22,7 +24,7 @@ test.describe('Shared Budgets Modal', () => {
   })
 
   test('should show empty state when no shared budgets exist', async ({ page }) => {
-    const sharedBudgetsButton = page.getByTestId('shared-budgets-btn')
+    const sharedBudgetsButton = page.getByTestId('shared-budgets-button')
     await sharedBudgetsButton.click()
 
     const modal = page.getByTestId('shared-budgets-modal')
@@ -33,7 +35,7 @@ test.describe('Shared Budgets Modal', () => {
   })
 
   test('should close modal via close button', async ({ page }) => {
-    const sharedBudgetsButton = page.getByTestId('shared-budgets-btn')
+    const sharedBudgetsButton = page.getByTestId('shared-budgets-button')
     await sharedBudgetsButton.click()
 
     const modal = page.getByTestId('shared-budgets-modal')
@@ -46,7 +48,7 @@ test.describe('Shared Budgets Modal', () => {
   })
 
   test('should close modal via Escape key', async ({ page }) => {
-    const sharedBudgetsButton = page.getByTestId('shared-budgets-btn')
+    const sharedBudgetsButton = page.getByTestId('shared-budgets-button')
     await sharedBudgetsButton.click()
 
     const modal = page.getByTestId('shared-budgets-modal')

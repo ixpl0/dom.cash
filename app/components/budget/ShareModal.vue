@@ -140,7 +140,7 @@
                   class="input input-bordered w-full"
                   data-testid="share-username-input"
                   @keyup.enter="addShare()"
-                  @keyup.esc="cancelAdd()"
+                  @keyup.esc.stop="cancelAdd()"
                 >
               </td>
               <td>
@@ -254,9 +254,10 @@ const editingId = ref<string | null>(null)
 const newShare = ref<ShareEntry>({ id: '', username: '', access: 'read' })
 const editingShare = ref<ShareEntry>({ id: '', username: '', access: 'read' })
 
-const startAdd = (): void => {
-  isAddingNew.value = true
+const startAdd = async (): Promise<void> => {
   newShare.value = { id: '', username: '', access: 'read' }
+  await nextTick()
+  isAddingNew.value = true
 }
 
 const cancelAdd = (): void => {

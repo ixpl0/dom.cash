@@ -33,7 +33,7 @@
         class="text-2xl font-bold mb-2"
         data-testid="no-budget-message"
       >
-        {{ t('budget.noBudgetYet') }}
+        {{ isOwnBudget ? t('budget.noBudgetYet') : t('budget.noBudgetYetUser', { username: budgetStore.data?.user?.username }) }}
       </h2>
       <p class="text-lg opacity-70 mb-6">
         {{ !budgetStore.canEdit ? t('budget.userNoMonths') : t('budget.startWithMonth') }}
@@ -76,6 +76,13 @@
           {{ t('budget.importBudget') }}
         </button>
       </div>
+      <button
+        v-else
+        class="btn btn-outline btn-lg"
+        @click="navigateToOwnBudget"
+      >
+        {{ t('budget.toOwnBudget') }}
+      </button>
     </div>
 
     <div v-else>
@@ -155,13 +162,39 @@
             {{ t('budget.import') }}
           </button>
 
-          <NuxtLink
+          <button
+            v-if="isOwnBudget"
+            class="btn btn-ghost btn-sm"
+            data-testid="shared-budgets-button"
+            @click="modalsStore.openSharedBudgetsModal"
+          >
+            <Icon
+              name="heroicons:users"
+              size="20"
+            />
+            {{ t('budget.sharedBudgets') }}
+          </button>
+
+          <button
+            v-if="isOwnBudget"
+            class="btn btn-ghost btn-sm"
+            data-testid="share-button"
+            @click="modalsStore.openShareModal('')"
+          >
+            <Icon
+              name="heroicons:share"
+              size="20"
+            />
+            {{ t('budget.share') }}
+          </button>
+
+          <button
             v-if="!isOwnBudget"
-            to="/budget"
             class="btn btn-outline btn-sm"
+            @click="navigateToOwnBudget"
           >
             {{ t('budget.toOwnBudget') }}
-          </NuxtLink>
+          </button>
         </div>
       </div>
 
@@ -245,6 +278,8 @@ import { findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 
+const LAST_SHARED_BUDGET_COOKIE = 'lastSharedBudget'
+
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const route = useRoute()
@@ -273,6 +308,13 @@ const isImportModalOpen = ref(false)
 const BudgetChartModal = defineAsyncComponent(() => import('~/components/budget/ChartModal.vue'))
 
 const isOwnBudget = computed(() => budgetStore.isOwnBudget)
+
+const lastSharedBudgetCookie = useCookie(LAST_SHARED_BUDGET_COOKIE)
+
+const navigateToOwnBudget = async (): Promise<void> => {
+  lastSharedBudgetCookie.value = null
+  await navigateTo('/budget')
+}
 
 const groupedData = computed(() => {
   const months = budgetStore.months
