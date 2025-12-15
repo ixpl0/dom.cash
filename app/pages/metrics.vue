@@ -146,11 +146,11 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
 
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-6 animate-header">
+    <h1 class="text-2xl font-bold mb-6 animate-fade-in-left">
       {{ t('metrics.dashboardTitle') }}
     </h1>
 
-    <div class="bg-base-100 p-6 rounded-lg shadow-md border border-base-300 animate-content">
+    <div class="bg-base-100 p-6 rounded-lg shadow-md border border-base-300 animate-fade-in-up-delayed">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">
           {{ t('metrics.usersTitle') }}
@@ -345,35 +345,3 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
     </div>
   </div>
 </template>
-
-<style scoped>
-@keyframes fade-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-header {
-  animation: fade-in-left 0.5s ease-out both;
-}
-
-.animate-content {
-  animation: fade-in-up 0.6s ease-out 0.15s both;
-}
-</style>

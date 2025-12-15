@@ -84,13 +84,13 @@
         data-testid="budget-header"
       >
         <h1
-          class="text-3xl font-bold ml-2 animate-header-left"
+          class="text-3xl font-bold ml-2 animate-fade-in-left"
           data-testid="budget-title"
         >
           {{ t('budget.title') }}
         </h1>
 
-        <div class="flex items-center flex-wrap gap-2 flex-col sm:flex-row w-full sm:w-auto animate-header-center">
+        <div class="flex items-center flex-wrap gap-2 flex-col sm:flex-row w-full sm:w-auto animate-fade-in-up-delayed">
           <span
             v-if="budgetStore.data?.access !== 'owner'"
             class="badge w-full sm:w-auto"
@@ -117,7 +117,7 @@
           </span>
         </div>
 
-        <div class="flex gap-2 flex-wrap animate-header-right">
+        <div class="flex gap-2 flex-wrap animate-fade-in-right-delayed">
           <button
             class="btn btn-ghost btn-sm"
             data-testid="chart-button"
@@ -165,7 +165,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto py-6 animate-content">
+      <div class="overflow-x-auto py-6 animate-fade-in-up-delayed-3">
         <UiTimeline
           class="[--timeline-col-start:23ch]"
           data-testid="budget-timeline"
@@ -445,54 +445,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-@keyframes fade-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-header-left {
-  animation: fade-in-left 0.5s ease-out both;
-}
-
-.animate-header-center {
-  animation: fade-in-up 0.5s ease-out 0.15s both;
-}
-
-.animate-header-right {
-  animation: fade-in-right 0.5s ease-out 0.3s both;
-}
-
-.animate-content {
-  animation: fade-in-up 0.6s ease-out 0.45s both;
-}
-</style>

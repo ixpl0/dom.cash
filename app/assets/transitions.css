@@ -1,7 +1,3 @@
-.animate-on-scroll-initial {
-  opacity: 0;
-}
-
 .fade-up-enter-active,
 .fade-up-leave-active {
   transition: all 0.35s ease-out;
