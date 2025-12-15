@@ -59,11 +59,13 @@
         v-for="{ day, jsIndex } in weekdaysWithIndex"
         :key="jsIndex"
         class="flex items-center gap-1 cursor-pointer"
+        :data-testid="`recurrence-weekday-${jsIndex}`"
       >
         <input
           type="checkbox"
           class="checkbox checkbox-sm"
           :checked="selectedWeekdays.includes(jsIndex)"
+          :data-testid="`recurrence-weekday-checkbox-${jsIndex}`"
           @change="toggleWeekday(jsIndex)"
         >
         <span class="text-sm">{{ day }}</span>
