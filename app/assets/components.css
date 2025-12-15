@@ -1,0 +1,11 @@
+:where(.modal[open], .modal-open, .modal-toggle:checked + .modal):not(.modal-start, .modal-end) {
+  scrollbar-gutter: auto;
+}
+
+@media (hover: hover) {
+  .btn:hover {
+    --btn-bg: var(--btn-color, transparent);
+    --btn-shadow: transparent;
+    --btn-noise: transparent;
+  }
+}

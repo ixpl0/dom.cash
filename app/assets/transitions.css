@@ -1,0 +1,69 @@
+.animate-on-scroll-initial {
+  opacity: 0;
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: all 0.35s ease-out;
+}
+
+.fade-up-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.fade-enter-active {
+  transition: opacity 0.3s ease-out;
+}
+
+.fade-leave-active {
+  transition: opacity 0.2s ease-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-delayed-enter-active {
+  transition: opacity 0.3s ease-out 0.4s;
+}
+
+.fade-delayed-leave-active {
+  transition: opacity 0.2s ease-out;
+}
+
+.fade-delayed-enter-from,
+.fade-delayed-leave-to {
+  opacity: 0;
+}
+
+.modal-transition-enter-active,
+.modal-transition-leave-active {
+  transition: opacity 0.35s ease-out;
+}
+
+.modal-transition-enter-active .modal-box,
+.modal-transition-leave-active .modal-box {
+  transition: all 0.35s ease-out;
+}
+
+.modal-transition-enter-from,
+.modal-transition-leave-to {
+  opacity: 0;
+}
+
+.modal-transition-enter-from .modal-box {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.modal-transition-leave-to .modal-box {
+  opacity: 0;
+  transform: translateY(-8px);
+}

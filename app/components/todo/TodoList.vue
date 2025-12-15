@@ -2,7 +2,7 @@
   <div data-testid="todo-list">
     <div class="columns-1 md:columns-2 xl:columns-3 gap-4">
       <TransitionGroup
-        :name="animateItems ? 'todo-card' : ''"
+        :name="animateItems ? 'fade-up' : ''"
         tag="div"
         class="contents"
       >
@@ -15,7 +15,7 @@
         </div>
       </TransitionGroup>
     </div>
-    <Transition name="empty-fade">
+    <Transition name="fade-delayed">
       <div
         v-if="items.length === 0"
         class="text-center py-8 text-base-content/60"
@@ -37,27 +37,3 @@ interface Props {
 
 defineProps<Props>()
 </script>
-
-<style scoped>
-.todo-card-leave-active {
-  transition: all 0.35s ease-out;
-}
-
-.todo-card-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.empty-fade-enter-active {
-  transition: opacity 0.3s ease-out 0.4s;
-}
-
-.empty-fade-leave-active {
-  transition: opacity 0.2s ease-out;
-}
-
-.empty-fade-enter-from,
-.empty-fade-leave-to {
-  opacity: 0;
-}
-</style>
