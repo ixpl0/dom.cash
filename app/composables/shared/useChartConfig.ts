@@ -11,6 +11,8 @@ export type ChartOption = ComposeOption<
   | DataZoomComponentOption
 >
 
+export type TooltipFormatter = Exclude<TooltipComponentOption['formatter'], string | undefined>
+
 export interface ChartSeriesConfig {
   name: string
   data: number[]
@@ -22,7 +24,7 @@ export interface ChartConfigOptions {
   labels: string[]
   series: ReadonlyArray<ChartSeriesConfig>
   legendSelected?: Record<string, boolean>
-  tooltipFormatter?: (params: unknown) => string
+  tooltipFormatter?: TooltipFormatter
   yAxisFormatter?: (value: number) => string
   enableDataZoom?: boolean
   gridTop?: number
@@ -72,7 +74,7 @@ export const buildChartOption = (options: ChartConfigOptions): ChartOption => {
       backgroundColor: colors.background,
       borderColor: colors.axis,
       textStyle: { color: colors.text },
-      ...(tooltipFormatter ? { formatter: tooltipFormatter as never } : {}),
+      ...(tooltipFormatter ? { formatter: tooltipFormatter } : {}),
     },
     legend: {
       type: 'scroll',

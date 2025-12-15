@@ -361,7 +361,7 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
   return await buildMonthData(createdMonth, event)
 }
 
-export const findUserByUsername = async (username: string, event: H3Event) => {
+export const findUserByUsername = async (username: string, event: H3Event): Promise<typeof user.$inferSelect | null> => {
   const db = useDatabase(event)
   const users = await db
     .select()
@@ -369,7 +369,7 @@ export const findUserByUsername = async (username: string, event: H3Event) => {
     .where(eq(user.username, username))
     .limit(1)
 
-  return users[0] || null
+  return users[0] ?? null
 }
 
 export const deleteMonth = async (monthId: string, event: H3Event): Promise<void> => {

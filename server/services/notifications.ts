@@ -17,14 +17,19 @@ export interface NotificationEvent {
   createdAt: Date
 }
 
-const activeConnections = new Map<string, { write: (data: string) => void, close: () => void }>()
+interface NotificationConnection {
+  write: (data: string) => void
+  close: () => void
+}
+
+const activeConnections = new Map<string, NotificationConnection>()
 const budgetSubscriptions = new Map<string, Set<string>>()
 
-export const addConnection = (userId: string, connection: { write: (data: string) => void, close: () => void }) => {
+export const addConnection = (userId: string, connection: NotificationConnection): void => {
   activeConnections.set(userId, connection)
 }
 
-export const removeConnection = (userId: string) => {
+export const removeConnection = (userId: string): void => {
   activeConnections.delete(userId)
 
   for (const [budgetOwnerId, subscribers] of budgetSubscriptions.entries()) {
@@ -37,14 +42,14 @@ export const removeConnection = (userId: string) => {
   }
 }
 
-export const subscribeToBudget = (userId: string, budgetOwnerId: string) => {
+export const subscribeToBudget = (userId: string, budgetOwnerId: string): void => {
   if (!budgetSubscriptions.has(budgetOwnerId)) {
     budgetSubscriptions.set(budgetOwnerId, new Set())
   }
   budgetSubscriptions.get(budgetOwnerId)!.add(userId)
 }
 
-export const unsubscribeFromBudget = (userId: string, budgetOwnerId: string) => {
+export const unsubscribeFromBudget = (userId: string, budgetOwnerId: string): void => {
   const subscribers = budgetSubscriptions.get(budgetOwnerId)
   if (subscribers) {
     subscribers.delete(userId)
@@ -59,7 +64,7 @@ const getBudgetSubscribers = (budgetOwnerId: string): string[] => {
   return subscribers ? Array.from(subscribers) : []
 }
 
-const sendNotificationToUser = (userId: string, notification: NotificationEvent) => {
+const sendNotificationToUser = (userId: string, notification: NotificationEvent): void => {
   const connection = activeConnections.get(userId)
   if (connection) {
     try {
