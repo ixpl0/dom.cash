@@ -27,7 +27,7 @@
   * Tailwind CSS (https://tailwindcss.com/). Try to avoid custom styles, use Tailwind classes instead.
   * **UI components** (`app/components/ui/`): Must be "dumb" — no business logic, only presentation. Pass callbacks/functions as props for any logic.
 * **State Management**: Pinia stores in `app/stores/`
-* **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `locales/` directory.
+* **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
 * **Charts**: ECharts via vue-echarts
 * **Linting**: Husky + lint-staged for pre-commit hooks
 * **Real-time Notifications**: Server-Sent Events (SSE) via `useNotifications` composable

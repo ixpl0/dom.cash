@@ -27,11 +27,13 @@ The application implements **Thin Handlers with Clean Services** pattern:
 
 ##### Структура тестов
 
-- `tests/e2e/auth.setup.ts` - начальная аутентификация и сохранение состояния
-- `tests/e2e/helpers/auth.ts` - вспомогательные функции для аутентификации
-- `tests/e2e/*.spec.ts` - тестовые сценарии
-- `tests/e2e/*.unauth.spec.ts` - тесты для неаутентифицированных пользователей
-- `tests/e2e/cleanup.teardown.spec.ts` - очистка тестовых данных через API
+- `tests/e2e/public/` - тесты для публичных страниц (без аутентификации)
+- `tests/e2e/authenticated/` - тесты для аутентифицированных пользователей
+  - `budget/` - тесты бюджета и модальных окон
+  - `todo/` - тесты задач
+- `tests/e2e/helpers/` - вспомогательные функции (auth, confirmation, budget-setup, wait-for-hydration)
+- `tests/e2e/fixtures.ts` - фикстуры и константы для тестов
+- `tests/e2e/cleanup.teardown.spec.ts` - очистка тестовых данных после прогона
 
 ##### Запуск тестов
 
@@ -48,9 +50,10 @@ pnpm run test:e2e:headed
 
 ##### Покрытие тестами
 
-- **Главная страница** - отображение и навигация для неаутентифицированных пользователей
-- **Страница бюджета** - доступ, отображение информации пользователя, UI создания бюджета
-- **Общие компоненты** - кнопки шаринга, выпадающее меню пользователя
+- **Публичные страницы** - главная, авторизация, восстановление пароля, переключение темы и языка
+- **Страница бюджета** - CRUD операции, модальные окна (entry, share, shared budgets, confirmation), импорт/экспорт
+- **Страница задач (Todo)** - создание, редактирование, удаление задач
+- **Общие компоненты** - header, выход из системы
 
 ### Frontend Architecture Principles
 
@@ -81,6 +84,17 @@ Budget timeline implements **responsive column width synchronization**:
 - **Dynamic updates** - responds to content changes via ResizeObserver and reactive watchers
 - **Smooth animations** - animated transitions between width changes
 - **Flexible content containers** - inner elements (.column-content) with `w-fit` maintain natural sizing while parent containers receive synchronized fixed widths
+
+#### CSS Architecture
+
+Styles are split into logical CSS files in `app/assets/`:
+
+- **base.css** - CSS reset and base styles
+- **themes.css** - DaisyUI theme customizations
+- **components.css** - Custom component styles
+- **animations.css** - Keyframe animations (fade-up, pulse, etc.)
+- **transitions.css** - Vue transition definitions (modal-fade, todo-card, etc.)
+- **app.css** - Main entry point that imports all CSS files
 
 ## Tech Stack
 
@@ -217,6 +231,13 @@ pnpm run db:migrate:prod
 - `0006_add_attempt_count_to_verification_codes.sql` - Add attempt tracking to verification codes
 - `0007_add_email_verified_to_user.sql` - Add email_verified field to user table
 - `0008_add_is_admin_to_user.sql` - Add is_admin field to user table
+- `0009_add_verify_attempt_count.sql` - Add verification attempt counter
+- `0010_add_last_activity_at_to_user.sql` - Add last activity timestamp to user
+- `0011_create_memo_tables.sql` - Create memo (todo) tables
+- `0012_update_memo_datetime.sql` - Update memo datetime format
+- `0013_remove-memo-type-field.sql` - Remove memo type field
+- `0014_rename_memo_to_todo.sql` - Rename memo to todo
+- `0015_add_todo_recurrence.sql` - Add recurring todos support
 
 ### Database Commands
 
@@ -298,10 +319,11 @@ pnpm run test:e2e:headed # Run tests with visible browser
 
 ```
 ├── app/
-│   ├── components/     # Vue components
-│   ├── composables/    # Vue composables (frontend-only)
-│   ├── pages/          # Nuxt pages
-│   ├── stores/         # Pinia state management
+│   ├── assets/         # CSS files (base, themes, components, animations, transitions)
+│   ├── components/     # Vue components organized by feature
+│   ├── composables/    # Vue composables organized by feature
+│   ├── pages/          # Nuxt pages (index, auth, budget, metrics, todo)
+│   ├── stores/         # Pinia state management organized by feature
 │   ├── layouts/        # Page layouts
 │   ├── middleware/     # Nuxt middleware
 │   ├── plugins/        # Nuxt plugins
@@ -315,9 +337,15 @@ pnpm run test:e2e:headed # Run tests with visible browser
 ├── shared/
 │   ├── types/          # Shared TypeScript types
 │   ├── schemas/        # Shared Zod schemas
-│   └── utils/          # Shared business logic
+│   ├── utils/          # Shared business logic
+│   └── validators/     # Custom validators
 ├── i18n/
 │   └── locales/        # Translation files (ru, en)
+├── tests/e2e/
+│   ├── public/         # Tests for public pages
+│   ├── authenticated/  # Tests for authenticated pages
+│   └── helpers/        # Test helpers
+├── migrations/         # Wrangler D1 SQL migrations
 ```
 
 ## Known Issues
@@ -341,8 +369,6 @@ pnpm run test:e2e:headed # Run tests with visible browser
 3. Update `server/services/notifications.ts` to use Durable Object stubs instead of Maps
 4. Update `server/api/notifications/events.get.ts` to connect through Durable Object
 5. Add Durable Object binding configuration to `wrangler.toml`
-
-**Estimated effort**: 1-2 hours
 
 **References**:
 - [Cloudflare Durable Objects Docs](https://developers.cloudflare.com/durable-objects/)
