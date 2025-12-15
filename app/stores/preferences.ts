@@ -9,6 +9,7 @@ interface MetricsSort {
 
 interface UserPreferences {
   metricsSort: MetricsSort
+  todoHideCompleted: boolean
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -16,6 +17,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   },
+  todoHideCompleted: true,
 }
 
 export const usePreferencesStore = defineStore('preferences', () => {
@@ -25,6 +27,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
   })
 
   const metricsSort = computed(() => cookie.value.metricsSort)
+  const todoHideCompleted = computed(() => cookie.value.todoHideCompleted ?? true)
 
   const setMetricsSort = (sortBy: string, sortOrder: SortOrder) => {
     cookie.value = {
@@ -33,8 +36,17 @@ export const usePreferencesStore = defineStore('preferences', () => {
     }
   }
 
+  const setTodoHideCompleted = (value: boolean) => {
+    cookie.value = {
+      ...cookie.value,
+      todoHideCompleted: value,
+    }
+  }
+
   return {
     metricsSort,
+    todoHideCompleted,
     setMetricsSort,
+    setTodoHideCompleted,
   }
 })

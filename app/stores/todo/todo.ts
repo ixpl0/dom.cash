@@ -1,24 +1,17 @@
 import type { DateReference } from '~~/shared/types/recurrence'
 import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult } from '~~/shared/types/todo'
 
-const HIDE_COMPLETED_KEY = 'todo-hide-completed'
-
-const getInitialHideCompleted = (): boolean => {
-  if (import.meta.server) {
-    return true
-  }
-  const stored = localStorage.getItem(HIDE_COMPLETED_KEY)
-  return stored === null ? true : stored === 'true'
-}
-
 export const useTodoStore = defineStore('todo', () => {
+  const preferencesStore = usePreferencesStore()
+
   const data = ref<TodoData | null>(null)
   const connections = ref<TodoConnection[]>([])
   const error = ref<string | null>(null)
   const isLoading = ref(false)
-  const hideCompleted = ref(getInitialHideCompleted())
   const togglingIds = ref<Set<string>>(new Set())
   const leavingIds = ref<Set<string>>(new Set())
+
+  const hideCompleted = computed(() => preferencesStore.todoHideCompleted)
 
   const isOverdue = (item: TodoListItem): boolean => {
     if (!item.plannedDate || item.isCompleted) {
@@ -298,10 +291,7 @@ export const useTodoStore = defineStore('todo', () => {
   }
 
   const toggleHideCompleted = () => {
-    hideCompleted.value = !hideCompleted.value
-    if (!import.meta.server) {
-      localStorage.setItem(HIDE_COMPLETED_KEY, String(hideCompleted.value))
-    }
+    preferencesStore.setTodoHideCompleted(!hideCompleted.value)
   }
 
   const reset = () => {
@@ -309,7 +299,6 @@ export const useTodoStore = defineStore('todo', () => {
     connections.value = []
     error.value = null
     isLoading.value = false
-    hideCompleted.value = true
     togglingIds.value = new Set()
     leavingIds.value = new Set()
   }
