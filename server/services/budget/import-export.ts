@@ -19,6 +19,23 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
+const convertEntriesToMainCurrency = (
+  entries: BudgetExportEntry[],
+  mainCurrency: string,
+  exchangeRates: Record<string, number>,
+): number => {
+  return entries.reduce((total, entryData) => {
+    if (entryData.currency === mainCurrency) {
+      return total + entryData.amount
+    }
+
+    const fromRate = exchangeRates[entryData.currency] || 1
+    const toRate = exchangeRates[mainCurrency] || 1
+
+    return total + (entryData.amount / fromRate) * toRate
+  }, 0)
+}
+
 const COLORS = {
   yearHeader: { bg: '2D3748', text: 'FFFFFF' },
   monthHeader: { bg: '4A5568', text: 'FFFFFF' },
@@ -76,6 +93,7 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
       year: monthData.year,
       month: monthData.month,
       entries,
+      exchangeRates: monthData.exchangeRates,
     }
   })
 
@@ -312,6 +330,7 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
   }, {} as Record<number, BudgetExportMonth[]>)
 
   const years = Object.keys(monthsByYear).map(Number).sort((a, b) => b - a)
+  const mainCurrency = exportData.user.mainCurrency
 
   let currentRow = 1
 
@@ -324,7 +343,7 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
     let yearExpenseTotal = 0
 
     for (const monthData of yearMonths) {
-      const monthName = MONTH_NAMES[monthData.month] || ''
+      const monthName = `${MONTH_NAMES[monthData.month] || ''} ${monthData.year}`
       currentRow = addMonthHeader(worksheet, monthName, currentRow)
       currentRow = addTableHeader(worksheet, currentRow)
 
@@ -342,24 +361,23 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
         currentRow = addEntryRow(worksheet, entryData, currentRow)
       }
 
-      const balanceTotal = balanceEntries.reduce((sum, e) => sum + e.amount, 0)
-      const incomeTotal = incomeEntries.reduce((sum, e) => sum + e.amount, 0)
-      const expenseTotal = expenseEntries.reduce((sum, e) => sum + e.amount, 0)
+      const balanceTotal = convertEntriesToMainCurrency(balanceEntries, mainCurrency, monthData.exchangeRates)
+      const incomeTotal = convertEntriesToMainCurrency(incomeEntries, mainCurrency, monthData.exchangeRates)
+      const expenseTotal = convertEntriesToMainCurrency(expenseEntries, mainCurrency, monthData.exchangeRates)
 
       yearIncomeTotal += incomeTotal
       yearExpenseTotal += expenseTotal
 
-      currentRow = addSubtotalRow(worksheet, 'Balance:', balanceTotal, currentRow)
-      currentRow = addSubtotalRow(worksheet, 'Income:', incomeTotal, currentRow)
-      currentRow = addSubtotalRow(worksheet, 'Expenses:', expenseTotal, currentRow)
-      currentRow = addSubtotalRow(worksheet, 'Net:', incomeTotal - expenseTotal, currentRow)
+      currentRow = addSubtotalRow(worksheet, `Balance (${mainCurrency}):`, balanceTotal, currentRow)
+      currentRow = addSubtotalRow(worksheet, `Income (${mainCurrency}):`, incomeTotal, currentRow)
+      currentRow = addSubtotalRow(worksheet, `Expenses (${mainCurrency}):`, expenseTotal, currentRow)
 
       currentRow = addEmptyRow(worksheet, currentRow)
     }
 
     const yearTotalRow = worksheet.getRow(currentRow)
     worksheet.mergeCells(currentRow, 1, currentRow, 2)
-    yearTotalRow.getCell(1).value = `Year ${year} Total Income:`
+    yearTotalRow.getCell(1).value = `Year ${year} Total Income (${mainCurrency}):`
     yearTotalRow.getCell(3).value = yearIncomeTotal
     yearTotalRow.getCell(3).numFmt = '#,##0.00'
     yearTotalRow.eachCell((cell) => {
@@ -373,7 +391,7 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
 
     const yearExpenseRow = worksheet.getRow(currentRow)
     worksheet.mergeCells(currentRow, 1, currentRow, 2)
-    yearExpenseRow.getCell(1).value = `Year ${year} Total Expenses:`
+    yearExpenseRow.getCell(1).value = `Year ${year} Total Expenses (${mainCurrency}):`
     yearExpenseRow.getCell(3).value = yearExpenseTotal
     yearExpenseRow.getCell(3).numFmt = '#,##0.00'
     yearExpenseRow.eachCell((cell) => {
@@ -393,14 +411,19 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
   summarySheet.columns = [
     { key: 'year', width: 10 },
     { key: 'month', width: 15 },
-    { key: 'balance', width: 15 },
-    { key: 'income', width: 15 },
-    { key: 'expenses', width: 15 },
-    { key: 'net', width: 15 },
+    { key: 'balance', width: 18 },
+    { key: 'income', width: 18 },
+    { key: 'expenses', width: 18 },
   ]
 
   const summaryHeaderRow = summarySheet.getRow(1)
-  summaryHeaderRow.values = ['Year', 'Month', 'Balance', 'Income', 'Expenses', 'Net']
+  summaryHeaderRow.values = [
+    'Year',
+    'Month',
+    `Balance (${mainCurrency})`,
+    `Income (${mainCurrency})`,
+    `Expenses (${mainCurrency})`,
+  ]
   styleHeaderRow(summaryHeaderRow, COLORS.header.bg, COLORS.header.text)
 
   let summaryRowNum = 2
@@ -408,9 +431,13 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
     const yearMonths = monthsByYear[year] || []
     for (const monthData of yearMonths) {
       const row = summarySheet.getRow(summaryRowNum)
-      const balanceTotal = monthData.entries.filter(e => e.kind === 'balance').reduce((sum, e) => sum + e.amount, 0)
-      const incomeTotal = monthData.entries.filter(e => e.kind === 'income').reduce((sum, e) => sum + e.amount, 0)
-      const expenseTotal = monthData.entries.filter(e => e.kind === 'expense').reduce((sum, e) => sum + e.amount, 0)
+      const balanceEntries = monthData.entries.filter(e => e.kind === 'balance')
+      const incomeEntries = monthData.entries.filter(e => e.kind === 'income')
+      const expenseEntries = monthData.entries.filter(e => e.kind === 'expense')
+
+      const balanceTotal = convertEntriesToMainCurrency(balanceEntries, mainCurrency, monthData.exchangeRates)
+      const incomeTotal = convertEntriesToMainCurrency(incomeEntries, mainCurrency, monthData.exchangeRates)
+      const expenseTotal = convertEntriesToMainCurrency(expenseEntries, mainCurrency, monthData.exchangeRates)
 
       row.values = [
         monthData.year,
@@ -418,7 +445,6 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
         balanceTotal,
         incomeTotal,
         expenseTotal,
-        incomeTotal - expenseTotal,
       ]
 
       row.eachCell((cell, colNumber) => {
@@ -428,15 +454,6 @@ export const exportBudgetToExcel = async (userId: string, event: H3Event): Promi
           cell.alignment = { horizontal: 'right' }
         }
       })
-
-      const netCell = row.getCell(6)
-      const netValue = incomeTotal - expenseTotal
-      if (netValue > 0) {
-        netCell.font = { color: { argb: COLORS.income.text } }
-      }
-      else if (netValue < 0) {
-        netCell.font = { color: { argb: COLORS.expense.text } }
-      }
 
       summaryRowNum++
     }
