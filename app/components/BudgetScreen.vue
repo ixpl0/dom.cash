@@ -199,7 +199,7 @@
       </div>
 
       <div
-        class="py-6 animate-fade-in-up-delayed-3"
+        class="pt-10 pb-6 animate-fade-in-up-delayed-3"
         data-testid="budget-timeline"
       >
         <UiTimelineAddButton
@@ -210,8 +210,8 @@
           @create="handleCreateNextMonth"
         />
 
-        <div class="overflow-x-auto px-6">
-          <div class="flex flex-col gap-4 mt-4">
+        <div class="overflow-x-auto px-6 pt-20 pb-4 -mt-14">
+          <div class="flex flex-col gap-4">
             <BudgetYear
               v-for="year in years"
               :key="year"
@@ -227,7 +227,7 @@
           direction="previous"
           :month-text="getPreviousMonthText()"
           :is-loading="isCreatingPreviousMonth"
-          class="mt-4"
+          class="mt-2"
           @create="handleCreatePreviousMonth"
         />
 

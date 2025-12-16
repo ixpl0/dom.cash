@@ -5,36 +5,17 @@
     data-testid="budget-month"
   >
     <div class="flex items-center gap-4 px-4 py-2">
-      <div class="flex items-center gap-1 w-28 flex-shrink-0">
-        <Transition
-          enter-active-class="transition-opacity duration-200"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
+      <div
+        class="tooltip capitalize w-28 flex-shrink-0"
+        :data-tip="monthBadgeTooltip"
+      >
+        <button
+          class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+          data-testid="month-badge"
+          @click="$emit('currencyRatesClick')"
         >
-          <div
-            v-if="props.isCurrentMonth"
-            class="tooltip flex items-center justify-center"
-            :data-tip="labels.currentMonth"
-          >
-            <Icon
-              name="heroicons:play-solid"
-              size="14"
-              class="text-primary"
-            />
-          </div>
-        </Transition>
-        <div
-          class="tooltip capitalize"
-          :data-tip="monthBadgeTooltip"
-        >
-          <button
-            class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
-            data-testid="month-badge"
-            @click="$emit('currencyRatesClick')"
-          >
-            {{ monthName }}
-          </button>
-        </div>
+          {{ monthName }}
+        </button>
       </div>
 
       <div class="flex gap-4">
@@ -212,7 +193,7 @@
       >
         <div
           v-if="canDelete"
-          class="tooltip text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          class="tooltip text-center"
           :data-tip="labels.deleteMonth"
         >
           <button
@@ -247,7 +228,6 @@ export interface UiMonthData {
 }
 
 export interface UiMonthLabels {
-  currentMonth: string
   deleteMonth: string
 }
 

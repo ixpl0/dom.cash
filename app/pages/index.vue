@@ -328,7 +328,6 @@ const formatDemoAmount = (amount: number): string => {
 }
 
 const monthLabels = computed((): UiMonthLabels => ({
-  currentMonth: t('budget.month.currentMonth'),
   deleteMonth: t('budget.month.deleteMonth'),
 }))
 

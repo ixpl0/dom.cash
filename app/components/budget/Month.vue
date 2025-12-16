@@ -81,7 +81,6 @@ const uiMonthData = computed((): UiMonthData => ({
 }))
 
 const labels = computed((): UiMonthLabels => ({
-  currentMonth: t('budget.month.currentMonth'),
   deleteMonth: t('budget.month.deleteMonth'),
 }))
 
