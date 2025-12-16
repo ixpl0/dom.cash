@@ -202,8 +202,6 @@ export const useTodoStore = defineStore('todo', () => {
     }
 
     const isRecurring = item.recurrence !== null
-    const originalIsCompleted = item.isCompleted
-    const originalPlannedDate = item.plannedDate
     const willBeCompleted = !item.isCompleted
     const shouldAnimateLeave = !isRecurring && willBeCompleted && hideCompleted.value
     const animationDuration = 400
@@ -216,16 +214,7 @@ export const useTodoStore = defineStore('todo', () => {
       leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
     }
 
-    if (isRecurring) {
-      togglingIds.value = new Set([...togglingIds.value, id])
-    }
-    else if (data.value) {
-      data.value = {
-        items: data.value.items.map(i =>
-          i.id === id ? { ...i, isCompleted: !i.isCompleted } : i,
-        ),
-      }
-    }
+    togglingIds.value = new Set([...togglingIds.value, id])
 
     try {
       const result = await $fetch<ToggleResult>(`/api/todo/${id}/toggle`, {
@@ -236,15 +225,11 @@ export const useTodoStore = defineStore('todo', () => {
       const elapsed = Date.now() - startTime
       const remainingDelay = Math.max(0, animationDuration - elapsed)
 
-      if (isRecurring || shouldAnimateLeave) {
-        if (remainingDelay > 0) {
-          await new Promise(resolve => setTimeout(resolve, remainingDelay))
-        }
+      if (remainingDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingDelay))
       }
 
-      if (isRecurring) {
-        togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
-      }
+      togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
 
       if (shouldAnimateLeave) {
         leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
@@ -267,22 +252,10 @@ export const useTodoStore = defineStore('todo', () => {
       return true
     }
     catch (e) {
-      if (isRecurring) {
-        togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
-      }
+      togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
 
       if (shouldAnimateLeave) {
         leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
-      }
-
-      if (!isRecurring && data.value) {
-        data.value = {
-          items: data.value.items.map(i =>
-            i.id === id
-              ? { ...i, isCompleted: originalIsCompleted, plannedDate: originalPlannedDate }
-              : i,
-          ),
-        }
       }
 
       error.value = e instanceof Error ? e.message : 'Failed to toggle todo'
