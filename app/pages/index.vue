@@ -319,7 +319,6 @@ const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget
 const { t, locale } = useI18n()
 const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
-const { currentTheme } = useTheme()
 
 const DEMO_CURRENCY = 'USD'
 
@@ -481,13 +480,11 @@ const demoChartSeriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => 
   { name: t('chart.expenses'), data: demoChartData.expenses, colorKey: 'error' },
 ])
 
-const demoChartOption = computed((): ChartOption => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-  currentTheme.value
-  const colors = getChartThemeColors()
+const { colors: themeColors } = useChartTheme()
 
+const demoChartOption = computed((): ChartOption => {
   return buildChartOption({
-    colors,
+    colors: themeColors.value,
     labels: demoChartLabels.value,
     series: demoChartSeriesConfigs.value,
     yAxisFormatter: (value: number) => formatCurrencyRounded(value, DEMO_CURRENCY),

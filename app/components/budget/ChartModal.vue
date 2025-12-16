@@ -44,7 +44,7 @@
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import { type ChartOption, type TooltipFormatter, buildChartOption, type ChartSeriesConfig } from '~/composables/shared/useChartConfig'
-import { getChartThemeColors, type ChartThemeColors } from '~/composables/shared/useChartTheme'
+import { useChartTheme } from '~/composables/shared/useChartTheme'
 import { formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
 
 type TooltipParams = Parameters<TooltipFormatter>[0]
@@ -110,7 +110,7 @@ const chartData = computed(() => {
 const formatChartValue = (value: number): string =>
   formatCurrencyRounded(value, budgetStore.effectiveMainCurrency)
 
-const themeColors = ref<ChartThemeColors>(getChartThemeColors())
+const { colors: themeColors } = useChartTheme()
 
 const LEGEND_STORAGE_KEY = 'budget-chart-legend-selected'
 
@@ -211,10 +211,4 @@ const handleLegendSelectChanged = (selected: Record<string, boolean>) => {
 const hide = () => {
   modalsStore.closeChartModal()
 }
-
-watch(isOpen, (open) => {
-  if (open && import.meta.client) {
-    themeColors.value = getChartThemeColors()
-  }
-})
 </script>

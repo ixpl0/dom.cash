@@ -64,6 +64,16 @@ export const getChartThemeColors = (): ChartThemeColors => {
   }
 }
 
+const waitForStyleUpdate = (): Promise<void> => {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resolve()
+      })
+    })
+  })
+}
+
 export const useChartTheme = () => {
   const { currentTheme } = useTheme()
   const colors = ref<ChartThemeColors>(getChartThemeColors())
@@ -72,8 +82,9 @@ export const useChartTheme = () => {
     colors.value = getChartThemeColors()
   }
 
-  watch(currentTheme, () => {
+  watch(currentTheme, async () => {
     if (import.meta.client) {
+      await waitForStyleUpdate()
       refreshColors()
     }
   })
