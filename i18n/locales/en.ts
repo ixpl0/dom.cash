@@ -122,6 +122,8 @@ export default {
     mainCurrencyLabel: 'Main Currency:',
     chart: 'Chart',
     export: 'Export',
+    exportJson: 'Export as JSON',
+    exportExcel: 'Export as Excel',
     import: 'Import',
     sharedBudgets: 'Shared',
     share: 'Share',

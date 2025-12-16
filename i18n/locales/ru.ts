@@ -122,6 +122,8 @@ export default {
     mainCurrencyLabel: 'Основная валюта:',
     chart: 'График',
     export: 'Экспорт',
+    exportJson: 'Экспорт в JSON',
+    exportExcel: 'Экспорт в Excel',
     import: 'Импорт',
     sharedBudgets: 'Общие',
     share: 'Поделиться',

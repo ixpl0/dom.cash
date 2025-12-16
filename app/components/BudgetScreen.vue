@@ -87,7 +87,7 @@
 
     <div v-else>
       <div
-        class="flex items-center justify-between flex-wrap gap-4 p-6 pb-0"
+        class="flex items-center justify-between flex-wrap gap-4 p-6 pb-0 relative z-10"
         data-testid="budget-header"
       >
         <h1
@@ -137,17 +137,7 @@
             {{ t('budget.chart') }}
           </button>
 
-          <button
-            class="btn btn-ghost btn-sm"
-            data-testid="export-button"
-            @click="handleExport"
-          >
-            <Icon
-              name="heroicons:cloud-arrow-down"
-              size="20"
-            />
-            {{ t('budget.export') }}
-          </button>
+          <BudgetExportDropdown @export="handleExport" />
 
           <button
             v-if="budgetStore.canEdit"
@@ -449,9 +439,9 @@ const handleLoadPreviousYear = async (): Promise<void> => {
   }
 }
 
-const handleExport = async (): Promise<void> => {
+const handleExport = async (format: 'json' | 'excel'): Promise<void> => {
   try {
-    await budgetStore.exportBudget()
+    await budgetStore.exportBudget(format)
   }
   catch (error) {
     console.error('Export failed:', error)

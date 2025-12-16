@@ -499,7 +499,7 @@ export const useBudgetStore = defineStore('budget', () => {
     return getPreviousMonth(data.value?.months || [])
   }
 
-  const exportBudget = async () => {
+  const exportBudgetJson = async () => {
     try {
       const response = await $fetch('/api/budget/export', {
         method: 'GET',
@@ -518,8 +518,44 @@ export const useBudgetStore = defineStore('budget', () => {
       URL.revokeObjectURL(url)
     }
     catch (err) {
-      console.error('Error exporting budget:', err)
+      console.error('Error exporting budget to JSON:', err)
       throw err
+    }
+  }
+
+  const exportBudgetExcel = async () => {
+    try {
+      const response = await $fetch<ArrayBuffer>('/api/budget/export-excel', {
+        method: 'GET',
+        responseType: 'arrayBuffer',
+      })
+
+      const blob = new Blob([new Uint8Array(response)], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `budget-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }
+    catch (err) {
+      console.error('Error exporting budget to Excel:', err)
+      throw err
+    }
+  }
+
+  const exportBudget = async (format: 'json' | 'excel' = 'json') => {
+    if (format === 'excel') {
+      await exportBudgetExcel()
+    }
+    else {
+      await exportBudgetJson()
     }
   }
 
