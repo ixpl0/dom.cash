@@ -44,18 +44,6 @@
             {{ t('header.todo') }}
           </NuxtLink>
         </div>
-        <NuxtLink
-          v-if="user?.isAdmin"
-          to="/metrics"
-          class="btn btn-outline btn-sm"
-          data-testid="metrics-btn"
-        >
-          <Icon
-            name="heroicons:chart-bar"
-            size="16"
-          />
-          {{ t('header.metrics') }}
-        </NuxtLink>
       </template>
 
       <UiLanguagePicker class="hidden xl:flex" />
@@ -95,6 +83,18 @@
         >
           <UiLanguagePicker class="xl:hidden px-3 py-1" />
           <UiThemePicker class="xl:hidden px-3 py-1" />
+          <li v-if="user?.isAdmin">
+            <NuxtLink
+              to="/metrics"
+              data-testid="metrics-btn"
+            >
+              <Icon
+                name="heroicons:chart-bar"
+                size="16"
+              />
+              {{ t('header.metrics') }}
+            </NuxtLink>
+          </li>
           <li>
             <button
               data-testid="logout-btn"
