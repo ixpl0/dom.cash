@@ -157,13 +157,13 @@ const saveLegendSelected = (selected: Record<string, boolean>) => {
 const legendSelected = ref(loadLegendSelected())
 
 const seriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => [
-  { name: t('chart.balance'), data: chartData.value.datasets.startBalance, colorKey: 'primary' },
-  { name: t('chart.income'), data: chartData.value.datasets.totalIncome, colorKey: 'success' },
-  { name: t('chart.expenses'), data: chartData.value.datasets.allExpenses, colorKey: 'error' },
-  { name: t('chart.pocketExpenses'), data: chartData.value.datasets.calculatedPocketExpenses, colorKey: 'warning' },
-  { name: t('chart.majorExpenses'), data: chartData.value.datasets.totalExpenses, colorKey: 'secondary' },
-  { name: t('chart.currencyFluctuations'), data: chartData.value.datasets.currencyProfitLoss, colorKey: 'accent' },
-  { name: t('chart.optionalExpenses'), data: chartData.value.datasets.totalOptionalExpenses, colorKey: 'info' },
+  { name: t('chart.balance'), data: chartData.value.datasets.startBalance, colorKey: 'primary', type: 'line' },
+  { name: t('chart.income'), data: chartData.value.datasets.totalIncome, colorKey: 'success', type: 'bar' },
+  { name: t('chart.expenses'), data: chartData.value.datasets.allExpenses, colorKey: 'error', type: 'bar' },
+  { name: t('chart.pocketExpenses'), data: chartData.value.datasets.calculatedPocketExpenses, colorKey: 'warning', type: 'line' },
+  { name: t('chart.majorExpenses'), data: chartData.value.datasets.totalExpenses, colorKey: 'secondary', type: 'line' },
+  { name: t('chart.currencyFluctuations'), data: chartData.value.datasets.currencyProfitLoss, colorKey: 'accent', type: 'line' },
+  { name: t('chart.optionalExpenses'), data: chartData.value.datasets.totalOptionalExpenses, colorKey: 'info', type: 'line' },
 ])
 
 const tooltipFormatter = (p: TooltipParams): string => {

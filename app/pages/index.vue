@@ -475,9 +475,9 @@ const demoChartData = {
 }
 
 const demoChartSeriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => [
-  { name: t('chart.balance'), data: demoChartData.balance, colorKey: 'primary' },
-  { name: t('chart.income'), data: demoChartData.income, colorKey: 'success' },
-  { name: t('chart.expenses'), data: demoChartData.expenses, colorKey: 'error' },
+  { name: t('chart.balance'), data: demoChartData.balance, colorKey: 'primary', type: 'line' },
+  { name: t('chart.income'), data: demoChartData.income, colorKey: 'success', type: 'bar' },
+  { name: t('chart.expenses'), data: demoChartData.expenses, colorKey: 'error', type: 'bar' },
 ])
 
 const { colors: themeColors } = useChartTheme()

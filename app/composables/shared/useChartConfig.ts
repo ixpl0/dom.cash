@@ -1,10 +1,11 @@
 import type { ComposeOption } from 'echarts/core'
-import type { LineSeriesOption } from 'echarts/charts'
+import type { LineSeriesOption, BarSeriesOption } from 'echarts/charts'
 import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, DataZoomComponentOption } from 'echarts/components'
 import type { ChartThemeColors } from './useChartTheme'
 
 export type ChartOption = ComposeOption<
   | LineSeriesOption
+  | BarSeriesOption
   | GridComponentOption
   | LegendComponentOption
   | TooltipComponentOption
@@ -13,10 +14,13 @@ export type ChartOption = ComposeOption<
 
 export type TooltipFormatter = Exclude<TooltipComponentOption['formatter'], string | undefined>
 
+export type ChartSeriesType = 'line' | 'bar'
+
 export interface ChartSeriesConfig {
   name: string
   data: number[]
   colorKey: keyof ChartThemeColors
+  type?: ChartSeriesType
 }
 
 export interface ChartConfigOptions {
@@ -31,7 +35,7 @@ export interface ChartConfigOptions {
   legendTop?: number
 }
 
-const createSeries = (
+const createLineSeries = (
   config: ChartSeriesConfig,
   colors: ChartThemeColors,
 ): LineSeriesOption => {
@@ -52,6 +56,36 @@ const createSeries = (
     sampling: 'lttb',
     connectNulls: true,
   }
+}
+
+const createBarSeries = (
+  config: ChartSeriesConfig,
+  colors: ChartThemeColors,
+): BarSeriesOption => {
+  const color = colors[config.colorKey]
+  return {
+    name: config.name,
+    type: 'bar',
+    data: config.data,
+    barMaxWidth: 40,
+    itemStyle: {
+      color,
+      borderRadius: [4, 4, 0, 0],
+    },
+    emphasis: {
+      itemStyle: { color },
+    },
+  }
+}
+
+const createSeries = (
+  config: ChartSeriesConfig,
+  colors: ChartThemeColors,
+): LineSeriesOption | BarSeriesOption => {
+  if (config.type === 'bar') {
+    return createBarSeries(config, colors)
+  }
+  return createLineSeries(config, colors)
 }
 
 export const buildChartOption = (options: ChartConfigOptions): ChartOption => {
