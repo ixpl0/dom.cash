@@ -1,11 +1,11 @@
 <template>
-  <li
-    class="hover:bg-base-200"
+  <div
+    class="group w-fit mx-auto rounded-box bg-base-200/50 hover:bg-base-200 border-2 transition-all duration-200"
+    :class="props.isCurrentMonth ? 'border-primary' : 'border-transparent'"
     data-testid="budget-month"
   >
-    <hr>
-    <div class="timeline-start">
-      <div class="flex items-center gap-1">
+    <div class="flex items-center gap-4 px-4 py-2">
+      <div class="flex items-center gap-1 w-28 flex-shrink-0">
         <Transition
           enter-active-class="transition-opacity duration-200"
           enter-from-class="opacity-0"
@@ -36,190 +36,185 @@
           </button>
         </div>
       </div>
-    </div>
 
-    <div class="timeline-middle">
-      <Icon
-        name="heroicons:check-circle-solid"
-        size="20"
-      />
-    </div>
+      <div class="flex gap-4">
+        <div
+          :ref="setCardRef(0)"
+          class="tooltip text-center"
+          :data-tip="balanceTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-2xl"
+              :class="{
+                'text-primary': data.startBalance !== 0,
+                'text-base-content': data.startBalance === 0,
+              }"
+              :disabled="isReadOnly"
+              data-testid="balance-button"
+              @click="$emit('balanceClick')"
+            >
+              {{ formatAmount(data.startBalance) }}
+            </button>
+          </div>
+        </div>
 
-    <div class="timeline-end flex gap-4 pl-4 py-1">
-      <div
-        :ref="setCardRef(0)"
-        class="tooltip text-center"
-        :data-tip="balanceTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-2xl"
-            :class="{
-              'text-primary': data.startBalance !== 0,
-              'text-base-content': data.startBalance === 0,
-            }"
-            :disabled="isReadOnly"
-            data-testid="balance-button"
-            @click="$emit('balanceClick')"
-          >
-            {{ formatAmount(data.startBalance) }}
-          </button>
+        <div
+          :ref="setCardRef(1)"
+          class="tooltip text-center"
+          :data-tip="incomeTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-2xl"
+              :class="{
+                'text-success': data.totalIncome !== 0,
+                'text-base-content': data.totalIncome === 0,
+              }"
+              :disabled="isReadOnly"
+              data-testid="incomes-button"
+              @click="$emit('incomeClick')"
+            >
+              {{ formatAmount(data.totalIncome) }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          :ref="setCardRef(2)"
+          class="tooltip text-center"
+          :data-tip="expensesTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-2xl"
+              :class="{
+                'text-error': data.totalExpenses !== 0,
+                'text-base-content': data.totalExpenses === 0,
+              }"
+              :disabled="isReadOnly"
+              data-testid="expenses-button"
+              @click="$emit('expenseClick')"
+            >
+              {{ formatAmount(data.totalExpenses) }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          :ref="setCardRef(3)"
+          class="tooltip text-center"
+          :data-tip="pocketExpensesTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-xl"
+              disabled
+              data-testid="pocket-expenses-button"
+              :class="{
+                'text-warning': data.calculatedPocketExpenses !== null && data.calculatedPocketExpenses < 0,
+                'text-error': data.calculatedPocketExpenses !== null && data.calculatedPocketExpenses > 0,
+                'text-base-content': data.calculatedPocketExpenses === 0,
+              }"
+            >
+              {{ data.calculatedPocketExpenses !== null ? formatAmount(data.calculatedPocketExpenses) : '—' }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          :ref="setCardRef(4)"
+          class="tooltip text-center"
+          :data-tip="totalExpensesTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-xl"
+              disabled
+              data-testid="total-expenses-button"
+              :class="{
+                'text-warning': data.totalAllExpenses !== null && data.totalAllExpenses < 0,
+                'text-error': data.totalAllExpenses !== null && data.totalAllExpenses > 0,
+                'text-base-content': data.totalAllExpenses === 0,
+              }"
+            >
+              {{ data.totalAllExpenses !== null ? formatAmount(data.totalAllExpenses) : '—' }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          :ref="setCardRef(5)"
+          class="tooltip text-center"
+          :data-tip="balanceChangeTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-xl"
+              data-testid="balance-change-button"
+              :class="{
+                'text-success': data.calculatedBalanceChange !== null && data.calculatedBalanceChange > 0,
+                'text-error': data.calculatedBalanceChange !== null && data.calculatedBalanceChange < 0,
+                'text-base-content': data.calculatedBalanceChange === 0,
+              }"
+              disabled
+            >
+              {{ data.calculatedBalanceChange !== null ? formatAmount(data.calculatedBalanceChange) : '—' }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          :ref="setCardRef(6)"
+          class="tooltip text-center"
+          :data-tip="currencyFluctuationTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-xl"
+              data-testid="currency-fluctuation-button"
+              :class="{
+                'text-success': data.currencyProfitLoss !== null && data.currencyProfitLoss > 0,
+                'text-error': data.currencyProfitLoss !== null && data.currencyProfitLoss < 0,
+                'text-base-content': data.currencyProfitLoss === 0,
+              }"
+              disabled
+            >
+              {{ data.currencyProfitLoss !== null ? formatAmount(data.currencyProfitLoss) : '—' }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          :ref="setCardRef(7)"
+          class="tooltip text-center"
+          :data-tip="optionalExpensesTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-xl"
+              data-testid="optional-expenses-button"
+              :class="{
+                'text-error': data.totalOptionalExpenses !== 0,
+                'text-base-content': data.totalOptionalExpenses === 0,
+              }"
+              disabled
+            >
+              {{ formatAmount(data.totalOptionalExpenses) }}
+            </button>
+          </div>
         </div>
       </div>
 
       <div
-        :ref="setCardRef(1)"
-        class="tooltip text-center"
-        :data-tip="incomeTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-2xl"
-            :class="{
-              'text-success': data.totalIncome !== 0,
-              'text-base-content': data.totalIncome === 0,
-            }"
-            :disabled="isReadOnly"
-            data-testid="incomes-button"
-            @click="$emit('incomeClick')"
-          >
-            {{ formatAmount(data.totalIncome) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(2)"
-        class="tooltip text-center"
-        :data-tip="expensesTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-2xl"
-            :class="{
-              'text-error': data.totalExpenses !== 0,
-              'text-base-content': data.totalExpenses === 0,
-            }"
-            :disabled="isReadOnly"
-            data-testid="expenses-button"
-            @click="$emit('expenseClick')"
-          >
-            {{ formatAmount(data.totalExpenses) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(3)"
-        class="tooltip text-center"
-        :data-tip="pocketExpensesTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            disabled
-            data-testid="pocket-expenses-button"
-            :class="{
-              'text-warning': data.calculatedPocketExpenses !== null && data.calculatedPocketExpenses < 0,
-              'text-error': data.calculatedPocketExpenses !== null && data.calculatedPocketExpenses > 0,
-              'text-base-content': data.calculatedPocketExpenses === 0,
-            }"
-          >
-            {{ data.calculatedPocketExpenses !== null ? formatAmount(data.calculatedPocketExpenses) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(4)"
-        class="tooltip text-center"
-        :data-tip="totalExpensesTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            disabled
-            data-testid="total-expenses-button"
-            :class="{
-              'text-warning': data.totalAllExpenses !== null && data.totalAllExpenses < 0,
-              'text-error': data.totalAllExpenses !== null && data.totalAllExpenses > 0,
-              'text-base-content': data.totalAllExpenses === 0,
-            }"
-          >
-            {{ data.totalAllExpenses !== null ? formatAmount(data.totalAllExpenses) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(5)"
-        class="tooltip text-center"
-        :data-tip="balanceChangeTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            data-testid="balance-change-button"
-            :class="{
-              'text-success': data.calculatedBalanceChange !== null && data.calculatedBalanceChange > 0,
-              'text-error': data.calculatedBalanceChange !== null && data.calculatedBalanceChange < 0,
-              'text-base-content': data.calculatedBalanceChange === 0,
-            }"
-            disabled
-          >
-            {{ data.calculatedBalanceChange !== null ? formatAmount(data.calculatedBalanceChange) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(6)"
-        class="tooltip text-center"
-        :data-tip="currencyFluctuationTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            data-testid="currency-fluctuation-button"
-            :class="{
-              'text-success': data.currencyProfitLoss !== null && data.currencyProfitLoss > 0,
-              'text-error': data.currencyProfitLoss !== null && data.currencyProfitLoss < 0,
-              'text-base-content': data.currencyProfitLoss === 0,
-            }"
-            disabled
-          >
-            {{ data.currencyProfitLoss !== null ? formatAmount(data.currencyProfitLoss) : '—' }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        :ref="setCardRef(7)"
-        class="tooltip text-center"
-        :data-tip="optionalExpensesTooltip"
-      >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
-          <button
-            class="btn btn-ghost text-xl"
-            data-testid="optional-expenses-button"
-            :class="{
-              'text-error': data.totalOptionalExpenses !== 0,
-              'text-base-content': data.totalOptionalExpenses === 0,
-            }"
-            disabled
-          >
-            {{ formatAmount(data.totalOptionalExpenses) }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="canDelete"
         :ref="setCardRef(8)"
-        class="tooltip text-center"
-        :data-tip="labels.deleteMonth"
+        class="w-10 flex justify-center"
       >
-        <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+        <div
+          v-if="canDelete"
+          class="tooltip text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          :data-tip="labels.deleteMonth"
+        >
           <button
             class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
             data-testid="delete-month-button"
@@ -233,9 +228,7 @@
         </div>
       </div>
     </div>
-
-    <hr>
-  </li>
+  </div>
 </template>
 
 <script setup lang="ts">

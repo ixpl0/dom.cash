@@ -198,63 +198,62 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto py-6 animate-fade-in-up-delayed-3">
-        <UiTimeline
-          class="[--timeline-col-start:23ch]"
-          data-testid="budget-timeline"
+      <div
+        class="py-6 animate-fade-in-up-delayed-3"
+        data-testid="budget-timeline"
+      >
+        <UiTimelineAddButton
+          v-if="budgetStore.canEdit"
+          direction="next"
+          :month-text="getNextMonthText()"
+          :is-loading="isCreatingNextMonth"
+          @create="handleCreateNextMonth"
+        />
+
+        <div class="overflow-x-auto px-6">
+          <div class="flex flex-col gap-4 mt-4">
+            <BudgetYear
+              v-for="year in years"
+              :key="year"
+              :year="year"
+              :months="groupedData[year] || []"
+              :month-names="monthNames"
+            />
+          </div>
+        </div>
+
+        <UiTimelineAddButton
+          v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
+          direction="previous"
+          :month-text="getPreviousMonthText()"
+          :is-loading="isCreatingPreviousMonth"
+          class="mt-4"
+          @create="handleCreatePreviousMonth"
+        />
+
+        <div
+          v-if="budgetStore.nextYearToLoad"
+          class="flex justify-center mt-4"
         >
-          <UiTimelineAddButton
-            v-if="budgetStore.canEdit"
-            direction="next"
-            :month-text="getNextMonthText()"
-            :is-loading="isCreatingNextMonth"
-            @create="handleCreateNextMonth"
-          />
-
-          <BudgetYear
-            v-for="year in years"
-            :key="year"
-            :year="year"
-            :months="groupedData[year] || []"
-            :month-names="monthNames"
-          />
-
-          <UiTimelineAddButton
-            v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
-            direction="previous"
-            :month-text="getPreviousMonthText()"
-            :is-loading="isCreatingPreviousMonth"
-            @create="handleCreatePreviousMonth"
-          />
-
-          <li v-if="budgetStore.nextYearToLoad">
-            <hr>
-            <div class="timeline-start">
-              <button
-                class="btn btn-outline btn-sm"
-                :disabled="budgetStore.isLoadingYear"
-                @click="handleLoadPreviousYear"
-              >
-                <span
-                  v-if="budgetStore.isLoadingYear"
-                  class="loading loading-spinner loading-xs"
-                />
-                <template v-else>
-                  <Icon
-                    name="heroicons:chevron-double-down"
-                    size="16"
-                  />
-                  {{ t('budget.showYear') }} {{ budgetStore.nextYearToLoad.year }} {{ t('budget.yearWord') }}
-                </template>
-                <span v-if="budgetStore.isLoadingYear">{{ t('common.loading') }}</span>
-              </button>
-            </div>
-            <div class="timeline-middle">
-              <div class="w-3 h-3 m-1 bg-base-300 rounded-full" />
-            </div>
-            <hr>
-          </li>
-        </UiTimeline>
+          <button
+            class="btn btn-outline btn-sm"
+            :disabled="budgetStore.isLoadingYear"
+            @click="handleLoadPreviousYear"
+          >
+            <span
+              v-if="budgetStore.isLoadingYear"
+              class="loading loading-spinner loading-xs"
+            />
+            <template v-else>
+              <Icon
+                name="heroicons:chevron-double-down"
+                size="16"
+              />
+              {{ t('budget.showYear') }} {{ budgetStore.nextYearToLoad.year }} {{ t('budget.yearWord') }}
+            </template>
+            <span v-if="budgetStore.isLoadingYear">{{ t('common.loading') }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -277,8 +276,16 @@
 import { findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
+import { timelineColumnsSyncKey } from '~/types/timeline'
 
 const LAST_SHARED_BUDGET_COOKIE = 'lastSharedBudget'
+
+const columnsSync = useBudgetColumnsSync()
+
+provide(timelineColumnsSyncKey, {
+  registerRow: columnsSync.registerRow,
+  unregisterRow: columnsSync.unregisterRow,
+})
 
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
