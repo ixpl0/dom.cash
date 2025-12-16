@@ -46,7 +46,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       return { class: 'animate-on-scroll-initial' }
     },
 
-    beforeMount(element: HTMLElement) {
+    created(element: HTMLElement) {
       element.classList.add('animate-on-scroll-initial')
     },
 
