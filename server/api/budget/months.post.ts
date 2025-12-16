@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (error instanceof Error) {
+      secureLog.error('Error creating month:', error.message)
       if (error.message === 'Month already exists') {
         throw createError({
           statusCode: 409,

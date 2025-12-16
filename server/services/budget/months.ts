@@ -141,7 +141,9 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
   )
 
   if (candidates.length === 0) {
-    throw new Error(`No exchange rates available in database for ${rateDate}`)
+    const result = { rates: {}, source: '' }
+    ratesCache.set(rateDate, result)
+    return result
   }
 
   const targetDate = new Date(rateDate)
@@ -262,7 +264,11 @@ const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId:
       isOptional: sourceEntry.isOptional,
     }))
 
-    await db.insert(entry).values(copiedEntries)
+    const batchSize = 10
+    for (let i = 0; i < copiedEntries.length; i += batchSize) {
+      const batch = copiedEntries.slice(i, i + batchSize)
+      await db.insert(entry).values(batch)
+    }
   }
 }
 
