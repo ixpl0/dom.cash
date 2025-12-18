@@ -1,6 +1,6 @@
 <template>
   <div data-testid="budget-year">
-    <div class="w-fit mx-auto rounded-box bg-base-100 border-2 border-base-300 shadow-sm mb-2">
+    <div class="w-fit mx-auto rounded-box mb-2">
       <div class="flex items-center gap-4 px-4 py-2">
         <h2 class="text-5xl font-bold w-28 flex-shrink-0">
           {{ year }}
