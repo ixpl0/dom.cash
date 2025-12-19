@@ -82,7 +82,7 @@ const isOverdue = computed(() => {
   const today = new Date()
   plannedDate.setHours(0, 0, 0, 0)
   today.setHours(0, 0, 0, 0)
-  return plannedDate < today
+  return plannedDate <= today
 })
 
 const handleToggle = async () => {

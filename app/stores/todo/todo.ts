@@ -21,7 +21,7 @@ export const useTodoStore = defineStore('todo', () => {
     const today = new Date()
     plannedDate.setHours(0, 0, 0, 0)
     today.setHours(0, 0, 0, 0)
-    return plannedDate < today
+    return plannedDate <= today
   }
 
   const filteredItems = computed((): TodoListItem[] => {
