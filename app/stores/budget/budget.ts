@@ -1,9 +1,11 @@
 import type { MonthData, ComputedMonthData, YearSummary, YearInfo } from '~~/shared/types/budget'
 import type { BudgetShareAccess } from '~~/server/db/schema'
+import type { BudgetExportData } from '~~/shared/types/export-import'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/budget/entry-strategies'
 import { toMutable } from '~~/shared/utils/shared/immutable'
 import { computeMonthData, computeYearSummary, createMonthId } from '~~/shared/utils/budget/budget-calculations'
+import { generateExcelFromBudgetData } from '~~/app/utils/excel-export'
 
 export interface YearsData {
   availableYears: YearInfo[]
@@ -525,14 +527,11 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const exportBudgetExcel = async () => {
     try {
-      const response = await $fetch<ArrayBuffer>('/api/budget/export-excel', {
+      const response = await $fetch<BudgetExportData>('/api/budget/export', {
         method: 'GET',
-        responseType: 'arrayBuffer',
       })
 
-      const blob = new Blob([new Uint8Array(response)], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
+      const blob = generateExcelFromBudgetData(response)
       const url = URL.createObjectURL(blob)
 
       const link = document.createElement('a')
