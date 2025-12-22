@@ -23,170 +23,87 @@
 
     <div
       v-else-if="!budgetStore.data || !budgetStore.months || budgetStore.months.length === 0"
-      class="text-center py-12"
       data-testid="budget-empty-state"
     >
-      <div class="mb-4 flex justify-center">
-        <UiLogo class="w-16 h-16" />
-      </div>
-      <h2
-        class="text-2xl font-bold mb-2"
-        data-testid="no-budget-message"
-      >
-        {{ isOwnBudget ? t('budget.noBudgetYet') : t('budget.noBudgetYetUser', { username: budgetStore.data?.user?.username }) }}
-      </h2>
-      <p class="text-lg opacity-70 mb-6">
-        {{ !budgetStore.canEdit ? t('budget.userNoMonths') : t('budget.startWithMonth') }}
-      </p>
-      <div
-        v-if="budgetStore.canEdit"
-        class="flex flex-col sm:flex-row gap-4 justify-center"
-      >
-        <button
-          class="btn btn-primary btn-lg"
-          :disabled="isCreatingCurrentMonth"
-          data-testid="create-first-month-btn"
-          @click="createCurrentMonth"
-        >
-          <span
-            v-if="isCreatingCurrentMonth"
-            class="loading loading-spinner loading-sm"
-          />
-          <span
-            v-if="!isCreatingCurrentMonth"
-            class="flex items-center gap-2"
-          >
-            <Icon
-              name="heroicons:calendar"
-              size="20"
-            />
-            {{ t('budget.createFirstMonth') }} {{ monthNames[currentMonth] }} {{ currentYear }}
-          </span>
-          <span v-else>{{ t('budget.creatingMonth') }}</span>
-        </button>
-        <button
-          class="btn btn-outline btn-lg"
-          data-testid="import-budget-btn"
-          @click="openImportModal"
-        >
-          <Icon
-            name="heroicons:arrow-down-tray"
-            size="20"
-          />
-          {{ t('budget.importBudget') }}
-        </button>
-      </div>
-      <button
-        v-else
-        class="btn btn-outline btn-lg"
-        @click="navigateToOwnBudget"
-      >
-        {{ t('budget.toOwnBudget') }}
-      </button>
-    </div>
+      <BudgetHeader
+        :has-data="false"
+        :is-viewing-own-budget-url="isViewingOwnBudgetUrl"
+        @currency-change="saveCurrency"
+        @export="handleExport"
+        @import="openImportModal"
+        @navigate-to-own="navigateToOwnBudget"
+      />
 
-    <div v-else>
-      <div
-        class="flex items-center justify-between flex-wrap gap-4 p-6 pb-0 relative z-10"
-        data-testid="budget-header"
-      >
-        <h1
-          class="text-3xl font-bold ml-2 animate-fade-in-left"
-          data-testid="budget-title"
-        >
-          {{ t('budget.title') }}
-        </h1>
-
-        <div class="flex items-center flex-wrap gap-2 flex-col sm:flex-row w-full sm:w-auto animate-fade-in-up-delayed">
-          <span
-            v-if="budgetStore.data?.access !== 'owner'"
-            class="badge w-full sm:w-auto"
-          >
-            {{ t('budget.access.ownerOf') }}
-            {{ budgetStore.data?.user.username }}
-          </span>
-          <span class="badge w-full sm:w-auto">
-            {{ getAccessText(budgetStore.data?.access || 'unknown') }}
-          </span>
-          <UiCurrencyPicker
-            v-if="budgetStore.canEdit"
-            :model-value="budgetStore.data?.user.mainCurrency"
-            :placeholder="t('budget.mainCurrency')"
-            class="w-full sm:w-70"
-            @change="saveCurrency"
-          />
-          <span
-            v-else
-            class="opacity-70 text-sm"
-          >
-            {{ t('budget.mainCurrencyLabel') }}
-            {{ getCurrencyDisplayText(budgetStore.data?.user.mainCurrency || '') }}
-          </span>
+      <div class="text-center py-12">
+        <div class="mb-4 flex justify-center">
+          <UiLogo class="w-16 h-16" />
         </div>
-
-        <div class="flex gap-2 flex-wrap animate-fade-in-right-delayed">
+        <h2
+          class="text-2xl font-bold mb-2"
+          data-testid="no-budget-message"
+        >
+          {{ isViewingOwnBudgetUrl ? t('budget.noBudgetYet') : t('budget.noBudgetYetUser', { username: budgetStore.data?.user?.username }) }}
+        </h2>
+        <p class="text-lg opacity-70 mb-6">
+          {{ !budgetStore.canEdit ? t('budget.userNoMonths') : t('budget.startWithMonth') }}
+        </p>
+        <div
+          v-if="budgetStore.canEdit"
+          class="flex flex-col sm:flex-row gap-4 justify-center"
+        >
           <button
-            class="btn btn-ghost btn-sm"
-            data-testid="chart-button"
-            @click="modalsStore.openChartModal"
+            class="btn btn-primary btn-lg"
+            :disabled="isCreatingCurrentMonth"
+            data-testid="create-first-month-btn"
+            @click="createCurrentMonth"
           >
-            <Icon
-              name="heroicons:chart-bar"
-              size="20"
+            <span
+              v-if="isCreatingCurrentMonth"
+              class="loading loading-spinner loading-sm"
             />
-            {{ t('budget.chart') }}
+            <span
+              v-if="!isCreatingCurrentMonth"
+              class="flex items-center gap-2"
+            >
+              <Icon
+                name="heroicons:calendar"
+                size="20"
+              />
+              {{ t('budget.createFirstMonth') }} {{ monthNames[currentMonth] }} {{ currentYear }}
+            </span>
+            <span v-else>{{ t('budget.creatingMonth') }}</span>
           </button>
-
-          <BudgetExportDropdown @export="handleExport" />
-
           <button
-            v-if="budgetStore.canEdit"
-            class="btn btn-ghost btn-sm"
-            data-testid="import-button"
+            class="btn btn-outline btn-lg"
+            data-testid="import-budget-btn"
             @click="openImportModal"
           >
             <Icon
-              name="heroicons:cloud-arrow-up"
+              name="heroicons:arrow-down-tray"
               size="20"
             />
-            {{ t('budget.import') }}
-          </button>
-
-          <button
-            v-if="isOwnBudget"
-            class="btn btn-ghost btn-sm"
-            data-testid="shared-budgets-button"
-            @click="modalsStore.openSharedBudgetsModal"
-          >
-            <Icon
-              name="heroicons:users"
-              size="20"
-            />
-            {{ t('budget.sharedBudgets') }}
-          </button>
-
-          <button
-            v-if="isOwnBudget"
-            class="btn btn-ghost btn-sm"
-            data-testid="share-button"
-            @click="modalsStore.openShareModal('')"
-          >
-            <Icon
-              name="heroicons:share"
-              size="20"
-            />
-            {{ t('budget.share') }}
-          </button>
-
-          <button
-            v-if="!isOwnBudget"
-            class="btn btn-outline btn-sm"
-            @click="navigateToOwnBudget"
-          >
-            {{ t('budget.toOwnBudget') }}
+            {{ t('budget.importBudget') }}
           </button>
         </div>
+        <button
+          v-else
+          class="btn btn-outline btn-lg"
+          @click="navigateToOwnBudget"
+        >
+          {{ t('budget.toOwnBudget') }}
+        </button>
       </div>
+    </div>
+
+    <div v-else>
+      <BudgetHeader
+        :has-data="true"
+        :is-viewing-own-budget-url="isViewingOwnBudgetUrl"
+        @currency-change="saveCurrency"
+        @export="handleExport"
+        @import="openImportModal"
+        @navigate-to-own="navigateToOwnBudget"
+      />
 
       <div
         class="pt-10 pb-6 animate-fade-in-up-delayed-3"
@@ -265,7 +182,6 @@
 <script setup lang="ts">
 import { findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
-import { useModalsStore } from '~/stores/budget/modals'
 import { timelineColumnsSyncKey } from '~/types/timeline'
 
 const LAST_SHARED_BUDGET_COOKIE = 'lastSharedBudget'
@@ -278,13 +194,11 @@ provide(timelineColumnsSyncKey, {
 })
 
 const budgetStore = useBudgetStore()
-const modalsStore = useModalsStore()
 const route = useRoute()
 const { t } = useI18n()
 
 const { formatError } = useServerError()
 const { monthNames } = useMonthNames()
-const { getCurrencyName } = useCurrencies()
 const { toast } = useToast()
 
 const targetUsername = computed(() => {
@@ -305,6 +219,7 @@ const isImportModalOpen = ref(false)
 const BudgetChartModal = defineAsyncComponent(() => import('~/components/budget/ChartModal.vue'))
 
 const isOwnBudget = computed(() => budgetStore.isOwnBudget)
+const isViewingOwnBudgetUrl = computed(() => !targetUsername.value)
 
 const lastSharedBudgetCookie = useCookie(LAST_SHARED_BUDGET_COOKIE)
 
@@ -399,11 +314,6 @@ const createCurrentMonth = async (): Promise<void> => {
   }
 }
 
-const getCurrencyDisplayText = (currencyCode: string): string => {
-  const currencyName = getCurrencyName(currencyCode)
-  return `${currencyCode} - ${currencyName}`
-}
-
 const saveCurrency = async (newCurrency: string): Promise<void> => {
   try {
     await budgetStore.updateCurrency(newCurrency)
@@ -411,19 +321,6 @@ const saveCurrency = async (newCurrency: string): Promise<void> => {
   catch (error) {
     console.error('Failed to update currency:', error)
     toast({ type: 'error', message: formatError(error, t('budget.currencyUpdateError')) })
-  }
-}
-
-const getAccessText = (access: string): string => {
-  switch (access) {
-    case 'owner':
-      return t('budget.access.owner')
-    case 'read':
-      return t('budget.access.read')
-    case 'write':
-      return t('budget.access.write')
-    default:
-      return t('budget.access.unknown')
   }
 }
 

@@ -25,6 +25,32 @@ test.describe('Budget page isolated tests', () => {
     await expect(createFirstMonthButton).toBeVisible()
   })
 
+  test('should show header with shared budgets button in empty state', async ({ page }) => {
+    const emptyState = page.getByTestId('budget-empty-state')
+    await expect(emptyState).toBeVisible()
+
+    const header = page.getByTestId('budget-header')
+    await expect(header).toBeVisible()
+
+    const sharedBudgetsButton = page.getByTestId('shared-budgets-button')
+    await expect(sharedBudgetsButton).toBeVisible()
+  })
+
+  test('should open shared budgets modal from empty state', async ({ page }) => {
+    const emptyState = page.getByTestId('budget-empty-state')
+    await expect(emptyState).toBeVisible()
+
+    const sharedBudgetsButton = page.getByTestId('shared-budgets-button')
+    await expect(sharedBudgetsButton).toBeVisible()
+    await sharedBudgetsButton.click()
+
+    const modal = page.getByTestId('shared-budgets-modal')
+    await expect(modal).toBeVisible()
+
+    const emptyModalState = page.getByTestId('shared-budgets-empty-state')
+    await expect(emptyModalState).toBeVisible()
+  })
+
   test('should create first month when clicking create button', async ({ page }) => {
     const createFirstMonthButton = page.getByTestId('create-first-month-btn')
     await expect(createFirstMonthButton).toBeVisible()
