@@ -15,6 +15,16 @@ const parseBinding = (binding: DirectiveBinding): AnimateOnScrollOptions => {
   return binding.value as AnimateOnScrollOptions
 }
 
+const hideElementBeforeAnimation = (element: HTMLElement): void => {
+  element.style.opacity = '0'
+  element.classList.add('animate-on-scroll-initial')
+}
+
+const showElementWithAnimation = (element: HTMLElement, animation: string): void => {
+  element.style.opacity = ''
+  element.classList.add(animation)
+}
+
 const handleIntersect = (
   entries: IntersectionObserverEntry[],
   element: HTMLElement,
@@ -25,11 +35,11 @@ const handleIntersect = (
     const delay = options.delay ?? 0
     if (delay > 0) {
       setTimeout(() => {
-        element.classList.add(options.animation)
+        showElementWithAnimation(element, options.animation)
       }, delay)
     }
     else {
-      element.classList.add(options.animation)
+      showElementWithAnimation(element, options.animation)
     }
 
     const observer = observerMap.get(element)
@@ -47,7 +57,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
 
     created(element: HTMLElement) {
-      element.classList.add('animate-on-scroll-initial')
+      hideElementBeforeAnimation(element)
     },
 
     mounted(element: HTMLElement, binding: DirectiveBinding) {
