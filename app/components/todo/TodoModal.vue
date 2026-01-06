@@ -91,7 +91,7 @@ const handleSave = async (data: {
         content: data.content,
         plannedDate: data.plannedDate,
         recurrence: data.recurrence,
-        sharedWithUserIds: data.sharedWithUserIds,
+        ...(isOwner.value ? { sharedWithUserIds: data.sharedWithUserIds } : {}),
       })
     }
     else {
