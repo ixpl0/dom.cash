@@ -75,6 +75,34 @@ export const useBudgetStore = defineStore('budget', () => {
     return yearsSummary.value.find(y => y.year === year)
   }
 
+  const getRollingAverageExpenses = (monthCount: number = 12, minMonths: number = 3): number | null => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth()
+
+    const isPastMonth = (year: number, month: number): boolean =>
+      year < currentYear || (year === currentYear && month < currentMonth)
+
+    const monthsWithExpenses = computedMonths.value
+      .filter(month =>
+        month.totalAllExpenses !== null
+        && month.totalAllExpenses > 0
+        && isPastMonth(month.year, month.month),
+      )
+      .slice(0, monthCount)
+
+    if (monthsWithExpenses.length < minMonths) {
+      return null
+    }
+
+    const totalExpenses = monthsWithExpenses.reduce(
+      (sum, month) => sum + (month.totalAllExpenses ?? 0),
+      0,
+    )
+
+    return Math.ceil(totalExpenses / monthsWithExpenses.length)
+  }
+
   const nextYearToLoad = computed(() => {
     if (availableYears.value.length === 0) {
       return null
@@ -639,6 +667,7 @@ export const useBudgetStore = defineStore('budget', () => {
     getComputedMonthById,
     getComputedMonthByYearMonth,
     getYearSummary,
+    getRollingAverageExpenses,
     refresh,
     forceRefresh,
     loadYear,

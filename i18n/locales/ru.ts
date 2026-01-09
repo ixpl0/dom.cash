@@ -166,6 +166,7 @@ export default {
       clickForRates: 'Нажмите для просмотра курсов валют',
       balanceTooltip: 'Сумма всех сбережений на начало месяца. Этого хватило бы на',
       balanceTooltipMonths: 'мес',
+      balanceTooltipShort: 'Сумма всех сбережений на начало месяца',
       incomeTooltip: 'Все доходы за',
       incomeTooltipText: 'Это зарплата, бонусы, подарки и т.д.',
       expensesTooltip: 'Все крупные расходы за',

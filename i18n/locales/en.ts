@@ -166,6 +166,7 @@ export default {
       clickForRates: 'Click to view exchange rates',
       balanceTooltip: 'Total savings at the beginning of the month. This would be enough for',
       balanceTooltipMonths: 'months',
+      balanceTooltipShort: 'Total savings at the beginning of the month',
       incomeTooltip: 'All income for',
       incomeTooltipText: 'This includes salary, bonuses, gifts, etc.',
       expensesTooltip: 'All major expenses for',

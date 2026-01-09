@@ -61,13 +61,7 @@ onMounted(() => {
   isCurrentMonthValue.value = isCurrentMonth(monthData.value)
 })
 
-const averageMonthlyExpenses = computed(() => {
-  const yearSummary = budgetStore.getYearSummary(monthData.value.year)
-  if (!yearSummary || yearSummary.monthCount === 0) {
-    return 3500
-  }
-  return Math.ceil(yearSummary.avgAllExpenses || 3500)
-})
+const rollingAverageExpenses = computed(() => budgetStore.getRollingAverageExpenses())
 
 const uiMonthData = computed((): UiMonthData => ({
   startBalance: monthData.value.startBalance,
@@ -90,7 +84,10 @@ const monthBadgeTooltip = computed(() => {
 })
 
 const balanceTooltip = computed(() => {
-  const months = Math.floor(monthData.value.startBalance / averageMonthlyExpenses.value)
+  if (rollingAverageExpenses.value === null) {
+    return t('budget.month.balanceTooltipShort')
+  }
+  const months = Math.floor(monthData.value.startBalance / rollingAverageExpenses.value)
   return `${t('budget.month.balanceTooltip')} ${months} ${t('budget.month.balanceTooltipMonths')}`
 })
 
