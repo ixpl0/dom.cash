@@ -100,6 +100,28 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
+  const forceRefresh = async () => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const [todoData, connectionsData] = await Promise.all([
+        $fetch<TodoData>('/api/todo'),
+        $fetch<TodoConnection[]>('/api/todo/connections'),
+      ])
+
+      data.value = todoData || null
+      connections.value = connectionsData || []
+    }
+    catch (e) {
+      error.value = e instanceof Error ? e.message : 'Failed to load todos'
+      data.value = null
+    }
+    finally {
+      isLoading.value = false
+    }
+  }
+
   const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
     error.value = null
     try {
@@ -297,6 +319,7 @@ export const useTodoStore = defineStore('todo', () => {
     isToggling,
     isLeaving,
     refresh,
+    forceRefresh,
     createTodo,
     updateTodo,
     deleteTodo,

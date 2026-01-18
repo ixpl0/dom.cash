@@ -30,6 +30,12 @@ if (routeUsername) {
 
 const budgetStore = useBudgetStore()
 const { subscribeToBudgetByUsername, unsubscribeFromBudgetByUsername } = useNotifications()
+const { hideWarningBanner } = useOutdatedBanner()
+
+useVisibilityRefresh(async () => {
+  await budgetStore.forceRefresh(targetUsername)
+  hideWarningBanner()
+})
 
 await budgetStore.refresh(targetUsername)
 

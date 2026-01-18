@@ -83,6 +83,7 @@
   * Use Vue 3, Composition API, `<script setup lang="ts">`. Prefer `ref` over `reactive`.
   * Follow the existing ESLint and TS config.
   * Use `git mv` and `git rm` to keep git history.
+  * **NEVER** add `Co-Authored-By` to commit messages.
 
 ## Testing
 

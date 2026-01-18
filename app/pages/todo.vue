@@ -6,8 +6,14 @@
 
 <script setup lang="ts">
 const todoStore = useTodoStore()
+const { hideWarningBanner } = useOutdatedBanner()
 
 useNotifications()
+
+useVisibilityRefresh(async () => {
+  await todoStore.forceRefresh()
+  hideWarningBanner()
+})
 
 await todoStore.refresh()
 </script>
