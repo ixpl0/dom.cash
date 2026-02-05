@@ -58,7 +58,7 @@ test.describe('Todo validation', () => {
     const contentInput = modal.getByTestId('todo-modal-content-input')
     await contentInput.fill('Test content')
 
-    await expect(modal.locator('text=12 / 10000')).toBeVisible()
+    await expect(modal.getByTestId('todo-modal-content-count')).toContainText('12 / 10000')
   })
 
   test('should disable save when content exceeds max length', async ({ page }) => {

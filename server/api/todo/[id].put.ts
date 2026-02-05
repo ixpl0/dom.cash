@@ -7,6 +7,7 @@ import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { canEditTodo, getTodoRecipientIds } from '~~/server/utils/todo-permissions'
+import { parseBody } from '~~/server/utils/validation'
 import { recurrencePatternSchema } from '~~/shared/schemas/recurrence'
 
 const updateTodoSchema = z.object({
@@ -55,8 +56,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
-  const { content, plannedDate, recurrence, sharedWithUserIds } = updateTodoSchema.parse(body)
+  const { content, plannedDate, recurrence, sharedWithUserIds } = await parseBody(event, updateTodoSchema)
 
   const existingTodo = todoRecord[0]
   if (!existingTodo) {

@@ -62,6 +62,8 @@ test.describe('Todo page', () => {
   })
 
   test('should create a todo item', async ({ page }) => {
+    const content = `Test todo item ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
@@ -69,27 +71,29 @@ test.describe('Todo page', () => {
     await expect(modal).toBeVisible()
 
     const contentInput = modal.getByTestId('todo-modal-content-input')
-    await contentInput.fill('Test todo item')
+    await contentInput.fill(content)
 
     const saveButton = modal.getByTestId('todo-modal-save-button')
     await saveButton.click()
 
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
-    await expect(card.getByTestId('todo-card-content')).toContainText('Test todo item')
+    await expect(card.getByTestId('todo-card-content')).toContainText(content)
     await expect(card.getByTestId('todo-card-checkbox')).toBeVisible()
   })
 
   test('should create a todo with date', async ({ page }) => {
+    const content = `Test todo with date ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
 
     const contentInput = modal.getByTestId('todo-modal-content-input')
-    await contentInput.fill('Test todo with date')
+    await contentInput.fill(content)
 
     const dateInput = modal.getByTestId('todo-modal-date-input')
     await expect(dateInput).toBeVisible()
@@ -100,9 +104,9 @@ test.describe('Todo page', () => {
 
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
-    await expect(card.getByTestId('todo-card-content')).toContainText('Test todo with date')
+    await expect(card.getByTestId('todo-card-content')).toContainText(content)
     await expect(card.getByTestId('todo-card-date')).toBeVisible()
   })
 
@@ -135,15 +139,18 @@ test.describe('Todo page', () => {
   })
 
   test('should edit a todo', async ({ page }) => {
+    const originalContent = `Original content ${Date.now()}`
+    const updatedContent = `${originalContent} updated`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     let modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Original content')
+    await modal.getByTestId('todo-modal-content-input').fill(originalContent)
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: originalContent })
     const editButton = card.getByTestId('todo-card-edit-button')
     await editButton.click()
 
@@ -152,23 +159,25 @@ test.describe('Todo page', () => {
 
     const contentInput = modal.getByTestId('todo-modal-content-input')
     await contentInput.clear()
-    await contentInput.fill('Updated content')
+    await contentInput.fill(updatedContent)
     await modal.getByTestId('todo-modal-save-button').click()
 
     await expect(modal).not.toBeVisible()
-    await expect(card.getByTestId('todo-card-content')).toContainText('Updated content')
+    await expect(page.getByTestId('todo-card').filter({ hasText: updatedContent })).toBeVisible()
   })
 
   test('should delete a todo with confirmation', async ({ page }) => {
+    const content = `Delete test todo ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Delete test todo')
+    await modal.getByTestId('todo-modal-content-input').fill(content)
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
 
     const deleteButton = card.getByTestId('todo-card-delete-button')
@@ -184,15 +193,17 @@ test.describe('Todo page', () => {
   })
 
   test('should hide completed todos when toggle is enabled', async ({ page }) => {
+    const content = `Hide completed test ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Hide completed test')
+    await modal.getByTestId('todo-modal-content-input').fill(content)
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
 
     const hideToggle = page.getByTestId('todo-hide-completed-toggle')
@@ -208,16 +219,18 @@ test.describe('Todo page', () => {
 
     await hideToggle.click()
 
-    const completedCard = page.getByTestId('todo-card').first()
+    const completedCard = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(completedCard).toBeVisible()
   })
 
   test('should create a recurring todo with interval', async ({ page }) => {
+    const content = `Recurring interval todo ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Recurring interval todo')
+    await modal.getByTestId('todo-modal-content-input').fill(content)
 
     const recurrenceSelect = modal.getByTestId('recurrence-type-select')
     await recurrenceSelect.selectOption('interval')
@@ -232,18 +245,20 @@ test.describe('Todo page', () => {
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
-    await expect(card.getByTestId('todo-card-content')).toContainText('Recurring interval todo')
+    await expect(card.getByTestId('todo-card-content')).toContainText(content)
     await expect(card.getByTestId('todo-card-recurrence-badge')).toBeVisible()
   })
 
   test('should create a recurring todo with weekdays', async ({ page }) => {
+    const content = `Weekday recurring todo ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Weekday recurring todo')
+    await modal.getByTestId('todo-modal-content-input').fill(content)
 
     const recurrenceSelect = modal.getByTestId('recurrence-type-select')
     await recurrenceSelect.selectOption('weekdays')
@@ -261,18 +276,20 @@ test.describe('Todo page', () => {
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
-    await expect(card.getByTestId('todo-card-content')).toContainText('Weekday recurring todo')
+    await expect(card.getByTestId('todo-card-content')).toContainText(content)
     await expect(card.getByTestId('todo-card-recurrence-badge')).toBeVisible()
   })
 
   test('should create a recurring todo with day of month', async ({ page }) => {
+    const content = `Monthly recurring todo ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Monthly recurring todo')
+    await modal.getByTestId('todo-modal-content-input').fill(content)
 
     const recurrenceSelect = modal.getByTestId('recurrence-type-select')
     await recurrenceSelect.selectOption('dayOfMonth')
@@ -284,9 +301,9 @@ test.describe('Todo page', () => {
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
-    await expect(card.getByTestId('todo-card-content')).toContainText('Monthly recurring todo')
+    await expect(card.getByTestId('todo-card-content')).toContainText(content)
     await expect(card.getByTestId('todo-card-recurrence-badge')).toBeVisible()
   })
 
@@ -347,11 +364,13 @@ test.describe('Todo page', () => {
   })
 
   test('should show overdue styling for past date todo', async ({ page }) => {
+    const content = `Overdue todo test ${Date.now()}`
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Overdue todo test')
+    await modal.getByTestId('todo-modal-content-input').fill(content)
 
     const dateInput = modal.getByTestId('todo-modal-date-input')
     await dateInput.fill('2020-01-01')
@@ -359,7 +378,7 @@ test.describe('Todo page', () => {
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: content })
     await expect(card).toBeVisible()
     await expect(card).toHaveClass(/border-error/)
   })

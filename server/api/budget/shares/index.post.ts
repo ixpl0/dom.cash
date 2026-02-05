@@ -6,6 +6,7 @@ import type { NewBudgetShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { accessSchema } from '~~/shared/schemas/common'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { parseBody } from '~~/server/utils/validation'
 
 const createShareSchema = z.object({
   username: z.string().min(1),
@@ -22,8 +23,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
-  const { username, access } = createShareSchema.parse(body)
+  const { username, access } = await parseBody(event, createShareSchema)
 
   const targetUser = await db
     .select()

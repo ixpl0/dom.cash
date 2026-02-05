@@ -9,6 +9,15 @@ const UpdateCurrencySchema = z.object({
   targetUsername: z.string().optional(),
 })
 
+const isHttpError = (error: unknown): error is { statusCode: number } => {
+  return Boolean(
+    error
+    && typeof error === 'object'
+    && 'statusCode' in error
+    && typeof error.statusCode === 'number',
+  )
+}
+
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
@@ -76,11 +85,8 @@ export default defineEventHandler(async (event) => {
     const { secureLog } = await import('~~/server/utils/secure-logger')
     secureLog.error('Update currency error:', error)
 
-    if (error instanceof Error && error.message.includes('User not found')) {
-      throw createError({
-        statusCode: 404,
-        message: ERROR_KEYS.USER_NOT_FOUND,
-      })
+    if (isHttpError(error)) {
+      throw error
     }
 
     throw createError({

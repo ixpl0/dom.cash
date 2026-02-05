@@ -22,16 +22,10 @@ interface NotificationConnection {
   close: () => void
 }
 
-const activeConnections = new Map<string, NotificationConnection>()
+const activeConnections = new Map<string, Map<string, NotificationConnection>>()
 const budgetSubscriptions = new Map<string, Set<string>>()
 
-export const addConnection = (userId: string, connection: NotificationConnection): void => {
-  activeConnections.set(userId, connection)
-}
-
-export const removeConnection = (userId: string): void => {
-  activeConnections.delete(userId)
-
+const removeUserSubscriptions = (userId: string): void => {
   for (const [budgetOwnerId, subscribers] of budgetSubscriptions.entries()) {
     if (subscribers.has(userId)) {
       subscribers.delete(userId)
@@ -40,6 +34,38 @@ export const removeConnection = (userId: string): void => {
       }
     }
   }
+}
+
+export const addConnection = (
+  userId: string,
+  connectionId: string,
+  connection: NotificationConnection,
+): void => {
+  const userConnections = activeConnections.get(userId)
+
+  if (!userConnections) {
+    activeConnections.set(userId, new Map([[connectionId, connection]]))
+    return
+  }
+
+  userConnections.set(connectionId, connection)
+}
+
+export const removeConnection = (userId: string, connectionId: string): void => {
+  const userConnections = activeConnections.get(userId)
+
+  if (!userConnections) {
+    return
+  }
+
+  userConnections.delete(connectionId)
+
+  if (userConnections.size > 0) {
+    return
+  }
+
+  activeConnections.delete(userId)
+  removeUserSubscriptions(userId)
 }
 
 export const subscribeToBudget = (userId: string, budgetOwnerId: string): void => {
@@ -65,15 +91,20 @@ const getBudgetSubscribers = (budgetOwnerId: string): string[] => {
 }
 
 const sendNotificationToUser = (userId: string, notification: NotificationEvent): void => {
-  const connection = activeConnections.get(userId)
-  if (connection) {
+  const userConnections = activeConnections.get(userId)
+
+  if (!userConnections || userConnections.size === 0) {
+    return
+  }
+
+  for (const [connectionId, connection] of userConnections.entries()) {
     try {
       const data = `data: ${JSON.stringify(notification)}\n\n`
       connection.write(data)
     }
     catch (error) {
       console.error('Error sending notification to user:', error)
-      removeConnection(userId)
+      removeConnection(userId, connectionId)
     }
   }
 }

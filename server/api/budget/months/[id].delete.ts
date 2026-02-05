@@ -7,6 +7,15 @@ import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
+const isHttpError = (error: unknown): error is { statusCode: number } => {
+  return Boolean(
+    error
+    && typeof error === 'object'
+    && 'statusCode' in error
+    && typeof error.statusCode === 'number',
+  )
+}
+
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
   try {
@@ -68,18 +77,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     secureLog.error('Delete month error:', error)
 
-    if (error instanceof Error) {
-      if (error.message === 'Month not found' || error.message === ERROR_KEYS.MONTH_NOT_FOUND) {
-        throw createError({
-          statusCode: 404,
-          message: ERROR_KEYS.MONTH_NOT_FOUND,
-        })
-      }
-
-      throw createError({
-        statusCode: 500,
-        message: ERROR_KEYS.FAILED_TO_DELETE_MONTH,
-      })
+    if (isHttpError(error)) {
+      throw error
     }
 
     throw createError({

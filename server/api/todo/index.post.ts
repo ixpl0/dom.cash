@@ -7,6 +7,7 @@ import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { getTodoRecipientIds } from '~~/server/utils/todo-permissions'
+import { parseBody } from '~~/server/utils/validation'
 import { recurrencePatternSchema } from '~~/shared/schemas/recurrence'
 import type { TodoListItem } from '~~/shared/types/todo'
 
@@ -27,8 +28,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
-  const { content, plannedDate, recurrence, sharedWithUserIds } = createTodoSchema.parse(body)
+  const { content, plannedDate, recurrence, sharedWithUserIds } = await parseBody(event, createTodoSchema)
 
   if (sharedWithUserIds && sharedWithUserIds.length > 0) {
     const recipientIds = await getTodoRecipientIds(db, currentUser.id)

@@ -63,25 +63,13 @@ export const useAuth = () => {
     }
 
     try {
-      const config = await $fetch<{ clientId: string }>('/api/auth/google-config')
-
       const currentUrl = new URL(window.location.href)
-      const redirectUri = `${currentUrl.origin}/auth`
-
-      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-      authUrl.searchParams.set('client_id', config.clientId)
-      authUrl.searchParams.set('redirect_uri', redirectUri)
-      authUrl.searchParams.set('response_type', 'code')
-      authUrl.searchParams.set('scope', 'openid profile email')
-      authUrl.searchParams.set('access_type', 'online')
-      authUrl.searchParams.set('prompt', 'select_account')
-
       const redirect = currentUrl.searchParams.get('redirect')
-      if (redirect) {
-        authUrl.searchParams.set('state', redirect)
-      }
+      const response = await $fetch<{ authUrl: string }>('/api/auth/google-url', {
+        query: redirect ? { redirect } : undefined,
+      })
 
-      window.location.href = authUrl.toString()
+      window.location.href = response.authUrl
     }
     catch (error) {
       console.error('Failed to redirect to Google OAuth:', error)

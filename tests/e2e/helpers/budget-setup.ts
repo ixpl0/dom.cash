@@ -5,7 +5,9 @@ import { join } from 'path'
 export const initBudget = async (page: Page, budgetFixtureName: string) => {
   const budgetPath = join(process.cwd(), 'tests', 'e2e', 'fixtures', 'budgets', `${budgetFixtureName}.json`)
 
-  const importButton = page.getByTestId('import-budget-btn').or(page.getByTestId('import-button'))
+  const importBudgetButton = page.getByTestId('import-budget-btn')
+  const importHeaderButton = page.getByTestId('import-button')
+  const importButton = await importBudgetButton.isVisible() ? importBudgetButton : importHeaderButton
   await expect(importButton).toBeVisible()
   await importButton.click()
 
@@ -15,7 +17,7 @@ export const initBudget = async (page: Page, budgetFixtureName: string) => {
   const fileInput = importModal.getByTestId('import-file-input')
   await fileInput.setInputFiles(budgetPath)
 
-  const overwriteRadio = importModal.locator('input[type="radio"][value="overwrite"]')
+  const overwriteRadio = importModal.getByTestId('import-strategy-overwrite')
   await expect(overwriteRadio).toBeVisible()
   await overwriteRadio.check()
 

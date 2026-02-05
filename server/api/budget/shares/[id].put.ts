@@ -6,6 +6,7 @@ import { getUserFromRequest } from '~~/server/utils/auth'
 import { accessSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { parseBody } from '~~/server/utils/validation'
 
 const updateShareSchema = z.object({
   access: accessSchema,
@@ -29,8 +30,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
-  const { access } = updateShareSchema.parse(body)
+  const { access } = await parseBody(event, updateShareSchema)
 
   const existingShare = await db
     .select({

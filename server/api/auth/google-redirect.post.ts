@@ -1,4 +1,4 @@
-import { defineEventHandler, getQuery, getHeader, createError } from 'h3'
+import { createError, defineEventHandler, getQuery, getRequestURL } from 'h3'
 import { z } from 'zod'
 import { verifyGoogleToken } from '~~/server/utils/google-oauth'
 import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, findUser } from '~~/server/utils/auth'
@@ -7,6 +7,11 @@ import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import {
+  clearGoogleOAuthState,
+  getGoogleOAuthRedirect,
+  validateGoogleOAuthState,
+} from '~~/server/utils/google-auth-state'
 
 type GoogleTokenResponse = {
   access_token?: string
@@ -21,7 +26,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const querySchema = z.object({
     code: z.string().min(1),
-    state: z.string().optional(),
+    state: z.string().min(1),
   })
   const parsed = querySchema.safeParse(query)
   if (!parsed.success) {
@@ -31,6 +36,17 @@ export default defineEventHandler(async (event) => {
     })
   }
   const { code, state } = parsed.data
+
+  const stateIsValid = validateGoogleOAuthState(event, state)
+  const safeRedirectTo = getGoogleOAuthRedirect(event)
+  clearGoogleOAuthState(event)
+
+  if (!stateIsValid) {
+    throw createError({
+      statusCode: 400,
+      message: ERROR_KEYS.GOOGLE_AUTH_FAILED,
+    })
+  }
 
   try {
     const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
@@ -43,31 +59,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const originHeader = getHeader(event, 'origin')
-    const refererHeader = getHeader(event, 'referer')
-
-    let origin: string | undefined
-    if (originHeader) {
-      origin = originHeader
-    }
-    else if (refererHeader) {
-      try {
-        const refererUrl = new URL(refererHeader)
-        origin = refererUrl.origin
-      }
-      catch {
-        origin = undefined
-      }
-    }
-
-    if (!origin) {
-      throw createError({
-        statusCode: 400,
-        message: ERROR_KEYS.UNABLE_TO_DETERMINE_ORIGIN,
-      })
-    }
-
-    const redirectUri = `${origin}/auth`
+    const requestUrl = getRequestURL(event)
+    const redirectUri = `${requestUrl.origin}/auth`
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -146,8 +139,6 @@ export default defineEventHandler(async (event) => {
 
     const sessionToken = await createSession(authenticatedUser.id, now, event)
     setAuthCookie(event, sessionToken)
-
-    const safeRedirectTo = (state && state.startsWith('/') && !state.startsWith('//')) ? state : '/'
 
     return {
       user: {

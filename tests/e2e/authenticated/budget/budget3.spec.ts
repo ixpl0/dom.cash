@@ -96,11 +96,13 @@ test.describe('Budget page historical testing', () => {
     await initBudget(page, 'two-months-clp')
     await waitForHydration(page)
 
-    const downloadPromise = page.waitForEvent('download')
-
     const exportButton = page.getByTestId('export-button')
     await expect(exportButton).toBeVisible()
     await exportButton.click()
+    const exportJsonButton = page.getByTestId('export-json-btn')
+    await expect(exportJsonButton).toBeVisible()
+    const downloadPromise = page.waitForEvent('download')
+    await exportJsonButton.click()
 
     const download = await downloadPromise
     expect(download.suggestedFilename()).toMatch(/budget.*\.json$/)
@@ -131,9 +133,12 @@ test.describe('Budget page historical testing', () => {
     const originalAverageBalanceText = await yearAverageBalanceElement.textContent()
     const originalAverageBalance = parseInt(originalAverageBalanceText?.replace(/[^-\d]/g, ''), 10)
 
-    const downloadPromise = page.waitForEvent('download')
     const exportButton = page.getByTestId('export-button')
     await exportButton.click()
+    const exportJsonButton = page.getByTestId('export-json-btn')
+    await expect(exportJsonButton).toBeVisible()
+    const downloadPromise = page.waitForEvent('download')
+    await exportJsonButton.click()
     const download = await downloadPromise
     const exportPath = testInfo.outputPath('budget-for-import.json')
     await download.saveAs(exportPath)

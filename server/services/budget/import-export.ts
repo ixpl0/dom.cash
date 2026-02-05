@@ -2,8 +2,7 @@ import { eq, and } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { user, month, entry } from '~~/server/db/schema'
-import { getUserMonths, createMonth } from './months'
-import { createEntry } from './entries'
+import { getUserMonths } from './months'
 import type {
   BudgetExportData,
   BudgetExportMonth,
@@ -80,6 +79,7 @@ export const importBudget = async (
   options: BudgetImportOptions,
   event: H3Event,
 ): Promise<BudgetImportResult> => {
+  const db = useDatabase(event)
   const result: BudgetImportResult = {
     success: true,
     importedMonths: 0,
@@ -88,11 +88,12 @@ export const importBudget = async (
     errors: [],
   }
 
+  const entryInsertBatchSize = 100
+
   for (const importMonth of importData.months) {
     try {
-      const db = useDatabase(event)
       const existingMonth = await db
-        .select()
+        .select({ id: month.id })
         .from(month)
         .where(and(
           eq(month.userId, userId),
@@ -101,41 +102,48 @@ export const importBudget = async (
         ))
         .limit(1)
 
-      let monthId: string
-
-      if (existingMonth.length > 0) {
-        if (options.strategy === 'skip') {
-          result.skippedMonths++
-          continue
-        }
-
-        monthId = existingMonth[0]!.id
-
-        await db
-          .delete(entry)
-          .where(eq(entry.monthId, monthId))
-      }
-      else {
-        const createdMonth = await createMonth({
-          year: importMonth.year,
-          month: importMonth.month,
-          targetUserId: userId,
-        }, event)
-        monthId = createdMonth.id
-        result.importedMonths++
+      if (existingMonth.length > 0 && options.strategy === 'skip') {
+        result.skippedMonths += 1
+        continue
       }
 
-      for (const importEntry of importMonth.entries) {
-        await createEntry({
-          monthId,
-          kind: importEntry.kind,
-          description: importEntry.description,
-          amount: importEntry.amount,
-          currency: importEntry.currency,
-          date: importEntry.date,
-        }, event)
-        result.importedEntries++
-      }
+      const monthId = existingMonth[0]?.id ?? crypto.randomUUID()
+      const importedMonths = existingMonth.length === 0 ? 1 : 0
+
+      const monthBaseStatement = existingMonth.length > 0
+        ? db.delete(entry).where(eq(entry.monthId, monthId))
+        : db
+            .insert(month)
+            .values({
+              id: monthId,
+              userId,
+              year: importMonth.year,
+              month: importMonth.month,
+            })
+
+      const entriesToInsert = importMonth.entries.map(importEntry => ({
+        id: crypto.randomUUID(),
+        monthId,
+        kind: importEntry.kind,
+        description: importEntry.description,
+        amount: importEntry.amount,
+        currency: importEntry.currency,
+        date: importEntry.date ?? null,
+        isOptional: false,
+      }))
+
+      const entryBatchStartIndexes = entriesToInsert
+        .map((_, entryIndex) => entryIndex)
+        .filter(entryIndex => entryIndex % entryInsertBatchSize === 0)
+
+      const entryInsertStatements = entryBatchStartIndexes
+        .map(entryIndex => entriesToInsert.slice(entryIndex, entryIndex + entryInsertBatchSize))
+        .map(entryBatch => db.insert(entry).values(entryBatch))
+
+      await db.batch([monthBaseStatement, ...entryInsertStatements])
+
+      result.importedMonths += importedMonths
+      result.importedEntries += entriesToInsert.length
     }
     catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'x-accel-buffering', 'no')
 
   let keepAlive: ReturnType<typeof setInterval> | null = null
+  const connectionId = crypto.randomUUID()
 
   const stream = new ReadableStream({
     start(controller) {
@@ -44,11 +45,11 @@ export default defineEventHandler(async (event) => {
           clearInterval(keepAlive)
           keepAlive = null
         }
-        removeConnection(user.id)
+        removeConnection(user.id, connectionId)
         close()
       }
 
-      addConnection(user.id, { write, close })
+      addConnection(user.id, connectionId, { write, close })
 
       write('data: {"type":"connected"}\n\n')
 
@@ -61,7 +62,7 @@ export default defineEventHandler(async (event) => {
         clearInterval(keepAlive)
         keepAlive = null
       }
-      removeConnection(user.id)
+      removeConnection(user.id, connectionId)
     },
   })
 

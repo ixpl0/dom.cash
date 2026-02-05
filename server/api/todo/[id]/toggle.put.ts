@@ -6,6 +6,7 @@ import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { canEditTodo } from '~~/server/utils/todo-permissions'
+import { parseBody } from '~~/server/utils/validation'
 import { dateReferenceSchema } from '~~/shared/schemas/recurrence'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import type { ToggleResult } from '~~/shared/types/todo'
@@ -62,8 +63,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
-  const { reference } = toggleTodoSchema.parse(body ?? {})
+  const { reference } = await parseBody(event, toggleTodoSchema.default({}))
 
   const isOwner = existingTodo.userId === currentUser.id
 

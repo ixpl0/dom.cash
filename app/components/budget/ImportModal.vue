@@ -44,6 +44,7 @@
                 name="importMode"
                 value="skip"
                 class="radio mr-2"
+                data-testid="import-strategy-skip"
               >
               <span class="label-text whitespace-break-spaces">{{ t('import.strategySkip') }}</span>
             </label>
@@ -57,6 +58,7 @@
                 name="importMode"
                 value="overwrite"
                 class="radio mr-2"
+                data-testid="import-strategy-overwrite"
               >
               <span class="label-text whitespace-break-spaces">{{ t('import.strategyOverwrite') }}</span>
             </label>
@@ -70,10 +72,16 @@
           <h4 class="font-semibold mb-2">
             {{ t('import.previewTitle') }}
           </h4>
-          <p class="text-sm">
+          <p
+            class="text-sm"
+            data-testid="import-preview-username"
+          >
             {{ t('import.previewUser') }} {{ previewData.user.username }}
           </p>
-          <p class="text-sm">
+          <p
+            class="text-sm"
+            data-testid="import-preview-currency"
+          >
             {{ t('import.previewCurrency') }} {{ previewData.user.mainCurrency }}
           </p>
           <p class="text-sm">

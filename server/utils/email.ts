@@ -26,7 +26,7 @@ const TEMPLATES: Record<EmailLanguage, Record<EmailTemplate, EmailContent>> = {
       subject: 'Your verification code',
       title: 'Welcome to dom.cash',
       message: 'Your verification code:',
-      expiration: 'The code expires in 10 minutes.',
+      expiration: 'The code expires in 1 hour.',
       ignore: 'If you didn\'t request this, please ignore this email.',
     },
     'reset-password': {
@@ -42,7 +42,7 @@ const TEMPLATES: Record<EmailLanguage, Record<EmailTemplate, EmailContent>> = {
       subject: 'Код подтверждения',
       title: 'Добро пожаловать в dom.cash',
       message: 'Ваш код подтверждения:',
-      expiration: 'Код действителен 10 минут.',
+      expiration: 'Код действителен 1 час.',
       ignore: 'Если вы не запрашивали этот код, проигнорируйте это письмо.',
     },
     'reset-password': {

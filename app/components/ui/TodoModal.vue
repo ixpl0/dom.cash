@@ -28,6 +28,7 @@
           <span
             class="label-text-alt"
             :class="{ 'text-error': form.content.length > MAX_CONTENT_LENGTH }"
+            data-testid="todo-modal-content-count"
           >
             {{ form.content.length }} / {{ MAX_CONTENT_LENGTH }}
           </span>

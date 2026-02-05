@@ -43,9 +43,12 @@ test.describe('Import/Export functionality', () => {
     test('should download export file with correct format', async ({ page }) => {
       await initBudget(page, 'one-month-with-data')
 
-      const downloadPromise = page.waitForEvent('download')
       const exportButton = page.getByTestId('export-button')
       await exportButton.click()
+      const exportJsonButton = page.getByTestId('export-json-btn')
+      await expect(exportJsonButton).toBeVisible()
+      const downloadPromise = page.waitForEvent('download')
+      await exportJsonButton.click()
 
       const download = await downloadPromise
 
@@ -80,9 +83,12 @@ test.describe('Import/Export functionality', () => {
     test('should export budget with all entry types', async ({ page }) => {
       await initBudget(page, 'one-month-with-data')
 
-      const downloadPromise = page.waitForEvent('download')
       const exportButton = page.getByTestId('export-button')
       await exportButton.click()
+      const exportJsonButton = page.getByTestId('export-json-btn')
+      await expect(exportJsonButton).toBeVisible()
+      const downloadPromise = page.waitForEvent('download')
+      await exportJsonButton.click()
 
       const download = await downloadPromise
       const downloadPath = join(TEMP_DIR, 'export-all-types.json')
@@ -171,8 +177,8 @@ test.describe('Import/Export functionality', () => {
       const fileInput = importModal.getByTestId('import-file-input')
       await fileInput.setInputFiles(budgetPath)
 
-      await expect(importModal.locator('text=test')).toBeVisible()
-      await expect(importModal.locator('text=USD')).toBeVisible()
+      await expect(importModal.getByTestId('import-preview-username')).toContainText('test')
+      await expect(importModal.getByTestId('import-preview-currency')).toContainText('USD')
 
       const submitButton = importModal.getByTestId('import-submit-button')
       await expect(submitButton).toBeEnabled()
@@ -188,8 +194,8 @@ test.describe('Import/Export functionality', () => {
       const fileInput = importModal.getByTestId('import-file-input')
       await fileInput.setInputFiles(budgetPath)
 
-      const skipRadio = importModal.locator('input[type="radio"][value="skip"]')
-      const overwriteRadio = importModal.locator('input[type="radio"][value="overwrite"]')
+      const skipRadio = importModal.getByTestId('import-strategy-skip')
+      const overwriteRadio = importModal.getByTestId('import-strategy-overwrite')
 
       await expect(skipRadio).toBeVisible()
       await expect(overwriteRadio).toBeVisible()
@@ -212,7 +218,7 @@ test.describe('Import/Export functionality', () => {
       const fileInput = importModal.getByTestId('import-file-input')
       await fileInput.setInputFiles(budgetPath)
 
-      const skipRadio = importModal.locator('input[type="radio"][value="skip"]')
+      const skipRadio = importModal.getByTestId('import-strategy-skip')
       await expect(skipRadio).toBeChecked()
 
       const submitButton = importModal.getByTestId('import-submit-button')
@@ -276,7 +282,7 @@ test.describe('Import/Export functionality', () => {
       const fileInput = importModal.getByTestId('import-file-input')
       await fileInput.setInputFiles(budgetPath)
 
-      const overwriteRadio = importModal.locator('input[type="radio"][value="overwrite"]')
+      const overwriteRadio = importModal.getByTestId('import-strategy-overwrite')
       await overwriteRadio.check()
 
       const submitButton = importModal.getByTestId('import-submit-button')
@@ -302,7 +308,7 @@ test.describe('Import/Export functionality', () => {
       const fileInput = importModal.getByTestId('import-file-input')
       await fileInput.setInputFiles(budgetPath)
 
-      const overwriteRadio = importModal.locator('input[type="radio"][value="overwrite"]')
+      const overwriteRadio = importModal.getByTestId('import-strategy-overwrite')
       await overwriteRadio.check()
 
       const submitButton = importModal.getByTestId('import-submit-button')
@@ -388,9 +394,12 @@ test.describe('Import/Export functionality', () => {
       const balanceButton = page.getByTestId('balance-button').first()
       const originalBalanceText = await balanceButton.textContent()
 
-      const downloadPromise = page.waitForEvent('download')
       const exportButton = page.getByTestId('export-button')
       await exportButton.click()
+      const exportJsonButton = page.getByTestId('export-json-btn')
+      await expect(exportJsonButton).toBeVisible()
+      const downloadPromise = page.waitForEvent('download')
+      await exportJsonButton.click()
 
       const download = await downloadPromise
       const exportPath = join(TEMP_DIR, 'roundtrip-export.json')
@@ -411,7 +420,7 @@ test.describe('Import/Export functionality', () => {
       const fileInput = importModal.getByTestId('import-file-input')
       await fileInput.setInputFiles(exportPath)
 
-      const overwriteRadio = importModal.locator('input[type="radio"][value="overwrite"]')
+      const overwriteRadio = importModal.getByTestId('import-strategy-overwrite')
       await overwriteRadio.check()
 
       const submitButton = importModal.getByTestId('import-submit-button')
