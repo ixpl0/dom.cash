@@ -128,27 +128,51 @@ const weekdaysWithIndex = computed(() => {
   }))
 })
 
+const arraysEqual = (a: number[], b: number[]) => {
+  if (a.length !== b.length) {
+    return false
+  }
+  return a.every((val, i) => val === b[i])
+}
+
 const initializeFromValue = (value: RecurrencePattern | null) => {
   if (!value) {
-    selectedType.value = 'none'
+    if (selectedType.value !== 'none') {
+      selectedType.value = 'none'
+    }
     return
   }
 
   switch (value.type) {
     case 'interval': {
-      selectedType.value = 'interval'
-      intervalValue.value = value.value
-      intervalUnit.value = value.unit
+      if (selectedType.value !== 'interval') {
+        selectedType.value = 'interval'
+      }
+      if (intervalValue.value !== value.value) {
+        intervalValue.value = value.value
+      }
+      if (intervalUnit.value !== value.unit) {
+        intervalUnit.value = value.unit
+      }
       break
     }
     case 'weekdays': {
-      selectedType.value = 'weekdays'
-      selectedWeekdays.value = [...value.days]
+      if (selectedType.value !== 'weekdays') {
+        selectedType.value = 'weekdays'
+      }
+      const sortedDays = [...value.days].sort((a, b) => a - b)
+      if (!arraysEqual(selectedWeekdays.value, sortedDays)) {
+        selectedWeekdays.value = sortedDays
+      }
       break
     }
     case 'dayOfMonth': {
-      selectedType.value = 'dayOfMonth'
-      dayOfMonthValue.value = value.day
+      if (selectedType.value !== 'dayOfMonth') {
+        selectedType.value = 'dayOfMonth'
+      }
+      if (dayOfMonthValue.value !== value.day) {
+        dayOfMonthValue.value = value.day
+      }
       break
     }
   }
