@@ -113,22 +113,25 @@ test.describe('Todo page', () => {
     const modal = page.getByTestId('todo-modal')
 
     const contentInput = modal.getByTestId('todo-modal-content-input')
-    await contentInput.fill('Toggle test todo')
+    await contentInput.fill('Toggle test todo unique')
 
     const saveButton = modal.getByTestId('todo-modal-save-button')
     await saveButton.click()
 
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: 'Toggle test todo unique' })
+    await expect(card).toBeVisible()
+
     const checkbox = card.getByTestId('todo-card-checkbox')
-    await expect(checkbox).not.toBeChecked()
+    await expect(checkbox).toBeVisible()
+    await expect(checkbox).not.toHaveClass(/is-completed/)
 
     await checkbox.click()
-    await expect(checkbox).toBeChecked()
+    await expect(checkbox).toHaveClass(/is-completed/)
 
     await checkbox.click()
-    await expect(checkbox).not.toBeChecked()
+    await expect(checkbox).not.toHaveClass(/is-completed/)
   })
 
   test('should edit a todo', async ({ page }) => {
@@ -311,7 +314,7 @@ test.describe('Todo page', () => {
     await addButton.click()
 
     const modal = page.getByTestId('todo-modal')
-    await modal.getByTestId('todo-modal-content-input').fill('Toggle recurring test')
+    await modal.getByTestId('todo-modal-content-input').fill('Toggle recurring unique test')
 
     const recurrenceSelect = modal.getByTestId('recurrence-type-select')
     await recurrenceSelect.selectOption('interval')
@@ -325,17 +328,19 @@ test.describe('Todo page', () => {
     await modal.getByTestId('todo-modal-save-button').click()
     await expect(modal).not.toBeVisible()
 
-    const card = page.getByTestId('todo-card').first()
+    const card = page.getByTestId('todo-card').filter({ hasText: 'Toggle recurring unique test' })
     await expect(card).toBeVisible()
+
+    const checkbox = card.getByTestId('todo-card-checkbox')
+    await expect(checkbox).toBeVisible()
 
     const dateBeforeToggle = await card.getByTestId('todo-card-date').textContent()
 
-    const checkbox = card.getByTestId('todo-card-checkbox')
     await checkbox.click()
 
     await page.waitForTimeout(600)
 
-    await expect(checkbox).not.toBeChecked()
+    await expect(checkbox).not.toHaveClass(/is-completed/)
 
     const dateAfterToggle = await card.getByTestId('todo-card-date').textContent()
     expect(dateAfterToggle).not.toBe(dateBeforeToggle)
@@ -359,19 +364,25 @@ test.describe('Todo page', () => {
     await expect(card).toHaveClass(/border-error/)
   })
 
-  test('should persist hide completed preference in localStorage', async ({ page }) => {
-    const hideToggle = page.getByTestId('todo-hide-completed-toggle')
+  test('should persist hide completed preference after reload', async ({ page }) => {
+    const hideToggle = page.getByTestId('todo-hide-completed-toggle').first()
+    await expect(hideToggle).toBeVisible()
+
+    const initialState = await hideToggle.isChecked()
 
     await hideToggle.click()
+    await page.waitForTimeout(100)
+
     const stateAfterClick = await hideToggle.isChecked()
+    expect(stateAfterClick).not.toBe(initialState)
 
-    const storedValue = await page.evaluate(() => localStorage.getItem('todo-hide-completed'))
-    expect(storedValue).toBe(String(stateAfterClick))
+    await page.reload()
+    await waitForHydration(page)
 
-    await hideToggle.click()
-    const stateAfterSecondClick = await hideToggle.isChecked()
+    const hideToggleAfterReload = page.getByTestId('todo-hide-completed-toggle').first()
+    await expect(hideToggleAfterReload).toBeVisible()
 
-    const storedValueAfterSecondClick = await page.evaluate(() => localStorage.getItem('todo-hide-completed'))
-    expect(storedValueAfterSecondClick).toBe(String(stateAfterSecondClick))
+    const stateAfterReload = await hideToggleAfterReload.isChecked()
+    expect(stateAfterReload).toBe(stateAfterClick)
   })
 })
