@@ -2,14 +2,15 @@
 
 ## Setup & Infrastructure
 
-* **Node**: 20.16.0 (pinned in `package.json` → `engines`).
-* **Package manager**: pnpm 10.
-* **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
-* **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
-* **Deployment**: Cloudflare Workers with D1 database.
+* **Node**: 20.16.0
+* **Package manager**: pnpm 10
+* **Framework**: Nuxt 4.1.0 (https://nuxt.com/docs/getting-started/introduction)
+* **Language**: TypeScript 5.9 (https://www.typescriptlang.org/docs/)
+* **Deployment**: Cloudflare Workers with D1 database
 * Commands:
   * `pnpm i`
   * `pnpm run db:migrate` (local) / `pnpm run db:migrate:test` (remote) / `pnpm run db:migrate:prod` (production)
+  * `pnpm run db:reset` — reset local database (deletes and recreates)
   * `pnpm run dev` (local) / `pnpm run deploy:test` (test) / `pnpm run deploy:prod` (production)
   * `pnpm run db:backup` / `pnpm run db:backup:test` / `pnpm run db:backup:prod` — backup database
 * **Data layer**:
@@ -28,13 +29,17 @@
   * **UI components** (`app/components/ui/`): Must be "dumb" — no business logic, only presentation. Pass callbacks/functions as props for any logic.
 * **State Management**: Pinia stores in `app/stores/`
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
-* **Charts**: ECharts via vue-echarts
+* **Charts**: ECharts via vue-echarts (client-only components with `.client.vue` suffix)
+* **Excel Export**: xlsx-js-style for styled Excel exports
 * **Linting**: Husky + lint-staged for pre-commit hooks
 * **Real-time Notifications**: Server-Sent Events (SSE) via `useNotifications` composable
+* **Auto-refresh**: `useVisibilityRefresh` composable refreshes data when tab becomes visible after 5+ minutes
 * Commands:
   * `pnpm typecheck` — run TypeScript type checking
   * `pnpm lint` / `pnpm lint:fix` — run ESLint
   * `pnpm test:e2e` — run Playwright tests
+  * `pnpm test:e2e:ui` — run tests with Playwright UI
+  * `pnpm test:e2e:headed` — run tests in headed browser mode
 
 ## Project Structure
 
@@ -63,10 +68,11 @@
 
 ## Features
 
-* **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
+* **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export, balance runway calculations
 * **Budget Sharing**: Share budgets with other users (read/write access)
-* **Todo**: Task management with planned dates, recurrence patterns, sharing between users
-* **Metrics**: Analytics dashboard with charts
+* **Todo**: Task management with planned dates, sharing between users
+  * Recurrence patterns: interval (day/week/month/year), weekdays, day of month
+* **Metrics**: Analytics dashboard with charts (admin only)
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
 
 ## Code Style (required)
