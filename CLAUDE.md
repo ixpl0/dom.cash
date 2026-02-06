@@ -2,7 +2,7 @@
 
 ## Setup & Infrastructure
 
-* **Node**: 20.16.0 (pinned in `package.json` → `engines`).
+* **Node**: 20+ (pnpm pinned via `packageManager` field in `package.json`).
 * **Package manager**: pnpm 10.
 * **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
 * **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
@@ -12,6 +12,8 @@
   * `pnpm run db:migrate` (local) / `pnpm run db:migrate:test` (remote) / `pnpm run db:migrate:prod` (production)
   * `pnpm run dev` (local) / `pnpm run deploy:test` (test) / `pnpm run deploy:prod` (production)
   * `pnpm run db:backup` / `pnpm run db:backup:test` / `pnpm run db:backup:prod` — backup database
+  * `pnpm run db:reset` — reset local database (deletes local D1 state and re-migrates)
+  * `pnpm run deploy:all` — deploy to test and production
 * **Data layer**:
   * Cloudflare D1 (SQLite) for production
   * Local SQLite emulation via Wrangler for development
@@ -28,6 +30,8 @@
   * **UI components** (`app/components/ui/`): Must be "dumb" — no business logic, only presentation. Pass callbacks/functions as props for any logic.
 * **State Management**: Pinia stores in `app/stores/`
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
+* **Icons**: @nuxt/icon with @iconify-json/heroicons
+* **Excel import/export**: xlsx-js-style
 * **Charts**: ECharts via vue-echarts
 * **Linting**: Husky + lint-staged for pre-commit hooks
 * **Real-time Notifications**: Server-Sent Events (SSE) via `useNotifications` composable
@@ -35,6 +39,8 @@
   * `pnpm typecheck` — run TypeScript type checking
   * `pnpm lint` / `pnpm lint:fix` — run ESLint
   * `pnpm test:e2e` — run Playwright tests
+  * `pnpm test:e2e:ui` — run Playwright tests with UI mode
+  * `pnpm test:e2e:headed` — run Playwright tests in headed browser
 
 ## Project Structure
 
@@ -42,24 +48,32 @@
   * `pages/` — Pages: index (landing), auth, budget, metrics, todo
   * `components/` — Vue components organized by feature (budget/, todo/, ui/, etc.)
   * `composables/` — Composables organized by feature (auth/, budget/, shared/)
+  * `layouts/` — Nuxt layouts (default.vue)
+  * `middleware/` — Client middleware (auth.global.ts)
+  * `plugins/` — Nuxt plugins (auth, favicon, animate-on-scroll)
   * `stores/` — Pinia stores organized by feature (budget/, todo/, preferences)
+  * `types/` — App-specific type definitions
   * `utils/` — Client-side utilities
 * `server/` — Nitro server
-  * `api/` — API routes
+  * `api/` — API routes (auth/, budget/, todo/, notifications/, user/, admin/)
   * `db/` — Database schema (`schema.ts`) and index
-  * `services/` — Business logic services
-  * `middleware/` — Server middleware
+  * `services/` — Business logic services (auth/, budget/, notifications)
+  * `middleware/` — Server middleware (content-validation)
+  * `types/` — Server-specific type definitions (Cloudflare D1)
   * `utils/` — Server-side utilities
+* `migrations/` — Wrangler D1 SQL migration files
 * `shared/` — Shared between client and server (isomorphic code)
   * `schemas/` — Zod validation schemas (auth, common, recurrence)
   * `types/` — TypeScript types (budget, todo, i18n, recurrence)
   * `utils/` — Shared utilities (currencies, budget calculations)
-  * `validators/` — Custom validators
 * `tests/e2e/` — Playwright E2E tests
   * `public/` — Tests for public pages
   * `authenticated/` — Tests for authenticated pages (budget/, todo/)
-  * `helpers/` — Test helpers (auth, confirmation, budget-setup)
+  * `helpers/` — Test helpers (auth, confirmation, budget-setup, wait-for-hydration)
   * `fixtures.ts` — Test fixtures
+  * `fixtures/budgets/` — JSON budget fixtures for import tests
+  * `constants.ts` — Test constants
+  * `cleanup.teardown.spec.ts` — Cleanup teardown
 
 ## Features
 
