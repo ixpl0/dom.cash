@@ -91,7 +91,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="flex items-center gap-1">
           <button
             class="btn btn-ghost btn-sm btn-square text-base-content/60 hover:text-base-content transition-colors duration-200"
             data-testid="todo-card-edit-button"
