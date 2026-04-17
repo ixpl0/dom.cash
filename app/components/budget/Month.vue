@@ -237,18 +237,14 @@ const canDeleteMonth = computed(() => {
     return false
   }
 
-  if (monthData.value.isPlanOnly) {
-    return true
-  }
-
-  const rawMonthData = budgetStore.getMonthById(monthData.value.id)
+  const allMonths = budgetStore.months
+  const rawMonthData = allMonths.find(month => month.id === monthData.value.id)
   if (!rawMonthData) {
     return false
   }
 
-  const realMonths = budgetStore.data?.months || []
-  const isFirstAmongLoaded = isFirstMonth(rawMonthData, realMonths)
-  const isLastAmongLoaded = isLastMonth(rawMonthData, realMonths)
+  const isFirstAmongLoaded = isFirstMonth(rawMonthData, allMonths)
+  const isLastAmongLoaded = isLastMonth(rawMonthData, allMonths)
   const hasMoreYearsToLoad = Boolean(budgetStore.nextYearToLoad)
 
   return isLastAmongLoaded || (isFirstAmongLoaded && !hasMoreYearsToLoad)
