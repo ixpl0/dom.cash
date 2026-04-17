@@ -10,17 +10,22 @@
     :balance-change-tooltip="balanceChangeTooltip"
     :currency-fluctuation-tooltip="currencyFluctuationTooltip"
     :optional-expenses-tooltip="optionalExpensesTooltip"
+    :planned-balance-change-tooltip="plannedBalanceChangeTooltip"
+    :expected-balance-tooltip="expectedBalanceTooltip"
     :data="uiMonthData"
     :labels="labels"
     :is-current-month="isCurrentMonthValue"
     :is-read-only="isReadOnly"
     :can-delete="canDeleteMonth"
+    :is-planning-mode="budgetStore.isPlanningMode"
+    :is-past-month="isPastMonthValue"
     :format-amount="formatAmountForDisplay"
     @balance-click="openBalanceModal"
     @income-click="openIncomeModal"
     @expense-click="openExpenseModal"
     @currency-rates-click="openCurrencyRatesModal"
     @delete-click="handleDeleteMonth"
+    @plan-click="openPlanModal"
   />
 </template>
 
@@ -56,9 +61,25 @@ const isReadOnly = computed(() => !budgetStore.canEdit)
 const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.data?.user?.username : undefined)
 
 const isCurrentMonthValue = ref(false)
+const isPastMonthValue = ref(false)
+
+const checkIsPastMonth = (year: number, monthValue: number): boolean => {
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+
+  if (year < currentYear) {
+    return true
+  }
+  if (year === currentYear && monthValue < currentMonth) {
+    return true
+  }
+  return false
+}
 
 onMounted(() => {
   isCurrentMonthValue.value = isCurrentMonth(monthData.value)
+  isPastMonthValue.value = checkIsPastMonth(monthData.value.year, monthData.value.month)
 })
 
 const rollingAverageExpenses = computed(() => budgetStore.getRollingAverageExpenses())
@@ -72,10 +93,14 @@ const uiMonthData = computed((): UiMonthData => ({
   totalAllExpenses: monthData.value.totalAllExpenses,
   calculatedBalanceChange: monthData.value.calculatedBalanceChange,
   currencyProfitLoss: monthData.value.currencyProfitLoss,
+  plannedBalanceChange: monthData.value.plannedBalanceChange,
+  plannedVsActualDiff: monthData.value.plannedVsActualDiff,
+  expectedBalance: monthData.value.expectedBalance,
 }))
 
 const labels = computed((): UiMonthLabels => ({
   deleteMonth: t('budget.month.deleteMonth'),
+  addPlan: t('budget.month.addPlan'),
 }))
 
 const monthBadgeTooltip = computed(() => {
@@ -134,6 +159,26 @@ const optionalExpensesTooltip = computed(() => {
   return `${t('budget.month.optionalExpensesTooltip')} ${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}. ${t('budget.month.optionalExpensesTooltipText')}`
 })
 
+const plannedBalanceChangeTooltip = computed(() => {
+  if (isPastMonthValue.value && monthData.value.plannedBalanceChange !== null && monthData.value.plannedVsActualDiff !== null) {
+    return t('budget.month.plannedVsActualTooltip')
+  }
+  if (isPastMonthValue.value) {
+    return t('budget.month.plannedPastTooltip')
+  }
+  if (isReadOnly.value) {
+    return t('budget.month.plannedReadOnlyTooltip')
+  }
+  return t('budget.month.plannedTooltip')
+})
+
+const expectedBalanceTooltip = computed(() => {
+  if (isPastMonthValue.value) {
+    return t('budget.month.expectedBalancePastTooltip')
+  }
+  return t('budget.month.expectedBalanceTooltip')
+})
+
 const formatAmountForDisplay = (amount: number): string => {
   return formatAmountRounded(amount, budgetStore.effectiveMainCurrency)
 }
@@ -175,9 +220,25 @@ const openCurrencyRatesModal = (): void => {
   })
 }
 
+const openPlanModal = (): void => {
+  if (isReadOnly.value || isPastMonthValue.value) {
+    return
+  }
+  modalsStore.openPlanModal({
+    year: monthData.value.year,
+    month: monthData.value.month,
+    monthTitle: `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`,
+    currentValue: monthData.value.plannedBalanceChange,
+  })
+}
+
 const canDeleteMonth = computed(() => {
   if (isReadOnly.value) {
     return false
+  }
+
+  if (monthData.value.isPlanOnly) {
+    return true
   }
 
   const rawMonthData = budgetStore.getMonthById(monthData.value.id)
@@ -185,8 +246,9 @@ const canDeleteMonth = computed(() => {
     return false
   }
 
-  const isFirstAmongLoaded = isFirstMonth(rawMonthData, budgetStore.months)
-  const isLastAmongLoaded = isLastMonth(rawMonthData, budgetStore.months)
+  const realMonths = budgetStore.data?.months || []
+  const isFirstAmongLoaded = isFirstMonth(rawMonthData, realMonths)
+  const isLastAmongLoaded = isLastMonth(rawMonthData, realMonths)
   const hasMoreYearsToLoad = Boolean(budgetStore.nextYearToLoad)
 
   return isLastAmongLoaded || (isFirstAmongLoaded && !hasMoreYearsToLoad)

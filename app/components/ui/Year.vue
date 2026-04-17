@@ -33,7 +33,10 @@
             </div>
           </div>
 
-          <div :ref="setHeaderRef(1)">
+          <div
+            v-if="!isPlanningMode"
+            :ref="setHeaderRef(1)"
+          >
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
@@ -70,7 +73,10 @@
             </div>
           </div>
 
-          <div :ref="setHeaderRef(2)">
+          <div
+            v-if="!isPlanningMode"
+            :ref="setHeaderRef(2)"
+          >
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
@@ -108,7 +114,10 @@
             </div>
           </div>
 
-          <div :ref="setHeaderRef(3)">
+          <div
+            v-if="!isPlanningMode"
+            :ref="setHeaderRef(3)"
+          >
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
@@ -148,7 +157,10 @@
             </div>
           </div>
 
-          <div :ref="setHeaderRef(4)">
+          <div
+            v-if="!isPlanningMode"
+            :ref="setHeaderRef(4)"
+          >
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
@@ -227,7 +239,10 @@
             </div>
           </div>
 
-          <div :ref="setHeaderRef(6)">
+          <div
+            v-if="!isPlanningMode"
+            :ref="setHeaderRef(6)"
+          >
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
@@ -267,7 +282,10 @@
             </div>
           </div>
 
-          <div :ref="setHeaderRef(7)">
+          <div
+            v-if="!isPlanningMode"
+            :ref="setHeaderRef(7)"
+          >
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
@@ -306,7 +324,82 @@
           </div>
 
           <div
+            v-if="isPlanningMode"
             :ref="setHeaderRef(8)"
+          >
+            <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+              <div
+                class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
+                :data-tip="labels.plannedFormula"
+              >
+                <span>{{ labels.plannedLine1 }}</span>
+                <span>{{ labels.plannedLine2 }}</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div
+                  class="tooltip tooltip-top"
+                  :class="{
+                    'text-info': stats.totalPlannedBalanceChange > 0,
+                    'text-warning': stats.totalPlannedBalanceChange < 0,
+                    'text-base-content': stats.totalPlannedBalanceChange === 0,
+                  }"
+                  :data-tip="labels.totalPlanned"
+                  data-testid="year-total-planned"
+                >
+                  <div class="font-bold">
+                    {{ stats.plannedMonthCount > 0 ? formatAmount(stats.totalPlannedBalanceChange) : '—' }}
+                  </div>
+                </div>
+                <div
+                  v-if="stats.plannedDiffMonthCount > 0"
+                  class="text-sm tooltip tooltip-top"
+                  :class="{
+                    'text-success': stats.totalPlannedVsActualDiff > 0,
+                    'text-error': stats.totalPlannedVsActualDiff < 0,
+                    'text-base-content/80': stats.totalPlannedVsActualDiff === 0,
+                  }"
+                  :data-tip="labels.totalPlannedDiff"
+                  data-testid="year-total-planned-diff"
+                >
+                  {{ stats.totalPlannedVsActualDiff > 0 ? '+' : '' }}{{ formatAmount(stats.totalPlannedVsActualDiff) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="isPlanningMode"
+            :ref="setHeaderRef(9)"
+          >
+            <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
+              <div
+                class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
+                :data-tip="labels.expectedBalanceTooltip"
+              >
+                <span>{{ labels.expectedBalanceLine1 }}</span>
+                <span>{{ labels.expectedBalanceLine2 }}</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div
+                  class="tooltip tooltip-top"
+                  :class="{
+                    'text-primary': stats.endOfYearExpectedBalance !== null && stats.endOfYearExpectedBalance > 0,
+                    'text-error': stats.endOfYearExpectedBalance !== null && stats.endOfYearExpectedBalance < 0,
+                    'text-base-content': stats.endOfYearExpectedBalance === null || stats.endOfYearExpectedBalance === 0,
+                  }"
+                  :data-tip="labels.endOfYearExpectedBalance"
+                  data-testid="year-end-expected-balance"
+                >
+                  <div class="font-bold">
+                    {{ stats.endOfYearExpectedBalance !== null ? formatAmount(stats.endOfYearExpectedBalance) : '—' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            :ref="setHeaderRef(10)"
             class="w-10"
           />
         </div>
@@ -339,6 +432,11 @@ export interface UiYearStats {
   averageBalanceChange: number
   totalCurrencyProfitLoss: number
   averageCurrencyProfitLoss: number
+  totalPlannedBalanceChange: number
+  totalPlannedVsActualDiff: number
+  plannedMonthCount: number
+  plannedDiffMonthCount: number
+  endOfYearExpectedBalance: number | null
 }
 
 export interface UiYearLabels {
@@ -378,6 +476,15 @@ export interface UiYearLabels {
   optionalExpensesTooltip: string
   totalOptionalExpenses: string
   averageOptionalExpenses: string
+  plannedLine1: string
+  plannedLine2: string
+  plannedFormula: string
+  totalPlanned: string
+  totalPlannedDiff: string
+  expectedBalanceLine1: string
+  expectedBalanceLine2: string
+  expectedBalanceTooltip: string
+  endOfYearExpectedBalance: string
 }
 
 interface Props {
@@ -385,33 +492,59 @@ interface Props {
   stats: UiYearStats
   labels: UiYearLabels
   formatAmount: (amount: number) => string
+  isPlanningMode?: boolean
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isPlanningMode: false,
+})
 
 const columnsSync = inject(timelineColumnsSyncKey, null)
 
 const headerRefs = ref<HTMLElement[]>([])
+let registeredHeaderRefs: HTMLElement[] | null = null
 
 const setHeaderRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
   if (el && el instanceof HTMLElement) {
     headerRefs.value[index] = el
   }
+  else {
+    headerRefs.value[index] = null as unknown as HTMLElement
+  }
+}
+
+const registerCurrent = () => {
+  if (!columnsSync) {
+    return
+  }
+  const validRefs = headerRefs.value.filter(Boolean)
+  if (validRefs.length) {
+    columnsSync.registerRow(validRefs)
+    registeredHeaderRefs = validRefs
+  }
+}
+
+const unregisterCurrent = () => {
+  if (!columnsSync || !registeredHeaderRefs) {
+    return
+  }
+  columnsSync.unregisterRow(registeredHeaderRefs)
+  registeredHeaderRefs = null
 }
 
 onMounted(() => {
   nextTick(() => {
-    const validRefs = headerRefs.value.filter(Boolean)
-    if (validRefs.length && columnsSync) {
-      columnsSync.registerRow(validRefs)
-    }
+    registerCurrent()
   })
 })
 
 onUnmounted(() => {
-  const validRefs = headerRefs.value.filter(Boolean)
-  if (validRefs.length && columnsSync) {
-    columnsSync.unregisterRow(validRefs)
-  }
+  unregisterCurrent()
+})
+
+watch(() => props.isPlanningMode, async () => {
+  unregisterCurrent()
+  await nextTick()
+  registerCurrent()
 })
 </script>

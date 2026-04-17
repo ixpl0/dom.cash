@@ -1,12 +1,14 @@
 import { eq, getTableColumns } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { user, month, entry } from '~~/server/db/schema'
+import { user, month, entry, plan } from '~~/server/db/schema'
 import { getUserMonths } from './months'
+import { getUserPlans, upsertPlan } from './plans'
 import { secureLog } from '~~/server/utils/secure-logger'
 import type {
   BudgetExportData,
   BudgetExportMonth,
+  BudgetExportPlan,
   BudgetExportEntry,
   BudgetImportOptions,
   BudgetImportResult,
@@ -64,6 +66,13 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
     }
   })
 
+  const userPlans = await getUserPlans(userId, event)
+  const exportPlans: BudgetExportPlan[] = userPlans.map(planRow => ({
+    year: planRow.year,
+    month: planRow.month,
+    plannedBalanceChange: planRow.plannedBalanceChange,
+  }))
+
   return {
     version: '1.0',
     exportDate: new Date().toISOString(),
@@ -72,6 +81,7 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
       mainCurrency: userInfo.mainCurrency,
     },
     months: exportMonths,
+    plans: exportPlans,
   }
 }
 
@@ -115,6 +125,18 @@ const loadExistingMonthIds = async (
     .where(eq(month.userId, userId))
 
   return new Map(existingRows.map(row => [makeMonthKey(row.year, row.month), row.id]))
+}
+
+const loadExistingPlanKeys = async (
+  db: ReturnType<typeof useDatabase>,
+  userId: string,
+): Promise<Set<ExistingMonthKey>> => {
+  const existingRows = await db
+    .select({ year: plan.year, month: plan.month })
+    .from(plan)
+    .where(eq(plan.userId, userId))
+
+  return new Set(existingRows.map(row => makeMonthKey(row.year, row.month)))
 }
 
 const importSingleMonth = async (
@@ -224,7 +246,7 @@ export const importBudget = async (
     errors: [],
   }
 
-  return uniqueImportMonths.reduce<Promise<BudgetImportResult>>(
+  const monthsResult = await uniqueImportMonths.reduce<Promise<BudgetImportResult>>(
     async (previousResultPromise, importMonth) => {
       const previousResult = await previousResultPromise
       const existingMonthId = knownMonthIds.get(makeMonthKey(importMonth.year, importMonth.month))
@@ -255,5 +277,56 @@ export const importBudget = async (
       }
     },
     Promise.resolve(emptyResult),
+  )
+
+  const existingPlanKeys = await loadExistingPlanKeys(db, userId)
+
+  type ImportPlan = NonNullable<BudgetExportSchema['plans']>[number]
+  const deduplicatedPlans = new Map<ExistingMonthKey, ImportPlan>()
+  for (const candidate of importData.plans ?? []) {
+    const key = makeMonthKey(candidate.year, candidate.month)
+    if (!deduplicatedPlans.has(key)) {
+      deduplicatedPlans.set(key, candidate)
+    }
+  }
+  const uniqueImportPlans = Array.from(deduplicatedPlans.values())
+
+  return uniqueImportPlans.reduce<Promise<BudgetImportResult>>(
+    async (previousResultPromise, importPlan) => {
+      const previousResult = await previousResultPromise
+      const planKey = makeMonthKey(importPlan.year, importPlan.month)
+      const planAlreadyExists = existingPlanKeys.has(planKey)
+
+      if (planAlreadyExists && options.strategy === 'skip') {
+        return previousResult
+      }
+
+      try {
+        await upsertPlan(userId, importPlan.year, importPlan.month, importPlan.plannedBalanceChange, event)
+        existingPlanKeys.add(planKey)
+        return previousResult
+      }
+      catch (error) {
+        const errorName = error instanceof Error ? error.name : 'NonErrorThrown'
+        const rawMessage = error instanceof Error ? error.message : String(error)
+        const truncatedMessage = rawMessage.length > 200 ? `${rawMessage.slice(0, 200)}…` : rawMessage
+        secureLog.error('Budget import plan failed', {
+          userId,
+          year: importPlan.year,
+          month: importPlan.month,
+          errorName,
+          errorMessage: truncatedMessage,
+        })
+        return {
+          ...previousResult,
+          success: false,
+          errors: [
+            ...previousResult.errors,
+            { year: importPlan.year, month: importPlan.month, kind: 'failed' },
+          ],
+        }
+      }
+    },
+    Promise.resolve(monthsResult),
   )
 }

@@ -80,6 +80,25 @@ export const month = sqliteTable(
 export type Month = typeof month.$inferSelect
 export type NewMonth = typeof month.$inferInsert
 
+export const plan = sqliteTable(
+  'plan',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    year: integer('year').notNull(),
+    month: integer('month').notNull(),
+    plannedBalanceChange: integer('planned_balance_change').notNull(),
+  },
+  t => [
+    unique('uq_plan_user_year_month').on(t.userId, t.year, t.month),
+    index('idx_plan_user').on(t.userId),
+    check('ck_plan_month_range', sql`${t.month} between 0 and 11`),
+  ],
+)
+
+export type Plan = typeof plan.$inferSelect
+export type NewPlan = typeof plan.$inferInsert
+
 export const entry = sqliteTable(
   'entry',
   {

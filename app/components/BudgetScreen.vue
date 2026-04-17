@@ -110,7 +110,7 @@
         data-testid="budget-timeline"
       >
         <UiTimelineAddButton
-          v-if="budgetStore.canEdit"
+          v-if="budgetStore.canEdit && canAddNextMonth"
           direction="next"
           :month-text="getNextMonthText()"
           :is-loading="isCreatingNextMonth"
@@ -130,7 +130,7 @@
         </div>
 
         <UiTimelineAddButton
-          v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad"
+          v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad && !budgetStore.isPlanningMode"
           direction="previous"
           :month-text="getPreviousMonthText()"
           :is-loading="isCreatingPreviousMonth"
@@ -176,11 +176,13 @@
     <BudgetCurrencyRatesModal />
 
     <BudgetChartModal />
+
+    <BudgetPlanModal />
   </div>
 </template>
 
 <script setup lang="ts">
-import { findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
+import { findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { timelineColumnsSyncKey } from '~/types/timeline'
 
@@ -251,6 +253,14 @@ const getNextMonthText = (): string => {
   const nextMonth = budgetStore.getNextMonth()
   return `${monthNames.value[nextMonth.month]} ${nextMonth.year}`
 }
+
+const canAddNextMonth = computed((): boolean => {
+  if (!budgetStore.isPlanningMode) {
+    return true
+  }
+  const next = budgetStore.getNextMonth()
+  return !isPastMonth(next.year, next.month)
+})
 
 const getPreviousMonthText = (): string => {
   const prevMonth = budgetStore.getPreviousMonth()

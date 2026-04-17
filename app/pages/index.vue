@@ -328,6 +328,7 @@ const formatDemoAmount = (amount: number): string => {
 
 const monthLabels = computed((): UiMonthLabels => ({
   deleteMonth: t('budget.month.deleteMonth'),
+  addPlan: t('budget.month.addPlan'),
 }))
 
 const yearLabels = computed((): UiYearLabels => ({
@@ -367,6 +368,15 @@ const yearLabels = computed((): UiYearLabels => ({
   optionalExpensesTooltip: t('budget.year.optionalExpensesTooltip'),
   totalOptionalExpenses: t('budget.year.totalOptionalExpenses'),
   averageOptionalExpenses: t('budget.year.averageOptionalExpenses'),
+  plannedLine1: t('budget.year.plannedLine1'),
+  plannedLine2: t('budget.year.plannedLine2'),
+  plannedFormula: t('budget.year.plannedFormula'),
+  totalPlanned: t('budget.year.totalPlanned'),
+  totalPlannedDiff: t('budget.year.totalPlannedDiff'),
+  expectedBalanceLine1: t('budget.year.expectedBalanceLine1'),
+  expectedBalanceLine2: t('budget.year.expectedBalanceLine2'),
+  expectedBalanceTooltip: t('budget.year.expectedBalanceTooltip'),
+  endOfYearExpectedBalance: t('budget.year.endOfYearExpectedBalance'),
 }))
 
 interface DemoMonth {
@@ -399,6 +409,9 @@ const demoData = computed((): DemoData => {
         totalAllExpenses: 5300,
         calculatedBalanceChange: 3200,
         currencyProfitLoss: 120,
+        plannedBalanceChange: null,
+        plannedVsActualDiff: null,
+        expectedBalance: null,
       },
     },
     {
@@ -413,6 +426,9 @@ const demoData = computed((): DemoData => {
         totalAllExpenses: 4750,
         calculatedBalanceChange: 3450,
         currencyProfitLoss: -85,
+        plannedBalanceChange: null,
+        plannedVsActualDiff: null,
+        expectedBalance: null,
       },
     },
     {
@@ -427,6 +443,9 @@ const demoData = computed((): DemoData => {
         totalAllExpenses: 5750,
         calculatedBalanceChange: 2250,
         currencyProfitLoss: 45,
+        plannedBalanceChange: null,
+        plannedVsActualDiff: null,
+        expectedBalance: null,
       },
     },
   ]
@@ -447,6 +466,11 @@ const demoData = computed((): DemoData => {
     averageBalanceChange: 2967,
     totalCurrencyProfitLoss: 80,
     averageCurrencyProfitLoss: 27,
+    totalPlannedBalanceChange: 0,
+    totalPlannedVsActualDiff: 0,
+    plannedMonthCount: 0,
+    plannedDiffMonthCount: 0,
+    endOfYearExpectedBalance: null,
   }
 
   return {

@@ -1,5 +1,6 @@
 import type { MonthData, ComputedMonthData, YearSummary } from '../../types/budget'
 import { calculateTotalBalance } from './budget'
+import { isPastMonth } from './month-helpers'
 
 export const createMonthId = (year: number, month: number): string => {
   return `${year}-${String(month).padStart(2, '0')}`
@@ -17,6 +18,7 @@ export const computeMonthData = (
   allMonths: MonthData[],
   mainCurrency: string,
   monthNames: string[],
+  plannedBalanceChange: number | null = null,
 ): ComputedMonthData => {
   const monthId = createMonthId(monthData.year, monthData.month)
   const currentMonthRates = monthData.exchangeRates
@@ -104,6 +106,14 @@ export const computeMonthData = (
     }
   }
 
+  const plannedVsActualDiff = (
+    plannedBalanceChange !== null
+    && calculatedBalanceChange !== null
+    && isPastMonth(monthData.year, monthData.month)
+  )
+    ? calculatedBalanceChange - plannedBalanceChange
+    : null
+
   return {
     ...monthData,
     monthId,
@@ -118,7 +128,52 @@ export const computeMonthData = (
     nextMonthStartBalance,
     isUsingOtherMonthRates,
     sourceMonthTitle,
+    plannedBalanceChange,
+    plannedVsActualDiff,
+    expectedBalance: null,
   }
+}
+
+export const computeExpectedBalances = (
+  computedMonths: ComputedMonthData[],
+): ComputedMonthData[] => {
+  const sortedAsc = [...computedMonths].sort((a, b) => {
+    if (a.year !== b.year) {
+      return a.year - b.year
+    }
+    return a.month - b.month
+  })
+
+  const withExpected = sortedAsc.reduce<{ running: number | null, list: ComputedMonthData[] }>(
+    (acc, monthItem) => {
+      const monthIsPast = isPastMonth(monthItem.year, monthItem.month)
+
+      const nextRunning = (() => {
+        if (monthIsPast && monthItem.nextMonthStartBalance !== null) {
+          return monthItem.nextMonthStartBalance
+        }
+        if (monthIsPast) {
+          return monthItem.startBalance
+        }
+        const anchor = acc.running ?? monthItem.startBalance
+        const planned = monthItem.plannedBalanceChange ?? 0
+        return anchor + planned
+      })()
+
+      return {
+        running: nextRunning,
+        list: [...acc.list, { ...monthItem, expectedBalance: nextRunning }],
+      }
+    },
+    { running: null, list: [] },
+  )
+
+  const expectedById = new Map(withExpected.list.map(item => [item.monthId, item.expectedBalance]))
+
+  return computedMonths.map(monthItem => ({
+    ...monthItem,
+    expectedBalance: expectedById.get(monthItem.monthId) ?? null,
+  }))
 }
 
 export const computeYearSummary = (
@@ -140,6 +195,8 @@ export const computeYearSummary = (
       totalPocketExpenses: 0,
       totalCurrencyProfitLoss: 0,
       totalAllExpenses: 0,
+      totalPlannedBalanceChange: 0,
+      totalPlannedVsActualDiff: 0,
       avgStartBalance: 0,
       avgIncome: 0,
       avgExpenses: 0,
@@ -148,8 +205,19 @@ export const computeYearSummary = (
       avgPocketExpenses: 0,
       avgCurrencyProfitLoss: 0,
       avgAllExpenses: 0,
+      avgPlannedBalanceChange: 0,
+      avgPlannedVsActualDiff: 0,
+      plannedMonthCount: 0,
+      plannedDiffMonthCount: 0,
+      endOfYearExpectedBalance: null,
     }
   }
+
+  const latestMonthOfYear = yearMonths.reduce(
+    (latest, candidate) => (candidate.month > latest.month ? candidate : latest),
+    yearMonths[0]!,
+  )
+  const endOfYearExpectedBalance = latestMonthOfYear.expectedBalance
 
   const totals = yearMonths.reduce((acc, month) => {
     acc.totalStartBalance += month.startBalance
@@ -177,6 +245,16 @@ export const computeYearSummary = (
       acc.allExpensesCount++
     }
 
+    if (month.plannedBalanceChange !== null) {
+      acc.totalPlannedBalanceChange += month.plannedBalanceChange
+      acc.plannedMonthCount++
+    }
+
+    if (month.plannedVsActualDiff !== null) {
+      acc.totalPlannedVsActualDiff += month.plannedVsActualDiff
+      acc.plannedDiffMonthCount++
+    }
+
     return acc
   }, {
     totalStartBalance: 0,
@@ -187,10 +265,14 @@ export const computeYearSummary = (
     totalPocketExpenses: 0,
     totalCurrencyProfitLoss: 0,
     totalAllExpenses: 0,
+    totalPlannedBalanceChange: 0,
+    totalPlannedVsActualDiff: 0,
     balanceChangeCount: 0,
     pocketExpensesCount: 0,
     currencyProfitLossCount: 0,
     allExpensesCount: 0,
+    plannedMonthCount: 0,
+    plannedDiffMonthCount: 0,
   })
 
   return {
@@ -204,6 +286,8 @@ export const computeYearSummary = (
     totalPocketExpenses: totals.totalPocketExpenses,
     totalCurrencyProfitLoss: totals.totalCurrencyProfitLoss,
     totalAllExpenses: totals.totalAllExpenses,
+    totalPlannedBalanceChange: totals.totalPlannedBalanceChange,
+    totalPlannedVsActualDiff: totals.totalPlannedVsActualDiff,
     avgStartBalance: totals.totalStartBalance / monthCount,
     avgIncome: totals.totalIncome / monthCount,
     avgExpenses: totals.totalExpenses / monthCount,
@@ -212,5 +296,10 @@ export const computeYearSummary = (
     avgPocketExpenses: totals.pocketExpensesCount > 0 ? totals.totalPocketExpenses / totals.pocketExpensesCount : 0,
     avgCurrencyProfitLoss: totals.currencyProfitLossCount > 0 ? totals.totalCurrencyProfitLoss / totals.currencyProfitLossCount : 0,
     avgAllExpenses: totals.allExpensesCount > 0 ? totals.totalAllExpenses / totals.allExpensesCount : 0,
+    avgPlannedBalanceChange: totals.plannedMonthCount > 0 ? totals.totalPlannedBalanceChange / totals.plannedMonthCount : 0,
+    avgPlannedVsActualDiff: totals.plannedDiffMonthCount > 0 ? totals.totalPlannedVsActualDiff / totals.plannedDiffMonthCount : 0,
+    plannedMonthCount: totals.plannedMonthCount,
+    plannedDiffMonthCount: totals.plannedDiffMonthCount,
+    endOfYearExpectedBalance,
   }
 }

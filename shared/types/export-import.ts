@@ -9,6 +9,7 @@ export interface BudgetExportData {
     mainCurrency: string
   }
   months: BudgetExportMonth[]
+  plans?: BudgetExportPlan[]
 }
 
 export interface BudgetExportMonth {
@@ -16,6 +17,12 @@ export interface BudgetExportMonth {
   month: number
   entries: BudgetExportEntry[]
   exchangeRates: Record<string, number>
+}
+
+export interface BudgetExportPlan {
+  year: number
+  month: number
+  plannedBalanceChange: number
 }
 
 export interface BudgetExportEntry {
@@ -63,6 +70,12 @@ export const budgetExportMonthSchema = z.object({
   exchangeRates: z.record(z.string(), z.number()).optional(),
 })
 
+export const budgetExportPlanSchema = z.object({
+  year: z.number().int().min(1900).max(2100),
+  month: z.number().int().min(0).max(11),
+  plannedBalanceChange: z.number().int(),
+})
+
 export const budgetExportSchema = z.object({
   version: z.literal('1.0'),
   exportDate: z.string(),
@@ -71,6 +84,7 @@ export const budgetExportSchema = z.object({
     mainCurrency: currencySchema,
   }),
   months: z.array(budgetExportMonthSchema),
+  plans: z.array(budgetExportPlanSchema).optional(),
 })
 
 export const budgetImportOptionsSchema = z.object({

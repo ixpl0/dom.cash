@@ -1,11 +1,51 @@
-import type { MonthData, ComputedMonthData, YearSummary, YearInfo } from '~~/shared/types/budget'
+import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo } from '~~/shared/types/budget'
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import type { BudgetExportData } from '~~/shared/types/export-import'
-import { getNextMonth, getPreviousMonth, findClosestMonthForCopy } from '~~/shared/utils/budget/month-helpers'
+import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/budget/entry-strategies'
 import { toMutable } from '~~/shared/utils/shared/immutable'
-import { computeMonthData, computeYearSummary, createMonthId } from '~~/shared/utils/budget/budget-calculations'
+import { computeMonthData, computeYearSummary, createMonthId, computeExpectedBalances } from '~~/shared/utils/budget/budget-calculations'
 import { generateExcelFromBudgetData } from '~~/app/utils/excel-export'
+
+const PLAN_ONLY_ID_PREFIX = 'plan-only-'
+
+const isPlanOnlyId = (id: string): boolean => id.startsWith(PLAN_ONLY_ID_PREFIX)
+
+const parsePlanOnlyId = (id: string): { year: number, month: number } | null => {
+  if (!isPlanOnlyId(id)) {
+    return null
+  }
+  const remainder = id.slice(PLAN_ONLY_ID_PREFIX.length)
+  const [yearStr, monthStr] = remainder.split('-')
+  if (!yearStr || !monthStr) {
+    return null
+  }
+  const year = Number(yearStr)
+  const month = Number(monthStr)
+  if (!Number.isFinite(year) || !Number.isFinite(month)) {
+    return null
+  }
+  return { year, month }
+}
+
+const buildPlanOnlyId = (year: number, month: number): string =>
+  `${PLAN_ONLY_ID_PREFIX}${createMonthId(year, month)}`
+
+const createSyntheticPlanMonth = (planRow: PlanData): MonthData => ({
+  id: buildPlanOnlyId(planRow.year, planRow.month),
+  year: planRow.year,
+  month: planRow.month,
+  userMonthId: buildPlanOnlyId(planRow.year, planRow.month),
+  balanceSources: [],
+  incomeEntries: [],
+  expenseEntries: [],
+  balanceChange: 0,
+  pocketExpenses: 0,
+  income: 0,
+  exchangeRates: {},
+  exchangeRatesSource: '',
+  isPlanOnly: true,
+})
 
 export interface YearsData {
   availableYears: YearInfo[]
@@ -39,22 +79,99 @@ export const useBudgetStore = defineStore('budget', () => {
   const availableYears = ref<YearInfo[]>([])
   const loadedYears = ref<Set<number>>(new Set())
   const isLoadingYear = ref(false)
+  const isPlanningMode = ref(false)
+  const plans = ref<PlanData[]>([])
+  const plansLoaded = ref(false)
+  const isPlansLoading = ref(false)
 
   const isOwnBudget = computed(() => data.value?.access === 'owner')
-  const months = computed(() => data.value?.months || [])
   const { mainCurrency } = useUser()
   const { monthNames } = useMonthNames()
 
   const effectiveMainCurrency = computed(() => data.value?.user?.mainCurrency || mainCurrency.value)
 
+  const targetUsernameForApi = computed(() =>
+    !isOwnBudget.value && data.value?.user?.username ? data.value.user.username : undefined,
+  )
+
+  const ensurePlansLoaded = async (): Promise<void> => {
+    if (plansLoaded.value || isPlansLoading.value) {
+      return
+    }
+    isPlansLoading.value = true
+    try {
+      const targetUsername = targetUsernameForApi.value
+      const url = targetUsername
+        ? `/api/budget/plans?username=${encodeURIComponent(targetUsername)}`
+        : '/api/budget/plans'
+      const response = await $fetch<{ plans: PlanData[] }>(url)
+      plans.value = toMutable(response.plans || [])
+      plansLoaded.value = true
+    }
+    catch (err) {
+      console.error('Error loading plans:', err)
+    }
+    finally {
+      isPlansLoading.value = false
+    }
+  }
+
+  const togglePlanningMode = async (): Promise<void> => {
+    const willEnter = !isPlanningMode.value
+    isPlanningMode.value = willEnter
+    if (willEnter) {
+      await ensurePlansLoaded()
+    }
+  }
+
+  const setPlanningMode = async (value: boolean): Promise<void> => {
+    isPlanningMode.value = value
+    if (value) {
+      await ensurePlansLoaded()
+    }
+  }
+
+  const months = computed((): MonthData[] => {
+    const realMonths = data.value?.months || []
+    if (!isPlanningMode.value) {
+      return realMonths
+    }
+    const realKeys = new Set(realMonths.map(monthItem => createMonthId(monthItem.year, monthItem.month)))
+    const syntheticMonths = plans.value
+      .filter(planRow => !realKeys.has(createMonthId(planRow.year, planRow.month)))
+      .map(createSyntheticPlanMonth)
+    const merged = [...realMonths, ...syntheticMonths]
+    return merged.sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year
+      }
+      return b.month - a.month
+    })
+  })
+
   const computedMonths = computed((): ComputedMonthData[] => {
-    if (!data.value?.months) {
+    const sourceMonths = months.value
+    if (sourceMonths.length === 0) {
       return []
     }
 
-    return data.value.months.map(month =>
-      computeMonthData(month, data.value!.months, effectiveMainCurrency.value, monthNames.value),
-    )
+    const planByKey = new Map<string, PlanData>()
+    plans.value.forEach((planRow) => {
+      planByKey.set(createMonthId(planRow.year, planRow.month), planRow)
+    })
+
+    const baseComputed = sourceMonths.map((monthItem) => {
+      const key = createMonthId(monthItem.year, monthItem.month)
+      const planForMonth = planByKey.get(key) ?? null
+      return computeMonthData(
+        monthItem,
+        sourceMonths,
+        effectiveMainCurrency.value,
+        monthNames.value,
+        planForMonth?.plannedBalanceChange ?? null,
+      )
+    })
+    return computeExpectedBalances(baseComputed)
   })
 
   const getComputedMonthById = (monthId: string): ComputedMonthData | undefined => {
@@ -182,6 +299,12 @@ export const useBudgetStore = defineStore('budget', () => {
         canEdit.value = data.value.access === 'owner' || data.value.access === 'write'
         canView.value = true
       }
+
+      plans.value = []
+      plansLoaded.value = false
+      if (isPlanningMode.value) {
+        await ensurePlansLoaded()
+      }
     }
     catch (err) {
       console.error('Error refreshing budget:', err)
@@ -212,6 +335,12 @@ export const useBudgetStore = defineStore('budget', () => {
       if (data.value) {
         canEdit.value = data.value.access === 'owner' || data.value.access === 'write'
         canView.value = true
+      }
+
+      plans.value = []
+      plansLoaded.value = false
+      if (isPlanningMode.value) {
+        await ensurePlansLoaded()
       }
     }
     catch (err) {
@@ -266,17 +395,30 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   const createNextMonth = async () => {
-    if (!data.value?.months.length) {
+    const sourceMonths = months.value
+    if (!sourceMonths.length) {
       return
     }
 
-    const { year, month } = getNextMonth(data.value.months)
-    const copyFromId = findClosestMonthForCopy(data.value.months, year, month, 'previous')
+    const { year, month } = getNextMonth(sourceMonths)
 
+    if (isPlanningMode.value) {
+      if (isPastMonth(year, month)) {
+        return
+      }
+      await upsertPlan(year, month, 0)
+      return
+    }
+
+    const realMonths = data.value?.months || []
+    const copyFromId = findClosestMonthForCopy(realMonths, year, month, 'previous')
     await createMonth(year, month, copyFromId || undefined)
   }
 
   const createPreviousMonth = async () => {
+    if (isPlanningMode.value) {
+      return
+    }
     if (!data.value?.months.length) {
       return
     }
@@ -474,7 +616,66 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
+  const upsertPlan = async (year: number, month: number, plannedBalanceChange: number): Promise<void> => {
+    try {
+      const body: { year: number, month: number, plannedBalanceChange: number, targetUsername?: string } = {
+        year,
+        month,
+        plannedBalanceChange,
+      }
+      if (targetUsernameForApi.value) {
+        body.targetUsername = targetUsernameForApi.value
+      }
+      const response = await $fetch<PlanData>('/api/budget/plans', {
+        method: 'PUT',
+        body,
+      })
+      const key = createMonthId(year, month)
+      const updatedPlans = plans.value.some(planRow => createMonthId(planRow.year, planRow.month) === key)
+        ? plans.value.map(planRow =>
+            createMonthId(planRow.year, planRow.month) === key
+              ? { ...planRow, plannedBalanceChange: response.plannedBalanceChange, id: response.id }
+              : planRow,
+          )
+        : [...plans.value, response]
+      plans.value = toMutable(updatedPlans)
+    }
+    catch (err) {
+      console.error('Error upserting plan:', err)
+      throw err
+    }
+  }
+
+  const removePlan = async (year: number, month: number): Promise<void> => {
+    try {
+      const body: { year: number, month: number, targetUsername?: string } = { year, month }
+      if (targetUsernameForApi.value) {
+        body.targetUsername = targetUsernameForApi.value
+      }
+      await $fetch('/api/budget/plans', {
+        method: 'DELETE',
+        body,
+      })
+      const key = createMonthId(year, month)
+      plans.value = toMutable(
+        plans.value.filter(planRow => createMonthId(planRow.year, planRow.month) !== key),
+      )
+    }
+    catch (err) {
+      console.error('Error deleting plan:', err)
+      throw err
+    }
+  }
+
   const deleteMonth = async (monthId: string) => {
+    const planOnlyTarget = parsePlanOnlyId(monthId)
+    if (planOnlyTarget) {
+      await removePlan(planOnlyTarget.year, planOnlyTarget.month)
+      return
+    }
+
+    const target = data.value?.months.find(monthItem => monthItem.id === monthId)
+
     try {
       await $fetch(`/api/budget/months/${monthId}`, {
         method: 'DELETE',
@@ -484,10 +685,16 @@ export const useBudgetStore = defineStore('budget', () => {
         return
       }
 
-      const updatedMonths = data.value.months.filter(month => month.id !== monthId)
+      const updatedMonths = data.value.months.filter(monthItem => monthItem.id !== monthId)
       data.value = {
         ...data.value,
         months: toMutable(updatedMonths),
+      }
+
+      if (target) {
+        plans.value = toMutable(
+          plans.value.filter(planRow => !(planRow.year === target.year && planRow.month === target.month)),
+        )
       }
     }
     catch (err) {
@@ -522,7 +729,7 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   const getNextMonthData = (): { year: number, month: number } => {
-    return getNextMonth(data.value?.months || [])
+    return getNextMonth(months.value)
   }
 
   const getPreviousMonthData = (): { year: number, month: number } => {
@@ -645,6 +852,10 @@ export const useBudgetStore = defineStore('budget', () => {
     availableYears.value = []
     loadedYears.value = new Set()
     isLoadingYear.value = false
+    isPlanningMode.value = false
+    plans.value = []
+    plansLoaded.value = false
+    isPlansLoading.value = false
   }
 
   return {
@@ -655,6 +866,7 @@ export const useBudgetStore = defineStore('budget', () => {
     availableYears,
     loadedYears,
     isLoadingYear,
+    isPlanningMode,
     nextYearToLoad,
     isOwnBudget,
     months,
@@ -679,6 +891,13 @@ export const useBudgetStore = defineStore('budget', () => {
     deleteEntry,
     deleteMonth,
     updateCurrency,
+    upsertPlan,
+    removePlan,
+    ensurePlansLoaded,
+    plans,
+    plansLoaded,
+    togglePlanningMode,
+    setPlanningMode,
     getNextMonth: getNextMonthData,
     getPreviousMonth: getPreviousMonthData,
     exportBudget,

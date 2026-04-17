@@ -3,11 +3,12 @@
     :year="year"
     :stats="yearStats"
     :labels="labels"
+    :is-planning-mode="budgetStore.isPlanningMode"
     :format-amount="formatAmountForDisplay"
   >
     <BudgetMonth
       v-for="monthData in months"
-      :key="`${monthData.year}-${monthData.month}`"
+      :key="`${monthData.year}-${monthData.month}-${budgetStore.isPlanningMode}`"
       :month-id="createMonthId(monthData.year, monthData.month)"
     />
   </UiYear>
@@ -50,6 +51,11 @@ const yearStats = computed((): UiYearStats => {
       averageBalanceChange: 0,
       totalCurrencyProfitLoss: 0,
       averageCurrencyProfitLoss: 0,
+      totalPlannedBalanceChange: 0,
+      totalPlannedVsActualDiff: 0,
+      plannedMonthCount: 0,
+      plannedDiffMonthCount: 0,
+      endOfYearExpectedBalance: null,
     }
   }
 
@@ -69,6 +75,11 @@ const yearStats = computed((): UiYearStats => {
     averageBalanceChange: summary.avgBalanceChange,
     totalCurrencyProfitLoss: summary.totalCurrencyProfitLoss,
     averageCurrencyProfitLoss: summary.avgCurrencyProfitLoss,
+    totalPlannedBalanceChange: summary.totalPlannedBalanceChange,
+    totalPlannedVsActualDiff: summary.totalPlannedVsActualDiff,
+    plannedMonthCount: summary.plannedMonthCount,
+    plannedDiffMonthCount: summary.plannedDiffMonthCount,
+    endOfYearExpectedBalance: summary.endOfYearExpectedBalance,
   }
 })
 
@@ -109,6 +120,15 @@ const labels = computed((): UiYearLabels => ({
   optionalExpensesTooltip: t('budget.year.optionalExpensesTooltip'),
   totalOptionalExpenses: t('budget.year.totalOptionalExpenses'),
   averageOptionalExpenses: t('budget.year.averageOptionalExpenses'),
+  plannedLine1: t('budget.year.plannedLine1'),
+  plannedLine2: t('budget.year.plannedLine2'),
+  plannedFormula: t('budget.year.plannedFormula'),
+  totalPlanned: t('budget.year.totalPlanned'),
+  totalPlannedDiff: t('budget.year.totalPlannedDiff'),
+  expectedBalanceLine1: t('budget.year.expectedBalanceLine1'),
+  expectedBalanceLine2: t('budget.year.expectedBalanceLine2'),
+  expectedBalanceTooltip: t('budget.year.expectedBalanceTooltip'),
+  endOfYearExpectedBalance: t('budget.year.endOfYearExpectedBalance'),
 }))
 
 const formatAmountForDisplay = (amount: number): string => {

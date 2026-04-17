@@ -386,7 +386,8 @@ export const deleteMonth = async (monthId: string, event: H3Event): Promise<void
     .where(eq(month.id, monthId))
     .limit(1)
 
-  if (monthToDelete.length === 0) {
+  const monthRecord = monthToDelete[0]
+  if (!monthRecord) {
     throw new Error('Month not found')
   }
 
@@ -395,6 +396,10 @@ export const deleteMonth = async (monthId: string, event: H3Event): Promise<void
   await executeBatch(event, [
     { sql: 'DELETE FROM entry WHERE month_id = ?', params: [monthId] },
     { sql: 'DELETE FROM month WHERE id = ?', params: [monthId] },
+    {
+      sql: 'DELETE FROM plan WHERE user_id = ? AND year = ? AND month = ?',
+      params: [monthRecord.userId, monthRecord.year, monthRecord.month],
+    },
   ])
 }
 

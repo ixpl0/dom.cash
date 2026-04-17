@@ -41,6 +41,7 @@
         </div>
 
         <div
+          v-if="!isPlanningMode"
           :ref="setCardRef(1)"
           class="tooltip text-center"
           :data-tip="incomeTooltip"
@@ -62,6 +63,7 @@
         </div>
 
         <div
+          v-if="!isPlanningMode"
           :ref="setCardRef(2)"
           class="tooltip text-center"
           :data-tip="expensesTooltip"
@@ -83,6 +85,7 @@
         </div>
 
         <div
+          v-if="!isPlanningMode"
           :ref="setCardRef(3)"
           class="tooltip text-center"
           :data-tip="pocketExpensesTooltip"
@@ -104,6 +107,7 @@
         </div>
 
         <div
+          v-if="!isPlanningMode"
           :ref="setCardRef(4)"
           class="tooltip text-center"
           :data-tip="totalExpensesTooltip"
@@ -146,6 +150,7 @@
         </div>
 
         <div
+          v-if="!isPlanningMode"
           :ref="setCardRef(6)"
           class="tooltip text-center"
           :data-tip="currencyFluctuationTooltip"
@@ -167,6 +172,7 @@
         </div>
 
         <div
+          v-if="!isPlanningMode"
           :ref="setCardRef(7)"
           class="tooltip text-center"
           :data-tip="optionalExpensesTooltip"
@@ -185,10 +191,66 @@
             </button>
           </div>
         </div>
+
+        <div
+          v-if="isPlanningMode"
+          :ref="setCardRef(8)"
+          class="tooltip text-center"
+          :data-tip="plannedBalanceChangeTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-xl flex flex-col gap-0 leading-tight h-auto py-2"
+              data-testid="planned-balance-change-button"
+              :class="{
+                'text-warning': data.plannedBalanceChange !== null && data.plannedBalanceChange < 0,
+                'text-info': data.plannedBalanceChange !== null && data.plannedBalanceChange > 0,
+                'text-base-content': data.plannedBalanceChange === null || data.plannedBalanceChange === 0,
+              }"
+              :disabled="isReadOnly || isPastMonth"
+              @click="$emit('planClick')"
+            >
+              <span>{{ planMainText }}</span>
+              <span
+                v-if="isPastMonth && data.plannedVsActualDiff !== null"
+                class="text-xs opacity-80"
+                :class="{
+                  'text-success': data.plannedVsActualDiff > 0,
+                  'text-error': data.plannedVsActualDiff < 0,
+                  'text-base-content': data.plannedVsActualDiff === 0,
+                }"
+              >
+                {{ data.plannedVsActualDiff > 0 ? '+' : '' }}{{ formatAmount(data.plannedVsActualDiff) }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="isPlanningMode"
+          :ref="setCardRef(9)"
+          class="tooltip text-center"
+          :data-tip="expectedBalanceTooltip"
+        >
+          <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
+            <button
+              class="btn btn-ghost text-2xl"
+              disabled
+              data-testid="expected-balance-button"
+              :class="{
+                'text-primary': data.expectedBalance !== null && data.expectedBalance > 0,
+                'text-error': data.expectedBalance !== null && data.expectedBalance < 0,
+                'text-base-content': data.expectedBalance === null || data.expectedBalance === 0,
+              }"
+            >
+              {{ data.expectedBalance !== null ? formatAmount(data.expectedBalance) : '—' }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div
-        :ref="setCardRef(8)"
+        :ref="setCardRef(10)"
         class="w-10 flex justify-center"
       >
         <div
@@ -225,10 +287,14 @@ export interface UiMonthData {
   totalAllExpenses: number | null
   calculatedBalanceChange: number | null
   currencyProfitLoss: number | null
+  plannedBalanceChange: number | null
+  plannedVsActualDiff: number | null
+  expectedBalance: number | null
 }
 
 export interface UiMonthLabels {
   deleteMonth: string
+  addPlan: string
 }
 
 interface Props {
@@ -242,11 +308,15 @@ interface Props {
   balanceChangeTooltip: string
   currencyFluctuationTooltip: string
   optionalExpensesTooltip: string
+  plannedBalanceChangeTooltip: string
+  expectedBalanceTooltip: string
   data: UiMonthData
   labels: UiMonthLabels
   isCurrentMonth?: boolean
   isReadOnly?: boolean
   canDelete?: boolean
+  isPlanningMode?: boolean
+  isPastMonth?: boolean
   formatAmount: (amount: number) => string
 }
 
@@ -254,6 +324,8 @@ const props = withDefaults(defineProps<Props>(), {
   isCurrentMonth: false,
   isReadOnly: false,
   canDelete: false,
+  isPlanningMode: false,
+  isPastMonth: false,
 })
 
 defineEmits<{
@@ -262,7 +334,18 @@ defineEmits<{
   expenseClick: []
   currencyRatesClick: []
   deleteClick: []
+  planClick: []
 }>()
+
+const planMainText = computed(() => {
+  if (props.data.plannedBalanceChange !== null) {
+    return props.formatAmount(props.data.plannedBalanceChange)
+  }
+  if (props.isPastMonth || props.isReadOnly) {
+    return '—'
+  }
+  return props.labels.addPlan
+})
 
 const columnsSync = inject(timelineColumnsSyncKey, null)
 

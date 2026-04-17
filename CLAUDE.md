@@ -34,7 +34,8 @@
 * **Excel import/export**: xlsx-js-style
 * **Charts**: ECharts via vue-echarts
 * **Linting**: Husky + lint-staged for pre-commit hooks
-* **Real-time Notifications**: Server-Sent Events (SSE) via `useNotifications` composable
+* **Real-time Notifications**: Server-Sent Events (SSE) via `useNotifications` composable.
+  * **Known limitation (accepted)**: SSE state (`activeConnections`, `budgetSubscriptions`) lives in a module-level `Map` in `server/services/notifications.ts`. In Cloudflare Workers there is no guarantee of a single isolate, so parallel viewers landing in different isolates may not receive each other's events. This is intentional and not considered critical — best-effort delivery is acceptable; do not "fix" by introducing Durable Objects without explicit ask.
 * Commands:
   * `pnpm typecheck` — run TypeScript type checking
   * `pnpm lint` / `pnpm lint:fix` — run ESLint

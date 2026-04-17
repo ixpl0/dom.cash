@@ -21,11 +21,19 @@ logs
 nul
 .crime
 .claude
+Thumbs.db
+Desktop.ini
+
+# TypeScript
+*.tsbuildinfo
 
 # Local env files
 .env
 .env.*
 !.env.example
+
+# Wrangler local secrets
+.dev.vars
 
 # DB
 *.sqlite
@@ -38,5 +46,12 @@ backups
 test-results/
 playwright-report/
 playwright/.cache/
+blob_report/
 tests/.auth/
 .auth/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Local tool configs
+.crime/

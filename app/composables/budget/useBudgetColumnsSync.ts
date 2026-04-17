@@ -1,10 +1,13 @@
+const SYNC_DEBOUNCE_MS = 50
+
 export const useBudgetColumnsSync = () => {
   const isClient = import.meta.client
   const observer = ref<ResizeObserver | null>(null)
   const mounted = ref(false)
-  const isProcessing = ref(false)
   const registeredRows = ref<HTMLElement[][]>([])
   const isUnmounting = ref(false)
+  let syncTimerId: ReturnType<typeof setTimeout> | null = null
+  let isRunningSync = false
 
   const registerRow = (elements: HTMLElement[]) => {
     registeredRows.value.push(elements)
@@ -27,10 +30,12 @@ export const useBudgetColumnsSync = () => {
     }
   }
 
-  const syncColumnWidths = () => {
-    if (!isClient || !mounted.value || isProcessing.value || isUnmounting.value || !registeredRows.value.length) return
+  const runSync = () => {
+    if (!isClient || !mounted.value || isUnmounting.value || !registeredRows.value.length || isRunningSync) {
+      return
+    }
 
-    isProcessing.value = true
+    isRunningSync = true
 
     nextTick(() => {
       const columnWidths: Record<number, number> = {}
@@ -61,18 +66,34 @@ export const useBudgetColumnsSync = () => {
       requestAnimationFrame(() => {
         registeredRows.value.forEach((row) => {
           row.forEach((element, columnIndex) => {
-            if (element && columnWidths[columnIndex]) {
-              element.style.width = `${columnWidths[columnIndex]}px`
+            if (!element) {
+              return
+            }
+            const targetWidth = columnWidths[columnIndex]
+            if (targetWidth) {
+              element.style.width = `${targetWidth}px`
               element.style.transition = 'width 0.1s ease-out'
+            }
+            else {
+              element.style.width = ''
+              element.style.transition = ''
             }
           })
         })
 
-        setTimeout(() => {
-          isProcessing.value = false
-        }, 150)
+        isRunningSync = false
       })
     })
+  }
+
+  const syncColumnWidths = () => {
+    if (syncTimerId !== null) {
+      clearTimeout(syncTimerId)
+    }
+    syncTimerId = setTimeout(() => {
+      syncTimerId = null
+      runSync()
+    }, SYNC_DEBOUNCE_MS)
   }
 
   const startObserving = () => {
@@ -100,7 +121,6 @@ export const useBudgetColumnsSync = () => {
       }
     })
 
-    window.addEventListener('resize', syncColumnWidths)
     syncColumnWidths()
   }
 
@@ -117,13 +137,20 @@ export const useBudgetColumnsSync = () => {
 
   onMounted(() => {
     mounted.value = true
+    if (isClient) {
+      window.addEventListener('resize', syncColumnWidths)
+    }
     startObserving()
   })
 
   onBeforeUnmount(() => {
     isUnmounting.value = true
     mounted.value = false
-    isProcessing.value = false
+    if (syncTimerId !== null) {
+      clearTimeout(syncTimerId)
+      syncTimerId = null
+    }
+    isRunningSync = false
     stopObserving()
     registeredRows.value = []
   })

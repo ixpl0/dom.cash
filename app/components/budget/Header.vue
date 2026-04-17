@@ -45,6 +45,21 @@
     <div class="flex gap-2 flex-wrap animate-fade-in-right-delayed">
       <button
         v-if="hasData"
+        class="btn btn-sm"
+        :class="budgetStore.isPlanningMode ? 'btn-primary' : 'btn-ghost'"
+        data-testid="planning-mode-toggle"
+        :title="t('budget.planningModeTooltip')"
+        @click="budgetStore.togglePlanningMode"
+      >
+        <Icon
+          name="heroicons:calendar-days"
+          size="20"
+        />
+        {{ t('budget.planningMode') }}
+      </button>
+
+      <button
+        v-if="hasData"
         class="btn btn-ghost btn-sm"
         data-testid="chart-button"
         @click="modalsStore.openChartModal"

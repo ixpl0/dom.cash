@@ -130,3 +130,17 @@ export const isCurrentMonth = (monthData: MonthData): boolean => {
 
   return monthData.year === currentYear && monthData.month === currentMonth
 }
+
+export const isPastMonth = (year: number, month: number): boolean => {
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+
+  if (year < currentYear) {
+    return true
+  }
+  if (year === currentYear && month < currentMonth) {
+    return true
+  }
+  return false
+}

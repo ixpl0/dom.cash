@@ -7,6 +7,7 @@ export type NotificationType
     | 'budget_entry_created'
     | 'budget_entry_updated'
     | 'budget_entry_deleted'
+    | 'budget_plan_updated'
     | 'budget_share_granted'
     | 'budget_share_revoked'
     | 'budget_share_updated'

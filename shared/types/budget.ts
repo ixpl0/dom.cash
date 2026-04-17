@@ -11,6 +11,14 @@ export interface MonthData {
   income: number
   exchangeRates: Record<string, number>
   exchangeRatesSource: string
+  isPlanOnly?: boolean
+}
+
+export interface PlanData {
+  id: string
+  year: number
+  month: number
+  plannedBalanceChange: number
 }
 
 export interface ComputedMonthData extends MonthData {
@@ -26,6 +34,9 @@ export interface ComputedMonthData extends MonthData {
   nextMonthStartBalance: number | null
   isUsingOtherMonthRates: boolean
   sourceMonthTitle: string
+  plannedBalanceChange: number | null
+  plannedVsActualDiff: number | null
+  expectedBalance: number | null
 }
 
 export interface YearSummary {
@@ -39,6 +50,8 @@ export interface YearSummary {
   totalPocketExpenses: number
   totalCurrencyProfitLoss: number
   totalAllExpenses: number
+  totalPlannedBalanceChange: number
+  totalPlannedVsActualDiff: number
   avgStartBalance: number
   avgIncome: number
   avgExpenses: number
@@ -47,6 +60,11 @@ export interface YearSummary {
   avgPocketExpenses: number
   avgCurrencyProfitLoss: number
   avgAllExpenses: number
+  avgPlannedBalanceChange: number
+  avgPlannedVsActualDiff: number
+  plannedMonthCount: number
+  plannedDiffMonthCount: number
+  endOfYearExpectedBalance: number | null
 }
 
 interface BaseBudgetEntry {

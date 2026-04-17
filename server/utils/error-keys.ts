@@ -69,6 +69,9 @@ export const ERROR_KEYS = {
   TODO_ID_REQUIRED: 'serverErrors.todo_id_required',
   INVALID_SHARED_USER: 'serverErrors.invalid_shared_user',
   CANNOT_MODIFY_SHARE_AS_NON_OWNER: 'serverErrors.cannot_modify_share_as_non_owner',
+  NO_PERMISSION_UPDATE_PLAN: 'serverErrors.no_permission_update_plan',
+  FAILED_TO_UPDATE_PLAN: 'serverErrors.failed_to_update_plan',
+  CANNOT_PLAN_PAST_MONTH: 'serverErrors.cannot_plan_past_month',
 } as const
 
 export type ErrorKey = typeof ERROR_KEYS[keyof typeof ERROR_KEYS]
