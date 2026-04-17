@@ -19,6 +19,8 @@ logs
 .fleet
 .idea
 nul
+.crime
+.claude
 
 # Local env files
 .env
