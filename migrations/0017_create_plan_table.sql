@@ -23,21 +23,4 @@ SELECT
   planned_balance_change
 FROM month
 WHERE planned_balance_change IS NOT NULL;
-
-CREATE TABLE month_new (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  year INTEGER NOT NULL,
-  month INTEGER NOT NULL,
-  CONSTRAINT uq_user_year_month UNIQUE (user_id, year, month),
-  CONSTRAINT ck_month_range CHECK (month BETWEEN 0 AND 11)
-);
-
-INSERT INTO month_new (id, user_id, year, month)
-SELECT id, user_id, year, month FROM month;
-
-DROP INDEX IF EXISTS idx_month_user;
-DROP TABLE month;
-ALTER TABLE month_new RENAME TO month;
-
-CREATE INDEX idx_month_user ON month(user_id);
+ALTER TABLE month DROP COLUMN planned_balance_change;
