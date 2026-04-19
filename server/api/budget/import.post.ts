@@ -8,19 +8,16 @@ import { z } from 'zod'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
+const maxImportPayloadBytes = 1 * 1024 * 1024
+
 const importRequestSchema = z.object({
   data: budgetExportSchema,
   options: budgetImportOptionsSchema,
   targetUsername: z.string().optional(),
-}).refine((data) => {
-  const jsonSize = JSON.stringify(data).length
-  if (jsonSize > 1 * 1024 * 1024) {
-    throw new Error(ERROR_KEYS.IMPORT_FILE_TOO_LARGE)
-  }
-  return true
-}, {
-  message: ERROR_KEYS.IMPORT_VALIDATION_FAILED,
-})
+}).refine(
+  payload => JSON.stringify(payload).length <= maxImportPayloadBytes,
+  { message: ERROR_KEYS.IMPORT_FILE_TOO_LARGE },
+)
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
@@ -53,29 +50,31 @@ export default defineEventHandler(async (event) => {
   try {
     const result = await importBudget(targetUserId, data, options, event)
 
+    if (result.importedMonths > 0 || result.importedEntries > 0) {
+      try {
+        const { createNotification } = await import('~~/server/services/notifications')
+        await createNotification({
+          sourceUserId: currentUser.id,
+          budgetOwnerId: targetUserId,
+          type: 'budget_imported',
+          params: {
+            username: currentUser.username,
+            monthsCount: result.importedMonths,
+            entriesCount: result.importedEntries,
+          },
+        })
+      }
+      catch (error) {
+        secureLog.error('Error creating notification:', error)
+      }
+    }
+
     if (!result.success) {
       throw createError({
         statusCode: 400,
         message: ERROR_KEYS.IMPORT_FAILED,
         data: result,
       })
-    }
-
-    try {
-      const { createNotification } = await import('~~/server/services/notifications')
-      await createNotification({
-        sourceUserId: currentUser.id,
-        budgetOwnerId: targetUserId,
-        type: 'budget_imported',
-        params: {
-          username: currentUser.username,
-          monthsCount: result.importedMonths,
-          entriesCount: result.importedEntries,
-        },
-      })
-    }
-    catch (error) {
-      secureLog.error('Error creating notification:', error)
     }
 
     return result

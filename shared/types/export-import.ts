@@ -32,12 +32,20 @@ export interface BudgetImportOptions {
   strategy: ImportStrategy
 }
 
+export type BudgetImportErrorKind = 'tooLarge' | 'failed'
+
+export interface BudgetImportError {
+  year: number
+  month: number
+  kind: BudgetImportErrorKind
+}
+
 export interface BudgetImportResult {
   success: boolean
   importedMonths: number
   importedEntries: number
   skippedMonths: number
-  errors: string[]
+  errors: BudgetImportError[]
 }
 
 export const budgetExportEntrySchema = z.object({

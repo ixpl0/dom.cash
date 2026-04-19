@@ -115,7 +115,7 @@
       <div
         v-if="importResult"
         class="mb-4 p-4 rounded"
-        :class="importResult.success ? 'bg-success text-success-content' : 'bg-error text-error-content'"
+        :class="importResultBackgroundClass"
       >
         <h4 class="font-semibold mb-2">
           {{ t('import.resultTitle') }}
@@ -139,9 +139,9 @@
           <ul class="text-xs">
             <li
               v-for="importResultError in importResult.errors"
-              :key="importResultError"
+              :key="`${importResultError.year}-${importResultError.month}-${importResultError.kind}`"
             >
-              • {{ importResultError }}
+              • {{ formatImportError(importResultError) }}
             </li>
           </ul>
         </div>
@@ -182,7 +182,8 @@
 </template>
 
 <script setup lang="ts">
-import type { BudgetExportData, BudgetImportOptions, BudgetImportResult } from '~~/shared/types/export-import'
+import type { FetchError } from 'ofetch'
+import type { BudgetExportData, BudgetImportError, BudgetImportOptions, BudgetImportResult } from '~~/shared/types/export-import'
 
 interface Props {
   isOpen: boolean
@@ -263,22 +264,94 @@ const handleImport = async () => {
       },
     })
 
-    importResult.value = response as BudgetImportResult
+    if (!isBudgetImportResult(response)) {
+      error.value = t('import.importError')
+      importResult.value = null
+      return
+    }
+
+    importResult.value = response
 
     if (response.success) {
       emit('imported')
     }
   }
-  catch {
-    error.value = t('import.importError')
-    importResult.value = null
+  catch (fetchError: unknown) {
+    const errorData = extractImportResult(fetchError)
+    if (errorData) {
+      importResult.value = errorData
+      if (errorData.importedMonths > 0 || errorData.importedEntries > 0) {
+        emit('imported')
+      }
+    }
+    else {
+      error.value = t('import.importError')
+      importResult.value = null
+    }
   }
   finally {
     isImporting.value = false
   }
 }
 
-const startNewImport = () => {
+const importErrorKindKeys: Record<BudgetImportError['kind'], string> = {
+  tooLarge: 'import.errorKind.tooLarge',
+  failed: 'import.errorKind.failed',
+}
+
+const isBudgetImportError = (value: unknown): value is BudgetImportError => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  const candidate = value as Record<string, unknown>
+  return typeof candidate.year === 'number'
+    && Number.isInteger(candidate.year)
+    && typeof candidate.month === 'number'
+    && Number.isInteger(candidate.month)
+    && candidate.month >= 0
+    && candidate.month <= 11
+    && typeof candidate.kind === 'string'
+    && candidate.kind in importErrorKindKeys
+}
+
+const isBudgetImportResult = (value: unknown): value is BudgetImportResult => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  const candidate = value as Record<string, unknown>
+  return typeof candidate.success === 'boolean'
+    && typeof candidate.importedMonths === 'number'
+    && typeof candidate.importedEntries === 'number'
+    && typeof candidate.skippedMonths === 'number'
+    && Array.isArray(candidate.errors)
+    && candidate.errors.every(isBudgetImportError)
+}
+
+const extractImportResult = (fetchError: unknown): BudgetImportResult | null => {
+  const payload = (fetchError as FetchError<{ data?: unknown }> | null)?.data?.data
+  return isBudgetImportResult(payload) ? payload : null
+}
+
+const formatImportError = (importError: BudgetImportError): string => {
+  const monthLabel = `${importError.year}-${String(importError.month + 1).padStart(2, '0')}`
+  return `${monthLabel}: ${t(importErrorKindKeys[importError.kind])}`
+}
+
+const importResultBackgroundClass = computed(() => {
+  if (!importResult.value) {
+    return ''
+  }
+  if (importResult.value.success) {
+    return 'bg-success text-success-content'
+  }
+  const hasPartialProgress = importResult.value.importedMonths > 0 || importResult.value.importedEntries > 0
+  if (hasPartialProgress) {
+    return 'bg-warning text-warning-content'
+  }
+  return 'bg-error text-error-content'
+})
+
+const hide = () => {
   selectedFile.value = null
   previewData.value = null
   error.value = ''
@@ -287,10 +360,6 @@ const startNewImport = () => {
   if (fileInput.value) {
     fileInput.value.value = ''
   }
-}
-
-const hide = async () => {
-  startNewImport()
   emit('close')
 }
 

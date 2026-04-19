@@ -378,6 +378,10 @@ export default {
     importedEntries: 'Imported entries:',
     skippedMonths: 'Skipped months:',
     errors: 'Errors:',
+    errorKind: {
+      tooLarge: 'too many entries in this month to import in a single transaction',
+      failed: 'failed to import, please try again',
+    },
     importError: 'Error importing data',
     cancel: 'Cancel',
     close: 'Close',
