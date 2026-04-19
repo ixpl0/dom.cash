@@ -109,7 +109,7 @@ const monthBadgeTooltip = computed(() => {
 })
 
 const balanceTooltip = computed(() => {
-  if (rollingAverageExpenses.value === null) {
+  if (rollingAverageExpenses.value === null || monthData.value.startBalance === null) {
     return t('budget.month.balanceTooltipShort')
   }
   const months = Math.floor(monthData.value.startBalance / rollingAverageExpenses.value)

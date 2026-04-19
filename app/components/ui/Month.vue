@@ -28,14 +28,14 @@
             <button
               class="btn btn-ghost text-2xl"
               :class="{
-                'text-primary': data.startBalance !== 0,
-                'text-base-content': data.startBalance === 0,
+                'text-primary': data.startBalance !== null && data.startBalance !== 0,
+                'text-base-content': data.startBalance === null || data.startBalance === 0,
               }"
-              :disabled="isReadOnly"
+              :disabled="isReadOnly || data.startBalance === null"
               data-testid="balance-button"
               @click="$emit('balanceClick')"
             >
-              {{ formatAmount(data.startBalance) }}
+              {{ data.startBalance !== null ? formatAmount(data.startBalance) : '—' }}
             </button>
           </div>
         </div>
@@ -279,7 +279,7 @@ import type { ComponentPublicInstance } from 'vue'
 import { timelineColumnsSyncKey } from '~/types/timeline'
 
 export interface UiMonthData {
-  startBalance: number
+  startBalance: number | null
   totalIncome: number
   totalExpenses: number
   totalOptionalExpenses: number

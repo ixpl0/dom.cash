@@ -23,7 +23,7 @@ export interface PlanData {
 
 export interface ComputedMonthData extends MonthData {
   monthId: string
-  startBalance: number
+  startBalance: number | null
   totalIncome: number
   totalExpenses: number
   totalOptionalExpenses: number

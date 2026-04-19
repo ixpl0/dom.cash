@@ -22,12 +22,15 @@ export const computeMonthData = (
 ): ComputedMonthData => {
   const monthId = createMonthId(monthData.year, monthData.month)
   const currentMonthRates = monthData.exchangeRates
+  const isPlanOnly = monthData.isPlanOnly === true
 
-  const startBalance = calculateTotalBalance(
-    monthData.balanceSources,
-    mainCurrency,
-    currentMonthRates,
-  )
+  const startBalance = isPlanOnly
+    ? null
+    : calculateTotalBalance(
+        monthData.balanceSources,
+        mainCurrency,
+        currentMonthRates,
+      )
 
   const totalIncome = calculateTotalBalance(
     monthData.incomeEntries,
@@ -48,11 +51,12 @@ export const computeMonthData = (
   )
 
   const nextMonth = findNextMonth(monthData, allMonths)
+  const nextIsPlanOnly = nextMonth?.isPlanOnly === true
 
   let nextMonthStartBalance: number | null = null
   let nextMonthBalanceAtCurrentRates: number | null = null
 
-  if (nextMonth) {
+  if (nextMonth && !nextIsPlanOnly) {
     const nextMonthRates = nextMonth.exchangeRates
 
     nextMonthStartBalance = calculateTotalBalance(
@@ -68,15 +72,15 @@ export const computeMonthData = (
     )
   }
 
-  const calculatedBalanceChange = nextMonthStartBalance !== null
+  const calculatedBalanceChange = (!isPlanOnly && nextMonthStartBalance !== null && startBalance !== null)
     ? nextMonthStartBalance - startBalance
     : null
 
-  const currencyProfitLoss = (nextMonthBalanceAtCurrentRates !== null && nextMonthStartBalance !== null)
+  const currencyProfitLoss = (!isPlanOnly && nextMonthBalanceAtCurrentRates !== null && nextMonthStartBalance !== null)
     ? nextMonthStartBalance - nextMonthBalanceAtCurrentRates
     : null
 
-  const calculatedPocketExpenses = (nextMonthStartBalance !== null && currencyProfitLoss !== null)
+  const calculatedPocketExpenses = (!isPlanOnly && nextMonthStartBalance !== null && currencyProfitLoss !== null && startBalance !== null)
     ? startBalance + totalIncome + currencyProfitLoss - nextMonthStartBalance - totalExpenses
     : null
 
@@ -155,7 +159,7 @@ export const computeExpectedBalances = (
         if (monthIsPast) {
           return monthItem.startBalance
         }
-        const anchor = acc.running ?? monthItem.startBalance
+        const anchor = acc.running ?? monthItem.startBalance ?? 0
         const planned = monthItem.plannedBalanceChange ?? 0
         return anchor + planned
       })()
@@ -220,7 +224,10 @@ export const computeYearSummary = (
   const endOfYearExpectedBalance = latestMonthOfYear.expectedBalance
 
   const totals = yearMonths.reduce((acc, month) => {
-    acc.totalStartBalance += month.startBalance
+    if (month.startBalance !== null) {
+      acc.totalStartBalance += month.startBalance
+      acc.startBalanceCount++
+    }
     acc.totalIncome += month.totalIncome
     acc.totalExpenses += month.totalExpenses
     acc.totalOptionalExpenses += month.totalOptionalExpenses
@@ -267,6 +274,7 @@ export const computeYearSummary = (
     totalAllExpenses: 0,
     totalPlannedBalanceChange: 0,
     totalPlannedVsActualDiff: 0,
+    startBalanceCount: 0,
     balanceChangeCount: 0,
     pocketExpensesCount: 0,
     currencyProfitLossCount: 0,
@@ -288,7 +296,7 @@ export const computeYearSummary = (
     totalAllExpenses: totals.totalAllExpenses,
     totalPlannedBalanceChange: totals.totalPlannedBalanceChange,
     totalPlannedVsActualDiff: totals.totalPlannedVsActualDiff,
-    avgStartBalance: totals.totalStartBalance / monthCount,
+    avgStartBalance: totals.startBalanceCount > 0 ? totals.totalStartBalance / totals.startBalanceCount : 0,
     avgIncome: totals.totalIncome / monthCount,
     avgExpenses: totals.totalExpenses / monthCount,
     avgOptionalExpenses: totals.totalOptionalExpenses / monthCount,

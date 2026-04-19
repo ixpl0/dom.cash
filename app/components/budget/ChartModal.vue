@@ -95,7 +95,7 @@ const chartData = computed(() => {
   )
 
   const datasets = {
-    startBalance: sortedMonths.map(month => month.startBalance),
+    startBalance: sortedMonths.map(month => month.startBalance ?? 0),
     totalIncome: sortedMonths.map(month => month.totalIncome),
     totalExpenses: sortedMonths.map(month => month.totalExpenses),
     totalOptionalExpenses: sortedMonths.map(month => month.totalOptionalExpenses),

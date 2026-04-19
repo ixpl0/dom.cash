@@ -98,7 +98,7 @@ const totalAmount = computed(() => {
   }
 
   const totalMap: Record<string, number> = {
-    balance: month.startBalance,
+    balance: month.startBalance ?? 0,
     income: month.totalIncome,
     expense: month.totalExpenses,
   }
