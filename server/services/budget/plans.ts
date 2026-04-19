@@ -24,7 +24,7 @@ export const upsertPlan = async (
   userId: string,
   year: number,
   month: number,
-  plannedBalanceChange: number,
+  plannedBalanceChange: number | null,
   event: H3Event,
 ): Promise<PlanData> => {
   const db = useDatabase(event)

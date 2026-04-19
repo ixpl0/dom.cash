@@ -12,7 +12,7 @@ import { isPastMonth } from '~~/shared/utils/budget/month-helpers'
 const bodySchema = z.object({
   year: z.number().int().min(1900).max(2100),
   month: z.number().int().min(0).max(11),
-  plannedBalanceChange: z.number().int(),
+  plannedBalanceChange: z.number().int().nullable(),
   targetUsername: z.string().optional(),
 })
 

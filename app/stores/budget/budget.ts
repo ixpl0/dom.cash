@@ -406,7 +406,7 @@ export const useBudgetStore = defineStore('budget', () => {
       if (isPastMonth(year, month)) {
         return
       }
-      await upsertPlan(year, month, 0)
+      await upsertPlan(year, month, null)
       return
     }
 
@@ -616,9 +616,9 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
-  const upsertPlan = async (year: number, month: number, plannedBalanceChange: number): Promise<void> => {
+  const upsertPlan = async (year: number, month: number, plannedBalanceChange: number | null): Promise<void> => {
     try {
-      const body: { year: number, month: number, plannedBalanceChange: number, targetUsername?: string } = {
+      const body: { year: number, month: number, plannedBalanceChange: number | null, targetUsername?: string } = {
         year,
         month,
         plannedBalanceChange,

@@ -41,13 +41,13 @@
         </label>
         <input
           id="plan-amount-input"
+          ref="amountInputRef"
           v-model.number="amountInput"
           type="number"
           step="any"
           class="input input-bordered w-full"
           :placeholder="t('budget.plan.amountPlaceholder')"
           data-testid="plan-amount-input"
-          autofocus
         >
       </div>
 
@@ -113,6 +113,7 @@ const planModal = computed(() => modalsStore.planModal)
 const isOpen = computed(() => planModal.value.isOpen)
 
 const amountInput = ref<number | string>('')
+const amountInputRef = ref<HTMLInputElement | null>(null)
 const isSaving = ref(false)
 
 const isValid = computed(() => {
@@ -176,9 +177,12 @@ const clearPlan = async (): Promise<void> => {
   }
 }
 
-watch(isOpen, (open) => {
+watch(isOpen, async (open) => {
   if (open) {
     amountInput.value = planModal.value.currentValue ?? ''
+    await nextTick()
+    amountInputRef.value?.focus()
+    amountInputRef.value?.select()
   }
 })
 </script>

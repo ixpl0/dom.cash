@@ -18,7 +18,7 @@ export interface PlanData {
   id: string
   year: number
   month: number
-  plannedBalanceChange: number
+  plannedBalanceChange: number | null
 }
 
 export interface ComputedMonthData extends MonthData {

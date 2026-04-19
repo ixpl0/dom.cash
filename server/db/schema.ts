@@ -87,7 +87,7 @@ export const plan = sqliteTable(
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     year: integer('year').notNull(),
     month: integer('month').notNull(),
-    plannedBalanceChange: integer('planned_balance_change').notNull(),
+    plannedBalanceChange: integer('planned_balance_change'),
   },
   t => [
     unique('uq_plan_user_year_month').on(t.userId, t.year, t.month),
