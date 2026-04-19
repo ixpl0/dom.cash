@@ -648,13 +648,13 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const removePlan = async (year: number, month: number): Promise<void> => {
     try {
-      const body: { year: number, month: number, targetUsername?: string } = { year, month }
+      const query: Record<string, string | number> = { year, month }
       if (targetUsernameForApi.value) {
-        body.targetUsername = targetUsernameForApi.value
+        query.targetUsername = targetUsernameForApi.value
       }
       await $fetch('/api/budget/plans', {
         method: 'DELETE',
-        body,
+        query,
       })
       const key = createMonthId(year, month)
       plans.value = toMutable(
