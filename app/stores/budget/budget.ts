@@ -316,20 +316,29 @@ export const useBudgetStore = defineStore('budget', () => {
     error.value = null
 
     try {
+      const previouslyLoadedYears = Array.from(loadedYears.value)
+      const yearsQuery = previouslyLoadedYears.length > 0
+        ? `years=${previouslyLoadedYears.join(',')}`
+        : ''
+
+      const baseBudgetUrl = targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget'
+      const budgetUrl = yearsQuery ? `${baseBudgetUrl}?${yearsQuery}` : baseBudgetUrl
+
       const [yearsData, fetchedData] = await Promise.all([
         $fetch<YearsData>(
           targetUsername ? `/api/budget/years?username=${targetUsername}` : '/api/budget/years',
         ),
-        $fetch<BudgetData>(
-          targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
-        ),
+        $fetch<BudgetData>(budgetUrl),
       ])
 
       data.value = fetchedData || null
 
       if (yearsData) {
         availableYears.value = yearsData.availableYears
-        loadedYears.value = new Set(yearsData.initialYears)
+        const availableYearNumbers = new Set(yearsData.availableYears.map(y => y.year))
+        const preservedYears = previouslyLoadedYears.filter(year => availableYearNumbers.has(year))
+        const nextLoadedYears = preservedYears.length > 0 ? preservedYears : yearsData.initialYears
+        loadedYears.value = new Set(nextLoadedYears)
       }
 
       if (data.value) {
