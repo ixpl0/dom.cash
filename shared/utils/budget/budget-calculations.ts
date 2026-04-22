@@ -19,6 +19,7 @@ export const computeMonthData = (
   mainCurrency: string,
   monthNames: string[],
   plannedBalanceChange: number | null = null,
+  planComment: string | null = null,
 ): ComputedMonthData => {
   const monthId = createMonthId(monthData.year, monthData.month)
   const currentMonthRates = monthData.exchangeRates
@@ -135,6 +136,7 @@ export const computeMonthData = (
     plannedBalanceChange,
     plannedVsActualDiff,
     expectedBalance: null,
+    planComment,
   }
 }
 

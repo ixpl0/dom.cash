@@ -242,6 +242,7 @@ export default {
       expectedBalanceLine2: 'balance',
       expectedBalanceTooltip: 'Expected end-of-year balance based on the plan',
       endOfYearExpectedBalance: 'Expected balance at the end of the year',
+      planComment: 'Comment',
     },
 
     plan: {
@@ -249,6 +250,8 @@ export default {
       description: 'Enter the expected balance change in your main currency ({currency}). Positive — growth, negative — decline.',
       amountLabel: 'Balance change',
       amountPlaceholder: 'e.g. 50000 or -10000',
+      commentLabel: 'Comment',
+      commentPlaceholder: 'Optional',
       clear: 'Clear plan',
       savedToast: 'Plan saved',
       clearedToast: 'Plan cleared',

@@ -71,6 +71,7 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
     year: planRow.year,
     month: planRow.month,
     plannedBalanceChange: planRow.plannedBalanceChange,
+    comment: planRow.comment,
   }))
 
   return {
@@ -302,7 +303,7 @@ export const importBudget = async (
       }
 
       try {
-        await upsertPlan(userId, importPlan.year, importPlan.month, importPlan.plannedBalanceChange, event)
+        await upsertPlan(userId, importPlan.year, importPlan.month, importPlan.plannedBalanceChange, importPlan.comment ?? null, event)
         existingPlanKeys.add(planKey)
         return previousResult
       }

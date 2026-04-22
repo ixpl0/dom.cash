@@ -169,6 +169,7 @@ export const useBudgetStore = defineStore('budget', () => {
         effectiveMainCurrency.value,
         monthNames.value,
         planForMonth?.plannedBalanceChange ?? null,
+        planForMonth?.comment ?? null,
       )
     })
     return computeExpectedBalances(baseComputed)
@@ -625,12 +626,13 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
-  const upsertPlan = async (year: number, month: number, plannedBalanceChange: number | null): Promise<void> => {
+  const upsertPlan = async (year: number, month: number, plannedBalanceChange: number | null, comment: string | null = null): Promise<void> => {
     try {
-      const body: { year: number, month: number, plannedBalanceChange: number | null, targetUsername?: string } = {
+      const body: { year: number, month: number, plannedBalanceChange: number | null, comment: string | null, targetUsername?: string } = {
         year,
         month,
         plannedBalanceChange,
+        comment,
       }
       if (targetUsernameForApi.value) {
         body.targetUsername = targetUsernameForApi.value
@@ -643,7 +645,7 @@ export const useBudgetStore = defineStore('budget', () => {
       const updatedPlans = plans.value.some(planRow => createMonthId(planRow.year, planRow.month) === key)
         ? plans.value.map(planRow =>
             createMonthId(planRow.year, planRow.month) === key
-              ? { ...planRow, plannedBalanceChange: response.plannedBalanceChange, id: response.id }
+              ? { ...planRow, plannedBalanceChange: response.plannedBalanceChange, comment: response.comment, id: response.id }
               : planRow,
           )
         : [...plans.value, response]

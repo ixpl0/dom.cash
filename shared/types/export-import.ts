@@ -23,6 +23,7 @@ export interface BudgetExportPlan {
   year: number
   month: number
   plannedBalanceChange: number | null
+  comment?: string | null
 }
 
 export interface BudgetExportEntry {
@@ -74,6 +75,7 @@ export const budgetExportPlanSchema = z.object({
   year: z.number().int().min(1900).max(2100),
   month: z.number().int().min(0).max(11),
   plannedBalanceChange: z.number().int().nullable(),
+  comment: z.string().max(2000).nullable().optional(),
 })
 
 export const budgetExportSchema = z.object({

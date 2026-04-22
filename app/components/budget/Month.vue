@@ -96,6 +96,7 @@ const uiMonthData = computed((): UiMonthData => ({
   plannedBalanceChange: monthData.value.plannedBalanceChange,
   plannedVsActualDiff: monthData.value.plannedVsActualDiff,
   expectedBalance: monthData.value.expectedBalance,
+  planComment: monthData.value.planComment,
 }))
 
 const labels = computed((): UiMonthLabels => ({
@@ -220,7 +221,7 @@ const openCurrencyRatesModal = (): void => {
   })
 }
 
-const openPlanModal = (): void => {
+const openPlanModal = (focusField: 'amount' | 'comment' = 'amount'): void => {
   if (isReadOnly.value || isPastMonthValue.value) {
     return
   }
@@ -229,6 +230,8 @@ const openPlanModal = (): void => {
     month: monthData.value.month,
     monthTitle: `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`,
     currentValue: monthData.value.plannedBalanceChange,
+    currentComment: monthData.value.planComment,
+    focusField,
   })
 }
 

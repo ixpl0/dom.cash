@@ -88,6 +88,7 @@ export const plan = sqliteTable(
     year: integer('year').notNull(),
     month: integer('month').notNull(),
     plannedBalanceChange: integer('planned_balance_change'),
+    comment: text('comment'),
   },
   t => [
     unique('uq_plan_user_year_month').on(t.userId, t.year, t.month),

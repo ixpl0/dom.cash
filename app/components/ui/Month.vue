@@ -208,7 +208,7 @@
                 'text-base-content': data.plannedBalanceChange === null || data.plannedBalanceChange === 0,
               }"
               :disabled="isReadOnly || isPastMonth"
-              @click="$emit('planClick')"
+              @click="$emit('planClick', 'amount')"
             >
               <span>{{ planMainText }}</span>
               <span
@@ -247,10 +247,43 @@
             </button>
           </div>
         </div>
+
+        <div
+          v-if="isPlanningMode"
+          :ref="setCardRef(10)"
+          class="text-center"
+          :class="{ tooltip: data.planComment !== null && data.planComment !== '' }"
+          :data-tip="data.planComment || undefined"
+        >
+          <div class="column-content w-fit max-w-xs mx-auto">
+            <button
+              type="button"
+              class="btn btn-ghost normal-case font-normal text-left w-full max-w-xs px-3 py-2 h-auto min-h-0"
+              :disabled="isReadOnly || isPastMonth"
+              data-testid="plan-comment-button"
+              @click="$emit('planClick', 'comment')"
+            >
+              <span
+                v-if="data.planComment"
+                class="block text-sm text-base-content truncate w-full"
+                data-testid="plan-comment-text"
+              >
+                {{ data.planComment }}
+              </span>
+              <span
+                v-else
+                class="block text-xl text-base-content/50 text-center w-full"
+                data-testid="plan-comment-empty"
+              >
+                —
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div
-        :ref="setCardRef(10)"
+        :ref="setCardRef(11)"
         class="w-10 flex justify-center"
       >
         <div
@@ -290,6 +323,7 @@ export interface UiMonthData {
   plannedBalanceChange: number | null
   plannedVsActualDiff: number | null
   expectedBalance: number | null
+  planComment: string | null
 }
 
 export interface UiMonthLabels {
@@ -334,7 +368,7 @@ defineEmits<{
   expenseClick: []
   currencyRatesClick: []
   deleteClick: []
-  planClick: []
+  planClick: [focusField: 'amount' | 'comment']
 }>()
 
 const planMainText = computed(() => {

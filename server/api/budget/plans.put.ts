@@ -13,13 +13,14 @@ const bodySchema = z.object({
   year: z.number().int().min(1900).max(2100),
   month: z.number().int().min(0).max(11),
   plannedBalanceChange: z.number().int().nullable(),
+  comment: z.string().max(2000).nullable().optional(),
   targetUsername: z.string().optional(),
 })
 
 export default defineEventHandler(async (event) => {
   try {
     const currentUser = await requireAuth(event)
-    const { year, month, plannedBalanceChange, targetUsername } = await parseBody(event, bodySchema)
+    const { year, month, plannedBalanceChange, comment, targetUsername } = await parseBody(event, bodySchema)
 
     let targetUserId = currentUser.id
 
@@ -52,7 +53,15 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const saved = await upsertPlan(targetUserId, year, month, plannedBalanceChange, event)
+    const normalizedComment = (() => {
+      if (comment === undefined || comment === null) {
+        return null
+      }
+      const trimmed = comment.trim()
+      return trimmed.length === 0 ? null : trimmed
+    })()
+
+    const saved = await upsertPlan(targetUserId, year, month, plannedBalanceChange, normalizedComment, event)
 
     try {
       const { createNotification } = await import('~~/server/services/notifications')

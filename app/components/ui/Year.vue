@@ -399,7 +399,18 @@
           </div>
 
           <div
+            v-if="isPlanningMode"
             :ref="setHeaderRef(10)"
+          >
+            <div class="column-content w-fit max-w-xs mx-auto px-2 text-center">
+              <div class="text-sm text-base-content/70 font-semibold h-12 flex items-center justify-center">
+                {{ labels.planComment }}
+              </div>
+            </div>
+          </div>
+
+          <div
+            :ref="setHeaderRef(11)"
             class="w-10"
           />
         </div>
@@ -485,6 +496,7 @@ export interface UiYearLabels {
   expectedBalanceLine2: string
   expectedBalanceTooltip: string
   endOfYearExpectedBalance: string
+  planComment: string
 }
 
 interface Props {

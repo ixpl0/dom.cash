@@ -19,6 +19,7 @@ export interface PlanData {
   year: number
   month: number
   plannedBalanceChange: number | null
+  comment: string | null
 }
 
 export interface ComputedMonthData extends MonthData {
@@ -37,6 +38,7 @@ export interface ComputedMonthData extends MonthData {
   plannedBalanceChange: number | null
   plannedVsActualDiff: number | null
   expectedBalance: number | null
+  planComment: string | null
 }
 
 export interface YearSummary {

@@ -377,6 +377,7 @@ const yearLabels = computed((): UiYearLabels => ({
   expectedBalanceLine2: t('budget.year.expectedBalanceLine2'),
   expectedBalanceTooltip: t('budget.year.expectedBalanceTooltip'),
   endOfYearExpectedBalance: t('budget.year.endOfYearExpectedBalance'),
+  planComment: t('budget.year.planComment'),
 }))
 
 interface DemoMonth {
@@ -412,6 +413,7 @@ const demoData = computed((): DemoData => {
         plannedBalanceChange: null,
         plannedVsActualDiff: null,
         expectedBalance: null,
+        planComment: null,
       },
     },
     {
@@ -429,6 +431,7 @@ const demoData = computed((): DemoData => {
         plannedBalanceChange: null,
         plannedVsActualDiff: null,
         expectedBalance: null,
+        planComment: null,
       },
     },
     {
@@ -446,6 +449,7 @@ const demoData = computed((): DemoData => {
         plannedBalanceChange: null,
         plannedVsActualDiff: null,
         expectedBalance: null,
+        planComment: null,
       },
     },
   ]

@@ -51,9 +51,28 @@
         >
       </div>
 
+      <div>
+        <label
+          class="label"
+          for="plan-comment-input"
+        >
+          <span class="label-text">{{ t('budget.plan.commentLabel') }}</span>
+        </label>
+        <input
+          id="plan-comment-input"
+          ref="commentInputRef"
+          v-model="commentInput"
+          type="text"
+          class="input input-bordered w-full"
+          maxlength="2000"
+          :placeholder="t('budget.plan.commentPlaceholder')"
+          data-testid="plan-comment-input"
+        >
+      </div>
+
       <div class="flex justify-between gap-2 pt-2">
         <button
-          v-if="planModal.currentValue !== null"
+          v-if="planModal.currentValue !== null || planModal.currentComment !== null"
           type="button"
           class="btn btn-ghost btn-error"
           :disabled="isSaving"
@@ -113,10 +132,12 @@ const planModal = computed(() => modalsStore.planModal)
 const isOpen = computed(() => planModal.value.isOpen)
 
 const amountInput = ref<number | string>('')
+const commentInput = ref<string>('')
 const amountInputRef = ref<HTMLInputElement | null>(null)
+const commentInputRef = ref<HTMLInputElement | null>(null)
 const isSaving = ref(false)
 
-const isValid = computed(() => {
+const isAmountFilled = computed(() => {
   if (typeof amountInput.value === 'number') {
     return Number.isFinite(amountInput.value)
   }
@@ -125,6 +146,10 @@ const isValid = computed(() => {
     return Number.isFinite(parsed)
   }
   return false
+})
+
+const isValid = computed(() => {
+  return isAmountFilled.value || commentInput.value.trim() !== ''
 })
 
 const hide = (): void => {
@@ -138,13 +163,16 @@ const save = async (): Promise<void> => {
     return
   }
 
-  const numericValue = typeof amountInput.value === 'number'
-    ? amountInput.value
-    : Number(amountInput.value)
+  const plannedBalanceChange = isAmountFilled.value
+    ? Math.round(typeof amountInput.value === 'number' ? amountInput.value : Number(amountInput.value))
+    : null
+
+  const trimmedComment = commentInput.value.trim()
+  const commentToSave = trimmedComment.length === 0 ? null : trimmedComment
 
   isSaving.value = true
   try {
-    await budgetStore.upsertPlan(currentYear, currentMonth, Math.round(numericValue))
+    await budgetStore.upsertPlan(currentYear, currentMonth, plannedBalanceChange, commentToSave)
     toast({ type: 'success', message: t('budget.plan.savedToast') })
     hide()
   }
@@ -180,9 +208,16 @@ const clearPlan = async (): Promise<void> => {
 watch(isOpen, async (open) => {
   if (open) {
     amountInput.value = planModal.value.currentValue ?? ''
+    commentInput.value = planModal.value.currentComment ?? ''
     await nextTick()
-    amountInputRef.value?.focus()
-    amountInputRef.value?.select()
+    if (planModal.value.focusField === 'comment') {
+      commentInputRef.value?.focus()
+      commentInputRef.value?.select()
+    }
+    else {
+      amountInputRef.value?.focus()
+      amountInputRef.value?.select()
+    }
   }
 })
 </script>

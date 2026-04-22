@@ -12,6 +12,7 @@ export const getUserPlans = async (userId: string, event: H3Event): Promise<Plan
       year: plan.year,
       month: plan.month,
       plannedBalanceChange: plan.plannedBalanceChange,
+      comment: plan.comment,
     })
     .from(plan)
     .where(eq(plan.userId, userId))
@@ -25,6 +26,7 @@ export const upsertPlan = async (
   year: number,
   month: number,
   plannedBalanceChange: number | null,
+  comment: string | null,
   event: H3Event,
 ): Promise<PlanData> => {
   const db = useDatabase(event)
@@ -44,7 +46,7 @@ export const upsertPlan = async (
   if (existingPlan) {
     await db
       .update(plan)
-      .set({ plannedBalanceChange })
+      .set({ plannedBalanceChange, comment })
       .where(eq(plan.id, existingPlan.id))
 
     return {
@@ -52,6 +54,7 @@ export const upsertPlan = async (
       year,
       month,
       plannedBalanceChange,
+      comment,
     }
   }
 
@@ -62,9 +65,10 @@ export const upsertPlan = async (
     year,
     month,
     plannedBalanceChange,
+    comment,
   })
 
-  return { id, year, month, plannedBalanceChange }
+  return { id, year, month, plannedBalanceChange, comment }
 }
 
 export const deletePlan = async (

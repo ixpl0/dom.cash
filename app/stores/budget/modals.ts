@@ -34,6 +34,8 @@ interface PlanModalState {
   month: number | null
   monthTitle: string
   currentValue: number | null
+  currentComment: string | null
+  focusField: 'amount' | 'comment'
 }
 
 export const useModalsStore = defineStore('modals', () => {
@@ -73,6 +75,8 @@ export const useModalsStore = defineStore('modals', () => {
     month: null,
     monthTitle: '',
     currentValue: null,
+    currentComment: null,
+    focusField: 'amount',
   })
 
   const openEntryModal = (params: {
@@ -153,6 +157,8 @@ export const useModalsStore = defineStore('modals', () => {
     month: number
     monthTitle: string
     currentValue: number | null
+    currentComment: string | null
+    focusField?: 'amount' | 'comment'
   }) => {
     planModal.value = {
       isOpen: true,
@@ -160,6 +166,8 @@ export const useModalsStore = defineStore('modals', () => {
       month: params.month,
       monthTitle: params.monthTitle,
       currentValue: params.currentValue,
+      currentComment: params.currentComment,
+      focusField: params.focusField ?? 'amount',
     }
   }
 
