@@ -118,17 +118,17 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const togglePlanningMode = async (): Promise<void> => {
     const willEnter = !isPlanningMode.value
-    isPlanningMode.value = willEnter
     if (willEnter) {
       await ensurePlansLoaded()
     }
+    isPlanningMode.value = willEnter
   }
 
   const setPlanningMode = async (value: boolean): Promise<void> => {
-    isPlanningMode.value = value
     if (value) {
       await ensurePlansLoaded()
     }
+    isPlanningMode.value = value
   }
 
   const months = computed((): MonthData[] => {
