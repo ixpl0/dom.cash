@@ -33,8 +33,8 @@ const { subscribeToBudgetByUsername, unsubscribeFromBudgetByUsername } = useNoti
 const { hideWarningBanner } = useOutdatedBanner()
 
 useVisibilityRefresh(async () => {
-  await budgetStore.forceRefresh(targetUsername)
   hideWarningBanner()
+  reloadNuxtApp({ force: true, ttl: 0 })
 })
 
 await budgetStore.refresh(targetUsername)
