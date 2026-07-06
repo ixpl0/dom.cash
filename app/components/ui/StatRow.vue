@@ -7,15 +7,15 @@
     :data-testid="testId"
     @click="handleClick"
   >
-    <span class="text-sm text-base-content/70">{{ label }}</span>
-    <span class="text-right">
+    <span class="text-sm text-base-content/70 flex-shrink-0">{{ label }}</span>
+    <span class="min-w-0 text-right">
       <span
-        class="block font-semibold whitespace-nowrap"
+        class="block font-semibold truncate"
         :class="valueClass"
       >{{ valueText }}</span>
       <span
         v-if="secondaryText"
-        class="block text-xs whitespace-nowrap"
+        class="block text-xs truncate"
         :class="secondaryClass"
       >{{ secondaryText }}</span>
     </span>

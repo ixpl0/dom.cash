@@ -112,6 +112,7 @@ const labels = computed((): UiMonthLabels => ({
   optionalExpenses: `${t('budget.year.optionalExpensesLine1')} ${t('budget.year.optionalExpensesLine2')}`,
   planned: `${t('budget.year.plannedLine1')} ${t('budget.year.plannedLine2')}`,
   expectedBalance: `${t('budget.year.expectedBalanceLine1')} ${t('budget.year.expectedBalanceLine2')}`,
+  planComment: t('budget.year.planComment'),
 }))
 
 const monthBadgeTooltip = computed(() => {

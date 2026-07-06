@@ -384,9 +384,10 @@ export interface UiMonthLabels {
   optionalExpenses: string
   planned: string
   expectedBalance: string
+  planComment: string
 }
 
-type MonthStatEvent = 'balanceClick' | 'incomeClick' | 'expenseClick' | 'planClick'
+type MonthStatEvent = 'balanceClick' | 'incomeClick' | 'expenseClick' | 'planClick' | 'planCommentClick'
 
 interface MonthStatItem {
   key: string
@@ -515,6 +516,16 @@ const mobileStats = computed((): MonthStatItem[] => {
         clickable: false,
         testId: 'expected-balance-button',
       },
+      {
+        key: 'planComment',
+        label: props.labels.planComment,
+        valueText: props.data.planComment || '—',
+        valueClass: props.data.planComment ? 'font-normal text-sm text-base-content' : 'text-base-content/50',
+        clickable: true,
+        disabled: props.isReadOnly || props.isPastMonth,
+        testId: 'plan-comment-button',
+        event: 'planCommentClick',
+      },
     ]
   }
 
@@ -587,7 +598,10 @@ const handleStatActivate = (event?: MonthStatEvent): void => {
     emit('expenseClick')
   }
   else if (event === 'planClick') {
-    emit('planClick')
+    emit('planClick', 'amount')
+  }
+  else if (event === 'planCommentClick') {
+    emit('planClick', 'comment')
   }
 }
 
