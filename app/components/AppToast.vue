@@ -1,5 +1,5 @@
 <template>
-  <div class="toast toast-top toast-end z-[99999]">
+  <div class="toast toast-top toast-end z-[99999] max-w-[calc(100vw-2rem)]">
     <div
       v-for="toast in toasts"
       :key="toast.id"
@@ -8,7 +8,7 @@
       class="alert shadow-lg cursor-pointer"
       @click="removeToast(toast.id)"
     >
-      <span>{{ toast.message }}</span>
+      <span class="whitespace-normal break-words">{{ toast.message }}</span>
     </div>
   </div>
 </template>

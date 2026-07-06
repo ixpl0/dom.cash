@@ -3,7 +3,7 @@
     v-if="isOutdatedBannerVisible"
     class="alert alert-error alert-soft flex"
   >
-    <div class="flex items-center justify-between max-w-7xl mx-auto gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between max-w-7xl mx-auto gap-3 sm:gap-4">
       <div class="flex items-center gap-3">
         <Icon
           name="heroicons:exclamation-triangle-solid"
@@ -15,7 +15,7 @@
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center justify-end gap-2">
         <button
           class="btn btn-sm btn-outline"
           @click="refreshPage"

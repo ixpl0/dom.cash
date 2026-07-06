@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="confirmation-modal"
-    content-class="modal-box w-11/12 max-w-md relative overflow-visible"
+    content-class="modal-box sm:max-w-md relative overflow-visible"
     :close-on-backdrop="true"
     :close-on-esc="false"
     :z-index="9999"

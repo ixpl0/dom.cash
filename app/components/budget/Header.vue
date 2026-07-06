@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center justify-between flex-wrap gap-4 p-6 pb-0 relative z-10"
+    class="flex items-center justify-between flex-wrap gap-4 p-4 sm:p-6 pb-0 sm:pb-0 relative z-10"
     data-testid="budget-header"
   >
     <h1

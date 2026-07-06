@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="import-modal"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] flex flex-col"
+    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl flex flex-col"
     @close="hide"
   >
     <h3 class="font-bold text-lg mb-4 flex-shrink-0">
@@ -148,7 +148,7 @@
       </div>
     </div>
 
-    <div class="modal-action flex-shrink-0">
+    <div class="modal-action flex-shrink-0 flex-wrap">
       <button
         v-if="!importResult"
         class="btn btn-ghost"

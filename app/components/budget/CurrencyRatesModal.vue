@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="currency-rates-modal"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] flex flex-col"
+    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-3xl flex flex-col"
     @close="hide"
   >
     <button
@@ -43,7 +43,7 @@
       >
     </div>
 
-    <div class="space-y-2 flex-1 overflow-y-auto overflow-x-auto min-h-0">
+    <div class="space-y-2 flex-1 overflow-y-auto min-h-0">
       <div
         v-if="filteredRates.length === 0"
         class="text-center py-8 text-base-content/60"
@@ -59,14 +59,16 @@
           :key="rate.code"
           class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors gap-3"
         >
-          <div class="font-semibold text-lg">
-            {{ rate.code }}
-          </div>
-          <div class="text-sm opacity-70 text-center">
-            {{ rate.name }}
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-lg">
+              {{ rate.code }}
+            </div>
+            <div class="text-sm opacity-70 truncate">
+              {{ rate.name }}
+            </div>
           </div>
           <div
-            class="font-mono text-lg"
+            class="font-mono text-lg whitespace-nowrap"
             :data-testid="`rate-${rate.code}`"
           >
             {{ formatRate(rate.rate) }}

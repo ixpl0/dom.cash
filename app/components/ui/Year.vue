@@ -1,6 +1,35 @@
 <template>
   <div data-testid="budget-year">
-    <div class="w-fit mx-auto rounded-box mb-2">
+    <div
+      v-if="isMobileViewport"
+      class="collapse collapse-arrow bg-base-200/50 rounded-box mb-2"
+    >
+      <input type="checkbox">
+      <div class="collapse-title flex items-center">
+        <h2 class="text-3xl font-bold">
+          {{ year }}
+        </h2>
+      </div>
+      <div class="collapse-content">
+        <div class="flex flex-col">
+          <UiStatRow
+            v-for="stat in mobileStats"
+            :key="stat.key"
+            :label="stat.label"
+            :value-text="stat.valueText"
+            :value-class="stat.valueClass"
+            :secondary-text="stat.secondaryText"
+            :secondary-class="stat.secondaryClass"
+            :test-id="stat.testId"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-else
+      class="w-fit mx-auto rounded-box mb-2"
+    >
       <div class="flex items-center gap-4 px-4 py-2">
         <h2 class="text-5xl font-bold w-28 flex-shrink-0">
           {{ year }}
@@ -511,6 +540,132 @@ const props = withDefaults(defineProps<Props>(), {
   isPlanningMode: false,
 })
 
+const { isMobileViewport } = useIsMobileViewport()
+
+interface YearStatItem {
+  key: string
+  label: string
+  valueText: string
+  valueClass: string
+  secondaryText?: string
+  secondaryClass?: string
+  testId?: string
+}
+
+const signedValueClass = (value: number | null, positiveClass: string, negativeClass: string): string => {
+  if (value !== null && value > 0) {
+    return positiveClass
+  }
+  if (value !== null && value < 0) {
+    return negativeClass
+  }
+  return 'text-base-content'
+}
+
+const mobileStats = computed((): YearStatItem[] => {
+  const balanceStat: YearStatItem = {
+    key: 'balance',
+    label: props.labels.balance,
+    valueText: props.formatAmount(props.stats.averageBalance),
+    valueClass: signedValueClass(props.stats.averageBalance, 'text-primary', 'text-primary'),
+    testId: 'year-average-balance',
+  }
+
+  const balanceChangeStat: YearStatItem = {
+    key: 'balanceChange',
+    label: `${props.labels.balanceChangeLine1} ${props.labels.balanceChangeLine2}`,
+    valueText: props.formatAmount(props.stats.totalBalanceChange),
+    valueClass: signedValueClass(props.stats.totalBalanceChange, 'text-success', 'text-error'),
+    secondaryText: props.formatAmount(props.stats.averageBalanceChange),
+    secondaryClass: signedValueClass(props.stats.averageBalanceChange, 'text-success/80', 'text-error/80'),
+    testId: 'year-total-balance-change',
+  }
+
+  if (props.isPlanningMode) {
+    return [
+      balanceStat,
+      balanceChangeStat,
+      {
+        key: 'planned',
+        label: `${props.labels.plannedLine1} ${props.labels.plannedLine2}`,
+        valueText: props.stats.plannedMonthCount > 0 ? props.formatAmount(props.stats.totalPlannedBalanceChange) : '—',
+        valueClass: signedValueClass(props.stats.totalPlannedBalanceChange, 'text-info', 'text-warning'),
+        secondaryText: props.stats.plannedDiffMonthCount > 0
+          ? `${props.stats.totalPlannedVsActualDiff > 0 ? '+' : ''}${props.formatAmount(props.stats.totalPlannedVsActualDiff)}`
+          : '',
+        secondaryClass: signedValueClass(props.stats.totalPlannedVsActualDiff, 'text-success', 'text-error'),
+        testId: 'year-total-planned',
+      },
+      {
+        key: 'expectedBalance',
+        label: `${props.labels.expectedBalanceLine1} ${props.labels.expectedBalanceLine2}`,
+        valueText: props.stats.endOfYearExpectedBalance !== null ? props.formatAmount(props.stats.endOfYearExpectedBalance) : '—',
+        valueClass: signedValueClass(props.stats.endOfYearExpectedBalance, 'text-primary', 'text-error'),
+        testId: 'year-end-expected-balance',
+      },
+    ]
+  }
+
+  return [
+    balanceStat,
+    {
+      key: 'income',
+      label: props.labels.income,
+      valueText: props.formatAmount(props.stats.totalIncome),
+      valueClass: signedValueClass(props.stats.totalIncome, 'text-success', 'text-success'),
+      secondaryText: props.formatAmount(props.stats.averageIncome),
+      secondaryClass: signedValueClass(props.stats.averageIncome, 'text-success/80', 'text-success/80'),
+      testId: 'year-total-income',
+    },
+    {
+      key: 'majorExpenses',
+      label: `${props.labels.majorExpensesLine1} ${props.labels.majorExpensesLine2}`,
+      valueText: props.formatAmount(props.stats.totalExpenses),
+      valueClass: signedValueClass(props.stats.totalExpenses, 'text-error', 'text-error'),
+      secondaryText: props.formatAmount(props.stats.averageExpenses),
+      secondaryClass: signedValueClass(props.stats.averageExpenses, 'text-error/80', 'text-error/80'),
+      testId: 'year-total-expenses',
+    },
+    {
+      key: 'pocketExpenses',
+      label: `${props.labels.pocketExpensesLine1} ${props.labels.pocketExpensesLine2}`,
+      valueText: props.formatAmount(props.stats.totalPocketExpenses),
+      valueClass: signedValueClass(props.stats.totalPocketExpenses, 'text-error', 'text-warning'),
+      secondaryText: props.formatAmount(props.stats.averagePocketExpenses),
+      secondaryClass: signedValueClass(props.stats.averagePocketExpenses, 'text-error/80', 'text-warning/80'),
+      testId: 'year-total-pocket-expenses',
+    },
+    {
+      key: 'allExpenses',
+      label: props.labels.allExpenses,
+      valueText: props.formatAmount(props.stats.totalAllExpenses),
+      valueClass: signedValueClass(props.stats.totalAllExpenses, 'text-error', 'text-warning'),
+      secondaryText: props.formatAmount(props.stats.averageAllExpenses),
+      secondaryClass: signedValueClass(props.stats.averageAllExpenses, 'text-error/80', 'text-warning/80'),
+      testId: 'year-total-all-expenses',
+    },
+    balanceChangeStat,
+    {
+      key: 'currencyFluctuations',
+      label: `${props.labels.currencyFluctuationsLine1} ${props.labels.currencyFluctuationsLine2}`,
+      valueText: props.formatAmount(props.stats.totalCurrencyProfitLoss),
+      valueClass: signedValueClass(props.stats.totalCurrencyProfitLoss, 'text-success', 'text-error'),
+      secondaryText: props.formatAmount(props.stats.averageCurrencyProfitLoss),
+      secondaryClass: signedValueClass(props.stats.averageCurrencyProfitLoss, 'text-success/80', 'text-error/80'),
+      testId: 'year-total-currency-profit-loss',
+    },
+    {
+      key: 'optionalExpenses',
+      label: `${props.labels.optionalExpensesLine1} ${props.labels.optionalExpensesLine2}`,
+      valueText: props.formatAmount(props.stats.totalOptionalExpenses),
+      valueClass: signedValueClass(props.stats.totalOptionalExpenses, 'text-error', 'text-error'),
+      secondaryText: props.formatAmount(props.stats.averageOptionalExpenses),
+      secondaryClass: signedValueClass(props.stats.averageOptionalExpenses, 'text-error/80', 'text-error/80'),
+      testId: 'year-total-optional-expenses',
+    },
+  ]
+})
+
 const columnsSync = inject(timelineColumnsSyncKey, null)
 
 const headerRefs = ref<HTMLElement[]>([])
@@ -554,8 +709,9 @@ onUnmounted(() => {
   unregisterCurrent()
 })
 
-watch(() => props.isPlanningMode, async () => {
+watch([() => props.isPlanningMode, isMobileViewport], async () => {
   unregisterCurrent()
+  headerRefs.value = []
   await nextTick()
   registerCurrent()
 })

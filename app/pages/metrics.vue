@@ -8,6 +8,7 @@ const { user: currentUser } = useAuth()
 const { confirm } = useConfirmation()
 const { toast } = useToast()
 const preferencesStore = usePreferencesStore()
+const { isMobileViewport } = useIsMobileViewport()
 
 if (!currentUser.value) {
   throw createError({
@@ -150,12 +151,12 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
       {{ t('metrics.dashboardTitle') }}
     </h1>
 
-    <div class="bg-base-100 p-6 rounded-lg shadow-md border border-base-300 animate-fade-in-up-delayed">
-      <div class="flex justify-between items-center mb-4">
+    <div class="bg-base-100 p-4 sm:p-6 rounded-lg shadow-md border border-base-300 animate-fade-in-up-delayed">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <h2 class="text-xl font-semibold">
           {{ t('metrics.usersTitle') }}
         </h2>
-        <div class="form-control w-full max-w-xs">
+        <div class="form-control w-full sm:max-w-xs">
           <input
             :value="search"
             type="text"
@@ -167,7 +168,74 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <div
+        v-if="isMobileViewport"
+        class="flex flex-col gap-2"
+      >
+        <div
+          v-if="pending && !users.length"
+          class="text-center py-4"
+        >
+          {{ t('metrics.loading') }}
+        </div>
+        <div
+          v-else-if="users.length === 0"
+          class="text-center py-4"
+        >
+          {{ t('metrics.noUsersFound') }}
+        </div>
+        <div
+          v-for="user in users"
+          :key="user.id"
+          class="flex flex-col gap-2 rounded-box bg-base-200 p-3"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0 flex-1 break-all font-bold">
+              {{ user.username }}
+            </div>
+            <button
+              v-if="!user.isAdmin"
+              class="btn btn-sm btn-error flex-shrink-0"
+              :disabled="deletingUserId === user.id"
+              data-testid="delete-user-button"
+              @click="deleteUser(user)"
+            >
+              <span
+                v-if="deletingUserId === user.id"
+                class="loading loading-spinner loading-xs"
+              />
+              <Icon
+                v-else
+                name="heroicons:trash"
+                size="16"
+              />
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <div
+              class="badge whitespace-nowrap"
+              :class="user.emailVerified ? 'badge-success' : 'badge-error'"
+            >
+              {{ user.emailVerified ? t('metrics.statusVerified') : t('metrics.statusUnverified') }}
+            </div>
+            <div
+              class="badge whitespace-nowrap"
+              :class="user.isAdmin ? 'badge-primary' : 'badge-ghost'"
+            >
+              {{ user.isAdmin ? t('metrics.roleAdmin') : t('metrics.roleUser') }}
+            </div>
+          </div>
+          <div class="text-sm opacity-70">
+            <div>{{ t('metrics.registeredColumn') }}: {{ formatDate(user.createdAt) }}</div>
+            <div>{{ t('metrics.lastActivityColumn') }}: {{ formatDateTime(user.lastActivityAt) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-else
+        class="overflow-x-auto"
+      >
         <table
           class="table table-zebra w-full"
           data-testid="users-table"

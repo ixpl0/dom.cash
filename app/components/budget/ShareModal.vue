@@ -1,7 +1,7 @@
 <template>
   <UiDialog
     :is-open="isOpen"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] flex flex-col"
+    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-3xl flex flex-col"
     data-testid="share-modal"
     @close="hide"
   >
@@ -21,153 +21,51 @@
       {{ t('share.title') }}
     </h3>
 
-    <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
-      <div
-        v-if="shares.length || isAddingNew"
-        class="min-w-[500px]"
-      >
-        <table
-          class="table"
+    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
+      <div v-if="shares.length || isAddingNew">
+        <div
+          class="flex flex-col gap-2"
           data-testid="share-table"
         >
-          <thead>
-            <tr>
-              <th>{{ t('share.username') }}</th>
-              <th>{{ t('share.accessLevel') }}</th>
-              <th class="w-1">
-                {{ t('share.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="share in shares"
-              :key="share.id"
-              data-testid="share-row"
-            >
-              <td>
-                <span data-testid="share-username">{{ share.username }}</span>
-              </td>
-              <td>
-                <select
-                  v-if="editingId === share.id"
-                  v-model="editingShare.access"
-                  class="select select-sm select-bordered w-full max-w-xs"
-                  data-testid="share-edit-access-select"
-                >
-                  <option value="read">
-                    {{ t('share.accessRead') }}
-                  </option>
-                  <option value="write">
-                    {{ t('share.accessWrite') }}
-                  </option>
-                </select>
-                <span
-                  v-else
-                  data-testid="share-access"
-                >{{ getAccessText(share.access) }}</span>
-              </td>
-              <td class="w-1">
-                <div class="flex gap-2">
-                  <template v-if="editingId === share.id">
-                    <button
-                      class="btn btn-sm btn-success"
-                      :disabled="isSaving"
-                      data-testid="share-save-button"
-                      @click="saveShare()"
-                    >
-                      <span
-                        v-if="isSaving"
-                        class="loading loading-spinner loading-xs"
-                      />
-                      <Icon
-                        v-else
-                        name="heroicons:check"
-                        size="16"
-                      />
-                    </button>
-                    <button
-                      class="btn btn-sm btn-ghost"
-                      data-testid="share-cancel-edit-button"
-                      @click="cancelEdit()"
-                    >
-                      <Icon
-                        name="heroicons:x-mark"
-                        size="16"
-                      />
-                    </button>
-                  </template>
-                  <template v-else>
-                    <button
-                      class="btn btn-sm btn-warning"
-                      data-testid="share-edit-button"
-                      @click="startEdit(share)"
-                    >
-                      <Icon
-                        name="heroicons:pencil-square"
-                        size="16"
-                      />
-                    </button>
-                    <button
-                      class="btn btn-sm btn-error"
-                      :disabled="isDeleting === share.id"
-                      data-testid="share-delete-button"
-                      @click="deleteShare(share.id)"
-                    >
-                      <span
-                        v-if="isDeleting === share.id"
-                        class="loading loading-spinner loading-xs"
-                      />
-                      <Icon
-                        v-else
-                        name="heroicons:trash"
-                        size="16"
-                      />
-                    </button>
-                  </template>
-                </div>
-              </td>
-            </tr>
-            <tr
-              v-if="isAddingNew"
-              data-testid="share-new-row"
-            >
-              <td>
-                <input
-                  v-model="newShare.username"
-                  type="text"
-                  :placeholder="t('share.usernamePlaceholder')"
-                  class="input input-bordered w-full"
-                  data-testid="share-username-input"
-                  @keyup.enter="addShare()"
-                  @keyup.esc.stop="cancelAdd()"
-                >
-              </td>
-              <td>
-                <select
-                  v-model="newShare.access"
-                  class="select select-sm select-bordered w-full max-w-xs"
-                  data-testid="share-access-select"
-                >
-                  <option value="read">
-                    {{ t('share.accessRead') }}
-                  </option>
-                  <option value="write">
-                    {{ t('share.accessWrite') }}
-                  </option>
-                </select>
-              </td>
-              <td class="w-1">
-                <div class="flex gap-2">
+          <div
+            v-for="share in shares"
+            :key="share.id"
+            class="flex flex-col gap-3 rounded-box bg-base-200 p-3 sm:flex-row sm:items-center"
+            data-testid="share-row"
+          >
+            <span
+              class="min-w-0 flex-1 break-all font-medium"
+              data-testid="share-username"
+            >{{ share.username }}</span>
+            <div class="flex items-center justify-between gap-3">
+              <select
+                v-if="editingId === share.id"
+                v-model="editingShare.access"
+                class="select select-sm select-bordered min-w-0 flex-1 sm:w-48"
+                data-testid="share-edit-access-select"
+              >
+                <option value="read">
+                  {{ t('share.accessRead') }}
+                </option>
+                <option value="write">
+                  {{ t('share.accessWrite') }}
+                </option>
+              </select>
+              <span
+                v-else
+                class="text-sm text-base-content/70"
+                data-testid="share-access"
+              >{{ getAccessText(share.access) }}</span>
+              <div class="flex flex-shrink-0 gap-2">
+                <template v-if="editingId === share.id">
                   <button
-                    type="button"
                     class="btn btn-sm btn-success"
-                    :disabled="isAdding"
-                    data-testid="share-confirm-add-button"
-                    @click="addShare()"
+                    :disabled="isSaving"
+                    data-testid="share-save-button"
+                    @click="saveShare()"
                   >
                     <span
-                      v-if="isAdding"
+                      v-if="isSaving"
                       class="loading loading-spinner loading-xs"
                     />
                     <Icon
@@ -177,21 +75,108 @@
                     />
                   </button>
                   <button
-                    type="button"
                     class="btn btn-sm btn-ghost"
-                    data-testid="share-cancel-add-button"
-                    @click="cancelAdd()"
+                    data-testid="share-cancel-edit-button"
+                    @click="cancelEdit()"
                   >
                     <Icon
                       name="heroicons:x-mark"
                       size="16"
                     />
                   </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </template>
+                <template v-else>
+                  <button
+                    class="btn btn-sm btn-warning"
+                    data-testid="share-edit-button"
+                    @click="startEdit(share)"
+                  >
+                    <Icon
+                      name="heroicons:pencil-square"
+                      size="16"
+                    />
+                  </button>
+                  <button
+                    class="btn btn-sm btn-error"
+                    :disabled="isDeleting === share.id"
+                    data-testid="share-delete-button"
+                    @click="deleteShare(share.id)"
+                  >
+                    <span
+                      v-if="isDeleting === share.id"
+                      class="loading loading-spinner loading-xs"
+                    />
+                    <Icon
+                      v-else
+                      name="heroicons:trash"
+                      size="16"
+                    />
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="isAddingNew"
+            class="flex flex-col gap-3 rounded-box bg-base-200 p-3 sm:flex-row sm:items-center"
+            data-testid="share-new-row"
+          >
+            <input
+              v-model="newShare.username"
+              type="text"
+              :placeholder="t('share.usernamePlaceholder')"
+              class="input input-bordered min-w-0 flex-1"
+              data-testid="share-username-input"
+              @keyup.enter="addShare()"
+              @keyup.esc.stop="cancelAdd()"
+            >
+            <div class="flex items-center justify-between gap-3">
+              <select
+                v-model="newShare.access"
+                class="select select-sm select-bordered min-w-0 flex-1 sm:w-48"
+                data-testid="share-access-select"
+              >
+                <option value="read">
+                  {{ t('share.accessRead') }}
+                </option>
+                <option value="write">
+                  {{ t('share.accessWrite') }}
+                </option>
+              </select>
+              <div class="flex flex-shrink-0 gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-success"
+                  :disabled="isAdding"
+                  data-testid="share-confirm-add-button"
+                  @click="addShare()"
+                >
+                  <span
+                    v-if="isAdding"
+                    class="loading loading-spinner loading-xs"
+                  />
+                  <Icon
+                    v-else
+                    name="heroicons:check"
+                    size="16"
+                  />
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-ghost"
+                  data-testid="share-cancel-add-button"
+                  @click="cancelAdd()"
+                >
+                  <Icon
+                    name="heroicons:x-mark"
+                    size="16"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="flex justify-center mt-4">
           <button

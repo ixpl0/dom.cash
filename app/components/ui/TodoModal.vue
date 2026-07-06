@@ -1,7 +1,7 @@
 <template>
   <UiDialog
     :is-open="isOpen"
-    content-class="modal-box w-full max-w-lg"
+    content-class="modal-box max-h-[85dvh] overflow-y-auto sm:max-w-lg"
     data-testid="todo-modal"
     @close="$emit('close')"
   >

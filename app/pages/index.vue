@@ -329,6 +329,16 @@ const formatDemoAmount = (amount: number): string => {
 const monthLabels = computed((): UiMonthLabels => ({
   deleteMonth: t('budget.month.deleteMonth'),
   addPlan: t('budget.month.addPlan'),
+  balance: t('budget.year.balance'),
+  income: t('budget.year.income'),
+  majorExpenses: `${t('budget.year.majorExpensesLine1')} ${t('budget.year.majorExpensesLine2')}`,
+  pocketExpenses: `${t('budget.year.pocketExpensesLine1')} ${t('budget.year.pocketExpensesLine2')}`,
+  allExpenses: t('budget.year.allExpenses'),
+  balanceChange: `${t('budget.year.balanceChangeLine1')} ${t('budget.year.balanceChangeLine2')}`,
+  currencyFluctuations: `${t('budget.year.currencyFluctuationsLine1')} ${t('budget.year.currencyFluctuationsLine2')}`,
+  optionalExpenses: `${t('budget.year.optionalExpensesLine1')} ${t('budget.year.optionalExpensesLine2')}`,
+  planned: `${t('budget.year.plannedLine1')} ${t('budget.year.plannedLine2')}`,
+  expectedBalance: `${t('budget.year.expectedBalanceLine1')} ${t('budget.year.expectedBalanceLine2')}`,
 }))
 
 const yearLabels = computed((): UiYearLabels => ({

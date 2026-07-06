@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="entry-modal"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] flex flex-col overflow-visible"
+    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl flex flex-col overflow-visible"
     @close="$emit('close')"
   >
     <button
@@ -17,155 +17,210 @@
       />
     </button>
 
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
+    <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-8">
       {{ title }}<template v-if="totalAmount">
         : {{ totalAmount }}
       </template>
     </h3>
 
-    <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
-      <div
-        v-if="entries.length || isAddingNewEntry"
-        class="min-w-[600px]"
-      >
-        <table class="table text-center">
-          <thead>
-            <tr>
-              <th>{{ descriptionLabel }}</th>
-              <th>{{ amountLabel }}</th>
-              <th>{{ currencyLabel }}</th>
-              <th v-if="entryKind !== 'balance'">
-                {{ dateLabel }}
-              </th>
-              <th v-if="entryKind === 'expense'">
-                {{ optionalLabel }}
-              </th>
-              <th class="w-1">
-                {{ actionsLabel }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <template
-              v-for="entry in entries"
-              :key="entry.id"
-            >
-              <UiEntryEditRow
-                v-if="editingEntryId === entry.id"
-                :model-value="editingEntry"
-                :entry-kind="entryKind"
-                :is-saving="isSaving"
-                :description-placeholder="descriptionPlaceholder"
-                :amount-placeholder="amountPlaceholder"
-                @update:model-value="$emit('update:editingEntry', $event)"
-                @save="$emit('saveEdit')"
-                @cancel="$emit('cancelEdit')"
-              />
-              <tr
-                v-else
-                data-testid="entry-row"
-              >
-                <td
-                  :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
-                  @click="handleCellClick(entry, 'description')"
-                >
-                  <span>{{ entry.description }}</span>
-                </td>
-                <td
-                  class="p-0"
-                  :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
-                  @click="handleCellClick(entry, 'amount')"
-                >
-                  <div
-                    :class="[
-                      'w-full h-full px-4 py-3',
-                      props.getAmountTooltip?.(entry) ? 'tooltip tooltip-top' : '',
-                    ]"
-                    :data-tip="props.getAmountTooltip?.(entry)"
-                  >
-                    <span
-                      :class="{
-                        'text-success': entryKind === 'income' && entry.amount > 0,
-                        'text-error': entryKind === 'expense' && entry.amount > 0,
-                        'text-primary': entryKind === 'balance' && entry.amount > 0,
-                        'text-base-content': entry.amount === 0,
-                        'text-warning': entry.amount < 0,
-                      }"
-                    >{{ formatAmount(entry.amount, entry.currency) }}</span>
-                  </div>
-                </td>
-                <td
-                  :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
-                  @click="handleCellClick(entry, 'currency')"
-                >
-                  <span>{{ entry.currency }}</span>
-                </td>
-                <td
-                  v-if="entryKind !== 'balance'"
-                  :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
-                  @click="handleCellClick(entry, 'date')"
-                >
-                  <span>{{ formatEntryDate(entry) }}</span>
-                </td>
-                <td
-                  v-if="entryKind === 'expense'"
-                  :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
-                  @click="handleCellClick(entry, 'optional')"
-                >
-                  <Icon
-                    v-if="'isOptional' in entry && entry.isOptional"
-                    name="heroicons:check"
-                    size="20"
-                    class="text-success inline-block"
-                  />
-                </td>
-                <td class="w-1">
-                  <div class="flex gap-2">
-                    <button
-                      v-if="!isReadOnly"
-                      class="btn btn-sm btn-warning"
-                      data-testid="entry-edit-button"
-                      @click="$emit('startEdit', entry)"
-                    >
-                      <Icon
-                        name="heroicons:pencil-square"
-                        size="16"
-                      />
-                    </button>
-                    <button
-                      v-if="!isReadOnly"
-                      class="btn btn-sm btn-error"
-                      :disabled="deletingEntryId === entry.id"
-                      @click="$emit('delete', entry.id)"
-                    >
-                      <span
-                        v-if="deletingEntryId === entry.id"
-                        class="loading loading-spinner loading-xs"
-                      />
-                      <Icon
-                        v-else
-                        name="heroicons:trash"
-                        size="16"
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <UiEntryEditRow
-              v-if="isAddingNewEntry"
-              :model-value="newEntry"
+    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
+      <div v-if="entries.length || isAddingNewEntry">
+        <div
+          v-if="isMobileViewport"
+          class="flex flex-col gap-2"
+        >
+          <template
+            v-for="entry in entries"
+            :key="entry.id"
+          >
+            <UiEntryEditCard
+              v-if="editingEntryId === entry.id"
+              :model-value="editingEntry"
               :entry-kind="entryKind"
-              :is-saving="isAdding"
-              :is-new="true"
+              :is-saving="isSaving"
+              :description-label="descriptionLabel"
+              :amount-label="amountLabel"
+              :currency-label="currencyLabel"
+              :date-label="dateLabel"
+              :optional-label="optionalLabel"
               :description-placeholder="descriptionPlaceholder"
               :amount-placeholder="amountPlaceholder"
-              @update:model-value="$emit('update:newEntry', $event)"
-              @save="$emit('saveNew')"
-              @cancel="$emit('cancelNew')"
+              @update:model-value="$emit('update:editingEntry', $event)"
+              @save="$emit('saveEdit')"
+              @cancel="$emit('cancelEdit')"
             />
-          </tbody>
-        </table>
+            <UiEntryCard
+              v-else
+              :description="entry.description"
+              :amount-text="formatAmount(entry.amount, entry.currency)"
+              :amount-class="getEntryAmountClass(entryKind, entry.amount)"
+              :converted-amount-text="props.getAmountTooltip?.(entry)"
+              :currency="entry.currency"
+              :date-text="entryKind !== 'balance' ? formatEntryDate(entry) : ''"
+              :show-optional="entryKind === 'expense'"
+              :is-optional="'isOptional' in entry && entry.isOptional"
+              :optional-label="optionalLabel"
+              :is-read-only="isReadOnly"
+              :is-deleting="deletingEntryId === entry.id"
+              @edit="$emit('startEdit', entry)"
+              @delete="$emit('delete', entry.id)"
+              @field-click="handleCellClick(entry, $event)"
+            />
+          </template>
+          <UiEntryEditCard
+            v-if="isAddingNewEntry"
+            :model-value="newEntry"
+            :entry-kind="entryKind"
+            :is-saving="isAdding"
+            :is-new="true"
+            :description-label="descriptionLabel"
+            :amount-label="amountLabel"
+            :currency-label="currencyLabel"
+            :date-label="dateLabel"
+            :optional-label="optionalLabel"
+            :description-placeholder="descriptionPlaceholder"
+            :amount-placeholder="amountPlaceholder"
+            @update:model-value="$emit('update:newEntry', $event)"
+            @save="$emit('saveNew')"
+            @cancel="$emit('cancelNew')"
+          />
+        </div>
+
+        <div
+          v-else
+          class="overflow-x-auto"
+        >
+          <table class="table text-center min-w-[600px]">
+            <thead>
+              <tr>
+                <th>{{ descriptionLabel }}</th>
+                <th>{{ amountLabel }}</th>
+                <th>{{ currencyLabel }}</th>
+                <th v-if="entryKind !== 'balance'">
+                  {{ dateLabel }}
+                </th>
+                <th v-if="entryKind === 'expense'">
+                  {{ optionalLabel }}
+                </th>
+                <th class="w-1">
+                  {{ actionsLabel }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <template
+                v-for="entry in entries"
+                :key="entry.id"
+              >
+                <UiEntryEditRow
+                  v-if="editingEntryId === entry.id"
+                  :model-value="editingEntry"
+                  :entry-kind="entryKind"
+                  :is-saving="isSaving"
+                  :description-placeholder="descriptionPlaceholder"
+                  :amount-placeholder="amountPlaceholder"
+                  @update:model-value="$emit('update:editingEntry', $event)"
+                  @save="$emit('saveEdit')"
+                  @cancel="$emit('cancelEdit')"
+                />
+                <tr
+                  v-else
+                  data-testid="entry-row"
+                >
+                  <td
+                    :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
+                    @click="handleCellClick(entry, 'description')"
+                  >
+                    <span>{{ entry.description }}</span>
+                  </td>
+                  <td
+                    class="p-0"
+                    :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
+                    @click="handleCellClick(entry, 'amount')"
+                  >
+                    <div
+                      :class="[
+                        'w-full h-full px-4 py-3',
+                        props.getAmountTooltip?.(entry) ? 'tooltip tooltip-top' : '',
+                      ]"
+                      :data-tip="props.getAmountTooltip?.(entry)"
+                    >
+                      <span :class="getEntryAmountClass(entryKind, entry.amount)">{{ formatAmount(entry.amount, entry.currency) }}</span>
+                    </div>
+                  </td>
+                  <td
+                    :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
+                    @click="handleCellClick(entry, 'currency')"
+                  >
+                    <span>{{ entry.currency }}</span>
+                  </td>
+                  <td
+                    v-if="entryKind !== 'balance'"
+                    :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
+                    @click="handleCellClick(entry, 'date')"
+                  >
+                    <span>{{ formatEntryDate(entry) }}</span>
+                  </td>
+                  <td
+                    v-if="entryKind === 'expense'"
+                    :class="{ 'cursor-pointer hover:bg-base-200': !isReadOnly }"
+                    @click="handleCellClick(entry, 'optional')"
+                  >
+                    <Icon
+                      v-if="'isOptional' in entry && entry.isOptional"
+                      name="heroicons:check"
+                      size="20"
+                      class="text-success inline-block"
+                    />
+                  </td>
+                  <td class="w-1">
+                    <div class="flex gap-2">
+                      <button
+                        v-if="!isReadOnly"
+                        class="btn btn-sm btn-warning"
+                        data-testid="entry-edit-button"
+                        @click="$emit('startEdit', entry)"
+                      >
+                        <Icon
+                          name="heroicons:pencil-square"
+                          size="16"
+                        />
+                      </button>
+                      <button
+                        v-if="!isReadOnly"
+                        class="btn btn-sm btn-error"
+                        :disabled="deletingEntryId === entry.id"
+                        @click="$emit('delete', entry.id)"
+                      >
+                        <span
+                          v-if="deletingEntryId === entry.id"
+                          class="loading loading-spinner loading-xs"
+                        />
+                        <Icon
+                          v-else
+                          name="heroicons:trash"
+                          size="16"
+                        />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <UiEntryEditRow
+                v-if="isAddingNewEntry"
+                :model-value="newEntry"
+                :entry-kind="entryKind"
+                :is-saving="isAdding"
+                :is-new="true"
+                :description-placeholder="descriptionPlaceholder"
+                :amount-placeholder="amountPlaceholder"
+                @update:model-value="$emit('update:newEntry', $event)"
+                @save="$emit('saveNew')"
+                @cancel="$emit('cancelNew')"
+              />
+            </tbody>
+          </table>
+        </div>
 
         <div class="flex justify-center mt-4">
           <button
@@ -254,6 +309,8 @@ const emit = defineEmits<{
   'update:editingEntry': [value: EntryFormData]
   'update:newEntry': [value: EntryFormData]
 }>()
+
+const { isMobileViewport } = useIsMobileViewport()
 
 const getEntryDate = (entry: BudgetEntry): string | null => {
   return 'date' in entry ? entry.date : null

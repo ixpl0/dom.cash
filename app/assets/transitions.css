@@ -63,3 +63,13 @@
   opacity: 0;
   transform: translateY(-8px);
 }
+
+@media (max-width: 639.9px) {
+  .modal-transition-enter-from .modal-box {
+    transform: translateY(24px);
+  }
+
+  .modal-transition-leave-to .modal-box {
+    transform: translateY(24px);
+  }
+}

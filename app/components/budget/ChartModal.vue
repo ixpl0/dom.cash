@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="chart-modal"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-6xl h-[90vh] flex flex-col overflow-hidden"
+    content-class="modal-box h-[85dvh] sm:h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-6xl flex flex-col overflow-hidden"
     @close="hide"
   >
     <button
@@ -21,8 +21,8 @@
       {{ t('chart.title') }}
     </h3>
 
-    <div class="flex-1 overflow-y-auto overflow-x-auto min-h-0">
-      <div class="min-w-[420px] h-full">
+    <div class="flex-1 overflow-y-auto min-h-0">
+      <div class="h-full">
         <ClientOnly>
           <BudgetChartClient
             v-if="isOpen"

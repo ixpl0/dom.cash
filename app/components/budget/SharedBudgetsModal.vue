@@ -1,7 +1,7 @@
 <template>
   <UiDialog
     :is-open="isOpen"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-xl max-h-[90vh] flex flex-col"
+    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-xl flex flex-col"
     data-testid="shared-budgets-modal"
     @close="hide"
   >
@@ -21,60 +21,43 @@
       {{ t('sharedBudgets.title') }}
     </h3>
 
-    <div class="space-y-4 flex-1 overflow-y-auto overflow-x-auto min-h-0">
+    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
       <div
         v-if="sharedBudgets.length"
-        class="min-w-[400px]"
+        class="flex flex-col gap-2"
+        data-testid="shared-budgets-table"
       >
-        <table
-          class="table"
-          data-testid="shared-budgets-table"
+        <div
+          v-for="budget in sharedBudgets"
+          :key="budget.id"
+          class="flex items-center justify-between gap-3 rounded-box bg-base-200 p-2"
+          data-testid="shared-budget-row"
         >
-          <thead>
-            <tr>
-              <th>{{ t('sharedBudgets.user') }}</th>
-              <th class="w-1">
-                {{ t('sharedBudgets.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="budget in sharedBudgets"
-              :key="budget.id"
-              data-testid="shared-budget-row"
-            >
-              <td>
-                <NuxtLink
-                  :to="`/budget/${budget.username}`"
-                  class="btn btn-sm btn-ghost"
-                  data-testid="shared-budget-link"
-                  @click="hide()"
-                >
-                  {{ t('sharedBudgets.goToBudget') }} {{ budget.username }}
-                </NuxtLink>
-              </td>
-              <td class="w-1">
-                <button
-                  class="btn btn-sm btn-error"
-                  :disabled="isRevoking === budget.id"
-                  data-testid="shared-budget-revoke-button"
-                  @click="revokeAccess(budget.id)"
-                >
-                  <span
-                    v-if="isRevoking === budget.id"
-                    class="loading loading-spinner loading-xs"
-                  />
-                  <Icon
-                    v-else
-                    name="heroicons:trash"
-                    size="16"
-                  />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <NuxtLink
+            :to="`/budget/${budget.username}`"
+            class="btn btn-sm btn-ghost min-w-0 flex-1 justify-start"
+            data-testid="shared-budget-link"
+            @click="hide()"
+          >
+            <span class="truncate">{{ t('sharedBudgets.goToBudget') }} {{ budget.username }}</span>
+          </NuxtLink>
+          <button
+            class="btn btn-sm btn-error flex-shrink-0"
+            :disabled="isRevoking === budget.id"
+            data-testid="shared-budget-revoke-button"
+            @click="revokeAccess(budget.id)"
+          >
+            <span
+              v-if="isRevoking === budget.id"
+              class="loading loading-spinner loading-xs"
+            />
+            <Icon
+              v-else
+              name="heroicons:trash"
+              size="16"
+            />
+          </button>
+        </div>
       </div>
       <div
         v-else

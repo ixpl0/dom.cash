@@ -1,7 +1,7 @@
 <template>
   <UiDialog
     :is-open="isOpen"
-    content-class="modal-box w-[calc(100vw-2rem)] max-w-md flex flex-col"
+    content-class="modal-box sm:max-w-md flex flex-col"
     data-testid="plan-modal"
     @close="hide"
   >
@@ -70,7 +70,7 @@
         >
       </div>
 
-      <div class="flex justify-between gap-2 pt-2">
+      <div class="flex flex-wrap justify-between gap-2 pt-2">
         <button
           v-if="planModal.currentValue !== null || planModal.currentComment !== null"
           type="button"

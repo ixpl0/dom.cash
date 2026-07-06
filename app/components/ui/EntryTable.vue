@@ -1,5 +1,26 @@
 <template>
-  <div class="overflow-x-auto">
+  <div
+    v-if="isMobileViewport"
+    class="flex flex-col gap-2"
+  >
+    <UiEntryCard
+      v-for="entry in entries"
+      :key="entry.id"
+      :description="entry.description"
+      :amount-text="formatAmount(entry.amount, entry.currency)"
+      :amount-class="getEntryAmountClass(entryKind, entry.amount)"
+      :currency="entry.currency"
+      :date-text="entryKind !== 'balance' ? formatEntryDate(entry) : ''"
+      :show-optional="entryKind === 'expense'"
+      :is-optional="entry.isOptional"
+      :optional-label="labels.optional"
+      :is-read-only="true"
+    />
+  </div>
+  <div
+    v-else
+    class="overflow-x-auto"
+  >
     <table class="table text-center">
       <thead>
         <tr>
@@ -24,15 +45,7 @@
             <span>{{ entry.description }}</span>
           </td>
           <td>
-            <span
-              :class="{
-                'text-success': entryKind === 'income' && entry.amount > 0,
-                'text-error': entryKind === 'expense' && entry.amount > 0,
-                'text-primary': entryKind === 'balance' && entry.amount > 0,
-                'text-base-content': entry.amount === 0,
-                'text-warning': entry.amount < 0,
-              }"
-            >{{ formatAmount(entry.amount, entry.currency) }}</span>
+            <span :class="getEntryAmountClass(entryKind, entry.amount)">{{ formatAmount(entry.amount, entry.currency) }}</span>
           </td>
           <td>
             <span>{{ entry.currency }}</span>
@@ -82,6 +95,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { isMobileViewport } = useIsMobileViewport()
 
 const formatEntryDate = (entry: EntryTableEntry): string => {
   return props.formatDate(entry.date)

@@ -1,5 +1,50 @@
 <template>
   <div
+    v-if="isMobileViewport"
+    class="rounded-box bg-base-200/50 border-2 transition-all duration-200"
+    :class="props.isCurrentMonth ? 'border-primary' : 'border-transparent'"
+    data-testid="budget-month"
+  >
+    <div class="flex items-center justify-between px-3 pt-3">
+      <button
+        class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+        data-testid="month-badge"
+        @click="$emit('currencyRatesClick')"
+      >
+        {{ monthName }}
+      </button>
+      <button
+        v-if="canDelete"
+        class="btn btn-ghost btn-sm hover:bg-error hover:text-white"
+        data-testid="delete-month-button"
+        @click="$emit('deleteClick')"
+      >
+        <Icon
+          name="heroicons:trash"
+          size="16"
+        />
+      </button>
+    </div>
+
+    <div class="flex flex-col p-2">
+      <UiStatRow
+        v-for="stat in mobileStats"
+        :key="stat.key"
+        :label="stat.label"
+        :value-text="stat.valueText"
+        :value-class="stat.valueClass"
+        :secondary-text="stat.secondaryText"
+        :secondary-class="stat.secondaryClass"
+        :clickable="stat.clickable"
+        :disabled="stat.disabled"
+        :test-id="stat.testId"
+        @activate="handleStatActivate(stat.event)"
+      />
+    </div>
+  </div>
+
+  <div
+    v-else
     class="group w-fit mx-auto rounded-box bg-base-200/50 hover:bg-base-200 border-2 transition-all duration-200"
     :class="props.isCurrentMonth ? 'border-primary' : 'border-transparent'"
     data-testid="budget-month"
@@ -329,6 +374,31 @@ export interface UiMonthData {
 export interface UiMonthLabels {
   deleteMonth: string
   addPlan: string
+  balance: string
+  income: string
+  majorExpenses: string
+  pocketExpenses: string
+  allExpenses: string
+  balanceChange: string
+  currencyFluctuations: string
+  optionalExpenses: string
+  planned: string
+  expectedBalance: string
+}
+
+type MonthStatEvent = 'balanceClick' | 'incomeClick' | 'expenseClick' | 'planClick'
+
+interface MonthStatItem {
+  key: string
+  label: string
+  valueText: string
+  valueClass: string
+  secondaryText?: string
+  secondaryClass?: string
+  clickable: boolean
+  disabled?: boolean
+  testId: string
+  event?: MonthStatEvent
 }
 
 interface Props {
@@ -362,7 +432,7 @@ const props = withDefaults(defineProps<Props>(), {
   isPastMonth: false,
 })
 
-defineEmits<{
+const emit = defineEmits<{
   balanceClick: []
   incomeClick: []
   expenseClick: []
@@ -370,6 +440,8 @@ defineEmits<{
   deleteClick: []
   planClick: [focusField: 'amount' | 'comment']
 }>()
+
+const { isMobileViewport } = useIsMobileViewport()
 
 const planMainText = computed(() => {
   if (props.data.plannedBalanceChange !== null) {
@@ -381,9 +453,148 @@ const planMainText = computed(() => {
   return props.labels.addPlan
 })
 
+const formatOrDash = (value: number | null): string => {
+  return value !== null ? props.formatAmount(value) : '—'
+}
+
+const signedValueClass = (value: number | null, positiveClass: string, negativeClass: string): string => {
+  if (value !== null && value > 0) {
+    return positiveClass
+  }
+  if (value !== null && value < 0) {
+    return negativeClass
+  }
+  return 'text-base-content'
+}
+
+const mobileStats = computed((): MonthStatItem[] => {
+  const balanceStat: MonthStatItem = {
+    key: 'balance',
+    label: props.labels.balance,
+    valueText: formatOrDash(props.data.startBalance),
+    valueClass: signedValueClass(props.data.startBalance, 'text-primary', 'text-primary'),
+    clickable: true,
+    disabled: props.isReadOnly || props.data.startBalance === null,
+    testId: 'balance-button',
+    event: 'balanceClick',
+  }
+
+  const balanceChangeStat: MonthStatItem = {
+    key: 'balanceChange',
+    label: props.labels.balanceChange,
+    valueText: formatOrDash(props.data.calculatedBalanceChange),
+    valueClass: signedValueClass(props.data.calculatedBalanceChange, 'text-success', 'text-error'),
+    clickable: false,
+    testId: 'balance-change-button',
+  }
+
+  if (props.isPlanningMode) {
+    const plannedDiff = props.isPastMonth ? props.data.plannedVsActualDiff : null
+    return [
+      balanceStat,
+      balanceChangeStat,
+      {
+        key: 'planned',
+        label: props.labels.planned,
+        valueText: planMainText.value,
+        valueClass: signedValueClass(props.data.plannedBalanceChange, 'text-info', 'text-warning'),
+        secondaryText: plannedDiff !== null
+          ? `${plannedDiff > 0 ? '+' : ''}${props.formatAmount(plannedDiff)}`
+          : '',
+        secondaryClass: signedValueClass(plannedDiff, 'text-success', 'text-error'),
+        clickable: true,
+        disabled: props.isReadOnly || props.isPastMonth,
+        testId: 'planned-balance-change-button',
+        event: 'planClick',
+      },
+      {
+        key: 'expectedBalance',
+        label: props.labels.expectedBalance,
+        valueText: formatOrDash(props.data.expectedBalance),
+        valueClass: signedValueClass(props.data.expectedBalance, 'text-primary', 'text-error'),
+        clickable: false,
+        testId: 'expected-balance-button',
+      },
+    ]
+  }
+
+  return [
+    balanceStat,
+    {
+      key: 'income',
+      label: props.labels.income,
+      valueText: props.formatAmount(props.data.totalIncome),
+      valueClass: signedValueClass(props.data.totalIncome, 'text-success', 'text-success'),
+      clickable: true,
+      disabled: props.isReadOnly,
+      testId: 'incomes-button',
+      event: 'incomeClick',
+    },
+    {
+      key: 'majorExpenses',
+      label: props.labels.majorExpenses,
+      valueText: props.formatAmount(props.data.totalExpenses),
+      valueClass: signedValueClass(props.data.totalExpenses, 'text-error', 'text-error'),
+      clickable: true,
+      disabled: props.isReadOnly,
+      testId: 'expenses-button',
+      event: 'expenseClick',
+    },
+    {
+      key: 'pocketExpenses',
+      label: props.labels.pocketExpenses,
+      valueText: formatOrDash(props.data.calculatedPocketExpenses),
+      valueClass: signedValueClass(props.data.calculatedPocketExpenses, 'text-error', 'text-warning'),
+      clickable: false,
+      testId: 'pocket-expenses-button',
+    },
+    {
+      key: 'allExpenses',
+      label: props.labels.allExpenses,
+      valueText: formatOrDash(props.data.totalAllExpenses),
+      valueClass: signedValueClass(props.data.totalAllExpenses, 'text-error', 'text-warning'),
+      clickable: false,
+      testId: 'total-expenses-button',
+    },
+    balanceChangeStat,
+    {
+      key: 'currencyFluctuations',
+      label: props.labels.currencyFluctuations,
+      valueText: formatOrDash(props.data.currencyProfitLoss),
+      valueClass: signedValueClass(props.data.currencyProfitLoss, 'text-success', 'text-error'),
+      clickable: false,
+      testId: 'currency-fluctuation-button',
+    },
+    {
+      key: 'optionalExpenses',
+      label: props.labels.optionalExpenses,
+      valueText: props.formatAmount(props.data.totalOptionalExpenses),
+      valueClass: signedValueClass(props.data.totalOptionalExpenses, 'text-error', 'text-error'),
+      clickable: false,
+      testId: 'optional-expenses-button',
+    },
+  ]
+})
+
+const handleStatActivate = (event?: MonthStatEvent): void => {
+  if (event === 'balanceClick') {
+    emit('balanceClick')
+  }
+  else if (event === 'incomeClick') {
+    emit('incomeClick')
+  }
+  else if (event === 'expenseClick') {
+    emit('expenseClick')
+  }
+  else if (event === 'planClick') {
+    emit('planClick')
+  }
+}
+
 const columnsSync = inject(timelineColumnsSyncKey, null)
 
 const cardRefs = ref<HTMLElement[]>([])
+let registeredCardRefs: HTMLElement[] | null = null
 
 const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | null) => {
   if (el && el instanceof HTMLElement) {
@@ -391,19 +602,39 @@ const setCardRef = (index: number) => (el: Element | ComponentPublicInstance | n
   }
 }
 
+const registerCurrentRefs = (): void => {
+  if (!columnsSync) {
+    return
+  }
+  const validRefs = cardRefs.value.filter(Boolean)
+  if (validRefs.length) {
+    columnsSync.registerRow(validRefs)
+    registeredCardRefs = validRefs
+  }
+}
+
+const unregisterCurrentRefs = (): void => {
+  if (!columnsSync || !registeredCardRefs) {
+    return
+  }
+  columnsSync.unregisterRow(registeredCardRefs)
+  registeredCardRefs = null
+}
+
 onMounted(() => {
   nextTick(() => {
-    const validRefs = cardRefs.value.filter(Boolean)
-    if (validRefs.length && columnsSync) {
-      columnsSync.registerRow(validRefs)
-    }
+    registerCurrentRefs()
   })
 })
 
 onUnmounted(() => {
-  const validRefs = cardRefs.value.filter(Boolean)
-  if (validRefs.length && columnsSync) {
-    columnsSync.unregisterRow(validRefs)
-  }
+  unregisterCurrentRefs()
+})
+
+watch(isMobileViewport, async () => {
+  unregisterCurrentRefs()
+  cardRefs.value = []
+  await nextTick()
+  registerCurrentRefs()
 })
 </script>

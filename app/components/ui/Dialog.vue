@@ -2,7 +2,7 @@
   <Transition name="modal-transition">
     <div
       v-if="isOpen"
-      class="modal modal-open"
+      class="modal modal-open modal-bottom sm:modal-middle"
       :style="{ zIndex }"
       v-bind="$attrs"
     >

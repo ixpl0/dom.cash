@@ -117,7 +117,7 @@
           @create="handleCreateNextMonth"
         />
 
-        <div class="overflow-x-auto px-6 pt-20 pb-4 -mt-14">
+        <div class="overflow-x-auto px-3 sm:px-6 pt-20 pb-4 -mt-14">
           <div class="flex flex-col gap-4">
             <BudgetYear
               v-for="year in years"
