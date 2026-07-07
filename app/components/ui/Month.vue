@@ -413,8 +413,8 @@ interface Props {
   balanceChangeTooltip: string
   currencyFluctuationTooltip: string
   optionalExpensesTooltip: string
-  plannedBalanceChangeTooltip: string
-  expectedBalanceTooltip: string
+  plannedBalanceChangeTooltip?: string
+  expectedBalanceTooltip?: string
   data: UiMonthData
   labels: UiMonthLabels
   isCurrentMonth?: boolean
@@ -426,6 +426,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  plannedBalanceChangeTooltip: '',
+  expectedBalanceTooltip: '',
   isCurrentMonth: false,
   isReadOnly: false,
   canDelete: false,
