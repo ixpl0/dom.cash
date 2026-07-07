@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="chart-modal"
-    content-class="modal-box h-[85dvh] sm:h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-6xl flex flex-col overflow-hidden"
+    content-class="modal-box sm:h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-6xl flex flex-col overflow-hidden"
     @close="hide"
   >
     <button

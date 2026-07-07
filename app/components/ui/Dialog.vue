@@ -13,7 +13,7 @@
 
       <div
         ref="contentRef"
-        :class="contentClass"
+        :class="[fullscreenOnMobile ? 'max-sm:h-dvh max-sm:max-h-none max-sm:w-full max-sm:max-w-none max-sm:rounded-none' : '', contentClass]"
         @click.stop
       >
         <slot />
@@ -29,6 +29,7 @@ interface Props {
   closeOnEsc?: boolean
   contentClass?: string
   zIndex?: number
+  fullscreenOnMobile?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -36,6 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
   closeOnEsc: true,
   contentClass: '',
   zIndex: 999,
+  fullscreenOnMobile: true,
 })
 
 const emit = defineEmits<{

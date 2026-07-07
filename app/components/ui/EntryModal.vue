@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="entry-modal"
-    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl flex flex-col overflow-visible"
+    content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl flex flex-col overflow-visible"
     @close="$emit('close')"
   >
     <button

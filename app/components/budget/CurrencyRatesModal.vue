@@ -2,7 +2,7 @@
   <UiDialog
     :is-open="isOpen"
     data-testid="currency-rates-modal"
-    content-class="modal-box max-h-[85dvh] sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-3xl flex flex-col"
+    content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-3xl flex flex-col"
     @close="hide"
   >
     <button

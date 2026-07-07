@@ -332,12 +332,12 @@ onMounted(() => {
 
   window.addEventListener('scroll', handleScroll, true)
   window.addEventListener('resize', handleResize)
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('click', handleClickOutside, true)
 
   onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll, true)
     window.removeEventListener('resize', handleResize)
-    document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener('click', handleClickOutside, true)
   })
 })
 </script>
