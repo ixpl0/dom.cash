@@ -13,10 +13,10 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://dom.cash' },
+        { property: 'og:url', content: 'https://domcash.ixplo.ai' },
       ],
       link: [
-        { rel: 'canonical', href: 'https://dom.cash' },
+        { rel: 'canonical', href: 'https://domcash.ixplo.ai' },
       ],
     },
   },

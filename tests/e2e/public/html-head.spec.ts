@@ -22,10 +22,10 @@ test.describe('HTML head meta tags', () => {
     await expect(ogType).toHaveAttribute('content', 'website')
 
     const ogUrl = page.locator('meta[property="og:url"]')
-    await expect(ogUrl).toHaveAttribute('content', 'https://dom.cash')
+    await expect(ogUrl).toHaveAttribute('content', 'https://domcash.ixplo.ai')
 
     const canonical = page.locator('link[rel="canonical"]')
-    await expect(canonical).toHaveAttribute('href', 'https://dom.cash')
+    await expect(canonical).toHaveAttribute('href', 'https://domcash.ixplo.ai')
   })
 
   test('has correct lang attribute in English', async ({ page }) => {

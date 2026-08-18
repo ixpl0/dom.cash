@@ -102,7 +102,7 @@ export const sendVerificationEmail = async (params: EmailParams): Promise<void> 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'dom.cash <noreply@auth.dom.cash>',
+        from: 'dom.cash <noreply@domcash.ixplo.ai>',
         to: [to],
         subject: content.subject,
         html: buildHtml(template, code, language),
