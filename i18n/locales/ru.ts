@@ -22,6 +22,8 @@ export default {
     metrics: 'Метрики',
     logout: 'Выйти',
     login: 'Войти',
+    impersonationBanner: 'Вы смотрите сайт от имени {username}',
+    impersonationExit: 'Вернуться в свой аккаунт',
   },
 
   auth: {
@@ -478,6 +480,8 @@ export default {
     deleteConfirmButton: 'Удалить пользователя',
     deleteSuccess: 'Пользователь успешно удалён',
     deleteError: 'Не удалось удалить пользователя',
+    impersonateButton: 'Посмотреть сайт от имени пользователя',
+    impersonateError: 'Не удалось включить режим просмотра',
   },
 
   currencies: currenciesRu,
@@ -591,6 +595,8 @@ export default {
     no_permission_update_plan: 'Нет прав на изменение плана для этого месяца',
     failed_to_update_plan: 'Не удалось обновить план',
     cannot_plan_past_month: 'Нельзя редактировать план для прошедшего месяца',
+    cannot_impersonate_yourself: 'Нельзя смотреть сайт от имени самого себя',
+    impersonation_read_only: 'Режим просмотра от имени пользователя: изменения запрещены',
   },
 
   todo: {

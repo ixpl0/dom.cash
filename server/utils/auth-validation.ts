@@ -5,6 +5,7 @@ import { eq, and, gt } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { SESSION_LIFETIME_MS, REFRESH_INTERVAL_MS, setAuthCookie } from '~~/server/utils/auth'
+import { resolveImpersonation } from '~~/server/utils/impersonation'
 
 import type { User } from '~~/shared/types'
 
@@ -64,13 +65,17 @@ export const validateAuthToken = async (event: H3Event): Promise<ValidateTokenRe
       setAuthCookie(event, token)
     }
 
+    const sessionUser: User = {
+      id: record.userId,
+      username: record.username,
+      mainCurrency: record.mainCurrency,
+      isAdmin: record.isAdmin,
+    }
+
+    const impersonatedUser = await resolveImpersonation(event, sessionUser)
+
     return {
-      user: {
-        id: record.userId,
-        username: record.username,
-        mainCurrency: record.mainCurrency,
-        isAdmin: record.isAdmin,
-      },
+      user: impersonatedUser ?? sessionUser,
     }
   }
   catch (error) {

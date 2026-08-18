@@ -186,7 +186,9 @@ export default defineEventHandler(async (event) => {
     }
   }))
 
-  await updateUserActivity(currentUser.id, event)
+  if (!currentUser.impersonatedBy) {
+    await updateUserActivity(currentUser.id, event)
+  }
 
   return {
     user: {

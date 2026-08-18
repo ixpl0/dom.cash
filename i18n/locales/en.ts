@@ -22,6 +22,8 @@ export default {
     metrics: 'Metrics',
     logout: 'Logout',
     login: 'Login',
+    impersonationBanner: 'You are viewing the site as {username}',
+    impersonationExit: 'Back to your account',
   },
 
   auth: {
@@ -478,6 +480,8 @@ export default {
     deleteConfirmButton: 'Delete user',
     deleteSuccess: 'User deleted successfully',
     deleteError: 'Failed to delete user',
+    impersonateButton: 'View the site as this user',
+    impersonateError: 'Failed to start view-as mode',
   },
 
   currencies: currenciesEn,
@@ -591,6 +595,8 @@ export default {
     no_permission_update_plan: 'No permission to update plan for this month',
     failed_to_update_plan: 'Failed to update plan',
     cannot_plan_past_month: 'Cannot edit plan for a past month',
+    cannot_impersonate_yourself: 'You cannot view the site as yourself',
+    impersonation_read_only: 'View-as mode is read-only: changes are not allowed',
   },
 
   todo: {

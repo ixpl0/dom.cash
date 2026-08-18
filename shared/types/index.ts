@@ -2,7 +2,9 @@ import type { CurrencyRates, User as DBUser } from '~~/server/db/schema'
 
 export type { Session, Month, Entry, EntryKind, CurrencyRates } from '~~/server/db/schema'
 
-export type User = Pick<DBUser, 'id' | 'username' | 'mainCurrency' | 'isAdmin'>
+export type User = Pick<DBUser, 'id' | 'username' | 'mainCurrency' | 'isAdmin'> & {
+  impersonatedBy?: string
+}
 
 export interface Currency {
   date: string

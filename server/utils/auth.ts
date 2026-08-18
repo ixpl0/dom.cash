@@ -5,6 +5,8 @@ import { useDatabase } from '~~/server/db'
 import { user, session, budgetShare } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { timingSafeCompare } from '~~/server/utils/crypto'
+import { resolveImpersonation } from '~~/server/utils/impersonation'
+import type { User } from '~~/shared/types'
 
 export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90
 export const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000
@@ -216,7 +218,7 @@ export const setAuthCookie = (event: H3Event, token: string, maxAge: number = SE
   })
 }
 
-export const getUserFromRequest = async (event: H3Event) => {
+export const getUserFromRequest = async (event: H3Event): Promise<User | null> => {
   const token = getCookie(event, 'auth-token')
   if (!token) {
     return null
@@ -241,7 +243,13 @@ export const getUserFromRequest = async (event: H3Event) => {
     ))
     .limit(1)
 
-  return userRecord || null
+  if (!userRecord) {
+    return null
+  }
+
+  const impersonatedUser = await resolveImpersonation(event, userRecord)
+
+  return impersonatedUser ?? userRecord
 }
 
 export const checkBudgetWritePermission = async (ownerId: string, requesterId: string, event: H3Event): Promise<boolean> => {

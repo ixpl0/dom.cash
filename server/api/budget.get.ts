@@ -8,7 +8,9 @@ import { ERROR_KEYS } from '~~/server/utils/error-keys'
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
-  updateUserActivity(user.id, event).catch(() => {})
+  if (!user.impersonatedBy) {
+    updateUserActivity(user.id, event).catch(() => {})
+  }
   const query = getQuery(event)
 
   const querySchema = z.object({

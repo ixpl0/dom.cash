@@ -230,10 +230,41 @@
       </div>
     </div>
   </header>
+
+  <div
+    v-if="user?.impersonatedBy"
+    class="flex items-center justify-center gap-3 bg-warning px-4 py-2 text-warning-content"
+    data-testid="impersonation-banner"
+  >
+    <Icon
+      name="heroicons:eye"
+      size="20"
+      class="flex-shrink-0"
+    />
+    <span class="font-semibold break-all">
+      {{ t('header.impersonationBanner', { username: user?.username }) }}
+    </span>
+    <button
+      class="btn btn-xs btn-circle btn-ghost flex-shrink-0"
+      :title="t('header.impersonationExit')"
+      data-testid="impersonation-exit-btn"
+      @click="exitImpersonation"
+    >
+      <Icon
+        name="heroicons:x-mark"
+        size="16"
+      />
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
 const todoStore = useTodoStore()
 const { t } = useI18n()
+
+const exitImpersonation = async (): Promise<void> => {
+  await $fetch('/api/admin/impersonate', { method: 'DELETE' }).catch(() => {})
+  window.location.href = '/metrics'
+}
 </script>

@@ -105,6 +105,24 @@ const formatDateTime = (dateStr: string | Date | null) => {
 }
 
 const deletingUserId = ref<string | null>(null)
+const impersonatingUserId = ref<string | null>(null)
+
+const impersonateUser = async (targetUser: AdminUser): Promise<void> => {
+  impersonatingUserId.value = targetUser.id
+
+  try {
+    await $fetch('/api/admin/impersonate', {
+      method: 'POST',
+      body: { userId: targetUser.id },
+    })
+
+    window.location.href = '/budget'
+  }
+  catch (error: unknown) {
+    toast({ type: 'error', message: formatError(error, t('metrics.impersonateError')) })
+    impersonatingUserId.value = null
+  }
+}
 
 const deleteUser = async (targetUser: AdminUser): Promise<void> => {
   const message: ConfirmationModalMessage = [
@@ -193,23 +211,43 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
             <div class="min-w-0 flex-1 break-all font-bold">
               {{ user.username }}
             </div>
-            <button
-              v-if="!user.isAdmin"
-              class="btn btn-sm btn-error flex-shrink-0"
-              :disabled="deletingUserId === user.id"
-              data-testid="delete-user-button"
-              @click="deleteUser(user)"
-            >
-              <span
-                v-if="deletingUserId === user.id"
-                class="loading loading-spinner loading-xs"
-              />
-              <Icon
-                v-else
-                name="heroicons:trash"
-                size="16"
-              />
-            </button>
+            <div class="flex flex-shrink-0 gap-2">
+              <button
+                v-if="user.id !== currentUser?.id"
+                class="btn btn-sm btn-warning"
+                :title="t('metrics.impersonateButton')"
+                :disabled="impersonatingUserId === user.id"
+                data-testid="impersonate-user-button"
+                @click="impersonateUser(user)"
+              >
+                <span
+                  v-if="impersonatingUserId === user.id"
+                  class="loading loading-spinner loading-xs"
+                />
+                <Icon
+                  v-else
+                  name="heroicons:eye"
+                  size="16"
+                />
+              </button>
+              <button
+                v-if="!user.isAdmin"
+                class="btn btn-sm btn-error"
+                :disabled="deletingUserId === user.id"
+                data-testid="delete-user-button"
+                @click="deleteUser(user)"
+              >
+                <span
+                  v-if="deletingUserId === user.id"
+                  class="loading loading-spinner loading-xs"
+                />
+                <Icon
+                  v-else
+                  name="heroicons:trash"
+                  size="16"
+                />
+              </button>
+            </div>
           </div>
           <div class="flex flex-wrap gap-2">
             <div
@@ -358,23 +396,43 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
                 </ClientOnly>
               </td>
               <td class="w-1">
-                <button
-                  v-if="!user.isAdmin"
-                  class="btn btn-sm btn-error"
-                  :disabled="deletingUserId === user.id"
-                  data-testid="delete-user-button"
-                  @click="deleteUser(user)"
-                >
-                  <span
-                    v-if="deletingUserId === user.id"
-                    class="loading loading-spinner loading-xs"
-                  />
-                  <Icon
-                    v-else
-                    name="heroicons:trash"
-                    size="16"
-                  />
-                </button>
+                <div class="flex gap-2">
+                  <button
+                    v-if="user.id !== currentUser?.id"
+                    class="btn btn-sm btn-warning"
+                    :title="t('metrics.impersonateButton')"
+                    :disabled="impersonatingUserId === user.id"
+                    data-testid="impersonate-user-button"
+                    @click="impersonateUser(user)"
+                  >
+                    <span
+                      v-if="impersonatingUserId === user.id"
+                      class="loading loading-spinner loading-xs"
+                    />
+                    <Icon
+                      v-else
+                      name="heroicons:eye"
+                      size="16"
+                    />
+                  </button>
+                  <button
+                    v-if="!user.isAdmin"
+                    class="btn btn-sm btn-error"
+                    :disabled="deletingUserId === user.id"
+                    data-testid="delete-user-button"
+                    @click="deleteUser(user)"
+                  >
+                    <span
+                      v-if="deletingUserId === user.id"
+                      class="loading loading-spinner loading-xs"
+                    />
+                    <Icon
+                      v-else
+                      name="heroicons:trash"
+                      size="16"
+                    />
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
