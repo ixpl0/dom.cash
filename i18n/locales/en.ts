@@ -527,6 +527,7 @@ export default {
     user_not_found: 'User not found',
     month_not_found: 'Month not found',
     entry_not_found: 'Entry not found',
+    entry_conflict: 'Entry conflict, please refresh the page',
     budget_not_found: 'Budget not found',
     share_not_found: 'Share not found',
     insufficient_permissions: 'Insufficient permissions',

@@ -527,6 +527,7 @@ export default {
     user_not_found: 'Пользователь не найден',
     month_not_found: 'Месяц не найден',
     entry_not_found: 'Запись не найдена',
+    entry_conflict: 'Конфликт записи, обновите страницу',
     budget_not_found: 'Бюджет не найден',
     share_not_found: 'Общий доступ не найден',
     insufficient_permissions: 'Недостаточно прав',

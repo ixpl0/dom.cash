@@ -12,6 +12,7 @@ export const ERROR_KEYS = {
   USER_ID_REQUIRED: 'serverErrors.user_id_required',
   MONTH_NOT_FOUND: 'serverErrors.month_not_found',
   ENTRY_NOT_FOUND: 'serverErrors.entry_not_found',
+  ENTRY_CONFLICT: 'serverErrors.entry_conflict',
   BUDGET_NOT_FOUND: 'serverErrors.budget_not_found',
   SHARE_NOT_FOUND: 'serverErrors.share_not_found',
   INSUFFICIENT_PERMISSIONS: 'serverErrors.insufficient_permissions',

@@ -29,6 +29,7 @@ export const useEntryForm = (
   const editingEntryId = ref<string | null>(null)
   const isSaving = ref(false)
   const isAddingNewEntry = ref(false)
+  const pendingAddId = ref<string | null>(null)
 
   const createDefaultFormData = (): EntryFormData => ({
     description: '',
@@ -59,11 +60,13 @@ export const useEntryForm = (
     }
     isAddingNewEntry.value = true
     newEntry.value = createDefaultFormData()
+    pendingAddId.value = crypto.randomUUID()
   }
 
   const cancelAdd = (): void => {
     isAddingNewEntry.value = false
     newEntry.value = createDefaultFormData()
+    pendingAddId.value = null
   }
 
   const startEdit = (entry: BudgetEntry): void => {
@@ -92,6 +95,7 @@ export const useEntryForm = (
     editingEntryId.value = null
     isSaving.value = false
     isAddingNewEntry.value = false
+    pendingAddId.value = null
     editingEntry.value = createDefaultFormData()
     newEntry.value = createDefaultFormData()
   }
@@ -108,6 +112,7 @@ export const useEntryForm = (
     editingEntryId,
     isSaving,
     isAddingNewEntry,
+    pendingAddId,
     editingEntry,
     newEntry,
     modalTitle: computed(getModalTitle),

@@ -5,6 +5,7 @@ import { entry, month } from '~~/server/db/schema'
 import type { EntryKind } from '~~/server/db/schema'
 
 export interface CreateEntryParams {
+  id?: string
   monthId: string
   kind: EntryKind
   description: string
@@ -59,7 +60,7 @@ export const createEntry = async (params: CreateEntryParams, event: H3Event): Pr
   const newEntry = await db
     .insert(entry)
     .values({
-      id: crypto.randomUUID(),
+      id: params.id ?? crypto.randomUUID(),
       monthId: params.monthId,
       kind: params.kind,
       description: params.description,
@@ -68,6 +69,7 @@ export const createEntry = async (params: CreateEntryParams, event: H3Event): Pr
       date: params.date ?? null,
       isOptional: params.isOptional ?? false,
     })
+    .onConflictDoNothing()
     .returning()
 
   return newEntry[0]

@@ -2,12 +2,14 @@ import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo } fr
 import type { BudgetShareAccess } from '~~/server/db/schema'
 import type { BudgetExportData } from '~~/shared/types/export-import'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
-import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId } from '~~/shared/utils/budget/entry-strategies'
+import { FetchError } from 'ofetch'
+import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId, monthHasEntry } from '~~/shared/utils/budget/entry-strategies'
 import { toMutable } from '~~/shared/utils/shared/immutable'
 import { computeMonthData, computeYearSummary, createMonthId, computeExpectedBalances } from '~~/shared/utils/budget/budget-calculations'
 import { generateExcelFromBudgetData } from '~~/app/utils/excel-export'
 
 const PLAN_ONLY_ID_PREFIX = 'plan-only-'
+const ENTRY_NOT_FOUND_ERROR_KEY = 'serverErrors.entry_not_found'
 
 const isPlanOnlyId = (id: string): boolean => id.startsWith(PLAN_ONLY_ID_PREFIX)
 
@@ -443,6 +445,7 @@ export const useBudgetStore = defineStore('budget', () => {
     monthId: string,
     entryKind: 'balance' | 'income' | 'expense',
     entryData: {
+      id?: string
       description: string
       amount: number
       currency: string
@@ -477,6 +480,15 @@ export const useBudgetStore = defineStore('budget', () => {
         return
       }
 
+      const month = currentMonths[monthIndex]
+      if (!month) {
+        return
+      }
+
+      if (monthHasEntry(month, entryKind, response.id)) {
+        return
+      }
+
       const config = getEntryConfig(entryKind)
       const newEntry = config.createEntry({
         id: response.id,
@@ -486,11 +498,6 @@ export const useBudgetStore = defineStore('budget', () => {
         date: response.date ?? undefined,
         isOptional: response.isOptional,
       })
-
-      const month = currentMonths[monthIndex]
-      if (!month) {
-        return
-      }
 
       const updatedMonth = updateMonthWithNewEntry(month, entryKind, newEntry) as MonthData
       const updatedMonths = [...currentMonths]
@@ -505,6 +512,49 @@ export const useBudgetStore = defineStore('budget', () => {
       console.error('Error adding entry:', err)
       throw err
     }
+  }
+
+  const removeEntryLocally = (entryId: string): void => {
+    if (!data.value) {
+      return
+    }
+
+    const currentMonths = data.value.months
+    let entryKindResult: { month: MonthData, kind: 'balance' | 'income' | 'expense' } | null = null
+
+    for (const month of currentMonths) {
+      const entryKind = findEntryKindByEntryId(month, entryId)
+      if (entryKind) {
+        entryKindResult = { month, kind: entryKind }
+        break
+      }
+    }
+
+    if (!entryKindResult) {
+      return
+    }
+
+    const updatedMonth = updateMonthWithDeletedEntry(entryKindResult.month, entryKindResult.kind, entryId) as MonthData
+    const monthIndex = currentMonths.findIndex(m => m.id === entryKindResult.month.id)
+    if (monthIndex === -1) {
+      return
+    }
+
+    const updatedMonths = [...currentMonths]
+    updatedMonths[monthIndex] = updatedMonth
+
+    data.value = {
+      ...data.value,
+      months: toMutable(updatedMonths),
+    }
+  }
+
+  const isEntryNotFoundError = (err: unknown): boolean => {
+    if (!(err instanceof FetchError) || err.statusCode !== 404) {
+      return false
+    }
+    const errorData = (err as FetchError<{ message?: string }>).data
+    return errorData?.message === ENTRY_NOT_FOUND_ERROR_KEY
   }
 
   const updateEntry = async (
@@ -576,6 +626,9 @@ export const useBudgetStore = defineStore('budget', () => {
       }
     }
     catch (err) {
+      if (isEntryNotFoundError(err)) {
+        removeEntryLocally(entryId)
+      }
       console.error('Error updating entry:', err)
       throw err
     }
@@ -587,40 +640,13 @@ export const useBudgetStore = defineStore('budget', () => {
         method: 'DELETE',
       })
 
-      if (!data.value) {
-        return
-      }
-
-      const currentMonths = data.value.months
-      let entryKindResult: { month: MonthData, kind: 'balance' | 'income' | 'expense' } | null = null
-
-      for (const month of currentMonths) {
-        const entryKind = findEntryKindByEntryId(month, entryId)
-        if (entryKind) {
-          entryKindResult = { month, kind: entryKind }
-          break
-        }
-      }
-
-      if (!entryKindResult) {
-        return
-      }
-
-      const updatedMonth = updateMonthWithDeletedEntry(entryKindResult.month, entryKindResult.kind, entryId) as MonthData
-      const monthIndex = currentMonths.findIndex(m => m.id === entryKindResult.month.id)
-      if (monthIndex === -1) {
-        return
-      }
-
-      const updatedMonths = [...currentMonths]
-      updatedMonths[monthIndex] = updatedMonth
-
-      data.value = {
-        ...data.value,
-        months: toMutable(updatedMonths),
-      }
+      removeEntryLocally(entryId)
     }
     catch (err) {
+      if (isEntryNotFoundError(err)) {
+        removeEntryLocally(entryId)
+        return
+      }
       console.error('Error deleting entry:', err)
       throw err
     }

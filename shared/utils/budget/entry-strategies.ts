@@ -51,6 +51,16 @@ export const getEntryConfig = (entryKind: EntryKind): EntryConfig => {
   return entryStrategies[entryKind]
 }
 
+export const monthHasEntry = (
+  month: MonthData,
+  entryKind: EntryKind,
+  entryId: string,
+): boolean => {
+  const config = getEntryConfig(entryKind)
+  const entries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
+  return entries.some(entry => entry.id === entryId)
+}
+
 export const updateMonthWithNewEntry = (
   month: MonthData,
   entryKind: EntryKind,
