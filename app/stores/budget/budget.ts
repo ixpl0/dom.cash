@@ -741,13 +741,15 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   const updateCurrency = async (currency: string) => {
+    const budgetUsername = data.value?.user.username
+
     try {
       await $fetch('/api/user/currency', {
         method: 'PUT',
-        body: { currency },
+        body: { currency, targetUsername: targetUsernameForApi.value },
       })
 
-      if (!data.value) {
+      if (!data.value || data.value.user.username !== budgetUsername) {
         return
       }
 
