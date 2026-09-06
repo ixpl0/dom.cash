@@ -3,6 +3,7 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { unsubscribeFromBudget } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -22,12 +23,17 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db
+  const removedShares = await db
     .delete(budgetShare)
     .where(and(
       eq(budgetShare.id, shareId),
       eq(budgetShare.sharedWithId, currentUser.id),
     ))
+    .returning({ ownerId: budgetShare.ownerId })
+
+  for (const { ownerId } of removedShares) {
+    unsubscribeFromBudget(currentUser.id, ownerId)
+  }
 
   return { success: true }
 })

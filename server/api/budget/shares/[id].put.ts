@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    await createNotification({
+    await createNotification(event, {
       sourceUserId: currentUser.id,
       budgetOwnerId: currentUser.id,
       type: 'budget_share_updated',

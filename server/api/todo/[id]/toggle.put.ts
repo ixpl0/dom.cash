@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
       }
 
       for (const targetUserId of targetUserIds) {
-        await createNotification({
+        await createNotification(event, {
           sourceUserId: currentUser.id,
           budgetOwnerId: existingTodo.userId,
           targetUserId,
@@ -169,7 +169,7 @@ export default defineEventHandler(async (event) => {
     }
 
     for (const targetUserId of targetUserIds) {
-      await createNotification({
+      await createNotification(event, {
         sourceUserId: currentUser.id,
         budgetOwnerId: existingTodo.userId,
         targetUserId,

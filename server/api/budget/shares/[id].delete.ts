@@ -4,6 +4,7 @@ import { budgetShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { unsubscribeFromBudget } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -54,9 +55,11 @@ export default defineEventHandler(async (event) => {
       eq(budgetShare.ownerId, currentUser.id),
     ))
 
+  unsubscribeFromBudget(shareData.userId, currentUser.id)
+
   try {
     const { createNotification } = await import('~~/server/services/notifications')
-    await createNotification({
+    await createNotification(event, {
       sourceUserId: currentUser.id,
       budgetOwnerId: currentUser.id,
       type: 'budget_share_revoked',

@@ -1,3 +1,7 @@
+import { eq } from 'drizzle-orm'
+import type { H3Event } from 'h3'
+import { useDatabase } from '~~/server/db'
+import { budgetShare } from '~~/server/db/schema'
 import type { NotificationType, NotificationParams } from '~~/shared/types/i18n'
 
 export type { NotificationType }
@@ -109,20 +113,35 @@ const sendNotificationToUser = (userId: string, notification: NotificationEvent)
   }
 }
 
-export const createNotification = async (notificationParams: CreateNotificationParams): Promise<void> => {
-  let targetUsers: string[]
+const getNotificationRecipients = async (
+  event: H3Event,
+  notificationParams: CreateNotificationParams,
+): Promise<string[]> => {
+  const { budgetOwnerId, sourceUserId, targetUserId, type } = notificationParams
+  const targetUsers = targetUserId
+    ? [targetUserId]
+    : [...new Set([...getBudgetSubscribers(budgetOwnerId), budgetOwnerId])]
+        .filter(userId => userId !== sourceUserId)
 
-  if (notificationParams.targetUserId) {
-    targetUsers = [notificationParams.targetUserId]
+  const containsBudgetData = type.startsWith('budget_') && !type.startsWith('budget_share_')
+
+  if (!containsBudgetData || targetUsers.every(userId => userId === budgetOwnerId)) {
+    return targetUsers
   }
-  else {
-    const subscribers = getBudgetSubscribers(notificationParams.budgetOwnerId)
-    targetUsers = [...subscribers]
-    if (!targetUsers.includes(notificationParams.budgetOwnerId)) {
-      targetUsers.push(notificationParams.budgetOwnerId)
-    }
-    targetUsers = targetUsers.filter(userId => userId !== notificationParams.sourceUserId)
-  }
+
+  const database = useDatabase(event)
+  const shares = await database
+    .select({ userId: budgetShare.sharedWithId })
+    .from(budgetShare)
+    .where(eq(budgetShare.ownerId, budgetOwnerId))
+
+  const authorizedUsers = new Set([budgetOwnerId, ...shares.map(share => share.userId)])
+
+  return targetUsers.filter(userId => authorizedUsers.has(userId))
+}
+
+export const createNotification = async (event: H3Event, notificationParams: CreateNotificationParams): Promise<void> => {
+  const targetUsers = await getNotificationRecipients(event, notificationParams)
 
   if (targetUsers.length === 0) {
     return

@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
       const { createNotification } = await import('~~/server/services/notifications')
       const truncatedContent = content.length > 50 ? `${content.slice(0, 50)}...` : content
       for (const targetUserId of sharedWithUserIds) {
-        await createNotification({
+        await createNotification(event, {
           sourceUserId: currentUser.id,
           budgetOwnerId: currentUser.id,
           targetUserId,

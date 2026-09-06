@@ -16,6 +16,20 @@ The application implements **Thin Handlers with Clean Services** pattern:
 
 ### Testing Strategy
 
+#### Unit Tests
+
+Проверки серверной логики запускаются через Node.js и `tsx`, без dev-сервера и внешних сервисов:
+
+```bash
+pnpm test:unit
+```
+
+Тесты находятся в `tests/unit/`. Для отдельной проверки их типов:
+
+```bash
+pnpm exec tsc --noEmit --project tests/unit/tsconfig.json
+```
+
 #### E2E Tests
 
 Приложение использует **Playwright** для end-to-end тестирования:

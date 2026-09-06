@@ -12,6 +12,7 @@
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test:unit": "tsx --tsconfig tests/unit/tsconfig.json --test tests/unit/*.test.ts",
     "db:migrate": "wrangler d1 migrations apply DB --local",
     "db:migrate:test": "wrangler d1 migrations apply DB --remote --env=\"\"",
     "db:migrate:prod": "wrangler d1 migrations apply DB --remote --env=\"production\"",

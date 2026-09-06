@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
 
     try {
       const { createNotification } = await import('~~/server/services/notifications')
-      await createNotification({
+      await createNotification(event, {
         sourceUserId: user.id,
         budgetOwnerId: targetUserId,
         type: 'budget_currency_changed',
