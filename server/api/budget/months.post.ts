@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { createMonth, findUserByUsername } from '~~/server/services/budget/months'
@@ -70,6 +71,10 @@ export default defineEventHandler(async (event) => {
     return createdMonth
   }
   catch (error) {
+    if (isError(error)) {
+      throw error
+    }
+
     if (error instanceof Error) {
       secureLog.error('Error creating month:', error.message)
       if (error.message === 'Month already exists') {

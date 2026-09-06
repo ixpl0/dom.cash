@@ -1,3 +1,4 @@
+import { isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { exportBudget } from '~~/server/services/budget/import-export'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
@@ -12,7 +13,11 @@ export default defineEventHandler(async (event) => {
 
     return exportData
   }
-  catch {
+  catch (error) {
+    if (isError(error)) {
+      throw error
+    }
+
     throw createError({
       statusCode: 500,
       message: ERROR_KEYS.FAILED_TO_EXPORT_BUDGET,

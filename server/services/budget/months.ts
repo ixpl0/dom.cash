@@ -1,10 +1,11 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { createError } from 'h3'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { currency, entry, month, user } from '~~/server/db/schema'
 import type { MonthData, YearInfo } from '~~/shared/types/budget'
-
-const ratesCache = new Map<string, { rates: Record<string, number>, source: string }>()
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { isValidRates } from '~~/server/utils/rates/validation'
 
 const groupEntriesByMonthId = (entries: (typeof entry.$inferSelect)[]): Map<string, (typeof entry.$inferSelect)[]> => {
   const map = new Map<string, (typeof entry.$inferSelect)[]>()
@@ -15,7 +16,7 @@ const groupEntriesByMonthId = (entries: (typeof entry.$inferSelect)[]): Map<stri
   return map
 }
 
-const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Event): Promise<boolean> => {
+const canAttemptUpdate = (year: number, monthNumber: number, lastAttempt: Date | null | undefined): boolean => {
   const now = new Date()
   const currentYear = now.getUTCFullYear()
   const currentMonth = now.getUTCMonth()
@@ -29,20 +30,6 @@ const canAttemptUpdate = async (year: number, monthNumber: number, event: H3Even
     return false
   }
 
-  const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
-  const db = useDatabase(event)
-
-  const currencyRecord = await db
-    .select({ lastUpdateAttempt: currency.lastUpdateAttempt })
-    .from(currency)
-    .where(eq(currency.date, rateDate))
-    .limit(1)
-
-  if (currencyRecord.length === 0) {
-    return true
-  }
-
-  const lastAttempt = currencyRecord[0]?.lastUpdateAttempt
   if (!lastAttempt) {
     return true
   }
@@ -74,10 +61,6 @@ const markUpdateAttempt = async (year: number, monthNumber: number, event: H3Eve
 export const getExchangeRatesForMonth = async (year: number, monthNumber: number, event: H3Event): Promise<{ rates: Record<string, number>, source: string }> => {
   const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
 
-  if (ratesCache.has(rateDate)) {
-    return ratesCache.get(rateDate)!
-  }
-
   const db = useDatabase(event)
   const currencyData = await db
     .select()
@@ -85,16 +68,12 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     .where(eq(currency.date, rateDate))
     .limit(1)
 
-  if (currencyData.length > 0) {
-    const rates = currencyData[0]?.rates
-    if (rates) {
-      const result = { rates, source: rateDate }
-      ratesCache.set(rateDate, result)
-      return result
-    }
+  const currentRates = currencyData[0]?.rates
+  if (isValidRates(currentRates)) {
+    return { rates: currentRates, source: rateDate }
   }
 
-  const shouldUpdate = await canAttemptUpdate(year, monthNumber, event)
+  const shouldUpdate = canAttemptUpdate(year, monthNumber, currencyData[0]?.lastUpdateAttempt)
   if (shouldUpdate) {
     await markUpdateAttempt(year, monthNumber, event)
 
@@ -108,13 +87,9 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
         .where(eq(currency.date, rateDate))
         .limit(1)
 
-      if (updatedCurrencyData.length > 0) {
-        const rates = updatedCurrencyData[0]?.rates
-        if (rates && Object.keys(rates).length > 0) {
-          const result = { rates, source: rateDate }
-          ratesCache.set(rateDate, result)
-          return result
-        }
+      const updatedRates = updatedCurrencyData[0]?.rates
+      if (isValidRates(updatedRates)) {
+        return { rates: updatedRates, source: rateDate }
       }
     }
     catch (error) {
@@ -122,28 +97,37 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     }
   }
 
-  const beforeOrEqual = await db
-    .select()
-    .from(currency)
-    .where(sql`${currency.date} <= ${rateDate}`)
-    .orderBy(desc(currency.date))
-    .limit(1)
+  const validStoredRates = sql`json_type(${currency.rates}) = 'object'
+    AND EXISTS (SELECT 1 FROM json_each(${currency.rates}))
+    AND NOT EXISTS (
+      SELECT 1 FROM json_each(${currency.rates})
+      WHERE type NOT IN ('integer', 'real') OR value <= 0
+    )`
 
-  const afterOrEqual = await db
-    .select()
-    .from(currency)
-    .where(sql`${currency.date} >= ${rateDate}`)
-    .orderBy(currency.date)
-    .limit(1)
+  const [beforeOrEqual, afterOrEqual] = await Promise.all([
+    db
+      .select()
+      .from(currency)
+      .where(and(sql`${currency.date} <= ${rateDate}`, validStoredRates))
+      .orderBy(desc(currency.date))
+      .limit(1),
+    db
+      .select()
+      .from(currency)
+      .where(and(sql`${currency.date} >= ${rateDate}`, validStoredRates))
+      .orderBy(currency.date)
+      .limit(1),
+  ])
 
   const candidates = [...beforeOrEqual, ...afterOrEqual].filter(
-    c => c?.rates && Object.keys(c.rates).length > 0,
+    candidate => isValidRates(candidate.rates),
   )
 
   if (candidates.length === 0) {
-    const result = { rates: {}, source: '' }
-    ratesCache.set(rateDate, result)
-    return result
+    throw createError({
+      statusCode: 503,
+      message: ERROR_KEYS.FAILED_TO_UPDATE_RATES,
+    })
   }
 
   const targetDate = new Date(rateDate)
@@ -153,9 +137,7 @@ export const getExchangeRatesForMonth = async (year: number, monthNumber: number
     return currentDiff < closestDiff ? current : closest
   })
 
-  const result = { rates: closestData.rates, source: closestData.date }
-  ratesCache.set(rateDate, result)
-  return result
+  return { rates: closestData.rates, source: closestData.date }
 }
 
 export const getUserMonths = async (userId: string, event: H3Event): Promise<MonthData[]> => {
@@ -272,7 +254,11 @@ const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId:
   }
 }
 
-const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3Event): Promise<MonthData> => {
+const buildMonthData = async (
+  monthRecord: typeof month.$inferSelect,
+  exchangeRatesData: Awaited<ReturnType<typeof getExchangeRatesForMonth>>,
+  event: H3Event,
+): Promise<MonthData> => {
   const db = useDatabase(event)
   const entries = await db
     .select()
@@ -310,8 +296,6 @@ const buildMonthData = async (monthRecord: typeof month.$inferSelect, event: H3E
 
   const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
 
-  const exchangeRatesData = await getExchangeRatesForMonth(monthRecord.year, monthRecord.month, event)
-
   return {
     id: monthRecord.id,
     year: monthRecord.year,
@@ -346,6 +330,8 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
     throw new Error('Month already exists')
   }
 
+  const exchangeRatesData = await getExchangeRatesForMonth(year, monthNumber, event)
+
   const [createdMonth] = await db
     .insert(month)
     .values({
@@ -364,7 +350,7 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
     await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id, event)
   }
 
-  return await buildMonthData(createdMonth, event)
+  return await buildMonthData(createdMonth, exchangeRatesData, event)
 }
 
 export const findUserByUsername = async (username: string, event: H3Event): Promise<typeof user.$inferSelect | null> => {

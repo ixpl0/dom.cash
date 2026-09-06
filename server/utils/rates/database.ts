@@ -2,6 +2,7 @@ import { currency } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
+import { isValidRates } from './validation'
 
 export const saveCurrencyRates = async (date: string, rates: Record<string, number>, event: H3Event): Promise<void> => {
   if (!rates || typeof rates !== 'object' || Object.keys(rates).length === 0) {
@@ -45,7 +46,8 @@ export const getCurrencyRates = async (date: string, event: H3Event): Promise<Re
     .where(eq(currency.date, date))
     .limit(1)
 
-  return result[0]?.rates ?? null
+  const rates = result[0]?.rates
+  return isValidRates(rates) ? rates : null
 }
 
 export const hasCurrencyRates = async (date: string, event: H3Event): Promise<boolean> => {
