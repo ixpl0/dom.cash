@@ -366,6 +366,8 @@ test.describe('Todo edge cases', () => {
   })
 
   test('should not show overdue styling for completed todo', async ({ page }) => {
+    await page.getByTestId('todo-hide-completed-toggle').uncheck()
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 

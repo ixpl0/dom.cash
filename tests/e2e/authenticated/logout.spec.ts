@@ -33,7 +33,9 @@ test.describe('Logout', () => {
 
     const logoutButton = page.getByTestId('logout-btn')
     await expect(logoutButton).toBeVisible()
+    const reloaded = page.waitForEvent('load')
     await logoutButton.click()
+    await reloaded
 
     await page.waitForURL('/')
 

@@ -23,6 +23,7 @@ const wait = (milliseconds: number) => new Promise(resolve => setTimeout(resolve
 const isServerReady = async (): Promise<boolean> => {
   try {
     const response = await fetch(BASE_URL)
+    await response.body?.cancel()
     return response.status < 500
   }
   catch {

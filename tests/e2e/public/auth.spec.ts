@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { INPUT_LIMITS, DEV_VERIFICATION_CODE } from '../constants'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 import { createTestEmail } from '../helpers/users'
+import { logout } from '../helpers/auth'
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
@@ -147,15 +148,9 @@ test.describe('Authentication', () => {
     await page.getByTestId('verify-code-btn').click()
 
     await page.waitForURL('/')
-    const userDropdown = page.getByTestId('user-dropdown')
-    await expect(userDropdown).toBeVisible()
+    await expect(page.getByTestId('user-dropdown')).toBeVisible()
 
-    await userDropdown.click()
-    const logoutButton = page.getByTestId('logout-btn')
-    await logoutButton.click()
-
-    await page.waitForURL('/')
-    await expect(userDropdown).not.toBeVisible()
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)

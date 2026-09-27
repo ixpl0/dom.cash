@@ -291,12 +291,11 @@ test.describe('Import/Export functionality', () => {
       const importCloseButton = importModal.getByTestId('import-close-button')
       await expect(importCloseButton).toBeVisible()
       await importCloseButton.click()
+      await expect(page.getByTestId('budget-month')).toHaveCount(2)
 
       await balanceButton.click()
       await expect(modal).toBeVisible()
-
-      const newRowCount = await tableRows.count()
-      expect(newRowCount).not.toBe(originalRowCount)
+      await expect(tableRows).not.toHaveCount(originalRowCount)
     })
 
     test('should show import result with counts', async ({ page }) => {

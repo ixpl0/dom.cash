@@ -22,7 +22,6 @@ export const useAuth = () => {
       method: 'POST',
     }).catch(() => {})
 
-    clearUser()
     lastSharedBudgetCookie.value = null
 
     if (import.meta.client) {
@@ -32,6 +31,7 @@ export const useAuth = () => {
       return
     }
 
+    clearUser()
     await navigateTo('/', { replace: true })
   }
 

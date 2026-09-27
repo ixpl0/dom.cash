@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { INPUT_LIMITS, DEV_VERIFICATION_CODE } from '../constants'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 import { createTestEmail } from '../helpers/users'
+import { logout } from '../helpers/auth'
 
 test.describe('Forgot Password', () => {
   test.beforeEach(async ({ page }) => {
@@ -68,10 +69,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -96,10 +94,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -132,10 +127,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -163,10 +155,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -202,10 +191,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -239,10 +225,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
@@ -276,10 +259,7 @@ test.describe('Forgot Password', () => {
     await page.getByTestId('verify-code-btn').click()
     await page.waitForURL('/')
 
-    const userDropdown = page.getByTestId('user-dropdown')
-    await userDropdown.click()
-    await page.getByTestId('logout-btn').click()
-    await page.waitForURL('/')
+    await logout(page)
 
     await page.goto('/auth')
     await waitForHydration(page)
