@@ -1,4 +1,4 @@
-import { eq, or, desc } from 'drizzle-orm'
+import { desc, eq, inArray, or } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { todo, todoShare, user } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
@@ -16,12 +16,20 @@ export default defineEventHandler(async (event): Promise<TodoData> => {
     })
   }
 
-  const sharedWithMe = await db
+  const todosSharedWithMe = db
     .select({ todoId: todoShare.todoId })
     .from(todoShare)
     .where(eq(todoShare.sharedWithId, currentUser.id))
 
-  const sharedTodoIds = sharedWithMe.map(s => s.todoId)
+  const isVisibleTodo = or(
+    eq(todo.userId, currentUser.id),
+    inArray(todo.id, todosSharedWithMe),
+  )
+
+  const visibleTodoIds = db
+    .select({ id: todo.id })
+    .from(todo)
+    .where(isVisibleTodo)
 
   const todos = await db
     .select({
@@ -37,17 +45,10 @@ export default defineEventHandler(async (event): Promise<TodoData> => {
     })
     .from(todo)
     .innerJoin(user, eq(todo.userId, user.id))
-    .where(
-      sharedTodoIds.length > 0
-        ? or(
-            eq(todo.userId, currentUser.id),
-            ...sharedTodoIds.map(id => eq(todo.id, id)),
-          )
-        : eq(todo.userId, currentUser.id),
-    )
+    .where(isVisibleTodo)
     .orderBy(desc(todo.createdAt))
 
-  const allShares = await db
+  const visibleShares = await db
     .select({
       todoId: todoShare.todoId,
       userId: todoShare.sharedWithId,
@@ -55,12 +56,12 @@ export default defineEventHandler(async (event): Promise<TodoData> => {
     })
     .from(todoShare)
     .innerJoin(user, eq(todoShare.sharedWithId, user.id))
+    .where(inArray(todoShare.todoId, visibleTodoIds))
 
-  const sharesByTodoId = new Map<string, Array<{ id: string, username: string }>>()
-  allShares.forEach((share) => {
-    const existing = sharesByTodoId.get(share.todoId) ?? []
-    sharesByTodoId.set(share.todoId, [...existing, { id: share.userId, username: share.username }])
-  })
+  const sharesByTodoId = visibleShares.reduce((sharesMap, share) => {
+    const existing = sharesMap.get(share.todoId) ?? []
+    return sharesMap.set(share.todoId, [...existing, { id: share.userId, username: share.username }])
+  }, new Map<string, Array<{ id: string, username: string }>>())
 
   const items: TodoListItem[] = todos.map(t => ({
     id: t.id,
