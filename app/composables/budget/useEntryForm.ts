@@ -1,5 +1,6 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
 import { getEntryConfig } from '~~/shared/utils/budget/entry-strategies'
+import { formatPlainDate, toLocalIsoDate } from '~~/shared/utils/shared/dates'
 
 export interface EntryFormData {
   description: string
@@ -35,7 +36,7 @@ export const useEntryForm = (
     description: '',
     amount: 0,
     currency: unref(defaultCurrency),
-    date: new Date().toISOString().split('T')[0] || '',
+    date: toLocalIsoDate(new Date()),
     isOptional: false,
   })
 
@@ -67,7 +68,7 @@ export const useEntryForm = (
     if (!date) {
       return '—'
     }
-    return new Date(date).toLocaleDateString(locale.value)
+    return formatPlainDate(date, locale.value)
   }
 
   const startAdd = (): void => {

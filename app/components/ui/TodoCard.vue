@@ -120,6 +120,7 @@
 
 <script setup lang="ts">
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
+import { formatPlainDate, getPlainDateYear } from '~~/shared/utils/shared/dates'
 
 interface Props {
   content: string
@@ -143,25 +144,19 @@ defineEmits<{
   delete: []
 }>()
 
+const { locale } = useI18n()
+
 const formattedDate = computed(() => {
   if (!props.plannedDate) {
     return ''
   }
-  const date = new Date(props.plannedDate)
-  const currentYear = new Date().getFullYear()
-  const dateYear = date.getFullYear()
 
-  if (dateYear !== currentYear) {
-    return date.toLocaleDateString(undefined, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
+  const isCurrentYear = getPlainDateYear(props.plannedDate) === new Date().getFullYear()
 
-  return date.toLocaleDateString(undefined, {
+  return formatPlainDate(props.plannedDate, locale.value, {
     day: 'numeric',
     month: 'short',
+    ...(isCurrentYear ? {} : { year: 'numeric' }),
   })
 })
 </script>

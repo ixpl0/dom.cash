@@ -313,6 +313,7 @@ import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 import type { EntryTableEntry, EntryTableLabels } from '~/components/ui/EntryTable.vue'
 import type { ChartOption, ChartSeriesConfig } from '~/composables/shared/useChartConfig'
 import { formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
+import { formatPlainDate } from '~~/shared/utils/shared/dates'
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
@@ -583,8 +584,7 @@ const formatDemoDate = (date: string | null | undefined): string => {
   if (!date) {
     return ''
   }
-  const d = new Date(date)
-  return d.toLocaleDateString(locale.value, {
+  return formatPlainDate(date, locale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
