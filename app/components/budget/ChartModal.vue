@@ -63,6 +63,9 @@ type TooltipItem = SingleParam & {
 const toList = (p: TooltipParams): readonly TooltipItem[] =>
   (Array.isArray(p) ? p : [p]) as TooltipItem[]
 
+const hasValue = (value: TooltipItem['value']): boolean =>
+  value !== null && value !== undefined && value !== '-'
+
 const toNumber = (v: TooltipItem['value']): number => {
   if (Array.isArray(v)) {
     const last = v.at(-1)
@@ -95,13 +98,13 @@ const chartData = computed(() => {
   )
 
   const datasets = {
-    startBalance: sortedMonths.map(month => month.startBalance ?? 0),
+    startBalance: sortedMonths.map(month => month.startBalance ?? null),
     totalIncome: sortedMonths.map(month => month.totalIncome),
     totalExpenses: sortedMonths.map(month => month.totalExpenses),
     totalOptionalExpenses: sortedMonths.map(month => month.totalOptionalExpenses),
-    calculatedPocketExpenses: sortedMonths.map(month => month.calculatedPocketExpenses || 0),
-    allExpenses: sortedMonths.map(month => month.totalAllExpenses || 0),
-    currencyProfitLoss: sortedMonths.map(month => month.currencyProfitLoss || 0),
+    calculatedPocketExpenses: sortedMonths.map(month => month.calculatedPocketExpenses ?? null),
+    allExpenses: sortedMonths.map(month => month.totalAllExpenses ?? null),
+    currencyProfitLoss: sortedMonths.map(month => month.currencyProfitLoss ?? null),
   }
 
   return { labels, datasets }
@@ -174,6 +177,7 @@ const tooltipFormatter = (p: TooltipParams): string => {
   const head = typeof idx === 'number' ? chartData.value.labels[idx] : (list[0]?.name ?? '')
 
   const body = list
+    .filter(({ value }) => hasValue(value))
     .map(({ marker = '', seriesName = '', value }) =>
       `${marker}${seriesName}: ${formatChartValue(toNumber(value))}`)
     .join('<br/>')

@@ -18,7 +18,7 @@ export type ChartSeriesType = 'line' | 'bar'
 
 export interface ChartSeriesConfig {
   name: string
-  data: number[]
+  data: Array<number | null>
   colorKey: keyof ChartThemeColors
   type?: ChartSeriesType
 }
