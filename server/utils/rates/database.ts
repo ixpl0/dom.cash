@@ -1,10 +1,9 @@
 import { currency } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
-import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { isValidRates } from './validation'
+import { fetchHistoricalRates } from './api'
 
-export const saveCurrencyRates = async (date: string, rates: Record<string, number>, event: H3Event): Promise<void> => {
+const saveCurrencyRates = async (date: string, rates: Record<string, number>, event: H3Event): Promise<void> => {
   if (!rates || typeof rates !== 'object' || Object.keys(rates).length === 0) {
     throw new Error(`Invalid rates data: empty or invalid object`)
   }
@@ -39,26 +38,7 @@ export const saveCurrencyRates = async (date: string, rates: Record<string, numb
   }
 }
 
-export const getCurrencyRates = async (date: string, event: H3Event): Promise<Record<string, number> | null> => {
-  const db = useDatabase(event)
-  const result = await db.select()
-    .from(currency)
-    .where(eq(currency.date, date))
-    .limit(1)
-
-  const rates = result[0]?.rates
-  return isValidRates(rates) ? rates : null
-}
-
-export const hasCurrencyRates = async (date: string, event: H3Event): Promise<boolean> => {
-  const rates = await getCurrencyRates(date, event)
-  return rates !== null
-}
-
-export const saveHistoricalRatesForCurrentMonth = async (event?: H3Event): Promise<void> => {
-  if (!event) {
-    throw new Error('saveHistoricalRatesForCurrentMonth requires H3Event context')
-  }
+export const saveHistoricalRatesForCurrentMonth = async (event: H3Event): Promise<void> => {
   const now = new Date()
   const lastDayOfPreviousMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0))
   const firstDayOfCurrentMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
@@ -66,7 +46,6 @@ export const saveHistoricalRatesForCurrentMonth = async (event?: H3Event): Promi
   const lastDayString = lastDayOfPreviousMonth.toISOString().slice(0, 10)
   const firstDayString = firstDayOfCurrentMonth.toISOString().slice(0, 10)
 
-  const { fetchHistoricalRates } = await import('./api')
   const rates = await fetchHistoricalRates(lastDayString)
   await saveCurrencyRates(firstDayString, rates, event)
 }

@@ -10,6 +10,8 @@ interface ExchangeRatesResponse {
 
 const OPENEXCHANGERATES_API_URL = 'https://openexchangerates.org/api'
 
+const REQUEST_TIMEOUT_MS = 5000
+
 const getApiKey = (): string => {
   const apiKey = process.env.OPENEXCHANGERATES_APP_ID
   if (!apiKey) {
@@ -24,7 +26,7 @@ const fetchRatesFromApi = async (url: string): Promise<Record<string, number>> =
   const apiKey = getApiKey()
   const fullUrl = `${url}?app_id=${apiKey}`
 
-  const response = await fetch(fullUrl)
+  const response = await fetch(fullUrl, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
 
   if (!response.ok) {
     throw new Error(`OpenExchangeRates API error: ${response.status} ${response.statusText}`)

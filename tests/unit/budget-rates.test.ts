@@ -1,72 +1,41 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { TestContext } from 'node:test'
-import type { H3Event } from 'h3'
-import { createMonth } from '../../server/services/budget/months'
-import { getExchangeRatesForMonth } from '../../server/services/budget/rates'
-import { hasCurrencyRates } from '../../server/utils/rates/database'
+import { useDatabase } from '../../server/db'
+import { currency, entry, month, user } from '../../server/db/schema'
+import { createMonth, loadMonths } from '../../server/services/budget/months'
+import { getExchangeRatesForMonth, loadExchangeRates } from '../../server/services/budget/rates'
+import { createTestDatabase, type TestDatabase } from './helpers/test-database'
 
 interface StoredRates {
   date: string
   rates: Record<string, number>
-  lastUpdateAttempt?: number | null
 }
 
-const createDatabase = (initialRows: StoredRates[] = []) => {
-  let rows = initialRows
-  let queries: string[] = []
-
-  const upsert = (record: StoredRates) => {
-    rows = [...rows.filter(row => row.date !== record.date), record]
+const createDatabaseWithRates = async (rows: StoredRates[] = []): Promise<TestDatabase> => {
+  const database = createTestDatabase()
+  if (rows.length > 0) {
+    await useDatabase(database.event).insert(currency).values(rows)
   }
+  return database
+}
 
-  const prepare = (query: string) => ({
-    bind: (...parameters: unknown[]) => ({
-      raw: async () => {
-        queries = [...queries, query]
-        if (query.includes('from "month"')) {
-          return []
-        }
+const upsertRates = async (database: TestDatabase, row: StoredRates): Promise<void> => {
+  await useDatabase(database.event)
+    .insert(currency)
+    .values(row)
+    .onConflictDoUpdate({ target: currency.date, set: { rates: row.rates } })
+}
 
-        const date = String(parameters[0])
-        const eligibleRows = rows.filter((row) => {
-          const matchesDate = query.includes('<= ?')
-            ? row.date <= date
-            : query.includes('>= ?')
-              ? row.date >= date
-              : row.date === date
-          const values = Object.values(row.rates)
-          const matchesRates = !query.includes('json_each')
-            || (values.length > 0 && values.every(value => Number.isFinite(value) && value > 0))
-          return matchesDate && matchesRates
-        })
-        const direction = query.includes(' desc') ? -1 : 1
-        return [...eligibleRows]
-          .sort((left, right) => direction * left.date.localeCompare(right.date))
-          .slice(0, 1)
-          .map(row => [row.date, JSON.stringify(row.rates), row.lastUpdateAttempt ?? null])
-      },
-      run: async () => {
-        queries = [...queries, query]
-        const date = String(parameters[0])
-        const existingRow = rows.find(row => row.date === date)
-        const rates = JSON.parse(String(parameters[1])) as Record<string, number>
-        const lastUpdateAttempt = parameters[2] === null ? null : Number(parameters[2])
-        upsert(existingRow
-          ? query.includes('set "rates"')
-            ? { ...existingRow, rates }
-            : { ...existingRow, lastUpdateAttempt }
-          : { date, rates, lastUpdateAttempt })
-        return { success: true, meta: { duration: 0 } }
-      },
-    }),
-  })
+const readStoredRates = (database: TestDatabase, date: string): unknown => {
+  const row = database.sqlite.prepare('SELECT rates FROM currency WHERE date = ?').get(date)
+  return row ? JSON.parse(String(row.rates)) : null
+}
 
-  const event = {
-    context: { cloudflare: { env: { DB: { prepare } } } },
-  } as unknown as H3Event
-
-  return { event, upsert, getQueries: () => queries }
+const countQueries = async (database: TestDatabase, action: () => Promise<unknown>): Promise<number> => {
+  const previousQueryCount = database.getQueries().length
+  await action()
+  return database.getQueries().length - previousQueryCount
 }
 
 const prepareClock = (context: TestContext, date = '2026-09-06T12:00:00Z') => {
@@ -87,13 +56,13 @@ const prepareClock = (context: TestContext, date = '2026-09-06T12:00:00Z') => {
 
 test('failed updates use previous rates and retry after an hour', async (context) => {
   prepareClock(context)
-  const database = createDatabase([{ date: '2026-08-01', rates: { USD: 1, GEL: 2.7 } }])
+  const database = await createDatabaseWithRates([{ date: '2026-08-01', rates: { USD: 1, GEL: 2.7 } }])
   const fetchMock = context.mock.method(globalThis, 'fetch', async () => new Response('', { status: 503 }))
 
   assert.deepEqual(await getExchangeRatesForMonth(2026, 8, database.event), {
     rates: { USD: 1, GEL: 2.7 }, source: '2026-08-01',
   })
-  assert.equal(await hasCurrencyRates('2026-09-01', database.event), false)
+  assert.deepEqual(readStoredRates(database, '2026-09-01'), {})
 
   await getExchangeRatesForMonth(2026, 8, database.event)
   assert.equal(fetchMock.mock.callCount(), 1)
@@ -104,12 +73,12 @@ test('failed updates use previous rates and retry after an hour', async (context
     rates: { USD: 1, GEL: 2.8 }, source: '2026-09-01',
   })
   assert.equal(fetchMock.mock.callCount(), 2)
-  assert.equal(await hasCurrencyRates('2026-09-01', database.event), true)
+  assert.deepEqual(readStoredRates(database, '2026-09-01'), { USD: 1, GEL: 2.8 })
 })
 
 test('fallback skips empty and invalid records before applying the date limit', async (context) => {
   prepareClock(context)
-  const database = createDatabase([
+  const database = await createDatabaseWithRates([
     { date: '2025-10-01', rates: { USD: 1, GEL: 2.7 } },
     { date: '2025-11-01', rates: {} },
     { date: '2025-12-01', rates: {} },
@@ -123,23 +92,24 @@ test('fallback skips empty and invalid records before applying the date limit', 
 
 test('new exact rates replace fallback and updated exact rates are read immediately', async (context) => {
   prepareClock(context)
-  const database = createDatabase([{ date: '2026-09-01', rates: { USD: 1, GEL: 2.7 } }])
+  const database = await createDatabaseWithRates([{ date: '2026-09-01', rates: { USD: 1, GEL: 2.7 } }])
   assert.equal((await getExchangeRatesForMonth(2026, 9, database.event)).source, '2026-09-01')
 
-  database.upsert({ date: '2026-10-01', rates: { USD: 1, GEL: 2.8 } })
-  const previousQueryCount = database.getQueries().length
-  assert.deepEqual(await getExchangeRatesForMonth(2026, 9, database.event), {
-    rates: { USD: 1, GEL: 2.8 }, source: '2026-10-01',
+  await upsertRates(database, { date: '2026-10-01', rates: { USD: 1, GEL: 2.8 } })
+  const queryCount = await countQueries(database, async () => {
+    assert.deepEqual(await getExchangeRatesForMonth(2026, 9, database.event), {
+      rates: { USD: 1, GEL: 2.8 }, source: '2026-10-01',
+    })
   })
-  assert.equal(database.getQueries().length - previousQueryCount, 1)
+  assert.equal(queryCount, 1)
 
-  database.upsert({ date: '2026-10-01', rates: { USD: 1, GEL: 2.9 } })
+  await upsertRates(database, { date: '2026-10-01', rates: { USD: 1, GEL: 2.9 } })
   assert.equal((await getExchangeRatesForMonth(2026, 9, database.event)).rates.GEL, 2.9)
 })
 
 test('a future month starts updating when it becomes current after midnight UTC', async (context) => {
   prepareClock(context, '2026-09-30T23:59:00Z')
-  const database = createDatabase([{ date: '2026-09-01', rates: { USD: 1, GEL: 2.7 } }])
+  const database = await createDatabaseWithRates([{ date: '2026-09-01', rates: { USD: 1, GEL: 2.7 } }])
   const fetchMock = context.mock.method(globalThis, 'fetch', async () => Response.json({ rates: { USD: 1, GEL: 2.8 } }))
 
   assert.equal((await getExchangeRatesForMonth(2026, 9, database.event)).source, '2026-09-01')
@@ -154,21 +124,88 @@ test('a future month starts updating when it becomes current after midnight UTC'
 
 test('missing valid rates fail explicitly and do not block later recovery', async (context) => {
   prepareClock(context)
-  const database = createDatabase([{ date: '2025-12-01', rates: {} }])
+  const database = await createDatabaseWithRates([{ date: '2025-12-01', rates: {} }])
   await assert.rejects(getExchangeRatesForMonth(2025, 11, database.event), {
     statusCode: 503,
     message: 'serverErrors.failed_to_update_rates',
   })
 
-  database.upsert({ date: '2025-12-01', rates: { USD: 1, GEL: 2.7 } })
+  await upsertRates(database, { date: '2025-12-01', rates: { USD: 1, GEL: 2.7 } })
   assert.deepEqual(await getExchangeRatesForMonth(2025, 11, database.event), {
     rates: { USD: 1, GEL: 2.7 }, source: '2025-12-01',
   })
 })
 
+test('rates for many months are read with one query', async (context) => {
+  prepareClock(context)
+  const months = Array.from({ length: 24 }, (_, index) => ({ year: 2024 + Math.floor(index / 12), month: index % 12 }))
+  const database = await createDatabaseWithRates(months.map(({ year, month: monthNumber }) => ({
+    date: `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`,
+    rates: { USD: 1, GEL: 2 + monthNumber / 10 },
+  })))
+
+  const queryCount = await countQueries(database, async () => {
+    const getExchangeRates = await loadExchangeRates(months, database.event)
+    assert.deepEqual(getExchangeRates(2025, 11), { rates: { USD: 1, GEL: 3.1 }, source: '2025-12-01' })
+    assert.deepEqual(getExchangeRates(2024, 0), { rates: { USD: 1, GEL: 2 }, source: '2024-01-01' })
+  })
+  assert.equal(queryCount, 1)
+})
+
+test('a month without rates takes the closest stored month, inside or outside the loaded range', async (context) => {
+  prepareClock(context)
+  const database = await createDatabaseWithRates([
+    { date: '2025-11-01', rates: { USD: 1, GEL: 2.5 } },
+    { date: '2026-01-01', rates: { USD: 1, GEL: 2.6 } },
+    { date: '2026-03-01', rates: { USD: 1, GEL: 2.8 } },
+  ])
+
+  const getExchangeRates = await loadExchangeRates([
+    { year: 2025, month: 11 },
+    { year: 2026, month: 0 },
+    { year: 2026, month: 1 },
+  ], database.event)
+
+  assert.equal(getExchangeRates(2025, 11).source, '2025-11-01')
+  assert.equal(getExchangeRates(2026, 0).source, '2026-01-01')
+  assert.equal(getExchangeRates(2026, 1).source, '2026-03-01')
+})
+
+test('loading months reads months, entries and rates with three queries', async (context) => {
+  prepareClock(context)
+  const database = await createDatabaseWithRates([
+    { date: '2026-01-01', rates: { USD: 1, GEL: 2.6 } },
+    { date: '2026-02-01', rates: { USD: 1, GEL: 2.7 } },
+  ])
+  const db = useDatabase(database.event)
+  await db.insert(user).values({ id: 'owner', username: 'owner@example.com', passwordHash: 'hash', mainCurrency: 'USD', createdAt: new Date() })
+  await db.insert(month).values([
+    { id: 'january', userId: 'owner', year: 2026, month: 0 },
+    { id: 'february', userId: 'owner', year: 2026, month: 1 },
+  ])
+  await db.insert(entry).values([
+    { id: 'savings', monthId: 'january', kind: 'balance', description: 'Savings', amount: 100, currency: 'USD' },
+    { id: 'salary', monthId: 'february', kind: 'income', description: 'Salary', amount: 50, currency: 'GEL', date: '2026-02-10' },
+  ])
+
+  const queryCount = await countQueries(database, async () => {
+    const months = await loadMonths('owner', [2026], database.event)
+    assert.deepEqual(months.map(({ id, exchangeRatesSource, balanceSources, incomeEntries }) => ({
+      id,
+      exchangeRatesSource,
+      balanceIds: balanceSources.map(source => source.id),
+      incomeIds: incomeEntries.map(income => income.id),
+    })), [
+      { id: 'february', exchangeRatesSource: '2026-02-01', balanceIds: [], incomeIds: ['salary'] },
+      { id: 'january', exchangeRatesSource: '2026-01-01', balanceIds: ['savings'], incomeIds: [] },
+    ])
+  })
+  assert.equal(queryCount, 3)
+})
+
 test('creating a month fails before inserting budget data when rates are unavailable', async (context) => {
   prepareClock(context)
-  const database = createDatabase()
+  const database = await createDatabaseWithRates()
   await assert.rejects(createMonth({
     year: 2025,
     month: 11,

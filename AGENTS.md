@@ -2,7 +2,7 @@
 
 ## Setup & Infrastructure
 
-* **Node**: 22.12+ (`.nvmrc`, `engines` in `package.json`). pnpm is pinned via the `packageManager` field.
+* **Node**: 22.16+ (`.nvmrc`, `engines` in `package.json`; unit tests use `node:sqlite`). pnpm is pinned via the `packageManager` field.
 * **Package manager**: pnpm 10.
 * **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
 * **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
@@ -118,7 +118,7 @@
 
 ## Testing
 
-* **Unit Tests**: `tests/unit/*.test.ts`, run with `pnpm test:unit`. Cover pure logic in `shared/` and server services with a fake D1. Compute expected values by hand, never copy them from the output; record known bugs as `{ todo: 'reason' }` tests with the correct expectation.
+* **Unit Tests**: `tests/unit/*.test.ts`, run with `pnpm test:unit`. Cover pure logic in `shared/`; test server services against `createTestDatabase()` (`tests/unit/helpers/test-database.ts`): an in-memory SQLite with all migrations that D1 code can use through `event`, and that counts the queries. Compute expected values by hand, never copy them from the output; record known bugs as `{ todo: 'reason' }` tests with the correct expectation.
 * **E2E Tests**: Use Playwright with TypeScript
   * Playwright reuses a dev server on port 8787 (`pnpm preview:e2e`) and starts one if none is running.
   * Only Desktop Chrome is configured. Tests retry only on CI.

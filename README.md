@@ -126,7 +126,7 @@ Styles are split into logical CSS files in `app/assets/`:
 
 ### Prerequisites
 
-- Node.js 22.12+ (see `.nvmrc`)
+- Node.js 22.16+ (see `.nvmrc`)
 - pnpm 10+
 - Wrangler CLI (for Cloudflare deployment)
 

@@ -7,7 +7,7 @@ import { entry, month, plan } from '~~/server/db/schema'
 import type { MonthData, YearInfo } from '~~/shared/types/budget'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
-import { getExchangeRatesForMonth } from '~~/server/services/budget/rates'
+import { getExchangeRatesForMonth, loadExchangeRates } from '~~/server/services/budget/rates'
 import type { ExchangeRatesData } from '~~/server/services/budget/rates'
 
 type EntryRow = Pick<typeof entry.$inferSelect, 'id' | 'monthId' | 'kind' | 'description' | 'amount' | 'currency' | 'date' | 'isOptional'>
@@ -80,12 +80,13 @@ export const loadMonths = async (ownerId: string, years: number[] | 'all', event
     .where(inArray(entry.monthId, db.select({ id: month.id }).from(month).where(monthFilter)))
 
   const entriesByMonthId = groupEntriesByMonthId(entryRows)
+  const getExchangeRates = await loadExchangeRates(monthRows, event)
 
-  return Promise.all(monthRows.map(async monthRow => toMonthData(
+  return monthRows.map(monthRow => toMonthData(
     monthRow,
     entriesByMonthId.get(monthRow.id) ?? [],
-    await getExchangeRatesForMonth(monthRow.year, monthRow.month, event),
-  )))
+    getExchangeRates(monthRow.year, monthRow.month),
+  ))
 }
 
 export const parseRequestedYears = (yearsParam: string): number[] => [
