@@ -44,6 +44,7 @@
 * **State Management**: Pinia stores in `app/stores/`
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
   * `useI18n()` works only at the top of a component `setup`. Code that stores or plugins may call uses `useT()` (`app/utils/i18n.ts`), which reads the global `$i18n`.
+  * Russian messages with a count list three forms, `one | few | many` (`{count} минуту | {count} минуты | {count} минут`); `i18n/plural-rules.ts` picks the form.
 * **Icons**: @nuxt/icon with @iconify-json/heroicons
 * **Excel import/export**: xlsx-js-style, loaded only when exporting
 * **Charts**: ECharts via vue-echarts
