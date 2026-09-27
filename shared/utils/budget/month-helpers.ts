@@ -1,43 +1,33 @@
 import type { MonthData } from '~~/shared/types/budget'
 
-export const getNextMonth = (currentMonths: MonthData[]): { year: number, month: number } => {
-  if (currentMonths.length === 0) {
-    const now = new Date()
-    return { year: now.getFullYear(), month: now.getMonth() }
-  }
-
-  const sortedMonths = [...currentMonths].sort((a, b) => {
-    if (a.year !== b.year) {
-      return b.year - a.year
-    }
-    return b.month - a.month
-  })
-
-  const latest = sortedMonths[0]!
-  const nextMonth = latest.month === 11 ? 0 : latest.month + 1
-  const nextYear = latest.month === 11 ? latest.year + 1 : latest.year
-
-  return { year: nextYear, month: nextMonth }
+interface MonthPosition {
+  year: number
+  month: number
 }
 
-export const getPreviousMonth = (currentMonths: MonthData[]): { year: number, month: number } => {
-  if (currentMonths.length === 0) {
-    const now = new Date()
-    return { year: now.getFullYear(), month: now.getMonth() }
-  }
+const toMonthNumber = ({ year, month }: MonthPosition): number => year * 12 + month
 
-  const sortedMonths = [...currentMonths].sort((a, b) => {
-    if (a.year !== b.year) {
-      return a.year - b.year
-    }
-    return a.month - b.month
-  })
+export const sortMonthsNewestFirst = <T extends MonthPosition>(months: readonly T[]): T[] =>
+  [...months].sort((a, b) => toMonthNumber(b) - toMonthNumber(a))
 
-  const earliest = sortedMonths[0]!
-  const prevMonth = earliest.month === 0 ? 11 : earliest.month - 1
-  const prevYear = earliest.month === 0 ? earliest.year - 1 : earliest.year
+const getCurrentMonth = (): MonthPosition => {
+  const now = new Date()
+  return { year: now.getFullYear(), month: now.getMonth() }
+}
 
-  return { year: prevYear, month: prevMonth }
+const fromMonthNumber = (monthNumber: number): MonthPosition => ({
+  year: Math.floor(monthNumber / 12),
+  month: monthNumber % 12,
+})
+
+export const getNextMonth = (currentMonths: MonthData[]): MonthPosition => {
+  const [latest] = sortMonthsNewestFirst(currentMonths)
+  return latest ? fromMonthNumber(toMonthNumber(latest) + 1) : getCurrentMonth()
+}
+
+export const getPreviousMonth = (currentMonths: MonthData[]): MonthPosition => {
+  const earliest = sortMonthsNewestFirst(currentMonths).at(-1)
+  return earliest ? fromMonthNumber(toMonthNumber(earliest) - 1) : getCurrentMonth()
 }
 
 export const findClosestMonthForCopy = (
@@ -46,121 +36,25 @@ export const findClosestMonthForCopy = (
   targetMonth: number,
   direction: 'next' | 'previous',
 ): string | undefined => {
-  if (monthsData.length === 0) {
-    return undefined
-  }
+  const target = toMonthNumber({ year: targetYear, month: targetMonth })
+  const sortedMonths = sortMonthsNewestFirst(monthsData)
+  const closestMonth = direction === 'next'
+    ? sortedMonths.filter(month => toMonthNumber(month) > target).at(-1)
+    : sortedMonths.find(month => toMonthNumber(month) < target)
 
-  if (direction === 'next') {
-    const sortedMonths = [...monthsData].sort((a, b) => {
-      if (a.year !== b.year) {
-        return b.year - a.year
-      }
-      return b.month - a.month
-    })
-
-    const targetMonthValue = targetYear * 12 + targetMonth
-    let closestMonth: MonthData | undefined = undefined
-
-    for (const month of sortedMonths) {
-      const monthValue = month.year * 12 + month.month
-      if (monthValue > targetMonthValue) {
-        if (!closestMonth) {
-          closestMonth = month
-        }
-        else {
-          const closestValue = closestMonth.year * 12 + closestMonth.month
-          if (monthValue < closestValue) {
-            closestMonth = month
-          }
-        }
-      }
-    }
-
-    return closestMonth?.id
-  }
-  else {
-    const sortedMonths = [...monthsData].sort((a, b) => {
-      if (a.year !== b.year) {
-        return a.year - b.year
-      }
-      return a.month - b.month
-    })
-
-    const targetMonthValue = targetYear * 12 + targetMonth
-    let closestMonth: MonthData | undefined = undefined
-
-    for (const month of sortedMonths) {
-      const monthValue = month.year * 12 + month.month
-      if (monthValue < targetMonthValue) {
-        if (!closestMonth) {
-          closestMonth = month
-        }
-        else {
-          const closestValue = closestMonth.year * 12 + closestMonth.month
-          if (monthValue > closestValue) {
-            closestMonth = month
-          }
-        }
-      }
-    }
-
-    return closestMonth?.id
-  }
+  return closestMonth?.id
 }
 
-export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
-  if (allMonths.length === 0) {
-    return false
-  }
-  if (allMonths.length === 1) {
-    return true
-  }
+export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): boolean =>
+  sortMonthsNewestFirst(allMonths).at(-1)?.id === monthData.id
 
-  const sortedMonths = [...allMonths].sort((a, b) => {
-    if (a.year !== b.year) {
-      return a.year - b.year
-    }
-    return a.month - b.month
-  })
-
-  const firstMonth = sortedMonths[0]
-  return firstMonth?.id === monthData.id
-}
-
-export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
-  if (allMonths.length === 0) {
-    return false
-  }
-
-  const sortedMonths = [...allMonths].sort((a, b) => {
-    if (a.year !== b.year) {
-      return b.year - a.year
-    }
-    return b.month - a.month
-  })
-
-  const lastMonth = sortedMonths[0]
-  return lastMonth?.id === monthData.id
-}
+export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean =>
+  sortMonthsNewestFirst(allMonths)[0]?.id === monthData.id
 
 export const isCurrentMonth = (monthData: MonthData): boolean => {
-  const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth()
-
-  return monthData.year === currentYear && monthData.month === currentMonth
+  const { year, month } = getCurrentMonth()
+  return monthData.year === year && monthData.month === month
 }
 
-export const isPastMonth = (year: number, month: number): boolean => {
-  const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth()
-
-  if (year < currentYear) {
-    return true
-  }
-  if (year === currentYear && month < currentMonth) {
-    return true
-  }
-  return false
-}
+export const isPastMonth = (year: number, month: number): boolean =>
+  toMonthNumber({ year, month }) < toMonthNumber(getCurrentMonth())

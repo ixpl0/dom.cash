@@ -46,7 +46,7 @@
   * `useI18n()` works only at the top of a component `setup`. Code that stores or plugins may call uses `useT()` (`app/utils/i18n.ts`), which reads the global `$i18n`.
   * Russian messages with a count list three forms, `one | few | many` (`{count} минуту | {count} минуты | {count} минут`); `i18n/plural-rules.ts` picks the form.
 * **Icons**: @nuxt/icon with @iconify-json/heroicons
-* **Excel import/export**: xlsx-js-style, loaded only when exporting
+* **Excel import/export**: xlsx-js-style, loaded only when exporting (`useBudgetExport`)
 * **Charts**: ECharts via vue-echarts
 * **Linting**: Husky + lint-staged for pre-commit hooks
 * **Real-time Notifications**: Server-Sent Events (SSE) handled by the `live-data` client plugin (`app/plugins/live-data.client.ts`).
@@ -102,6 +102,7 @@
 ## Features
 
 * **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
+  * The store keeps months newest first: sort them with `sortMonthsNewestFirst` (`shared/utils/budget/month-helpers.ts`) and replace changed months instead of copying the whole budget.
 * **Budget Sharing**: Share budgets with other users (read/write access)
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
   * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.

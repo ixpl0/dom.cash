@@ -186,6 +186,7 @@
 import { findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { timelineColumnsSyncKey } from '~/types/timeline'
+import type { BudgetExportFormat } from '~/composables/budget/useBudgetExport'
 
 const columnsSync = useBudgetColumnsSync()
 
@@ -195,6 +196,7 @@ provide(timelineColumnsSyncKey, {
 })
 
 const budgetStore = useBudgetStore()
+const { exportBudget } = useBudgetExport()
 const route = useRoute()
 const { t } = useI18n()
 
@@ -347,7 +349,7 @@ const handleLoadPreviousYear = async (): Promise<void> => {
   }
 
   try {
-    await budgetStore.loadYear(budgetStore.nextYearToLoad.year, targetUsername.value)
+    await budgetStore.loadYear(budgetStore.nextYearToLoad.year)
   }
   catch (error) {
     console.error('Error loading previous year:', error)
@@ -355,9 +357,9 @@ const handleLoadPreviousYear = async (): Promise<void> => {
   }
 }
 
-const handleExport = async (format: 'json' | 'excel'): Promise<void> => {
+const handleExport = async (format: BudgetExportFormat): Promise<void> => {
   try {
-    await budgetStore.exportBudget(format)
+    await exportBudget(format)
   }
   catch (error) {
     console.error('Export failed:', error)

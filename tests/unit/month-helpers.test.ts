@@ -9,6 +9,7 @@ import {
   isFirstMonth,
   isLastMonth,
   isPastMonth,
+  sortMonthsNewestFirst,
 } from '../../shared/utils/budget/month-helpers'
 
 const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
@@ -186,4 +187,11 @@ pastMonthCases.forEach(({ now, year, month, expected }) => {
 
     assert.equal(isPastMonth(year, month), expected)
   })
+})
+
+test('sortMonthsNewestFirst orders months across years and keeps the input', () => {
+  const months = [createMonth(2025, 11), createMonth(2026, 0), createMonth(2025, 2)]
+
+  assert.deepEqual(sortMonthsNewestFirst(months).map(month => month.id), ['jan-2026', 'dec-2025', 'mar-2025'])
+  assert.deepEqual(months.map(month => month.id), ['dec-2025', 'jan-2026', 'mar-2025'])
 })
