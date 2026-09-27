@@ -95,6 +95,7 @@
 * `tests/e2e/` — Playwright E2E tests
   * `public/` — Tests for public pages
   * `authenticated/` — Tests for authenticated pages (budget/, todo/)
+  * `mobile/` — Phone layout tests (Pixel 7 project)
   * `helpers/` — Test helpers (auth, confirmation, budget-setup, wait-for-hydration, text, users)
   * `fixtures.ts` — Test fixtures (one registered user per worker)
   * `fixtures/budgets/` — JSON budget fixtures for import tests
@@ -138,9 +139,9 @@
 * **E2E Tests**: Use Playwright with TypeScript
   * `pnpm test:e2e` runs against a production-like build (`nuxt build --envName e2e` into `.output-e2e`) served by `wrangler dev` on port 8787, with a fresh local D1 in `.wrangler/e2e` on every run. `playwright.dev.config.ts` targets the dev server instead.
   * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
-  * Only Desktop Chrome is configured. Tests retry only on CI.
+  * Desktop Chrome runs `public/` and `authenticated/`; the `mobile` project (Pixel 7) runs `tests/e2e/mobile/`, which covers the mobile menu and cards. Tests retry only on CI.
   * Do not edit files or run Nuxt commands (typecheck, prepare, build) while `pnpm test:e2e` runs: `wrangler dev` rebuilds the worker and requests in flight fail with 503.
-* **Test structure**: `tests/e2e/` with `public/` for public pages and `authenticated/` for pages requiring auth
+* **Test structure**: `tests/e2e/` with `public/` for public pages, `authenticated/` for pages requiring auth and `mobile/` for the phone layout
 * **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
   * Use `page.getByTestId('element-id')` instead of text-based selectors
   * Never use `getByRole`, `getByText`, or other text-dependent selectors

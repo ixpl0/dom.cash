@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar bg-base-200 flex justify-between gap-4 px-4">
+  <header class="navbar bg-base-200 flex justify-between gap-4 px-4 relative z-40">
     <NuxtLink
       to="/"
       class="text-2xl font-bold flex items-center gap-2 ml-4"

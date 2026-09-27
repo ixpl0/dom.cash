@@ -37,5 +37,10 @@ export default defineConfig({
       testMatch: '**/authenticated/**',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'mobile',
+      testMatch: '**/mobile/**',
+      use: { ...devices['Pixel 7'] },
+    },
   ],
 })
