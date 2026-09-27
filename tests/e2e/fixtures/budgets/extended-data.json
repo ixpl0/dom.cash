@@ -63,7 +63,7 @@
           "description": "Optional Expense",
           "amount": 20,
           "currency": "USD",
-          "optional": true
+          "isOptional": true
         }
       ]
     }

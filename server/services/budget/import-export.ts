@@ -56,6 +56,7 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
         amount: entryData.amount,
         currency: entryData.currency,
         date: entryData.date || undefined,
+        ...(entryData.isOptional ? { isOptional: true } : {}),
       })),
     ]
 
@@ -164,7 +165,7 @@ const importSingleMonth = async (
     amount: importEntry.amount,
     currency: importEntry.currency,
     date: importEntry.date ?? null,
-    isOptional: false,
+    isOptional: importEntry.kind === 'expense' && importEntry.isOptional === true,
   }))
 
   const entryInsertStatements = chunkArray(entriesToInsert, entriesPerInsertStatement)

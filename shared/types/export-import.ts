@@ -32,6 +32,7 @@ export interface BudgetExportEntry {
   amount: number
   currency: string
   date?: string
+  isOptional?: boolean
 }
 
 export type ImportStrategy = 'skip' | 'overwrite'
@@ -61,7 +62,8 @@ export const budgetExportEntrySchema = z.object({
   description: descriptionSchema,
   amount: amountSchema,
   currency: currencySchema,
-  date: z.string().optional(),
+  date: z.iso.date().optional(),
+  isOptional: z.boolean().optional(),
 })
 
 export const budgetExportMonthSchema = z.object({

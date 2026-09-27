@@ -27,7 +27,6 @@ interface ValidationCase {
   name: string
   input: unknown
   isValid: boolean
-  bug?: string
 }
 
 interface ValidationGroup {
@@ -35,8 +34,6 @@ interface ValidationGroup {
   schema: Validator
   cases: ValidationCase[]
 }
-
-const TRIM_ORDER = 'length limits are checked before trimming'
 
 const FIXTURES_DIRECTORY = new URL('../e2e/fixtures/budgets/', import.meta.url)
 
@@ -76,7 +73,6 @@ const validationGroups: ValidationGroup[] = [
         name: 'a username of spaces only',
         input: { ...validExport, user: { ...validUser, username: '   ' } },
         isValid: false,
-        bug: TRIM_ORDER,
       },
     ],
   },
@@ -138,7 +134,6 @@ const validationGroups: ValidationGroup[] = [
         name: 'a date that is not a date',
         input: { ...validEntry, date: 'next Friday' },
         isValid: false,
-        bug: 'entry dates are free text in the import and entry APIs',
       },
     ],
   },
@@ -164,7 +159,7 @@ const validationGroups: ValidationGroup[] = [
       { name: 'an address with two @', input: 'user@@example.com', isValid: false },
       { name: 'an address with a space inside', input: 'user@exa mple.com', isValid: false },
       { name: 'text without @', input: 'user.example.com', isValid: false },
-      { name: 'a 64-character address with a leading space', input: ` ${emailOfLength(64)}`, isValid: true, bug: TRIM_ORDER },
+      { name: 'a 64-character address with a leading space', input: ` ${emailOfLength(64)}`, isValid: true },
     ],
   },
   {
@@ -252,8 +247,8 @@ const validationGroups: ValidationGroup[] = [
 ]
 
 validationGroups.forEach(({ schemaName, schema, cases }) => {
-  cases.forEach(({ name, input, isValid, bug }) => {
-    test(`${schemaName} ${isValid ? 'accepts' : 'rejects'} ${name}`, { todo: bug }, () => {
+  cases.forEach(({ name, input, isValid }) => {
+    test(`${schemaName} ${isValid ? 'accepts' : 'rejects'} ${name}`, () => {
       assert.equal(schema.safeParse(input).success, isValid)
     })
   })
@@ -288,6 +283,6 @@ test('recurrencePatternSchema drops fields that do not belong to the pattern', (
   )
 })
 
-test('budgetExportEntrySchema keeps the optional flag of an expense', { todo: 'P2-02 optional flag is dropped on import' }, () => {
+test('budgetExportEntrySchema keeps the optional flag of an expense', () => {
   assert.deepEqual(budgetExportEntrySchema.parse({ ...validEntry, isOptional: true }), { ...validEntry, isOptional: true })
 })
