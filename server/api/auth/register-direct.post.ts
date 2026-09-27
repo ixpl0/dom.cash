@@ -4,7 +4,7 @@ import { parseBody } from '~~/server/utils/validation'
 import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
 import { emailSchema } from '~~/shared/schemas/auth'
 import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const registerSchema = z.object({
   email: emailSchema,

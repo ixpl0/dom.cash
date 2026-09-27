@@ -1,9 +1,10 @@
-import { createError, getQuery, isError, setHeader } from 'h3'
+import { createError, isError, setHeader } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
+import { parseQuery } from '~~/server/utils/validation'
 import { exportBudget } from '~~/server/services/budget/import-export'
 import { resolveBudget } from '~~/server/services/budget/access'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const exportQuerySchema = z.object({
   username: z.string().min(1).optional(),
@@ -12,15 +13,9 @@ const exportQuerySchema = z.object({
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
 
-  const parsedQuery = exportQuerySchema.safeParse(getQuery(event))
-  if (!parsedQuery.success) {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
-    })
-  }
+  const query = parseQuery(event, exportQuerySchema)
 
-  const { owner } = await resolveBudget(event, currentUser, parsedQuery.data.username, 'read')
+  const { owner } = await resolveBudget(event, currentUser, query.username, 'read')
 
   try {
     const exportData = await exportBudget(owner.id, event)

@@ -6,7 +6,7 @@ import { createMonth } from '~~/server/services/budget/months'
 import { resolveBudget } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { MONTH_KEYS } from '~~/shared/types/i18n'
 
 const createMonthSchema = z.object({

@@ -1,12 +1,13 @@
-import { createError, defineEventHandler, getQuery, getRequestURL } from 'h3'
+import { createError, defineEventHandler, getRequestURL } from 'h3'
 import { z } from 'zod'
 import { verifyGoogleToken } from '~~/server/utils/google-oauth'
+import { parseQuery } from '~~/server/utils/validation'
 import { findUserByGoogleId, createGoogleUser, createSession, setAuthCookie, findUser } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import {
   clearGoogleOAuthState,
   getGoogleOAuthRedirect,
@@ -22,20 +23,13 @@ type GoogleTokenResponse = {
   refresh_token?: string
 }
 
+const querySchema = z.object({
+  code: z.string().min(1),
+  state: z.string().min(1),
+})
+
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const querySchema = z.object({
-    code: z.string().min(1),
-    state: z.string().min(1),
-  })
-  const parsed = querySchema.safeParse(query)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.MISSING_AUTHORIZATION_CODE,
-    })
-  }
-  const { code, state } = parsed.data
+  const { code, state } = parseQuery(event, querySchema, ERROR_KEYS.MISSING_AUTHORIZATION_CODE)
 
   const stateIsValid = validateGoogleOAuthState(event, state)
   const safeRedirectTo = getGoogleOAuthRedirect(event)

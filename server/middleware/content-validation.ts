@@ -1,5 +1,5 @@
 import { defineEventHandler, getMethod, getHeaders, createError } from 'h3'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024
 

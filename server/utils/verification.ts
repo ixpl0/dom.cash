@@ -2,7 +2,7 @@ import { createError, type H3Event } from 'h3'
 import { eq, lt } from 'drizzle-orm'
 import { emailVerificationCode } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { timingSafeCompareStrings } from '~~/server/utils/crypto'
 
 export const DEV_VERIFICATION_CODE = '111111'

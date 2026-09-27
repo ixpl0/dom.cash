@@ -6,7 +6,7 @@ import { getEntryWithMonth, updateEntry } from '~~/server/services/budget/entrie
 import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
 import { currencySchema, descriptionSchema, amountSchema } from '~~/shared/schemas/common'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const updateEntrySchema = z.object({
   description: descriptionSchema,

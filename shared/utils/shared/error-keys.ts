@@ -1,9 +1,7 @@
 export const ERROR_KEYS = {
-  UNKNOWN: 'serverErrors.unknown',
   VALIDATION_FAILED: 'serverErrors.validation_failed',
   UNAUTHORIZED: 'serverErrors.unauthorized',
   FORBIDDEN: 'serverErrors.forbidden',
-  NOT_FOUND: 'serverErrors.not_found',
   INVALID_CREDENTIALS: 'serverErrors.invalid_credentials',
   ACCOUNT_EXISTS_GOOGLE: 'serverErrors.account_exists_google',
   ACCOUNT_EXISTS_PASSWORD: 'serverErrors.account_exists_password',
@@ -13,9 +11,7 @@ export const ERROR_KEYS = {
   MONTH_NOT_FOUND: 'serverErrors.month_not_found',
   ENTRY_NOT_FOUND: 'serverErrors.entry_not_found',
   ENTRY_CONFLICT: 'serverErrors.entry_conflict',
-  BUDGET_NOT_FOUND: 'serverErrors.budget_not_found',
   SHARE_NOT_FOUND: 'serverErrors.share_not_found',
-  INSUFFICIENT_PERMISSIONS: 'serverErrors.insufficient_permissions',
   INVALID_CURRENCY_FORMAT: 'serverErrors.invalid_currency_format',
   FAILED_TO_CREATE_USER: 'serverErrors.failed_to_create_user',
   FAILED_TO_UPDATE_CURRENCY: 'serverErrors.failed_to_update_currency',
@@ -23,19 +19,15 @@ export const ERROR_KEYS = {
   FAILED_TO_EXPORT_BUDGET: 'serverErrors.failed_to_export_budget',
   FAILED_TO_SEND_EMAIL: 'serverErrors.failed_to_send_email',
   EMAIL_NOT_CONFIGURED: 'serverErrors.email_not_configured',
-  RATE_LIMIT_WAIT: 'serverErrors.rate_limit_wait',
-  RATE_LIMIT_EXCEEDED: 'serverErrors.rate_limit_exceeded',
   RATE_LIMIT_TOO_MANY_FAILED: 'serverErrors.rate_limit_too_many_failed',
   INVALID_VERIFICATION_CODE: 'serverErrors.invalid_verification_code',
   CONTENT_TYPE_REQUIRED: 'serverErrors.content_type_required',
   PAYLOAD_TOO_LARGE: 'serverErrors.payload_too_large',
   USERNAME_REQUIRED: 'serverErrors.username_required',
   ENTRY_ID_REQUIRED: 'serverErrors.entry_id_required',
-  TARGET_USER_NOT_FOUND: 'serverErrors.target_user_not_found',
   NO_PERMISSION_UPDATE_CURRENCY: 'serverErrors.no_permission_update_currency',
   ACCESS_DENIED: 'serverErrors.access_denied',
   INVALID_QUERY_PARAMETERS: 'serverErrors.invalid_query_parameters',
-  IMPORT_VALIDATION_FAILED: 'serverErrors.import_validation_failed',
   INSUFFICIENT_PERMISSIONS_IMPORT: 'serverErrors.insufficient_permissions_import',
   INSUFFICIENT_PERMISSIONS_ADD: 'serverErrors.insufficient_permissions_add',
   INSUFFICIENT_PERMISSIONS_UPDATE: 'serverErrors.insufficient_permissions_update',
@@ -63,7 +55,6 @@ export const ERROR_KEYS = {
   LOGOUT_ERROR: 'serverErrors.logout_error',
   IMPORT_FILE_TOO_LARGE: 'serverErrors.import_file_too_large',
   MISSING_AUTHORIZATION_CODE: 'serverErrors.missing_authorization_code',
-  UNABLE_TO_DETERMINE_ORIGIN: 'serverErrors.unable_to_determine_origin',
   FAILED_TO_EXCHANGE_CODE: 'serverErrors.failed_to_exchange_code',
   NO_ID_TOKEN_RECEIVED: 'serverErrors.no_id_token_received',
   TODO_NOT_FOUND: 'serverErrors.todo_not_found',
@@ -78,20 +69,3 @@ export const ERROR_KEYS = {
 } as const
 
 export type ErrorKey = typeof ERROR_KEYS[keyof typeof ERROR_KEYS]
-
-export interface ServerErrorData {
-  errorKey: ErrorKey
-  params?: Record<string, string | number>
-}
-
-export const createI18nError = (
-  statusCode: number,
-  errorKey: ErrorKey,
-  params?: Record<string, string | number>,
-) => {
-  return createError({
-    statusCode,
-    message: errorKey,
-    data: params ? { params } : undefined,
-  })
-}

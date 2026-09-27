@@ -3,7 +3,7 @@ import { createError, setCookie, type H3Event } from 'h3'
 import { eq, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { timingSafeCompare } from '~~/server/utils/crypto'
 
 export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90

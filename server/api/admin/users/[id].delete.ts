@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { requireAuth } from '~~/server/utils/session'
 import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)

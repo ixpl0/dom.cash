@@ -5,7 +5,7 @@ import { budgetShare, user } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { accessSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { parseBody } from '~~/server/utils/validation'
 
 const updateShareSchema = z.object({

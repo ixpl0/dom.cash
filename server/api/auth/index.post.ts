@@ -2,7 +2,7 @@ import { defineEventHandler, createError } from 'h3'
 import { authSchema } from '~~/shared/schemas/auth'
 import { findUser, createSession, setAuthCookie, verifyPassword } from '~~/server/utils/auth'
 import { parseBody } from '~~/server/utils/validation'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
   const { username, password } = await parseBody(event, authSchema)

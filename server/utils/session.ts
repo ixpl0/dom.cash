@@ -4,7 +4,7 @@ import { createError, getCookie, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { session, user } from '~~/server/db/schema'
 import { REFRESH_INTERVAL_MS, SESSION_LIFETIME_MS, setAuthCookie } from '~~/server/utils/auth'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { resolveImpersonation } from '~~/server/utils/impersonation'
 import type { User } from '~~/shared/types'
 

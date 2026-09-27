@@ -1,6 +1,6 @@
 import { defineEventHandler, getMethod, getCookie, createError } from 'h3'
 import { IMPERSONATION_COOKIE } from '~~/server/utils/impersonation'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
 

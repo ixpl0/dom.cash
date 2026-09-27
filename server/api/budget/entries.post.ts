@@ -5,7 +5,7 @@ import { getMonthOwner, getEntryWithMonth, createEntry, updateEntry } from '~~/s
 import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
 import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const createEntrySchema = z.object({
   id: z.uuid().optional(),

@@ -67,20 +67,13 @@ export const useAuth = () => {
       throw new Error('Google OAuth is only available in browser')
     }
 
-    try {
-      const currentUrl = new URL(window.location.href)
-      const redirect = currentUrl.searchParams.get('redirect')
-      const response = await $fetch<{ authUrl: string }>('/api/auth/google-url', {
-        query: redirect ? { redirect } : undefined,
-      })
+    const currentUrl = new URL(window.location.href)
+    const redirect = currentUrl.searchParams.get('redirect')
+    const response = await $fetch<{ authUrl: string }>('/api/auth/google-url', {
+      query: redirect ? { redirect } : undefined,
+    })
 
-      window.location.href = response.authUrl
-    }
-    catch (error) {
-      console.error('Failed to redirect to Google OAuth:', error)
-      const t = useT()
-      throw new Error(t('auth.googleRedirectError'))
-    }
+    window.location.href = response.authUrl
   }
 
   return {

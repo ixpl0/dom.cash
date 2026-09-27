@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'auth-token')

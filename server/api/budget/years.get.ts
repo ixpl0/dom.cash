@@ -1,9 +1,9 @@
-import { createError, getQuery } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
+import { parseQuery } from '~~/server/utils/validation'
 import { getAvailableYears, getInitialYearsToLoad } from '~~/server/services/budget/months'
 import { resolveBudget } from '~~/server/services/budget/access'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import type { YearsData } from '~~/shared/types/budget'
 
 const querySchema = z.object({
@@ -13,15 +13,9 @@ const querySchema = z.object({
 export default defineEventHandler(async (event): Promise<YearsData> => {
   const currentUser = await requireAuth(event)
 
-  const parsed = querySchema.safeParse(getQuery(event))
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
-    })
-  }
+  const query = parseQuery(event, querySchema)
 
-  const { owner } = await resolveBudget(event, currentUser, parsed.data.username, 'read', ERROR_KEYS.INSUFFICIENT_PERMISSIONS_VIEW)
+  const { owner } = await resolveBudget(event, currentUser, query.username, 'read', ERROR_KEYS.INSUFFICIENT_PERMISSIONS_VIEW)
   const availableYears = await getAvailableYears(owner.id, event)
 
   return {

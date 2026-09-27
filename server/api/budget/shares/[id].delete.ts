@@ -3,7 +3,7 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { unsubscribeFromBudget } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {

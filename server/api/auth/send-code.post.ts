@@ -12,7 +12,7 @@ import {
   VERIFICATION_CONFIG,
 } from '~~/server/utils/verification'
 import { sendVerificationEmail } from '~~/server/utils/email'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const sendCodeSchema = z.object({
   email: emailSchema,

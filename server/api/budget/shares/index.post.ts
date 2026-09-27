@@ -6,7 +6,7 @@ import type { NewBudgetShare } from '~~/server/db/schema'
 import { findUser } from '~~/server/utils/auth'
 import { requireAuth } from '~~/server/utils/session'
 import { accessSchema, usernameSchema } from '~~/shared/schemas/common'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { parseBody } from '~~/server/utils/validation'
 
 const createShareSchema = z.object({

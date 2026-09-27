@@ -1,7 +1,8 @@
-import { createError, defineEventHandler, getQuery, getRequestURL } from 'h3'
+import { createError, defineEventHandler, getRequestURL } from 'h3'
 import { z } from 'zod'
 import { getGoogleClientId } from '~~/server/utils/google-oauth'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { parseQuery } from '~~/server/utils/validation'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import {
   createGoogleOAuthState,
   sanitizeOAuthRedirect,
@@ -13,15 +14,7 @@ const querySchema = z.object({
 })
 
 export default defineEventHandler((event) => {
-  const query = getQuery(event)
-  const parsedQuery = querySchema.safeParse(query)
-
-  if (!parsedQuery.success) {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
-    })
-  }
+  const query = parseQuery(event, querySchema)
 
   let clientId: string
 
@@ -35,7 +28,7 @@ export default defineEventHandler((event) => {
     })
   }
 
-  const redirect = sanitizeOAuthRedirect(parsedQuery.data.redirect)
+  const redirect = sanitizeOAuthRedirect(query.redirect)
   const state = createGoogleOAuthState()
   setGoogleOAuthState(event, state, redirect)
 

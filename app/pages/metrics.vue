@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminUsersResponse, AdminUser } from '~~/shared/types'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 
 const { t } = useI18n()
@@ -13,14 +14,14 @@ const { isMobileViewport } = useIsMobileViewport()
 if (!currentUser.value) {
   throw createError({
     statusCode: 401,
-    message: t('serverErrors.unauthorized'),
+    message: t(ERROR_KEYS.UNAUTHORIZED),
   })
 }
 
 if (!currentUser.value.isAdmin) {
   throw createError({
     statusCode: 403,
-    message: t('serverErrors.access_denied'),
+    message: t(ERROR_KEYS.ACCESS_DENIED),
   })
 }
 

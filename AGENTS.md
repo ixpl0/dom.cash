@@ -29,6 +29,10 @@
   * Use `$fetch` for client-only operations (POST/PUT/DELETE)
   * In Cloudflare Workers, `$fetch` doesn't properly forward cookies during SSR
   * Pass query parameters through the `query` option so they are encoded.
+* **Errors**:
+  * Throw `createError({ statusCode, message: ERROR_KEYS.X })` with a key from `shared/utils/shared/error-keys.ts`. Every key needs a `serverErrors` translation in both locales (a unit test checks it).
+  * Validate input with `parseBody` / `parseQuery` (`server/utils/validation.ts`): they answer 400 with an error key and list the failed fields in `data.issues`.
+  * Show errors with `useServerError().formatError(error, fallback)`: it translates error keys and shows the fallback for anything else.
 * **Dates**: date-only values are `YYYY-MM-DD` strings. Use `shared/utils/shared/dates.ts` to get the local date and to format dates; `toISOString()` gives the UTC date.
 * UI:
   * DaisyUI (https://daisyui.com/). All UI components should be based on DaisyUI.
@@ -75,7 +79,7 @@
 * `shared/` — Shared between client and server (isomorphic code)
   * `schemas/` — Zod validation schemas (auth, common, recurrence)
   * `types/` — TypeScript types (budget, todo, i18n, recurrence, export-import)
-  * `utils/` — Shared utilities (budget calculations, recurrence, currencies, dates)
+  * `utils/` — Shared utilities (budget calculations, recurrence, currencies, dates, error keys)
 * `tests/unit/` — Unit tests (`*.test.ts`, Node test runner)
 * `tests/e2e/` — Playwright E2E tests
   * `public/` — Tests for public pages

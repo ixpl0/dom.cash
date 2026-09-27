@@ -2,7 +2,7 @@ import { createError, getRouterParam } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { unsubscribeFromBudget } from '~~/server/services/notifications'
 import { findUser } from '~~/server/utils/auth'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)

@@ -1,5 +1,5 @@
 import { createError, type H3Event } from 'h3'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 type EmailTemplate = 'verification' | 'reset-password'
 type EmailLanguage = 'en' | 'ru'

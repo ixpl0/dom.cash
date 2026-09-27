@@ -4,7 +4,7 @@ import { parseBody } from '~~/server/utils/validation'
 import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
 import { emailSchema } from '~~/shared/schemas/auth'
 import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const verifyCodeSchema = z.object({
   email: emailSchema,

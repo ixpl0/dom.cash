@@ -4,7 +4,7 @@ import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { count, desc, asc, sql } from 'drizzle-orm'
 import type { AdminUsersResponse } from '~~/shared/types'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 10

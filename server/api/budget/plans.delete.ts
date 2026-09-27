@@ -1,11 +1,12 @@
-import { createError, getQuery, isError } from 'h3'
+import { createError, isError } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
+import { parseQuery } from '~~/server/utils/validation'
 import { deletePlan } from '~~/server/services/budget/plans'
 import { resolveBudget } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { MONTH_KEYS } from '~~/shared/types/i18n'
 
 const querySchema = z.object({
@@ -17,15 +18,7 @@ const querySchema = z.object({
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
 
-  const parsed = querySchema.safeParse(getQuery(event))
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
-    })
-  }
-
-  const { year, month, username } = parsed.data
+  const { year, month, username } = parseQuery(event, querySchema)
   const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.NO_PERMISSION_UPDATE_PLAN)
 
   try {

@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { todo, todoShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {

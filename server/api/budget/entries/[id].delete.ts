@@ -3,7 +3,7 @@ import { requireAuth } from '~~/server/utils/session'
 import { getEntryWithMonth, deleteEntry } from '~~/server/services/budget/entries'
 import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)

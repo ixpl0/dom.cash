@@ -3,7 +3,7 @@ import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, type user } from '~~/server/db/schema'
 import { findUser } from '~~/server/utils/auth'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 import type { User } from '~~/shared/types'
 import type { BudgetAccess } from '~~/shared/types/budget'
 
@@ -46,7 +46,7 @@ export const resolveBudget = async (
   currentUser: User,
   username: string | undefined,
   level: BudgetAccessLevel,
-  forbiddenKey: string = ERROR_KEYS.ACCESS_DENIED,
+  forbiddenKey: ErrorKey = ERROR_KEYS.ACCESS_DENIED,
 ): Promise<ResolvedBudget> => {
   const owner = username ? await findUser(username, event) : currentUser
 
@@ -76,7 +76,7 @@ export const requireBudgetWriteAccess = async (
   ownerId: string,
   currentUser: User,
   event: H3Event,
-  forbiddenKey: string,
+  forbiddenKey: ErrorKey,
 ): Promise<void> => {
   const access = await findBudgetAccess(ownerId, currentUser.id, event)
 

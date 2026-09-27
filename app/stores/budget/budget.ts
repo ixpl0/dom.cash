@@ -6,9 +6,10 @@ import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, u
 import { toMutable } from '~~/shared/utils/shared/immutable'
 import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
 import { computeMonthData, computeYearSummary, createMonthId, computeExpectedBalances } from '~~/shared/utils/budget/budget-calculations'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
+import { readServerErrorKey } from '~/utils/server-error'
 
 const PLAN_ONLY_ID_PREFIX = 'plan-only-'
-const ENTRY_NOT_FOUND_ERROR_KEY = 'serverErrors.entry_not_found'
 
 const isPlanOnlyId = (id: string): boolean => id.startsWith(PLAN_ONLY_ID_PREFIX)
 
@@ -512,13 +513,7 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
-  const isEntryNotFoundError = (err: unknown): boolean => {
-    if (!(err instanceof FetchError) || err.statusCode !== 404) {
-      return false
-    }
-    const errorData = (err as FetchError<{ message?: string }>).data
-    return errorData?.message === ENTRY_NOT_FOUND_ERROR_KEY
-  }
+  const isEntryNotFoundError = (err: unknown): boolean => readServerErrorKey(err) === ERROR_KEYS.ENTRY_NOT_FOUND
 
   const updateEntry = async (
     entryId: string,
