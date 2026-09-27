@@ -41,10 +41,10 @@
     </div>
 
     <div
-      v-else-if="todoStore.error"
+      v-else-if="todoStore.loadError"
       class="alert alert-error"
     >
-      {{ todoStore.error }}
+      {{ formatError(todoStore.loadError, t('todo.errors.loadFailed')) }}
     </div>
 
     <div
@@ -66,6 +66,7 @@
 const todoStore = useTodoStore()
 const todoModalsStore = useTodoModalsStore()
 const { t } = useI18n()
+const { formatError } = useServerError()
 
 const emptyMessage = computed(() => t('todo.emptyState'))
 </script>

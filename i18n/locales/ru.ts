@@ -675,6 +675,8 @@ export default {
     errors: {
       toggleFailed: 'Не удалось обновить задачу',
       deleteFailed: 'Не удалось удалить задачу',
+      saveFailed: 'Не удалось сохранить задачу',
+      loadFailed: 'Не удалось загрузить задачи',
     },
   },
 

@@ -6,7 +6,7 @@ export const useTodoStore = defineStore('todo', () => {
 
   const data = ref<TodoData | null>(null)
   const connections = ref<TodoConnection[]>([])
-  const error = ref<string | null>(null)
+  const loadError = ref<{ message: string } | null>(null)
   const isLoading = ref(false)
   const togglingIds = ref<Set<string>>(new Set())
   const leavingIds = ref<Set<string>>(new Set())
@@ -71,7 +71,7 @@ export const useTodoStore = defineStore('todo', () => {
 
   const refresh = async () => {
     isLoading.value = true
-    error.value = null
+    loadError.value = null
 
     try {
       const todoPromise = useFetch<TodoData>('/api/todo', { key: 'todo-list' })
@@ -83,7 +83,7 @@ export const useTodoStore = defineStore('todo', () => {
       ])
 
       if (todoError.value) {
-        error.value = todoError.value.data?.message || 'Failed to load todos'
+        loadError.value = { message: todoError.value.data?.message ?? '' }
         data.value = null
       }
       else {
@@ -92,8 +92,8 @@ export const useTodoStore = defineStore('todo', () => {
 
       connections.value = connectionsData.value || []
     }
-    catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load todos'
+    catch {
+      loadError.value = { message: '' }
     }
     finally {
       isLoading.value = false
@@ -102,7 +102,6 @@ export const useTodoStore = defineStore('todo', () => {
 
   const forceRefresh = async () => {
     isLoading.value = true
-    error.value = null
 
     try {
       const [todoData, connectionsData] = await Promise.all([
@@ -112,10 +111,12 @@ export const useTodoStore = defineStore('todo', () => {
 
       data.value = todoData || null
       connections.value = connectionsData || []
+      loadError.value = null
     }
-    catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load todos'
-      data.value = null
+    catch {
+      if (!data.value) {
+        loadError.value = { message: '' }
+      }
     }
     finally {
       isLoading.value = false
@@ -123,7 +124,6 @@ export const useTodoStore = defineStore('todo', () => {
   }
 
   const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
-    error.value = null
     try {
       const result = await $fetch<TodoListItem>('/api/todo', {
         method: 'POST',
@@ -138,14 +138,12 @@ export const useTodoStore = defineStore('todo', () => {
 
       return { id: result.id }
     }
-    catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to create todo'
+    catch {
       return null
     }
   }
 
   const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<boolean> => {
-    error.value = null
     try {
       await $fetch(`/api/todo/${id}`, {
         method: 'PUT',
@@ -192,14 +190,12 @@ export const useTodoStore = defineStore('todo', () => {
 
       return true
     }
-    catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to update todo'
+    catch {
       return false
     }
   }
 
   const deleteTodo = async (id: string): Promise<boolean> => {
-    error.value = null
     try {
       await $fetch(`/api/todo/${id}`, {
         method: 'DELETE',
@@ -211,8 +207,7 @@ export const useTodoStore = defineStore('todo', () => {
       }
       return true
     }
-    catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to delete todo'
+    catch {
       return false
     }
   }
@@ -273,14 +268,13 @@ export const useTodoStore = defineStore('todo', () => {
 
       return true
     }
-    catch (e) {
+    catch {
       togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
 
       if (shouldAnimateLeave) {
         leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
       }
 
-      error.value = e instanceof Error ? e.message : 'Failed to toggle todo'
       return false
     }
   }
@@ -292,7 +286,7 @@ export const useTodoStore = defineStore('todo', () => {
   const reset = () => {
     data.value = null
     connections.value = []
-    error.value = null
+    loadError.value = null
     isLoading.value = false
     togglingIds.value = new Set()
     leavingIds.value = new Set()
@@ -309,7 +303,7 @@ export const useTodoStore = defineStore('todo', () => {
   return {
     data,
     connections,
-    error,
+    loadError,
     isLoading,
     hideCompleted,
     filteredItems,

@@ -2,6 +2,7 @@ import type { User, LoginCredentials } from '~~/shared/types'
 
 export const useAuth = () => {
   const { user, setUser, clearUser, isAuthenticated } = useAuthState()
+  const lastSharedBudgetCookie = useCookie<string | null>(COOKIE_NAMES.lastSharedBudget)
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     const authenticatedUser = await $fetch<User>('/api/auth', {
@@ -22,9 +23,13 @@ export const useAuth = () => {
     }).catch(() => {})
 
     clearUser()
+    lastSharedBudgetCookie.value = null
 
     if (import.meta.client) {
       localStorage.removeItem('hasSession')
+      await nextTick()
+      reloadNuxtApp({ path: '/', force: true })
+      return
     }
 
     await navigateTo('/', { replace: true })

@@ -1,8 +1,9 @@
 <template>
   <div>
     <div
-      v-if="budgetStore.error"
+      v-if="budgetStore.loadError"
       class="text-center py-12"
+      data-testid="budget-load-error"
     >
       <div class="text-6xl mb-4">
         ❌
@@ -11,14 +12,15 @@
         {{ t('budget.accessError') }}
       </h2>
       <p class="text-lg opacity-70 mb-6">
-        {{ budgetStore.error || t('budget.loadError') }}
+        {{ formatError(budgetStore.loadError, t('budget.loadError')) }}
       </p>
-      <NuxtLink
-        to="/budget"
+      <button
         class="btn btn-primary"
+        data-testid="load-error-own-budget-button"
+        @click="navigateToOwnBudget"
       >
         {{ t('budget.backToOwnBudget') }}
-      </NuxtLink>
+      </button>
     </div>
 
     <div
@@ -186,8 +188,6 @@ import { findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/mon
 import { useBudgetStore } from '~/stores/budget/budget'
 import { timelineColumnsSyncKey } from '~/types/timeline'
 
-const LAST_SHARED_BUDGET_COOKIE = 'lastSharedBudget'
-
 const columnsSync = useBudgetColumnsSync()
 
 provide(timelineColumnsSyncKey, {
@@ -223,7 +223,7 @@ const BudgetChartModal = defineAsyncComponent(() => import('~/components/budget/
 const isOwnBudget = computed(() => budgetStore.isOwnBudget)
 const isViewingOwnBudgetUrl = computed(() => !targetUsername.value)
 
-const lastSharedBudgetCookie = useCookie(LAST_SHARED_BUDGET_COOKIE)
+const lastSharedBudgetCookie = useCookie(COOKIE_NAMES.lastSharedBudget)
 
 const navigateToOwnBudget = async (): Promise<void> => {
   lastSharedBudgetCookie.value = null

@@ -42,6 +42,7 @@ import type { RecurrencePattern } from '~~/shared/types/recurrence'
 const todoStore = useTodoStore()
 const todoModalsStore = useTodoModalsStore()
 const { t } = useI18n()
+const { toast } = useToast()
 const { confirmDiscardChanges } = useUnsavedChanges()
 
 const isSaving = ref(false)
@@ -82,31 +83,44 @@ const handleClose = async (hasUnsavedChanges: boolean): Promise<void> => {
   todoModalsStore.closeTodoModal()
 }
 
-const handleSave = async (data: {
+interface TodoFormData {
   content: string
   plannedDate: string | null
   recurrence: RecurrencePattern | null
   sharedWithUserIds: string[]
-}) => {
+}
+
+const saveTodo = async (data: TodoFormData): Promise<boolean> => {
+  if (editingTodo.value) {
+    return todoStore.updateTodo(editingTodo.value.id, {
+      content: data.content,
+      plannedDate: data.plannedDate,
+      recurrence: data.recurrence,
+      ...(isOwner.value ? { sharedWithUserIds: data.sharedWithUserIds } : {}),
+    })
+  }
+
+  const createdTodo = await todoStore.createTodo({
+    content: data.content,
+    plannedDate: data.plannedDate ?? undefined,
+    recurrence: data.recurrence ?? undefined,
+    sharedWithUserIds: data.sharedWithUserIds.length > 0 ? data.sharedWithUserIds : undefined,
+  })
+
+  return createdTodo !== null
+}
+
+const handleSave = async (data: TodoFormData) => {
   isSaving.value = true
 
   try {
-    if (editingTodo.value) {
-      await todoStore.updateTodo(editingTodo.value.id, {
-        content: data.content,
-        plannedDate: data.plannedDate,
-        recurrence: data.recurrence,
-        ...(isOwner.value ? { sharedWithUserIds: data.sharedWithUserIds } : {}),
-      })
+    const isSaved = await saveTodo(data)
+
+    if (!isSaved) {
+      toast({ type: 'error', message: t('todo.errors.saveFailed') })
+      return
     }
-    else {
-      await todoStore.createTodo({
-        content: data.content,
-        plannedDate: data.plannedDate ?? undefined,
-        recurrence: data.recurrence ?? undefined,
-        sharedWithUserIds: data.sharedWithUserIds.length > 0 ? data.sharedWithUserIds : undefined,
-      })
-    }
+
     todoModalsStore.closeTodoModal()
   }
   finally {

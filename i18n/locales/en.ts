@@ -675,6 +675,8 @@ export default {
     errors: {
       toggleFailed: 'Failed to update task',
       deleteFailed: 'Failed to delete task',
+      saveFailed: 'Failed to save task',
+      loadFailed: 'Failed to load tasks',
     },
   },
 
