@@ -6,6 +6,7 @@ import { currency, entry, month, user } from '~~/server/db/schema'
 import type { MonthData, YearInfo } from '~~/shared/types/budget'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { isValidRates } from '~~/server/utils/rates/validation'
+import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 
 const groupEntriesByMonthId = (entries: (typeof entry.$inferSelect)[]): Map<string, (typeof entry.$inferSelect)[]> => {
   const map = new Map<string, (typeof entry.$inferSelect)[]>()
@@ -223,39 +224,35 @@ export interface CreateMonthParams {
   targetUserId: string
 }
 
-const copyBalanceEntriesFromMonth = async (sourceMonthId: string, targetMonthId: string, event: H3Event): Promise<void> => {
+const findBalanceEntriesToCopy = async (sourceMonthId: string, ownerId: string, event: H3Event) => {
   const db = useDatabase(event)
+  const [sourceMonth] = await db
+    .select({ id: month.id })
+    .from(month)
+    .where(and(
+      eq(month.id, sourceMonthId),
+      eq(month.userId, ownerId),
+    ))
+    .limit(1)
 
-  const balanceEntriesToCopy = await db
+  if (!sourceMonth) {
+    throw createError({
+      statusCode: 404,
+      message: ERROR_KEYS.MONTH_NOT_FOUND,
+    })
+  }
+
+  return db
     .select()
     .from(entry)
     .where(and(
-      eq(entry.monthId, sourceMonthId),
+      eq(entry.monthId, sourceMonth.id),
       eq(entry.kind, 'balance'),
     ))
-
-  if (balanceEntriesToCopy.length > 0) {
-    const copiedEntries = balanceEntriesToCopy.map(sourceEntry => ({
-      id: crypto.randomUUID(),
-      monthId: targetMonthId,
-      kind: sourceEntry.kind,
-      description: sourceEntry.description,
-      amount: sourceEntry.amount,
-      currency: sourceEntry.currency,
-      date: sourceEntry.date,
-      isOptional: sourceEntry.isOptional,
-    }))
-
-    const batchSize = 10
-    for (let i = 0; i < copiedEntries.length; i += batchSize) {
-      const batch = copiedEntries.slice(i, i + batchSize)
-      await db.insert(entry).values(batch)
-    }
-  }
 }
 
 const buildMonthData = async (
-  monthRecord: typeof month.$inferSelect,
+  monthRecord: Pick<typeof month.$inferSelect, 'id' | 'year' | 'month'>,
   exchangeRatesData: Awaited<ReturnType<typeof getExchangeRatesForMonth>>,
   event: H3Event,
 ): Promise<MonthData> => {
@@ -332,23 +329,34 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
 
   const exchangeRatesData = await getExchangeRatesForMonth(year, monthNumber, event)
 
-  const [createdMonth] = await db
-    .insert(month)
-    .values({
-      id: crypto.randomUUID(),
-      userId: targetUserId,
-      year,
-      month: monthNumber,
-    })
-    .returning()
+  const entriesToCopy = copyFromMonthId
+    ? await findBalanceEntriesToCopy(copyFromMonthId, targetUserId, event)
+    : []
 
-  if (!createdMonth) {
-    throw new Error('Failed to create month')
+  const createdMonth = {
+    id: crypto.randomUUID(),
+    year,
+    month: monthNumber,
   }
 
-  if (copyFromMonthId) {
-    await copyBalanceEntriesFromMonth(copyFromMonthId, createdMonth.id, event)
-  }
+  const copiedEntries = entriesToCopy.map(sourceEntry => ({
+    id: crypto.randomUUID(),
+    monthId: createdMonth.id,
+    kind: sourceEntry.kind,
+    description: sourceEntry.description,
+    amount: sourceEntry.amount,
+    currency: sourceEntry.currency,
+    date: sourceEntry.date,
+    isOptional: sourceEntry.isOptional,
+  }))
+
+  const insertEntryStatements = chunkArray(copiedEntries, getRowsPerInsertStatement(entry))
+    .map(entryChunk => db.insert(entry).values(entryChunk))
+
+  await db.batch([
+    db.insert(month).values({ ...createdMonth, userId: targetUserId }),
+    ...insertEntryStatements,
+  ])
 
   return await buildMonthData(createdMonth, exchangeRatesData, event)
 }

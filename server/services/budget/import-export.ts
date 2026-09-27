@@ -1,10 +1,11 @@
-import { eq, getTableColumns } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { user, month, entry, plan } from '~~/server/db/schema'
 import { getUserMonths } from './months'
 import { getUserPlans, upsertPlan } from './plans'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import type {
   BudgetExportData,
   BudgetExportMonth,
@@ -91,30 +92,13 @@ type MonthImportOutcome
     | { status: 'imported', monthId: string, createdMonth: boolean, insertedEntries: number }
     | { status: 'failed', errorKind: BudgetImportError['kind'] }
 
-const d1MaxVariablesPerStatement = 100
 const maxStatementsPerMonthBatch = 100
 
-const entryColumnCount = Object.keys(getTableColumns(entry)).length
-
-if (entryColumnCount < 1 || entryColumnCount > d1MaxVariablesPerStatement) {
-  throw new Error(`Budget import cannot chunk entry table with ${entryColumnCount} columns against D1 ${d1MaxVariablesPerStatement}-variable limit`)
-}
-
-const entriesPerInsertStatement = Math.floor(d1MaxVariablesPerStatement / entryColumnCount)
+const entriesPerInsertStatement = getRowsPerInsertStatement(entry)
 
 type ExistingMonthKey = `${number}-${number}`
 
 const makeMonthKey = (year: number, monthIndex: number): ExistingMonthKey => `${year}-${monthIndex}`
-
-const chunkArray = <T>(items: readonly T[], chunkSize: number): T[][] => {
-  if (items.length === 0) {
-    return []
-  }
-  return Array.from(
-    { length: Math.ceil(items.length / chunkSize) },
-    (_, chunkIndex) => items.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize),
-  )
-}
 
 const loadExistingMonthIds = async (
   db: ReturnType<typeof useDatabase>,
