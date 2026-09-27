@@ -21,6 +21,7 @@
     :is-planning-mode="budgetStore.isPlanningMode"
     :is-past-month="isPastMonthValue"
     :format-amount="formatAmountForDisplay"
+    :amount-sign="getAmountSignForDisplay"
     @balance-click="openBalanceModal"
     @income-click="openIncomeModal"
     @expense-click="openExpenseModal"
@@ -46,7 +47,7 @@ const props = defineProps<Props>()
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const { t } = useI18n()
-const { formatMoneyRounded } = useMoneyFormat()
+const { formatMoneyRounded, getRoundedMoneySign } = useMoneyFormat()
 const { formatError } = useServerError()
 const { toast } = useToast()
 
@@ -144,7 +145,7 @@ const pocketExpensesTooltip = computed(() => {
   if (monthData.value.calculatedPocketExpenses === null) {
     return t('budget.month.pocketExpensesAvailable')
   }
-  if (monthData.value.calculatedPocketExpenses < 0) {
+  if (getAmountSignForDisplay(monthData.value.calculatedPocketExpenses) < 0) {
     return t('budget.month.pocketExpensesError')
   }
   return t('budget.month.pocketExpensesTooltip')
@@ -198,6 +199,9 @@ const expectedBalanceTooltip = computed(() => {
 const formatAmountForDisplay = (amount: number): string => {
   return formatMoneyRounded(amount, budgetStore.effectiveMainCurrency)
 }
+
+const getAmountSignForDisplay = (amount: number): number =>
+  getRoundedMoneySign(amount, budgetStore.effectiveMainCurrency)
 
 const openBalanceModal = (): void => {
   modalsStore.openEntryModal({

@@ -47,10 +47,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-primary': stats.averageBalance > 0,
-                    'text-base-content': stats.averageBalance === 0,
-                  }"
+                  :class="signedValueClass(stats.averageBalance, 'text-primary', 'text-base-content')"
                   :data-tip="labels.averageBalance"
                   data-testid="year-average-balance"
                 >
@@ -76,10 +73,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-success': stats.totalIncome > 0,
-                    'text-base-content': stats.totalIncome === 0,
-                  }"
+                  :class="signedValueClass(stats.totalIncome, 'text-success', 'text-base-content')"
                   :data-tip="labels.totalIncome"
                   data-testid="year-total-income"
                 >
@@ -89,10 +83,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-success/80': stats.averageIncome > 0,
-                    'text-base-content/80': stats.averageIncome === 0,
-                  }"
+                  :class="signedValueClass(stats.averageIncome, 'text-success/80', 'text-base-content/80', 'text-base-content/80')"
                   :data-tip="labels.averageIncome"
                   data-testid="year-average-income"
                 >
@@ -117,10 +108,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-error': stats.totalExpenses > 0,
-                    'text-base-content': stats.totalExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.totalExpenses, 'text-error', 'text-base-content')"
                   :data-tip="labels.totalMajorExpenses"
                   data-testid="year-total-expenses"
                 >
@@ -130,10 +118,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-error/80': stats.averageExpenses > 0,
-                    'text-base-content/80': stats.averageExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.averageExpenses, 'text-error/80', 'text-base-content/80', 'text-base-content/80')"
                   :data-tip="labels.averageMajorExpenses"
                   data-testid="year-average-expenses"
                 >
@@ -158,11 +143,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-warning': stats.totalPocketExpenses < 0,
-                    'text-error': stats.totalPocketExpenses > 0,
-                    'text-base-content': stats.totalPocketExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.totalPocketExpenses, 'text-error', 'text-warning')"
                   :data-tip="labels.totalPocketExpenses"
                   data-testid="year-total-pocket-expenses"
                 >
@@ -172,11 +153,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-warning/80': stats.averagePocketExpenses < 0,
-                    'text-error/80': stats.averagePocketExpenses > 0,
-                    'text-base-content/80': stats.averagePocketExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.averagePocketExpenses, 'text-error/80', 'text-warning/80', 'text-base-content/80')"
                   :data-tip="labels.averagePocketExpenses"
                   data-testid="year-average-pocket-expenses"
                 >
@@ -200,11 +177,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-warning': stats.totalAllExpenses < 0,
-                    'text-error': stats.totalAllExpenses > 0,
-                    'text-base-content': stats.totalAllExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.totalAllExpenses, 'text-error', 'text-warning')"
                   :data-tip="labels.totalAllExpenses"
                   data-testid="year-total-all-expenses"
                 >
@@ -214,11 +187,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-warning/80': stats.averageAllExpenses < 0,
-                    'text-error/80': stats.averageAllExpenses > 0,
-                    'text-base-content/80': stats.averageAllExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.averageAllExpenses, 'text-error/80', 'text-warning/80', 'text-base-content/80')"
                   :data-tip="labels.averageAllExpenses"
                   data-testid="year-average-all-expenses"
                 >
@@ -240,11 +209,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-success': stats.totalBalanceChange > 0,
-                    'text-error': stats.totalBalanceChange < 0,
-                    'text-base-content': stats.totalBalanceChange === 0,
-                  }"
+                  :class="signedValueClass(stats.totalBalanceChange, 'text-success', 'text-error')"
                   :data-tip="labels.totalBalanceChange"
                   data-testid="year-total-balance-change"
                 >
@@ -254,11 +219,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-success/80': stats.averageBalanceChange > 0,
-                    'text-error/80': stats.averageBalanceChange < 0,
-                    'text-base-content/80': stats.averageBalanceChange === 0,
-                  }"
+                  :class="signedValueClass(stats.averageBalanceChange, 'text-success/80', 'text-error/80', 'text-base-content/80')"
                   :data-tip="labels.averageBalanceChange"
                   data-testid="year-average-balance-change"
                 >
@@ -283,11 +244,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-success': stats.totalCurrencyProfitLoss > 0,
-                    'text-error': stats.totalCurrencyProfitLoss < 0,
-                    'text-base-content': stats.totalCurrencyProfitLoss === 0,
-                  }"
+                  :class="signedValueClass(stats.totalCurrencyProfitLoss, 'text-success', 'text-error')"
                   :data-tip="labels.totalCurrencyFluctuations"
                   data-testid="year-total-currency-profit-loss"
                 >
@@ -297,11 +254,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-success/80': stats.averageCurrencyProfitLoss > 0,
-                    'text-error/80': stats.averageCurrencyProfitLoss < 0,
-                    'text-base-content/80': stats.averageCurrencyProfitLoss === 0,
-                  }"
+                  :class="signedValueClass(stats.averageCurrencyProfitLoss, 'text-success/80', 'text-error/80', 'text-base-content/80')"
                   :data-tip="labels.averageCurrencyFluctuations"
                   data-testid="year-average-currency-profit-loss"
                 >
@@ -326,10 +279,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-error': stats.totalOptionalExpenses > 0,
-                    'text-base-content': stats.totalOptionalExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.totalOptionalExpenses, 'text-error', 'text-base-content')"
                   :data-tip="labels.totalOptionalExpenses"
                   data-testid="year-total-optional-expenses"
                 >
@@ -339,10 +289,7 @@
                 </div>
                 <div
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-error/80': stats.averageOptionalExpenses > 0,
-                    'text-base-content/80': stats.averageOptionalExpenses === 0,
-                  }"
+                  :class="signedValueClass(stats.averageOptionalExpenses, 'text-error/80', 'text-base-content/80', 'text-base-content/80')"
                   :data-tip="labels.averageOptionalExpenses"
                   data-testid="year-average-optional-expenses"
                 >
@@ -367,11 +314,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-info': stats.totalPlannedBalanceChange > 0,
-                    'text-warning': stats.totalPlannedBalanceChange < 0,
-                    'text-base-content': stats.totalPlannedBalanceChange === 0,
-                  }"
+                  :class="signedValueClass(stats.totalPlannedBalanceChange, 'text-info', 'text-warning')"
                   :data-tip="labels.totalPlanned"
                   data-testid="year-total-planned"
                 >
@@ -382,15 +325,11 @@
                 <div
                   v-if="stats.plannedDiffMonthCount > 0"
                   class="text-sm tooltip tooltip-top"
-                  :class="{
-                    'text-success': stats.totalPlannedVsActualDiff > 0,
-                    'text-error': stats.totalPlannedVsActualDiff < 0,
-                    'text-base-content/80': stats.totalPlannedVsActualDiff === 0,
-                  }"
+                  :class="signedValueClass(stats.totalPlannedVsActualDiff, 'text-success', 'text-error', 'text-base-content/80')"
                   :data-tip="labels.totalPlannedDiff"
                   data-testid="year-total-planned-diff"
                 >
-                  {{ stats.totalPlannedVsActualDiff > 0 ? '+' : '' }}{{ formatAmount(stats.totalPlannedVsActualDiff) }}
+                  {{ amountSign(stats.totalPlannedVsActualDiff) > 0 ? '+' : '' }}{{ formatAmount(stats.totalPlannedVsActualDiff) }}
                 </div>
               </div>
             </div>
@@ -411,11 +350,7 @@
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
-                  :class="{
-                    'text-primary': stats.endOfYearExpectedBalance !== null && stats.endOfYearExpectedBalance > 0,
-                    'text-error': stats.endOfYearExpectedBalance !== null && stats.endOfYearExpectedBalance < 0,
-                    'text-base-content': stats.endOfYearExpectedBalance === null || stats.endOfYearExpectedBalance === 0,
-                  }"
+                  :class="signedValueClass(stats.endOfYearExpectedBalance, 'text-primary', 'text-error')"
                   :data-tip="labels.endOfYearExpectedBalance"
                   data-testid="year-end-expected-balance"
                 >
@@ -533,6 +468,7 @@ interface Props {
   stats: UiYearStats
   labels: UiYearLabels
   formatAmount: (amount: number) => string
+  amountSign: (amount: number) => number
   isPlanningMode?: boolean
 }
 
@@ -552,14 +488,20 @@ interface YearStatItem {
   testId?: string
 }
 
-const signedValueClass = (value: number | null, positiveClass: string, negativeClass: string): string => {
-  if (value !== null && value > 0) {
+const signedValueClass = (
+  value: number | null,
+  positiveClass: string,
+  negativeClass: string,
+  zeroClass: string = 'text-base-content',
+): string => {
+  const sign = value === null ? 0 : props.amountSign(value)
+  if (sign > 0) {
     return positiveClass
   }
-  if (value !== null && value < 0) {
+  if (sign < 0) {
     return negativeClass
   }
-  return 'text-base-content'
+  return zeroClass
 }
 
 const mobileStats = computed((): YearStatItem[] => {
@@ -591,7 +533,7 @@ const mobileStats = computed((): YearStatItem[] => {
         valueText: props.stats.plannedMonthCount > 0 ? props.formatAmount(props.stats.totalPlannedBalanceChange) : '—',
         valueClass: signedValueClass(props.stats.totalPlannedBalanceChange, 'text-info', 'text-warning'),
         secondaryText: props.stats.plannedDiffMonthCount > 0
-          ? `${props.stats.totalPlannedVsActualDiff > 0 ? '+' : ''}${props.formatAmount(props.stats.totalPlannedVsActualDiff)}`
+          ? `${props.amountSign(props.stats.totalPlannedVsActualDiff) > 0 ? '+' : ''}${props.formatAmount(props.stats.totalPlannedVsActualDiff)}`
           : '',
         secondaryClass: signedValueClass(props.stats.totalPlannedVsActualDiff, 'text-success', 'text-error'),
         testId: 'year-total-planned',

@@ -37,6 +37,7 @@
   * Request schemas live in `shared/schemas` (auth, budget, todo, common): the server parses requests with them and forms check the same schemas before sending. Budget years are 2000–2100; income and expense amounts are greater than zero, a balance may be zero.
   * Show errors with `useServerError().formatError(error, fallback)`: it translates error keys and shows the fallback for anything else.
 * **Dates**: date-only values are `YYYY-MM-DD` strings. Use `shared/utils/shared/dates.ts` to get the local date and to format dates; `toISOString()` gives the UTC date.
+* **Money**: amounts are stored as entered, from 0 up to `MAX_AMOUNT` (`shared/schemas/common.ts`). Show them with `useMoneyFormat` (up to 2 decimals, BTC up to 8, metals up to 4; the rounded format drops cents) and take the sign for colours and "+" from `getShownSign`, so a value shown as 0 is never coloured as a gain or a loss.
 * UI:
   * DaisyUI (https://daisyui.com/). All UI components should be based on DaisyUI.
   * Tailwind CSS (https://tailwindcss.com/). Try to avoid custom styles, use Tailwind classes instead.
@@ -135,6 +136,7 @@
   * `pnpm test:e2e` runs against a production-like build (`nuxt build --envName e2e` into `.output-e2e`) served by `wrangler dev` on port 8787, with a fresh local D1 in `.wrangler/e2e` on every run. `playwright.dev.config.ts` targets the dev server instead.
   * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
   * Only Desktop Chrome is configured. Tests retry only on CI.
+  * Do not edit files or run Nuxt commands (typecheck, prepare, build) while `pnpm test:e2e` runs: `wrangler dev` rebuilds the worker and requests in flight fail with 503.
 * **Test structure**: `tests/e2e/` with `public/` for public pages and `authenticated/` for pages requiring auth
 * **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
   * Use `page.getByTestId('element-id')` instead of text-based selectors

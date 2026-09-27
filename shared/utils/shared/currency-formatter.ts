@@ -62,6 +62,19 @@ const getDistinctNarrowSymbol = (currency: string): string | null => {
   return symbol !== currency && !getSharedNarrowSymbols().has(symbol) ? symbol : null
 }
 
+const DEFAULT_FRACTION_DIGITS = 2
+
+const FRACTION_DIGITS_BY_CURRENCY: Readonly<Record<string, number>> = {
+  BTC: 8,
+  XAU: 4,
+  XAG: 4,
+  XPT: 4,
+  XPD: 4,
+}
+
+const getMaxFractionDigits = (currency: string, isRounded: boolean): number =>
+  FRACTION_DIGITS_BY_CURRENCY[currency] ?? (isRounded ? 0 : DEFAULT_FRACTION_DIGITS)
+
 const isShownAsZero = (amount: number, maxFractionDigits: number): boolean =>
   Math.abs(amount) < 0.5 / 10 ** maxFractionDigits
 
@@ -90,7 +103,7 @@ export const formatCurrency = (
   locale: string,
   options?: { rounded?: boolean },
 ): string => {
-  const maxFractionDigits = options?.rounded ? 0 : 2
+  const maxFractionDigits = getMaxFractionDigits(currency, options?.rounded ?? false)
   const value = isShownAsZero(amount, maxFractionDigits) ? 0 : amount
   const parts = getFormatter(locale, currency, maxFractionDigits).formatToParts(value)
   const symbol = getDistinctNarrowSymbol(currency)
@@ -102,3 +115,6 @@ export const formatCurrency = (
 
 export const formatCurrencyRounded = (amount: number, currency: string, locale: string): string =>
   formatCurrency(amount, currency, locale, { rounded: true })
+
+export const getShownSign = (amount: number, currency: string, options?: { rounded?: boolean }): number =>
+  isShownAsZero(amount, getMaxFractionDigits(currency, options?.rounded ?? false)) ? 0 : Math.sign(amount)

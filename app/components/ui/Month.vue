@@ -74,10 +74,7 @@
           <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
             <button
               class="btn btn-ghost text-2xl"
-              :class="{
-                'text-primary': data.startBalance !== null && data.startBalance !== 0,
-                'text-base-content': data.startBalance === null || data.startBalance === 0,
-              }"
+              :class="signedValueClass(data.startBalance, 'text-primary', 'text-primary')"
               :disabled="isReadOnly || data.startBalance === null"
               data-testid="balance-button"
               @click="$emit('balanceClick')"
@@ -96,10 +93,7 @@
           <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
             <button
               class="btn btn-ghost text-2xl"
-              :class="{
-                'text-success': data.totalIncome !== 0,
-                'text-base-content': data.totalIncome === 0,
-              }"
+              :class="signedValueClass(data.totalIncome, 'text-success', 'text-success')"
               :disabled="isReadOnly"
               data-testid="incomes-button"
               @click="$emit('incomeClick')"
@@ -118,10 +112,7 @@
           <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto">
             <button
               class="btn btn-ghost text-2xl"
-              :class="{
-                'text-error': data.totalExpenses !== 0,
-                'text-base-content': data.totalExpenses === 0,
-              }"
+              :class="signedValueClass(data.totalExpenses, 'text-error', 'text-error')"
               :disabled="isReadOnly"
               data-testid="expenses-button"
               @click="$emit('expenseClick')"
@@ -142,11 +133,7 @@
               class="btn btn-ghost text-xl"
               disabled
               data-testid="pocket-expenses-button"
-              :class="{
-                'text-warning': data.calculatedPocketExpenses !== null && data.calculatedPocketExpenses < 0,
-                'text-error': data.calculatedPocketExpenses !== null && data.calculatedPocketExpenses > 0,
-                'text-base-content': data.calculatedPocketExpenses === 0,
-              }"
+              :class="signedValueClass(data.calculatedPocketExpenses, 'text-error', 'text-warning')"
             >
               {{ data.calculatedPocketExpenses !== null ? formatAmount(data.calculatedPocketExpenses) : '—' }}
             </button>
@@ -164,11 +151,7 @@
               class="btn btn-ghost text-xl"
               disabled
               data-testid="total-expenses-button"
-              :class="{
-                'text-warning': data.totalAllExpenses !== null && data.totalAllExpenses < 0,
-                'text-error': data.totalAllExpenses !== null && data.totalAllExpenses > 0,
-                'text-base-content': data.totalAllExpenses === 0,
-              }"
+              :class="signedValueClass(data.totalAllExpenses, 'text-error', 'text-warning')"
             >
               {{ data.totalAllExpenses !== null ? formatAmount(data.totalAllExpenses) : '—' }}
             </button>
@@ -184,11 +167,7 @@
             <button
               class="btn btn-ghost text-xl"
               data-testid="balance-change-button"
-              :class="{
-                'text-success': data.calculatedBalanceChange !== null && data.calculatedBalanceChange > 0,
-                'text-error': data.calculatedBalanceChange !== null && data.calculatedBalanceChange < 0,
-                'text-base-content': data.calculatedBalanceChange === 0,
-              }"
+              :class="signedValueClass(data.calculatedBalanceChange, 'text-success', 'text-error')"
               disabled
             >
               {{ data.calculatedBalanceChange !== null ? formatAmount(data.calculatedBalanceChange) : '—' }}
@@ -206,11 +185,7 @@
             <button
               class="btn btn-ghost text-xl"
               data-testid="currency-fluctuation-button"
-              :class="{
-                'text-success': data.currencyProfitLoss !== null && data.currencyProfitLoss > 0,
-                'text-error': data.currencyProfitLoss !== null && data.currencyProfitLoss < 0,
-                'text-base-content': data.currencyProfitLoss === 0,
-              }"
+              :class="signedValueClass(data.currencyProfitLoss, 'text-success', 'text-error')"
               disabled
             >
               {{ data.currencyProfitLoss !== null ? formatAmount(data.currencyProfitLoss) : '—' }}
@@ -228,10 +203,7 @@
             <button
               class="btn btn-ghost text-xl"
               data-testid="optional-expenses-button"
-              :class="{
-                'text-error': data.totalOptionalExpenses !== 0,
-                'text-base-content': data.totalOptionalExpenses === 0,
-              }"
+              :class="signedValueClass(data.totalOptionalExpenses, 'text-error', 'text-error')"
               disabled
             >
               {{ formatAmount(data.totalOptionalExpenses) }}
@@ -249,11 +221,7 @@
             <button
               class="btn btn-ghost text-xl flex flex-col gap-0 leading-tight h-auto py-2"
               data-testid="planned-balance-change-button"
-              :class="{
-                'text-warning': data.plannedBalanceChange !== null && data.plannedBalanceChange < 0,
-                'text-info': data.plannedBalanceChange !== null && data.plannedBalanceChange > 0,
-                'text-base-content': data.plannedBalanceChange === null || data.plannedBalanceChange === 0,
-              }"
+              :class="signedValueClass(data.plannedBalanceChange, 'text-info', 'text-warning')"
               :disabled="isReadOnly || isPastMonth"
               @click="$emit('planClick', 'amount')"
             >
@@ -261,13 +229,9 @@
               <span
                 v-if="isPastMonth && data.plannedVsActualDiff !== null"
                 class="text-xs opacity-80"
-                :class="{
-                  'text-success': data.plannedVsActualDiff > 0,
-                  'text-error': data.plannedVsActualDiff < 0,
-                  'text-base-content': data.plannedVsActualDiff === 0,
-                }"
+                :class="signedValueClass(data.plannedVsActualDiff, 'text-success', 'text-error')"
               >
-                {{ data.plannedVsActualDiff > 0 ? '+' : '' }}{{ formatAmount(data.plannedVsActualDiff) }}
+                {{ amountSign(data.plannedVsActualDiff) > 0 ? '+' : '' }}{{ formatAmount(data.plannedVsActualDiff) }}
               </span>
             </button>
           </div>
@@ -284,11 +248,7 @@
               class="btn btn-ghost text-2xl"
               disabled
               data-testid="expected-balance-button"
-              :class="{
-                'text-primary': data.expectedBalance !== null && data.expectedBalance > 0,
-                'text-error': data.expectedBalance !== null && data.expectedBalance < 0,
-                'text-base-content': data.expectedBalance === null || data.expectedBalance === 0,
-              }"
+              :class="signedValueClass(data.expectedBalance, 'text-primary', 'text-error')"
             >
               {{ data.expectedBalance !== null ? formatAmount(data.expectedBalance) : '—' }}
             </button>
@@ -426,6 +386,7 @@ interface Props {
   isPlanningMode?: boolean
   isPastMonth?: boolean
   formatAmount: (amount: number) => string
+  amountSign: (amount: number) => number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -465,10 +426,11 @@ const formatOrDash = (value: number | null): string => {
 }
 
 const signedValueClass = (value: number | null, positiveClass: string, negativeClass: string): string => {
-  if (value !== null && value > 0) {
+  const sign = value === null ? 0 : props.amountSign(value)
+  if (sign > 0) {
     return positiveClass
   }
-  if (value !== null && value < 0) {
+  if (sign < 0) {
     return negativeClass
   }
   return 'text-base-content'
@@ -506,7 +468,7 @@ const mobileStats = computed((): MonthStatItem[] => {
         valueText: planMainText.value,
         valueClass: signedValueClass(props.data.plannedBalanceChange, 'text-info', 'text-warning'),
         secondaryText: plannedDiff !== null
-          ? `${plannedDiff > 0 ? '+' : ''}${props.formatAmount(plannedDiff)}`
+          ? `${props.amountSign(plannedDiff) > 0 ? '+' : ''}${props.formatAmount(plannedDiff)}`
           : '',
         secondaryClass: signedValueClass(plannedDiff, 'text-success', 'text-error'),
         clickable: true,

@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
+import { formatCurrency, formatCurrencyRounded, getShownSign } from '~~/shared/utils/shared/currency-formatter'
 
 export const useMoneyFormat = () => {
   const { locale } = useI18n()
@@ -9,8 +9,12 @@ export const useMoneyFormat = () => {
   const formatMoneyRounded = (amount: number, currency: string): string =>
     formatCurrencyRounded(amount, currency, locale.value)
 
+  const getRoundedMoneySign = (amount: number, currency: string): number =>
+    getShownSign(amount, currency, { rounded: true })
+
   return {
     formatMoney,
     formatMoneyRounded,
+    getRoundedMoneySign,
   }
 }

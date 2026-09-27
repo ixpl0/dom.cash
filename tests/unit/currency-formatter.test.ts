@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { CURRENCY_CODES } from '../../shared/utils/shared/currencies'
-import { formatCurrency, formatCurrencyRounded } from '../../shared/utils/shared/currency-formatter'
+import { formatCurrency, formatCurrencyRounded, getShownSign } from '../../shared/utils/shared/currency-formatter'
 
 const normalizeSpaces = (text: string): string => text.replace(/\s/g, ' ')
 
@@ -23,6 +23,8 @@ const formatCases = [
   { amount: 1000000000, currency: 'CLP', locale: 'en', expected: 'CLP 1,000,000,000' },
   { amount: 1234.5, currency: 'BTC', locale: 'en', expected: 'BTC 1,234.5' },
   { amount: 1234.5, currency: 'BTC', locale: 'ru', expected: '1 234,5 BTC' },
+  { amount: 0.00012345, currency: 'BTC', locale: 'en', expected: 'BTC 0.00012345' },
+  { amount: 1.23456, currency: 'XAU', locale: 'en', expected: 'XAU 1.2346' },
 ]
 
 formatCases.forEach(({ amount, currency, locale, expected }) => {
@@ -39,6 +41,8 @@ const roundedCases = [
   { amount: -1234.5, currency: 'USD', locale: 'en', expected: '-$1,235' },
   { amount: 999.5, currency: 'EUR', locale: 'ru', expected: '1 000 €' },
   { amount: 45000.4, currency: 'RUB', locale: 'ru', expected: '45 000 ₽' },
+  { amount: 0.00012345, currency: 'BTC', locale: 'en', expected: 'BTC 0.00012345' },
+  { amount: 2.5, currency: 'XAG', locale: 'en', expected: 'XAG 2.5' },
 ]
 
 roundedCases.forEach(({ amount, currency, locale, expected }) => {
@@ -76,4 +80,20 @@ test('formatCurrency never shows a dollar sign for a currency other than the US 
     .filter(code => /^-?\$/.test(formatCurrency(1, code, 'en')))
 
   assert.deepEqual(codesShownAsDollar, [])
+})
+
+const shownSignCases = [
+  { amount: 0.4, currency: 'USD', rounded: true, expected: 0 },
+  { amount: -0.4, currency: 'USD', rounded: true, expected: 0 },
+  { amount: 0.6, currency: 'USD', rounded: true, expected: 1 },
+  { amount: -0.4, currency: 'USD', rounded: false, expected: -1 },
+  { amount: -0.004, currency: 'USD', rounded: false, expected: 0 },
+  { amount: 0.001, currency: 'BTC', rounded: true, expected: 1 },
+  { amount: 0.000000004, currency: 'BTC', rounded: false, expected: 0 },
+]
+
+shownSignCases.forEach(({ amount, currency, rounded, expected }) => {
+  test(`getShownSign gives ${expected} for ${amount} ${currency}${rounded ? ' rounded' : ''}`, () => {
+    assert.equal(getShownSign(amount, currency, { rounded }), expected)
+  })
 })

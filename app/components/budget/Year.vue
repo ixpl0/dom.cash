@@ -5,6 +5,7 @@
     :labels="labels"
     :is-planning-mode="budgetStore.isPlanningMode"
     :format-amount="formatAmountForDisplay"
+    :amount-sign="getAmountSignForDisplay"
   >
     <BudgetMonth
       v-for="monthData in months"
@@ -28,7 +29,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { t } = useI18n()
-const { formatMoneyRounded } = useMoneyFormat()
+const { formatMoneyRounded, getRoundedMoneySign } = useMoneyFormat()
 const budgetStore = useBudgetStore()
 
 const yearStats = computed((): UiYearStats => {
@@ -134,4 +135,7 @@ const labels = computed((): UiYearLabels => ({
 const formatAmountForDisplay = (amount: number): string => {
   return formatMoneyRounded(amount, budgetStore.effectiveMainCurrency)
 }
+
+const getAmountSignForDisplay = (amount: number): number =>
+  getRoundedMoneySign(amount, budgetStore.effectiveMainCurrency)
 </script>

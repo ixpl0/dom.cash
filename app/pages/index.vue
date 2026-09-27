@@ -110,6 +110,7 @@
               :stats="demoData.yearStats"
               :labels="yearLabels"
               :format-amount="formatDemoAmount"
+              :amount-sign="getDemoAmountSign"
             >
               <UiMonth
                 v-for="(month, index) in demoData.months"
@@ -130,6 +131,7 @@
                 :is-read-only="true"
                 :can-delete="false"
                 :format-amount="formatDemoAmount"
+                :amount-sign="getDemoAmountSign"
               />
             </UiYear>
           </UiTimeline>
@@ -317,7 +319,7 @@ import { formatPlainDate } from '~~/shared/utils/shared/dates'
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
 const { t, locale } = useI18n()
-const { formatMoneyRounded } = useMoneyFormat()
+const { formatMoneyRounded, getRoundedMoneySign } = useMoneyFormat()
 const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
 
@@ -326,6 +328,8 @@ const DEMO_CURRENCY = 'USD'
 const formatDemoAmount = (amount: number): string => {
   return formatMoneyRounded(amount, DEMO_CURRENCY)
 }
+
+const getDemoAmountSign = (amount: number): number => getRoundedMoneySign(amount, DEMO_CURRENCY)
 
 const monthLabels = computed((): UiMonthLabels => ({
   deleteMonth: t('budget.month.deleteMonth'),
