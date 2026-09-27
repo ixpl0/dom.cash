@@ -128,7 +128,7 @@ export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): bool
 }
 
 export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
-  if (allMonths.length <= 1) {
+  if (allMonths.length === 0) {
     return false
   }
 

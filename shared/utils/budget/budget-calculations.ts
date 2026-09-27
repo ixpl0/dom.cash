@@ -150,9 +150,11 @@ export const computeExpectedBalances = (
     return a.month - b.month
   })
 
-  const withExpected = sortedAsc.reduce<{ running: number | null, list: ComputedMonthData[] }>(
+  const withExpected = sortedAsc.reduce<{ running: number | null, previousMonthOrdinal: number | null, list: ComputedMonthData[] }>(
     (acc, monthItem) => {
       const monthIsPast = isPastMonth(monthItem.year, monthItem.month)
+      const monthOrdinal = monthItem.year * 12 + monthItem.month
+      const followsPreviousMonth = acc.previousMonthOrdinal !== null && monthOrdinal - acc.previousMonthOrdinal === 1
 
       const nextRunning = (() => {
         if (monthIsPast && monthItem.nextMonthStartBalance !== null) {
@@ -161,17 +163,20 @@ export const computeExpectedBalances = (
         if (monthIsPast) {
           return monthItem.startBalance
         }
-        const anchor = acc.running ?? monthItem.startBalance ?? 0
+        const anchor = followsPreviousMonth
+          ? acc.running ?? monthItem.startBalance ?? 0
+          : monthItem.startBalance ?? acc.running ?? 0
         const planned = monthItem.plannedBalanceChange ?? 0
         return anchor + planned
       })()
 
       return {
         running: nextRunning,
+        previousMonthOrdinal: monthOrdinal,
         list: [...acc.list, { ...monthItem, expectedBalance: nextRunning }],
       }
     },
-    { running: null, list: [] },
+    { running: null, previousMonthOrdinal: null, list: [] },
   )
 
   const expectedById = new Map(withExpected.list.map(item => [item.monthId, item.expectedBalance]))
@@ -182,134 +187,65 @@ export const computeExpectedBalances = (
   }))
 }
 
+const sumOf = (values: readonly number[]): number => values.reduce((sum, value) => sum + value, 0)
+
+const averageOf = (values: readonly number[]): number =>
+  values.length > 0 ? sumOf(values) / values.length : 0
+
+const collectValues = (
+  months: readonly ComputedMonthData[],
+  selectValue: (month: ComputedMonthData) => number | null,
+): number[] => months.map(selectValue).filter((value): value is number => value !== null)
+
+const findLatestMonth = (months: readonly ComputedMonthData[]): ComputedMonthData | undefined =>
+  months.reduce<ComputedMonthData | undefined>(
+    (latest, candidate) => (!latest || candidate.month > latest.month ? candidate : latest),
+    undefined,
+  )
+
 export const computeYearSummary = (
   year: number,
   monthsData: ComputedMonthData[],
 ): YearSummary => {
-  const yearMonths = monthsData.filter(m => m.year === year)
-  const monthCount = yearMonths.length
+  const yearMonths = monthsData.filter(month => month.year === year)
+  const realMonths = yearMonths.filter(month => !month.isPlanOnly)
 
-  if (monthCount === 0) {
-    return {
-      year,
-      monthCount: 0,
-      totalStartBalance: 0,
-      totalIncome: 0,
-      totalExpenses: 0,
-      totalOptionalExpenses: 0,
-      totalBalanceChange: 0,
-      totalPocketExpenses: 0,
-      totalCurrencyProfitLoss: 0,
-      totalAllExpenses: 0,
-      totalPlannedBalanceChange: 0,
-      totalPlannedVsActualDiff: 0,
-      avgStartBalance: 0,
-      avgIncome: 0,
-      avgExpenses: 0,
-      avgOptionalExpenses: 0,
-      avgBalanceChange: 0,
-      avgPocketExpenses: 0,
-      avgCurrencyProfitLoss: 0,
-      avgAllExpenses: 0,
-      avgPlannedBalanceChange: 0,
-      avgPlannedVsActualDiff: 0,
-      plannedMonthCount: 0,
-      plannedDiffMonthCount: 0,
-      endOfYearExpectedBalance: null,
-    }
-  }
-
-  const latestMonthOfYear = yearMonths.reduce(
-    (latest, candidate) => (candidate.month > latest.month ? candidate : latest),
-    yearMonths[0]!,
-  )
-  const endOfYearExpectedBalance = latestMonthOfYear.expectedBalance
-
-  const totals = yearMonths.reduce((acc, month) => {
-    if (month.startBalance !== null) {
-      acc.totalStartBalance += month.startBalance
-      acc.startBalanceCount++
-    }
-    acc.totalIncome += month.totalIncome
-    acc.totalExpenses += month.totalExpenses
-    acc.totalOptionalExpenses += month.totalOptionalExpenses
-
-    if (month.calculatedBalanceChange !== null) {
-      acc.totalBalanceChange += month.calculatedBalanceChange
-      acc.balanceChangeCount++
-    }
-
-    if (month.calculatedPocketExpenses !== null) {
-      acc.totalPocketExpenses += month.calculatedPocketExpenses
-      acc.pocketExpensesCount++
-    }
-
-    if (month.currencyProfitLoss !== null) {
-      acc.totalCurrencyProfitLoss += month.currencyProfitLoss
-      acc.currencyProfitLossCount++
-    }
-
-    if (month.totalAllExpenses !== null) {
-      acc.totalAllExpenses += month.totalAllExpenses
-      acc.allExpensesCount++
-    }
-
-    if (month.plannedBalanceChange !== null) {
-      acc.totalPlannedBalanceChange += month.plannedBalanceChange
-      acc.plannedMonthCount++
-    }
-
-    if (month.plannedVsActualDiff !== null) {
-      acc.totalPlannedVsActualDiff += month.plannedVsActualDiff
-      acc.plannedDiffMonthCount++
-    }
-
-    return acc
-  }, {
-    totalStartBalance: 0,
-    totalIncome: 0,
-    totalExpenses: 0,
-    totalOptionalExpenses: 0,
-    totalBalanceChange: 0,
-    totalPocketExpenses: 0,
-    totalCurrencyProfitLoss: 0,
-    totalAllExpenses: 0,
-    totalPlannedBalanceChange: 0,
-    totalPlannedVsActualDiff: 0,
-    startBalanceCount: 0,
-    balanceChangeCount: 0,
-    pocketExpensesCount: 0,
-    currencyProfitLossCount: 0,
-    allExpensesCount: 0,
-    plannedMonthCount: 0,
-    plannedDiffMonthCount: 0,
-  })
+  const startBalances = collectValues(yearMonths, month => month.startBalance)
+  const incomes = realMonths.map(month => month.totalIncome)
+  const expenses = realMonths.map(month => month.totalExpenses)
+  const optionalExpenses = realMonths.map(month => month.totalOptionalExpenses)
+  const balanceChanges = collectValues(yearMonths, month => month.calculatedBalanceChange)
+  const pocketExpenses = collectValues(yearMonths, month => month.calculatedPocketExpenses)
+  const currencyProfitLosses = collectValues(yearMonths, month => month.currencyProfitLoss)
+  const allExpenses = collectValues(yearMonths, month => month.totalAllExpenses)
+  const plannedBalanceChanges = collectValues(yearMonths, month => month.plannedBalanceChange)
+  const plannedVsActualDiffs = collectValues(yearMonths, month => month.plannedVsActualDiff)
 
   return {
     year,
-    monthCount,
-    totalStartBalance: totals.totalStartBalance,
-    totalIncome: totals.totalIncome,
-    totalExpenses: totals.totalExpenses,
-    totalOptionalExpenses: totals.totalOptionalExpenses,
-    totalBalanceChange: totals.totalBalanceChange,
-    totalPocketExpenses: totals.totalPocketExpenses,
-    totalCurrencyProfitLoss: totals.totalCurrencyProfitLoss,
-    totalAllExpenses: totals.totalAllExpenses,
-    totalPlannedBalanceChange: totals.totalPlannedBalanceChange,
-    totalPlannedVsActualDiff: totals.totalPlannedVsActualDiff,
-    avgStartBalance: totals.startBalanceCount > 0 ? totals.totalStartBalance / totals.startBalanceCount : 0,
-    avgIncome: totals.totalIncome / monthCount,
-    avgExpenses: totals.totalExpenses / monthCount,
-    avgOptionalExpenses: totals.totalOptionalExpenses / monthCount,
-    avgBalanceChange: totals.balanceChangeCount > 0 ? totals.totalBalanceChange / totals.balanceChangeCount : 0,
-    avgPocketExpenses: totals.pocketExpensesCount > 0 ? totals.totalPocketExpenses / totals.pocketExpensesCount : 0,
-    avgCurrencyProfitLoss: totals.currencyProfitLossCount > 0 ? totals.totalCurrencyProfitLoss / totals.currencyProfitLossCount : 0,
-    avgAllExpenses: totals.allExpensesCount > 0 ? totals.totalAllExpenses / totals.allExpensesCount : 0,
-    avgPlannedBalanceChange: totals.plannedMonthCount > 0 ? totals.totalPlannedBalanceChange / totals.plannedMonthCount : 0,
-    avgPlannedVsActualDiff: totals.plannedDiffMonthCount > 0 ? totals.totalPlannedVsActualDiff / totals.plannedDiffMonthCount : 0,
-    plannedMonthCount: totals.plannedMonthCount,
-    plannedDiffMonthCount: totals.plannedDiffMonthCount,
-    endOfYearExpectedBalance,
+    monthCount: yearMonths.length,
+    totalStartBalance: sumOf(startBalances),
+    totalIncome: sumOf(incomes),
+    totalExpenses: sumOf(expenses),
+    totalOptionalExpenses: sumOf(optionalExpenses),
+    totalBalanceChange: sumOf(balanceChanges),
+    totalPocketExpenses: sumOf(pocketExpenses),
+    totalCurrencyProfitLoss: sumOf(currencyProfitLosses),
+    totalAllExpenses: sumOf(allExpenses),
+    totalPlannedBalanceChange: sumOf(plannedBalanceChanges),
+    totalPlannedVsActualDiff: sumOf(plannedVsActualDiffs),
+    avgStartBalance: averageOf(startBalances),
+    avgIncome: averageOf(incomes),
+    avgExpenses: averageOf(expenses),
+    avgOptionalExpenses: averageOf(optionalExpenses),
+    avgBalanceChange: averageOf(balanceChanges),
+    avgPocketExpenses: averageOf(pocketExpenses),
+    avgCurrencyProfitLoss: averageOf(currencyProfitLosses),
+    avgAllExpenses: averageOf(allExpenses),
+    avgPlannedBalanceChange: averageOf(plannedBalanceChanges),
+    avgPlannedVsActualDiff: averageOf(plannedVsActualDiffs),
+    plannedMonthCount: plannedBalanceChanges.length,
+    plannedDiffMonthCount: plannedVsActualDiffs.length,
+    endOfYearExpectedBalance: findLatestMonth(yearMonths)?.expectedBalance ?? null,
   }
 }

@@ -153,7 +153,7 @@ test('isFirstMonth treats a lone month as the first month', () => {
   assert.equal(isFirstMonth(month, [month]), true)
 })
 
-test('isLastMonth treats a lone month as the last month', { todo: 'a lone month is never last, so it cannot be deleted while older years are not loaded' }, () => {
+test('isLastMonth treats a lone month as the last month', () => {
   const month = createMonth(2026, 0)
 
   assert.equal(isLastMonth(month, [month]), true)

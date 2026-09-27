@@ -390,7 +390,7 @@ test('computeMonthData marks default rates as rates of another month', () => {
   assert.notEqual(result.sourceMonthTitle, '')
 })
 
-test('computeMonthData shows zero pocket expenses for a month that balances exactly', { todo: 'floating point leftovers are shown as "-$0"' }, () => {
+test('computeMonthData shows zero pocket expenses for a month that balances exactly', () => {
   const month = createMonth({ year: 2026, month: 2, balances: [balance(0.3, 'USD')], expenses: [expense(0.1, 'USD'), expense(0.2, 'USD')] })
   const nextMonth = createMonth({ year: 2026, month: 3 })
   const { calculatedPocketExpenses } = computeMonthData(month, [month, nextMonth], 'USD', MONTH_NAMES)
@@ -507,7 +507,6 @@ const expectedBalanceCases = [
   {
     name: 'the current month after a gap anchors on its own start balance',
     now: '2026-06-15T12:00',
-    todo: 'a gap before the current month keeps the stale start of an older month',
     months: [
       createComputedMonth(2026, 2, { startBalance: 1000 }),
       createComputedMonth(2026, 5, { startBalance: 1300, plannedBalanceChange: 200 }),
@@ -516,8 +515,8 @@ const expectedBalanceCases = [
   },
 ]
 
-expectedBalanceCases.forEach(({ name, now, todo, months, expected }) => {
-  test(`computeExpectedBalances: ${name}`, { todo }, (context) => {
+expectedBalanceCases.forEach(({ name, now, months, expected }) => {
+  test(`computeExpectedBalances: ${name}`, (context) => {
     pinClock(context, now)
 
     assert.deepEqual(toExpectedBalances(computeExpectedBalances(months)), expected)
@@ -702,7 +701,7 @@ test('computeYearSummary counts the plans of plan-only months and ends the year 
   )
 })
 
-test('computeYearSummary averages income and expenses over real months only', { todo: 'plan-only months dilute income and expense averages in planning mode' }, () => {
+test('computeYearSummary averages income and expenses over real months only', () => {
   const summary = computeYearSummary(2026, [createPlanOnlyApril(), ...createYearMonths()])
 
   assert.deepEqual(
