@@ -13,6 +13,6 @@ export default defineNuxtPlugin(async () => {
     setUser(user)
 
     const todoStore = useTodoStore()
-    await todoStore.refresh()
+    await todoStore.load()
   }
 })

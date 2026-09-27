@@ -5,15 +5,13 @@ export const useVisibilityRefresh = (
   refreshFn: () => Promise<void>,
   staleThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS,
 ) => {
+  const { $backHandlers } = useNuxtApp()
   const lastFetchTime = ref(Date.now())
   const isRefreshing = ref(false)
   let intervalId: ReturnType<typeof setInterval> | null = null
 
   const runRefreshIfStale = async () => {
-    if (isRefreshing.value) {
-      return
-    }
-    if (document.visibilityState !== 'visible') {
+    if (isRefreshing.value || document.visibilityState !== 'visible' || $backHandlers.hasHandlers()) {
       return
     }
     const elapsed = Date.now() - lastFetchTime.value
@@ -68,10 +66,4 @@ export const useVisibilityRefresh = (
       intervalId = null
     }
   })
-
-  const markFetched = () => {
-    lastFetchTime.value = Date.now()
-  }
-
-  return { markFetched }
 }

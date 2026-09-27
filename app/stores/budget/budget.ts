@@ -1,7 +1,6 @@
 import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo, BudgetData, YearsData } from '~~/shared/types/budget'
 import type { BudgetExportData } from '~~/shared/types/export-import'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
-import { FetchError } from 'ofetch'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId, monthHasEntry } from '~~/shared/utils/budget/entry-strategies'
 import { toMutable } from '~~/shared/utils/shared/immutable'
 import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
@@ -45,8 +44,10 @@ const createSyntheticPlanMonth = (planRow: PlanData): MonthData => ({
   isPlanOnly: true,
 })
 
+type RequestFetch = ReturnType<typeof useRequestFetch>
+
 const toLoadError = (err: unknown): { message: string } => ({
-  message: err instanceof FetchError ? String(err.data?.message ?? '') : '',
+  message: readServerErrorKey(err) ?? '',
 })
 
 export const useBudgetStore = defineStore('budget', () => {
@@ -240,99 +241,106 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
-  const refresh = async (targetUsername?: string) => {
+  const $reset = () => {
+    data.value = null
     loadError.value = null
+    canEdit.value = false
+    canView.value = false
+    availableYears.value = []
+    loadedYears.value = new Set()
+    isLoadingYear.value = false
+    isPlanningMode.value = false
+    plans.value = []
+    plansLoaded.value = false
+    isPlansLoading.value = false
+  }
 
+  const isShowingBudgetOf = (targetUsername: string | undefined): boolean => {
+    if (!data.value) {
+      return false
+    }
+    return targetUsername
+      ? data.value.user.username.toLowerCase() === targetUsername.toLowerCase()
+      : data.value.access === 'owner'
+  }
+
+  const fetchBudget = (requestFetch: RequestFetch, targetUsername: string | undefined, years: readonly number[]) =>
+    requestFetch<BudgetData>(targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget', {
+      query: years.length > 0 ? { years: years.join(',') } : undefined,
+    })
+
+  const fetchYears = (requestFetch: RequestFetch, targetUsername: string | undefined) =>
+    requestFetch<YearsData>('/api/budget/years', { query: { username: targetUsername } })
+
+  const applyBudget = (budgetData: BudgetData, yearsData: YearsData, years: readonly number[]): void => {
+    data.value = budgetData
+    availableYears.value = yearsData.availableYears
+    loadedYears.value = new Set(years)
+    canEdit.value = budgetData.access === 'owner' || budgetData.access === 'write'
+    canView.value = true
+    loadError.value = null
+  }
+
+  const loadNewBudget = async (requestFetch: RequestFetch, targetUsername: string | undefined, isLatestLoad: () => boolean): Promise<boolean> => {
     try {
-      const yearsPromise = useFetch<YearsData>('/api/budget/years', {
-        query: { username: targetUsername },
-        key: targetUsername ? `budget-years-${targetUsername}` : 'budget-years-own',
-      })
-
-      const { data: fetchedData, error: fetchError } = await useFetch<BudgetData>(
-        targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget',
-        {
-          key: targetUsername ? `budget-user-${targetUsername}` : 'budget-own',
-        },
-      )
-
-      const { data: yearsData } = await yearsPromise
-
-      if (fetchError.value) {
-        loadError.value = { message: fetchError.value.data?.message ?? '' }
-        data.value = null
+      const [yearsData, budgetData] = await Promise.all([
+        fetchYears(requestFetch, targetUsername),
+        fetchBudget(requestFetch, targetUsername, []),
+      ])
+      if (!isLatestLoad()) {
+        return false
       }
-      else {
-        data.value = fetchedData.value || null
-      }
-
-      if (yearsData.value) {
-        availableYears.value = yearsData.value.availableYears
-        loadedYears.value = new Set(yearsData.value.initialYears)
-      }
-
-      if (data.value) {
-        canEdit.value = data.value.access === 'owner' || data.value.access === 'write'
-        canView.value = true
-      }
-
-      plans.value = []
-      plansLoaded.value = false
-      if (isPlanningMode.value) {
-        await ensurePlansLoaded()
-      }
+      $reset()
+      applyBudget(budgetData, yearsData, yearsData.initialYears)
+      return true
     }
     catch (err) {
-      console.error('Error refreshing budget:', err)
+      console.error('Error loading budget:', err)
+      if (!isLatestLoad()) {
+        return false
+      }
+      $reset()
       loadError.value = toLoadError(err)
+      return false
     }
   }
 
-  const forceRefresh = async (targetUsername?: string) => {
-    loadError.value = null
-
+  const refreshShownBudget = async (requestFetch: RequestFetch, targetUsername: string | undefined, isLatestLoad: () => boolean): Promise<boolean> => {
     try {
-      const previouslyLoadedYears = Array.from(loadedYears.value)
-      const yearsQuery = previouslyLoadedYears.length > 0
-        ? `years=${previouslyLoadedYears.join(',')}`
-        : ''
-
-      const baseBudgetUrl = targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget'
-      const budgetUrl = yearsQuery ? `${baseBudgetUrl}?${yearsQuery}` : baseBudgetUrl
-
-      const [yearsData, fetchedData] = await Promise.all([
-        $fetch<YearsData>('/api/budget/years', {
-          query: { username: targetUsername },
-        }),
-        $fetch<BudgetData>(budgetUrl),
-      ])
-
-      data.value = fetchedData || null
-
-      if (yearsData) {
-        availableYears.value = yearsData.availableYears
-        const availableYearNumbers = new Set(yearsData.availableYears.map(y => y.year))
-        const preservedYears = previouslyLoadedYears.filter(year => availableYearNumbers.has(year))
-        const nextLoadedYears = preservedYears.length > 0 ? preservedYears : yearsData.initialYears
-        loadedYears.value = new Set(nextLoadedYears)
+      const yearsData = await fetchYears(requestFetch, targetUsername)
+      const availableYearNumbers = new Set(yearsData.availableYears.map(({ year }) => year))
+      const years = [...new Set([...loadedYears.value, ...yearsData.initialYears])]
+        .filter(year => availableYearNumbers.has(year))
+      const budgetData = await fetchBudget(requestFetch, targetUsername, years)
+      if (!isLatestLoad()) {
+        return false
       }
 
-      if (data.value) {
-        canEdit.value = data.value.access === 'owner' || data.value.access === 'write'
-        canView.value = true
-      }
-
+      applyBudget(budgetData, yearsData, years)
       plans.value = []
       plansLoaded.value = false
       if (isPlanningMode.value) {
         await ensurePlansLoaded()
       }
+      return true
     }
     catch (err) {
-      console.error('Error force refreshing budget:', err)
-      loadError.value = toLoadError(err)
-      data.value = null
+      console.error('Error refreshing budget:', err)
+      return false
     }
+  }
+
+  let latestLoadId = 0
+
+  const load = async (targetUsername?: string): Promise<boolean> => {
+    const requestFetch = useRequestFetch()
+    latestLoadId += 1
+    const loadId = latestLoadId
+    const isLatestLoad = (): boolean => loadId === latestLoadId
+
+    return isShowingBudgetOf(targetUsername)
+      ? refreshShownBudget(requestFetch, targetUsername, isLatestLoad)
+      : loadNewBudget(requestFetch, targetUsername, isLatestLoad)
   }
 
   const createMonth = async (year: number, month: number, copyFromMonthId?: string) => {
@@ -817,20 +825,6 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
-  const $reset = () => {
-    data.value = null
-    loadError.value = null
-    canEdit.value = false
-    canView.value = false
-    availableYears.value = []
-    loadedYears.value = new Set()
-    isLoadingYear.value = false
-    isPlanningMode.value = false
-    plans.value = []
-    plansLoaded.value = false
-    isPlansLoading.value = false
-  }
-
   return {
     data,
     loadError,
@@ -853,8 +847,7 @@ export const useBudgetStore = defineStore('budget', () => {
     getComputedMonthByYearMonth,
     getYearSummary,
     getRollingAverageExpenses,
-    refresh,
-    forceRefresh,
+    load,
     loadYear,
     createMonth,
     createNextMonth,

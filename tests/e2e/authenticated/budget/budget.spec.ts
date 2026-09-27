@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
+import { waitForNoBackGuard } from '../../helpers/back-navigation'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
 import { cleanupUserData } from '../../helpers/auth'
@@ -385,6 +386,8 @@ test.describe('Budget page isolated tests', () => {
 
     const updatedTotal = await readDigits(button)
 
+    await waitForNoBackGuard(page)
+
     await page.reload()
     await waitForHydration(page)
 
@@ -431,6 +434,8 @@ test.describe('Budget page isolated tests', () => {
       const updatedTotal = await readDigits(button)
       updatedTotals.push(updatedTotal)
     }
+
+    await waitForNoBackGuard(page)
 
     await page.reload()
     await waitForHydration(page)

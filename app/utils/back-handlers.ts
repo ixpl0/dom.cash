@@ -22,6 +22,7 @@ export interface BackHandlerRouter {
 
 export interface BackHandlerManager {
   addHandler: (onBack: BackHandler) => () => void
+  hasHandlers: () => boolean
   syncHistory: () => void
   connectRouter: (router: BackHandlerRouter) => void
 }
@@ -387,6 +388,7 @@ export const createBackHandlerManager = (browserWindow: Window = window): BackHa
 
   return {
     addHandler,
+    hasHandlers: () => handlers.length > 0,
     syncHistory,
     connectRouter,
   }

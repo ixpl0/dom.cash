@@ -1,5 +1,6 @@
 import type { DateReference } from '~~/shared/types/recurrence'
 import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult } from '~~/shared/types/todo'
+import { readServerErrorKey } from '~/utils/server-error'
 
 export const useTodoStore = defineStore('todo', () => {
   const preferencesStore = usePreferencesStore()
@@ -69,53 +70,23 @@ export const useTodoStore = defineStore('todo', () => {
     return data.value?.items.find(item => item.id === id)
   }
 
-  const refresh = async () => {
-    isLoading.value = true
-    loadError.value = null
-
-    try {
-      const todoPromise = useFetch<TodoData>('/api/todo', { key: 'todo-list' })
-      const connectionsPromise = useFetch<TodoConnection[]>('/api/todo/connections', { key: 'todo-connections' })
-
-      const [{ data: todoData, error: todoError }, { data: connectionsData }] = await Promise.all([
-        todoPromise,
-        connectionsPromise,
-      ])
-
-      if (todoError.value) {
-        loadError.value = { message: todoError.value.data?.message ?? '' }
-        data.value = null
-      }
-      else {
-        data.value = todoData.value || null
-      }
-
-      connections.value = connectionsData.value || []
-    }
-    catch {
-      loadError.value = { message: '' }
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
-
-  const forceRefresh = async () => {
-    isLoading.value = true
+  const load = async (): Promise<void> => {
+    const requestFetch = useRequestFetch()
+    isLoading.value = data.value === null
 
     try {
       const [todoData, connectionsData] = await Promise.all([
-        $fetch<TodoData>('/api/todo'),
-        $fetch<TodoConnection[]>('/api/todo/connections'),
+        requestFetch<TodoData>('/api/todo'),
+        requestFetch<TodoConnection[]>('/api/todo/connections'),
       ])
 
-      data.value = todoData || null
-      connections.value = connectionsData || []
+      data.value = todoData
+      connections.value = connectionsData
       loadError.value = null
     }
-    catch {
+    catch (err) {
       if (!data.value) {
-        loadError.value = { message: '' }
+        loadError.value = { message: readServerErrorKey(err) ?? '' }
       }
     }
     finally {
@@ -280,8 +251,7 @@ export const useTodoStore = defineStore('todo', () => {
     getTodoById,
     isToggling,
     isLeaving,
-    refresh,
-    forceRefresh,
+    load,
     createTodo,
     updateTodo,
     deleteTodo,

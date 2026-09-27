@@ -33,11 +33,11 @@ const { subscribeToBudgetByUsername, unsubscribeFromBudgetByUsername } = useNoti
 const { hideWarningBanner } = useOutdatedBanner()
 
 useVisibilityRefresh(async () => {
+  await budgetStore.load(targetUsername)
   hideWarningBanner()
-  reloadNuxtApp({ force: true, ttl: 0 })
 })
 
-await budgetStore.refresh(targetUsername)
+await callOnce('budget-page', () => budgetStore.load(targetUsername), { mode: 'navigation' })
 
 if (targetUsername) {
   lastSharedBudgetCookie.value = budgetStore.loadError ? null : targetUsername

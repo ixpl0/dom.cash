@@ -374,29 +374,10 @@ const closeImportModal = (): void => {
 }
 
 const handleImported = async (): Promise<void> => {
-  try {
-    await budgetStore.forceRefresh(targetUsername.value)
-  }
-  catch (error) {
-    console.error('Failed to refresh budget after import:', error)
-    toast({ type: 'error', message: formatError(error, t('budget.toast.refreshAfterImportError')) })
+  const isRefreshed = await budgetStore.load(targetUsername.value)
+
+  if (!isRefreshed) {
+    toast({ type: 'error', message: t('budget.toast.refreshAfterImportError') })
   }
 }
-
-const refreshBudget = async (username?: string) => {
-  const currentUsername = budgetStore.data?.user.username
-  const isChangingUser = (currentUsername && currentUsername !== username) || (!currentUsername && username)
-
-  if (isChangingUser) {
-    budgetStore.$reset()
-  }
-
-  await budgetStore.refresh(username)
-}
-
-onMounted(async () => {
-  if (import.meta.client && !budgetStore.data) {
-    await refreshBudget(targetUsername.value)
-  }
-})
 </script>

@@ -1,5 +1,6 @@
 import { test, expect } from '../../../fixtures'
 import { waitForHydration } from '../../../helpers/wait-for-hydration'
+import { waitForNoBackGuard } from '../../../helpers/back-navigation'
 import { initBudget } from '../../../helpers/budget-setup'
 import { cleanupUserData } from '../../../helpers/auth'
 
@@ -319,6 +320,8 @@ test.describe('Entry Modal functionality', () => {
       await expect(entryRows).toHaveCount(1)
 
       await modal.getByTestId('modal-close-button').click()
+
+      await waitForNoBackGuard(page)
 
       await page.reload()
       await waitForHydration(page)

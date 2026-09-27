@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
+import { waitForNoBackGuard } from '../../helpers/back-navigation'
 import { cleanupUserData } from '../../helpers/auth'
 import { toLocalIsoDate } from '../../helpers/text'
 
@@ -223,6 +224,8 @@ test.describe('Todo edge cases', () => {
 
     const cardBefore = page.getByTestId('todo-card').first()
     await expect(cardBefore).toBeVisible()
+
+    await waitForNoBackGuard(page)
 
     await page.reload()
     await waitForHydration(page)

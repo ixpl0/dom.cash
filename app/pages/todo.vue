@@ -11,9 +11,11 @@ const { hideWarningBanner } = useOutdatedBanner()
 useNotifications()
 
 useVisibilityRefresh(async () => {
-  await todoStore.forceRefresh()
+  await todoStore.load()
   hideWarningBanner()
 })
 
-await todoStore.refresh()
+const isLoadedByAuthPlugin = import.meta.server && todoStore.data !== null
+
+await callOnce('todo-page', () => isLoadedByAuthPlugin ? undefined : todoStore.load(), { mode: 'navigation' })
 </script>

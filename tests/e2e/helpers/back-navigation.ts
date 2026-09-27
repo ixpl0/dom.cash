@@ -2,12 +2,18 @@ import { expect, type Page } from '@playwright/test'
 
 const BACK_GUARD_STATE_KEY = 'backHandlerGuardId'
 
+const hasBackGuard = (page: Page): Promise<boolean> => page.evaluate((guardStateKey) => {
+  const state: unknown = window.history.state
+  return typeof state === 'object' && state !== null && guardStateKey in state
+    && typeof (state as Record<string, unknown>)[guardStateKey] === 'string'
+}, BACK_GUARD_STATE_KEY)
+
 export const waitForBackGuard = async (page: Page): Promise<void> => {
-  await expect.poll(() => page.evaluate((guardStateKey) => {
-    const state: unknown = window.history.state
-    return typeof state === 'object' && state !== null && guardStateKey in state
-      && typeof (state as Record<string, unknown>)[guardStateKey] === 'string'
-  }, BACK_GUARD_STATE_KEY)).toBe(true)
+  await expect.poll(() => hasBackGuard(page)).toBe(true)
+}
+
+export const waitForNoBackGuard = async (page: Page): Promise<void> => {
+  await expect.poll(() => hasBackGuard(page)).toBe(false)
 }
 
 export const pressBrowserBack = async (page: Page): Promise<void> => {

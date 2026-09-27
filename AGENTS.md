@@ -25,9 +25,11 @@
 * **Migrations**: Use Wrangler D1 migrations (`wrangler d1 migrations create`), NOT Drizzle-kit
   * Never drop or rebuild a table that other tables reference with `ON DELETE CASCADE`: SQLite deletes the child rows.
 * **API Calls**:
-  * Use `useFetch` for SSR-compatible GET requests that need cookie/header forwarding
-  * Use `$fetch` for client-only operations (POST/PUT/DELETE)
-  * In Cloudflare Workers, `$fetch` doesn't properly forward cookies during SSR
+  * Stores load data in a `load` action with `useRequestFetch()`: during SSR it forwards the request cookies, in the browser it is `$fetch`. Call it before the first `await` of the action.
+  * Never call `useFetch` or `useAsyncData` inside store actions: outside a component they keep the first response for the whole session.
+  * Pages start loading with `await callOnce(key, () => store.load(), { mode: 'navigation' })`: it runs during SSR, is skipped during hydration and runs again on every client navigation.
+  * `useVisibilityRefresh` reloads a page's data in place when the tab comes back after 15 minutes; it waits while an overlay or edit mode is open. Do not reload the whole app to refresh data.
+  * Use `$fetch` for mutations (POST/PUT/DELETE).
   * Pass query parameters through the `query` option so they are encoded.
 * **Errors**:
   * Throw `createError({ statusCode, message: ERROR_KEYS.X })` with a key from `shared/utils/shared/error-keys.ts`. Every key needs a `serverErrors` translation in both locales (a unit test checks it).

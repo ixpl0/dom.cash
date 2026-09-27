@@ -414,6 +414,16 @@ test('leaves the guard entry before router navigation', async () => {
   assert.equal(readGuardId(browser.getEntries()[0]), undefined)
 })
 
+test('reports whether a handler is open', () => {
+  const { manager } = setup()
+
+  assert.equal(manager.hasHandlers(), false)
+  const removeHandler = manager.addHandler(() => undefined)
+  assert.equal(manager.hasHandlers(), true)
+  removeHandler()
+  assert.equal(manager.hasHandlers(), false)
+})
+
 test('routes Escape to the top handler only', () => {
   const { browser, manager } = setup()
   const recorder = createBackRecorder()
