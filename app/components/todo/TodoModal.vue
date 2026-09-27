@@ -42,6 +42,7 @@ import type { RecurrencePattern } from '~~/shared/types/recurrence'
 const todoStore = useTodoStore()
 const todoModalsStore = useTodoModalsStore()
 const { t } = useI18n()
+const { confirmDiscardChanges } = useUnsavedChanges()
 
 const isSaving = ref(false)
 
@@ -73,7 +74,11 @@ const initialSharedWithUserIds = computed(() =>
   editingTodo.value?.sharedWith.map(s => s.id) ?? [],
 )
 
-const handleClose = () => {
+const handleClose = async (hasUnsavedChanges: boolean): Promise<void> => {
+  if (!(await confirmDiscardChanges(hasUnsavedChanges, 'close'))) {
+    return
+  }
+
   todoModalsStore.closeTodoModal()
 }
 
@@ -102,7 +107,7 @@ const handleSave = async (data: {
         sharedWithUserIds: data.sharedWithUserIds.length > 0 ? data.sharedWithUserIds : undefined,
       })
     }
-    handleClose()
+    todoModalsStore.closeTodoModal()
   }
   finally {
     isSaving.value = false

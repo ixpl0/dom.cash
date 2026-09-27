@@ -1,35 +1,29 @@
+export type DiscardChangesAction = 'close' | 'stopEditing'
+
 export const useUnsavedChanges = () => {
   const { confirm } = useConfirmation()
-  const hasUnsavedChanges = ref(false)
 
-  const markAsChanged = (): void => {
-    hasUnsavedChanges.value = true
-  }
-
-  const markAsSaved = (): void => {
-    hasUnsavedChanges.value = false
-  }
-
-  const confirmClose = async (message?: string): Promise<boolean> => {
-    if (!hasUnsavedChanges.value) {
+  const confirmDiscardChanges = async (
+    hasUnsavedChanges: boolean,
+    action: DiscardChangesAction = 'close',
+  ): Promise<boolean> => {
+    if (!hasUnsavedChanges) {
       return true
     }
 
     const t = useT()
+    const isClosing = action === 'close'
 
     return await confirm({
       title: t('unsavedChanges.title'),
-      message: message || t('unsavedChanges.message'),
+      message: isClosing ? t('unsavedChanges.message') : t('unsavedChanges.stopEditingMessage'),
       variant: 'warning',
-      confirmText: t('unsavedChanges.confirmText'),
+      confirmText: isClosing ? t('unsavedChanges.confirmText') : t('unsavedChanges.stopEditingConfirmText'),
       cancelText: t('common.cancel'),
     })
   }
 
   return {
-    hasUnsavedChanges: readonly(hasUnsavedChanges),
-    markAsChanged,
-    markAsSaved,
-    confirmClose,
+    confirmDiscardChanges,
   }
 }

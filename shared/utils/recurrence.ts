@@ -166,3 +166,27 @@ export const calculateInitialDate = (
     }
   }
 }
+
+const hasSameDays = (firstDays: readonly number[], secondDays: readonly number[]): boolean =>
+  firstDays.length === secondDays.length && firstDays.every(day => secondDays.includes(day))
+
+export const isSameRecurrence = (
+  first: RecurrencePattern | null,
+  second: RecurrencePattern | null,
+): boolean => {
+  if (!first || !second) {
+    return first === second
+  }
+
+  switch (first.type) {
+    case 'interval': {
+      return second.type === 'interval' && first.unit === second.unit && first.value === second.value
+    }
+    case 'weekdays': {
+      return second.type === 'weekdays' && hasSameDays(first.days, second.days)
+    }
+    case 'dayOfMonth': {
+      return second.type === 'dayOfMonth' && first.day === second.day
+    }
+  }
+}

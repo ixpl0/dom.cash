@@ -252,6 +252,16 @@ const selectOption = (option: CurrencyOption) => {
   inputRef.value?.blur()
 }
 
+const closeDropdown = () => {
+  isDropdownOpen.value = false
+  hideDropdown()
+  isFocused.value = false
+  searchQuery.value = ''
+  inputRef.value?.blur()
+}
+
+useBackHandler(isDropdownOpen, closeDropdown)
+
 const onOptionKeydown = (event: KeyboardEvent, option: CurrencyOption) => {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
@@ -287,11 +297,7 @@ const onKeyDown = (event: KeyboardEvent) => {
       break
     case 'Escape':
       event.preventDefault()
-      isDropdownOpen.value = false
-      hideDropdown()
-      isFocused.value = false
-      searchQuery.value = ''
-      inputRef.value?.blur()
+      closeDropdown()
       break
   }
 }

@@ -46,6 +46,7 @@ import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { BudgetEntry } from '~~/shared/types/budget'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
+import type { BackSource } from '~/utils/back-handlers'
 
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
@@ -117,7 +118,7 @@ const emit = defineEmits<{
   updated: [entryId: string]
 }>()
 
-const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
+const { confirmDiscardChanges } = useUnsavedChanges()
 
 const {
   isAdding,
@@ -128,6 +129,7 @@ const {
   pendingAddId,
   editingEntry,
   newEntry,
+  hasUnsavedChanges,
   modalTitle,
   emptyMessage,
   formatDate,
@@ -236,7 +238,6 @@ const addEntry = async (): Promise<void> => {
 
   try {
     await performAddEntry(newEntry.value)
-    markAsSaved()
     cancelAdd()
   }
   catch (error) {
@@ -304,23 +305,43 @@ const deleteEntry = async (entryId: string): Promise<void> => {
 }
 
 const hide = async (): Promise<void> => {
-  if (!(await confirmClose())) {
+  if (!(await confirmDiscardChanges(hasUnsavedChanges.value, 'close'))) {
     return
   }
 
-  markAsSaved()
   modalsStore.closeEntryModal()
 }
+
+const isEditingEntry = computed(() => isAddingNewEntry.value || editingEntryId.value !== null)
+
+const stopEditing = (): void => {
+  if (isAddingNewEntry.value) {
+    cancelAdd()
+  }
+
+  if (editingEntryId.value) {
+    cancelEdit()
+  }
+}
+
+const stopEditingOnBack = async (source: BackSource): Promise<void> => {
+  if (isAdding.value || isSaving.value) {
+    return
+  }
+
+  if (source === 'history' && !(await confirmDiscardChanges(hasUnsavedChanges.value, 'stopEditing'))) {
+    return
+  }
+
+  stopEditing()
+}
+
+useBackHandler(() => isOpen.value && isEditingEntry.value, stopEditingOnBack)
 
 watch(() => entryModal.value.isOpen, (newIsOpen) => {
   if (newIsOpen) {
     resetForm()
-    markAsSaved()
   }
-})
-
-watch([isAddingNewEntry, editingEntryId], () => {
-  markAsSaved()
 })
 
 watch(editingEntryId, async (newEditingId) => {
@@ -369,12 +390,6 @@ watch(editingEntryId, async (newEditingId) => {
   }
 })
 
-watch([newEntry, editingEntry], () => {
-  if (isAddingNewEntry.value || editingEntryId.value) {
-    markAsChanged()
-  }
-}, { deep: true })
-
 const saveEntry = async (): Promise<void> => {
   if (isSaving.value) {
     return
@@ -394,7 +409,6 @@ const saveEntry = async (): Promise<void> => {
 
   try {
     await performUpdateEntry(editingEntryId.value, editingEntry.value)
-    markAsSaved()
     cancelEdit()
   }
   catch (error) {

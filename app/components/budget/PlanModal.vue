@@ -3,13 +3,13 @@
     :is-open="isOpen"
     content-class="modal-box sm:max-w-md flex flex-col"
     data-testid="plan-modal"
-    @close="hide"
+    @close="requestClose"
   >
     <button
       type="button"
       class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
       data-testid="plan-modal-close"
-      @click="hide"
+      @click="requestClose"
     >
       <Icon
         name="heroicons:x-mark"
@@ -127,6 +127,7 @@ const budgetStore = useBudgetStore()
 const { t } = useI18n()
 const { toast } = useToast()
 const { formatError } = useServerError()
+const { confirmDiscardChanges } = useUnsavedChanges()
 
 const planModal = computed(() => modalsStore.planModal)
 const isOpen = computed(() => planModal.value.isOpen)
@@ -152,8 +153,28 @@ const isValid = computed(() => {
   return isAmountFilled.value || commentInput.value.trim() !== ''
 })
 
+const normalizeInputValue = (value: number | string | null): string =>
+  value === null ? '' : String(value).trim()
+
+const hasUnsavedChanges = computed(() =>
+  normalizeInputValue(amountInput.value) !== normalizeInputValue(planModal.value.currentValue)
+  || normalizeInputValue(commentInput.value) !== normalizeInputValue(planModal.value.currentComment),
+)
+
 const hide = (): void => {
   modalsStore.closePlanModal()
+}
+
+const requestClose = async (): Promise<void> => {
+  if (isSaving.value) {
+    return
+  }
+
+  if (!(await confirmDiscardChanges(hasUnsavedChanges.value, 'close'))) {
+    return
+  }
+
+  hide()
 }
 
 const save = async (): Promise<void> => {

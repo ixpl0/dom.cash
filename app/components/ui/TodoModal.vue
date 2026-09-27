@@ -3,7 +3,7 @@
     :is-open="isOpen"
     content-class="modal-box overflow-y-auto sm:max-w-lg"
     data-testid="todo-modal"
-    @close="$emit('close')"
+    @close="requestClose"
   >
     <div class="flex items-center justify-between mb-4">
       <h2 class="card-title">
@@ -12,7 +12,7 @@
       <button
         class="btn btn-ghost btn-sm btn-square"
         data-testid="todo-modal-close"
-        @click="$emit('close')"
+        @click="requestClose"
       >
         <Icon
           name="heroicons:x-mark"
@@ -122,7 +122,7 @@
           type="button"
           class="btn btn-ghost"
           data-testid="todo-modal-cancel-button"
-          @click="$emit('close')"
+          @click="$emit('close', false)"
         >
           {{ cancelText }}
         </button>
@@ -146,7 +146,7 @@
 <script setup lang="ts">
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import type { TodoConnection } from '~~/shared/types/todo'
-import { calculateInitialDate, formatDateForDb } from '~~/shared/utils/recurrence'
+import { calculateInitialDate, formatDateForDb, isSameRecurrence } from '~~/shared/utils/recurrence'
 
 const MAX_CONTENT_LENGTH = 10000
 
@@ -192,7 +192,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  close: []
+  close: [hasUnsavedChanges: boolean]
   save: [data: {
     content: string
     plannedDate: string | null
@@ -229,6 +229,20 @@ const isValid = computed(() => {
   }
   return true
 })
+
+const hasSameUserIds = (firstUserIds: readonly string[], secondUserIds: readonly string[]): boolean =>
+  firstUserIds.length === secondUserIds.length && firstUserIds.every(userId => secondUserIds.includes(userId))
+
+const hasUnsavedChanges = computed(() =>
+  form.content !== props.initialContent
+  || form.plannedDate !== extractDateOnly(props.initialPlannedDate)
+  || !isSameRecurrence(form.recurrence, props.initialRecurrence)
+  || !hasSameUserIds(form.sharedWithUserIds, props.initialSharedWithUserIds),
+)
+
+const requestClose = (): void => {
+  emit('close', hasUnsavedChanges.value)
+}
 
 const toggleConnection = (connectionId: string) => {
   if (form.sharedWithUserIds.includes(connectionId)) {

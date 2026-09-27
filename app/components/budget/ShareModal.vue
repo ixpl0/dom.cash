@@ -129,7 +129,6 @@
               class="input input-bordered min-w-0 flex-1"
               data-testid="share-username-input"
               @keyup.enter="addShare()"
-              @keyup.esc.stop="cancelAdd()"
             >
             <div class="flex items-center justify-between gap-3">
               <select
@@ -214,6 +213,7 @@
 <script setup lang="ts">
 import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
+import type { BackSource } from '~/utils/back-handlers'
 
 interface ShareEntry {
   id: string
@@ -226,7 +226,7 @@ const shares = ref<ShareEntry[]>([])
 const isLoading = ref(false)
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.shareModal.isOpen)
-const { confirmClose, markAsChanged, markAsSaved } = useUnsavedChanges()
+const { confirmDiscardChanges } = useUnsavedChanges()
 const { toast } = useToast()
 const { t } = useI18n()
 const { formatError } = useServerError()
@@ -267,7 +267,6 @@ const addShare = async (): Promise<void> => {
     })
 
     shares.value = [...shares.value, response]
-    markAsSaved()
     cancelAdd()
     toast({ type: 'success', message: t('share.accessGranted') })
   }
@@ -321,7 +320,6 @@ const saveShare = async (): Promise<void> => {
         ...shares.value.slice(index + 1),
       ]
     }
-    markAsSaved()
     cancelEdit()
     toast({ type: 'success', message: t('share.changesSaved') })
   }
@@ -393,30 +391,44 @@ const loadShares = async (): Promise<void> => {
   }
 }
 
+const isEditingShare = computed(() => isAddingNew.value || editingId.value !== null)
+
+const hasUnsavedChanges = computed((): boolean => {
+  if (isAddingNew.value) {
+    return newShare.value.username.trim() !== '' || newShare.value.access !== 'read'
+  }
+
+  const originalShare = shares.value.find(share => share.id === editingId.value)
+  return originalShare !== undefined && originalShare.access !== editingShare.value.access
+})
+
 const hide = async (): Promise<void> => {
-  if (!(await confirmClose())) {
+  if (!(await confirmDiscardChanges(hasUnsavedChanges.value, 'close'))) {
     return
   }
 
-  markAsSaved()
   modalsStore.closeShareModal()
 }
+
+const stopEditingOnBack = async (source: BackSource): Promise<void> => {
+  if (isAdding.value || isSaving.value) {
+    return
+  }
+
+  if (source === 'history' && !(await confirmDiscardChanges(hasUnsavedChanges.value, 'stopEditing'))) {
+    return
+  }
+
+  cancelAdd()
+  cancelEdit()
+}
+
+useBackHandler(() => isOpen.value && isEditingShare.value, stopEditingOnBack)
 
 watch(isOpen, async (open) => {
   if (open) {
     resetForm()
     await loadShares()
-    markAsSaved()
   }
 })
-
-watch([isAddingNew, editingId], () => {
-  markAsSaved()
-})
-
-watch([newShare, editingShare], () => {
-  if (isAddingNew.value || editingId.value) {
-    markAsChanged()
-  }
-}, { deep: true })
 </script>

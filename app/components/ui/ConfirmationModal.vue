@@ -5,7 +5,6 @@
     content-class="modal-box sm:max-w-md relative overflow-visible"
     :fullscreen-on-mobile="false"
     :close-on-backdrop="true"
-    :close-on-esc="false"
     :z-index="9999"
     @close="handleCancel"
   >
@@ -265,11 +264,6 @@ const handleKeydown = (event: KeyboardEvent): void => {
     event.preventDefault()
     event.stopPropagation()
     handleConfirm()
-  }
-  else if (event.key === 'Escape') {
-    event.preventDefault()
-    event.stopPropagation()
-    handleCancel()
   }
 }
 

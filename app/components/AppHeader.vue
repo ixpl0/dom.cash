@@ -56,7 +56,10 @@
     >
       <div
         v-if="isAuthenticated"
+        ref="userMenuRef"
         class="dropdown dropdown-end"
+        @focusin="handleUserMenuFocusIn"
+        @focusout="handleUserMenuFocusOut"
       >
         <div
           tabindex="0"
@@ -125,7 +128,12 @@
     </div>
 
     <div class="flex-none md:hidden">
-      <div class="dropdown dropdown-end">
+      <div
+        ref="mobileMenuRef"
+        class="dropdown dropdown-end"
+        @focusin="handleMobileMenuFocusIn"
+        @focusout="handleMobileMenuFocusOut"
+      >
         <div
           tabindex="0"
           role="button"
@@ -262,6 +270,18 @@
 const { user, isAuthenticated, logout } = useAuth()
 const todoStore = useTodoStore()
 const { t } = useI18n()
+
+const {
+  dropdownRef: userMenuRef,
+  handleFocusIn: handleUserMenuFocusIn,
+  handleFocusOut: handleUserMenuFocusOut,
+} = useDropdownBackHandler()
+
+const {
+  dropdownRef: mobileMenuRef,
+  handleFocusIn: handleMobileMenuFocusIn,
+  handleFocusOut: handleMobileMenuFocusOut,
+} = useDropdownBackHandler()
 
 const exitImpersonation = async (): Promise<void> => {
   await $fetch('/api/admin/impersonate', { method: 'DELETE' }).catch(() => {})

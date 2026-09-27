@@ -9,7 +9,6 @@
         data-testid="entry-description-input"
         @input="updateField('description', ($event.target as HTMLInputElement).value)"
         @keyup.enter="$emit('save')"
-        @keyup.esc="$emit('cancel')"
       >
     </td>
     <td>
@@ -23,7 +22,6 @@
         data-testid="entry-amount-input"
         @input="updateField('amount', parseFloat(($event.target as HTMLInputElement).value) || 0)"
         @keyup.enter="$emit('save')"
-        @keyup.esc="$emit('cancel')"
       >
     </td>
     <td>
@@ -40,7 +38,6 @@
         class="input input-bordered"
         @input="updateField('date', ($event.target as HTMLInputElement).value)"
         @keyup.enter="$emit('save')"
-        @keyup.esc="$emit('cancel')"
       >
     </td>
     <td v-if="entryKind === 'expense'">

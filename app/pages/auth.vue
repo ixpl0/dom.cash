@@ -693,6 +693,18 @@ const backToEmailStep = (): void => {
   errors.value = {}
 }
 
+useBackHandler(showVerificationStep, (source) => {
+  if (source === 'history' && !isLoading.value) {
+    backToEmailStep()
+  }
+})
+
+useBackHandler(showForgotPasswordStep, (source) => {
+  if (source === 'history' && !isLoading.value) {
+    backToLoginFromForgot()
+  }
+})
+
 const handleGoogleLogin = async (): Promise<void> => {
   try {
     isGoogleLoading.value = true

@@ -50,23 +50,12 @@ const handleBackdropClick = (): void => {
   }
 }
 
-const handleKeydown = (event: KeyboardEvent): void => {
-  if (!props.isOpen) {
+useBackHandler(() => props.isOpen, (source) => {
+  if (source === 'escape' && !props.closeOnEsc) {
     return
   }
 
-  if (event.key === 'Escape' && props.closeOnEsc) {
-    event.preventDefault()
-    emit('close')
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
+  emit('close')
 })
 
 watch(() => props.isOpen, (open) => {

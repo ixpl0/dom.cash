@@ -436,6 +436,8 @@ export default {
     title: 'Unsaved changes',
     message: 'You have unsaved changes. Are you sure you want to close?',
     confirmText: 'Close without saving',
+    stopEditingMessage: 'You have unsaved changes. Stop editing without saving?',
+    stopEditingConfirmText: 'Discard changes',
   },
 
   theme: {

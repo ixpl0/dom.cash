@@ -41,6 +41,23 @@ export const useEntryForm = (
 
   const editingEntry = ref(createDefaultFormData())
   const newEntry = ref(createDefaultFormData())
+  const initialFormData = ref<EntryFormData | null>(null)
+
+  const isSameFormData = (first: EntryFormData, second: EntryFormData): boolean =>
+    first.description === second.description
+    && first.amount === second.amount
+    && first.currency === second.currency
+    && first.date === second.date
+    && Boolean(first.isOptional) === Boolean(second.isOptional)
+
+  const hasUnsavedChanges = computed((): boolean => {
+    if (!initialFormData.value) {
+      return false
+    }
+
+    const currentFormData = isAddingNewEntry.value ? newEntry.value : editingEntry.value
+    return !isSameFormData(currentFormData, initialFormData.value)
+  })
 
   const getEntryDate = (entry: BudgetEntry): string | null => {
     return 'date' in entry ? entry.date : null
@@ -60,12 +77,14 @@ export const useEntryForm = (
     }
     isAddingNewEntry.value = true
     newEntry.value = createDefaultFormData()
+    initialFormData.value = { ...newEntry.value }
     pendingAddId.value = crypto.randomUUID()
   }
 
   const cancelAdd = (): void => {
     isAddingNewEntry.value = false
     newEntry.value = createDefaultFormData()
+    initialFormData.value = null
     pendingAddId.value = null
   }
 
@@ -82,11 +101,13 @@ export const useEntryForm = (
       date: getEntryDate(entry) || '',
       isOptional: 'isOptional' in entry ? entry.isOptional : false,
     }
+    initialFormData.value = { ...editingEntry.value }
   }
 
   const cancelEdit = (): void => {
     editingEntryId.value = null
     editingEntry.value = createDefaultFormData()
+    initialFormData.value = null
   }
 
   const resetForm = (): void => {
@@ -98,6 +119,7 @@ export const useEntryForm = (
     pendingAddId.value = null
     editingEntry.value = createDefaultFormData()
     newEntry.value = createDefaultFormData()
+    initialFormData.value = null
   }
 
   const kindValue = computed(() => unref(entryKind) || 'balance')
@@ -115,6 +137,7 @@ export const useEntryForm = (
     pendingAddId,
     editingEntry,
     newEntry,
+    hasUnsavedChanges,
     modalTitle: computed(getModalTitle),
     emptyMessage: computed(getEmptyMessage),
     getEntryDate,

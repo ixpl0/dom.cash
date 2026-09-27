@@ -1,5 +1,10 @@
 <template>
-  <div class="dropdown dropdown-end">
+  <div
+    ref="dropdownRef"
+    class="dropdown dropdown-end"
+    @focusin="handleFocusIn"
+    @focusout="handleFocusOut"
+  >
     <div
       tabindex="0"
       role="button"
@@ -56,21 +61,15 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 const { t } = useI18n()
-
-const closeDropdown = () => {
-  const activeElement = document.activeElement as HTMLElement
-  if (activeElement) {
-    activeElement.blur()
-  }
-}
+const { dropdownRef, handleFocusIn, handleFocusOut, close } = useDropdownBackHandler()
 
 const handleExportJson = () => {
-  closeDropdown()
+  close()
   emit('export', 'json')
 }
 
 const handleExportExcel = () => {
-  closeDropdown()
+  close()
   emit('export', 'excel')
 }
 </script>
