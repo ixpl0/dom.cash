@@ -99,11 +99,12 @@
 </template>
 
 <script setup lang="ts">
+import type { EntryKind } from '~~/shared/types'
 import type { EntryFormData } from '~/composables/budget/useEntryForm'
 
 interface Props {
   modelValue: EntryFormData
-  entryKind: 'balance' | 'income' | 'expense'
+  entryKind: EntryKind
   isSaving: boolean
   descriptionLabel: string
   amountLabel: string

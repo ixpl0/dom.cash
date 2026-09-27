@@ -20,6 +20,14 @@ export const amountSchema = z.number()
   .nonnegative()
   .max(MAX_AMOUNT)
 
-export const entryKindSchema = z.enum(['balance', 'income', 'expense'])
+export const ENTRY_KINDS = ['balance', 'income', 'expense'] as const
 
-export const accessSchema = z.enum(['read', 'write'])
+export const ACCESS_LEVELS = ['read', 'write'] as const
+
+export const entryKindSchema = z.enum(ENTRY_KINDS)
+
+export const accessSchema = z.enum(ACCESS_LEVELS)
+
+export type EntryKind = z.infer<typeof entryKindSchema>
+
+export type AccessLevel = z.infer<typeof accessSchema>

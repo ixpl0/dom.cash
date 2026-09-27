@@ -1,12 +1,12 @@
-export type EntryAmountKind = 'balance' | 'income' | 'expense'
+import type { EntryKind } from '~~/shared/types'
 
-const positiveAmountClasses: Record<EntryAmountKind, string> = {
+const positiveAmountClasses: Record<EntryKind, string> = {
   balance: 'text-primary',
   income: 'text-success',
   expense: 'text-error',
 }
 
-export const getEntryAmountClass = (entryKind: EntryAmountKind, amount: number): string => {
+export const getEntryAmountClass = (entryKind: EntryKind, amount: number): string => {
   if (amount < 0) {
     return 'text-warning'
   }

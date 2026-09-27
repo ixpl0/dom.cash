@@ -1,26 +1,22 @@
-export type IntervalUnit = 'day' | 'week' | 'month' | 'year'
+import type { z } from 'zod'
+import type {
+  dateReferenceSchema,
+  dayOfMonthRecurrenceSchema,
+  intervalRecurrenceSchema,
+  recurrencePatternSchema,
+  weekdaysRecurrenceSchema,
+} from '~~/shared/schemas/recurrence'
 
-export interface IntervalRecurrence {
-  type: 'interval'
-  unit: IntervalUnit
-  value: number
-}
+export type IntervalRecurrence = z.infer<typeof intervalRecurrenceSchema>
 
-export interface WeekdaysRecurrence {
-  type: 'weekdays'
-  days: number[]
-}
+export type IntervalUnit = IntervalRecurrence['unit']
 
-export interface DayOfMonthRecurrence {
-  type: 'dayOfMonth'
-  day: number
-}
+export type WeekdaysRecurrence = z.infer<typeof weekdaysRecurrenceSchema>
 
-export type RecurrencePattern
-  = IntervalRecurrence
-    | WeekdaysRecurrence
-    | DayOfMonthRecurrence
+export type DayOfMonthRecurrence = z.infer<typeof dayOfMonthRecurrenceSchema>
+
+export type RecurrencePattern = z.infer<typeof recurrencePatternSchema>
 
 export type RecurrenceType = RecurrencePattern['type']
 
-export type DateReference = 'planned' | 'now'
+export type DateReference = z.infer<typeof dateReferenceSchema>

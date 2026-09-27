@@ -1,3 +1,4 @@
+import type { EntryKind } from '~~/shared/types'
 import type { BudgetEntry } from '~~/shared/types/budget'
 import { getEntryConfig } from '~~/shared/utils/budget/entry-strategies'
 import { formatPlainDate, toLocalIsoDate } from '~~/shared/utils/shared/dates'
@@ -11,7 +12,7 @@ export interface EntryFormData {
 }
 
 export const useEntryForm = (
-  entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>,
+  entryKind: MaybeRef<EntryKind | null>,
   defaultCurrency: MaybeRef<string> = '',
 ) => {
   const { locale, t } = useI18n()

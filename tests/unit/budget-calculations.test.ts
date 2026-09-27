@@ -8,7 +8,8 @@ import type {
   IncomeEntryData,
   MonthData,
 } from '../../shared/types/budget'
-import { budgetExportSchema, type BudgetExportSchema } from '../../shared/types/export-import'
+import { budgetExportSchema } from '../../shared/schemas/export-import'
+import type { BudgetExportData, BudgetExportMonth } from '../../shared/types/export-import'
 import { formatCurrency } from '../../shared/utils/shared/currency-formatter'
 import {
   computeExpectedBalances,
@@ -168,11 +169,11 @@ const pinClock = (context: TestContext, localDateTime: string): void => {
 const toExpectedBalances = (months: ComputedMonthData[]): Record<string, number | null> =>
   Object.fromEntries(months.map(month => [month.monthId, month.expectedBalance]))
 
-const readBudgetFixture = (fileName: string): BudgetExportSchema => budgetExportSchema.parse(
+const readBudgetFixture = (fileName: string): BudgetExportData => budgetExportSchema.parse(
   JSON.parse(readFileSync(new URL(`../e2e/fixtures/budgets/${fileName}`, import.meta.url), 'utf8')),
 )
 
-const toMonthData = ({ year, month, entries }: BudgetExportSchema['months'][number]): MonthData => createMonth({
+const toMonthData = ({ year, month, entries }: BudgetExportMonth): MonthData => createMonth({
   year,
   month,
   balances: entries.filter(entry => entry.kind === 'balance').map(entry => balance(entry.amount, entry.currency)),

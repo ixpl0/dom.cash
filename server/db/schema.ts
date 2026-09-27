@@ -1,6 +1,7 @@
 import { sqliteTable, integer, text, unique, index, check } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
+import { ACCESS_LEVELS, ENTRY_KINDS } from '~~/shared/schemas/common'
 
 type Rates = Record<string, number>
 
@@ -105,7 +106,7 @@ export const entry = sqliteTable(
   {
     id: text('id').primaryKey(),
     monthId: text('month_id').notNull().references(() => month.id, { onDelete: 'cascade' }),
-    kind: text('kind', { enum: ['balance', 'income', 'expense'] }).notNull(),
+    kind: text('kind', { enum: ENTRY_KINDS }).notNull(),
     description: text('description').notNull(),
     amount: integer('amount').notNull(),
     currency: text('currency').notNull(),
@@ -122,7 +123,6 @@ export const entry = sqliteTable(
 
 export type Entry = typeof entry.$inferSelect
 export type NewEntry = typeof entry.$inferInsert
-export type EntryKind = Entry['kind']
 
 export const budgetShare = sqliteTable(
   'budget_share',
@@ -130,7 +130,7 @@ export const budgetShare = sqliteTable(
     id: text('id').primaryKey(),
     ownerId: text('owner_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     sharedWithId: text('shared_with_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-    access: text('access', { enum: ['read', 'write'] }).notNull(),
+    access: text('access', { enum: ACCESS_LEVELS }).notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   },
   t => [

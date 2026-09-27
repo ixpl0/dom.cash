@@ -45,6 +45,7 @@ import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { BudgetEntry } from '~~/shared/types/budget'
 import type { EntryKind } from '~~/shared/types'
+import type { EntryFormData } from '~/composables/budget/useEntryForm'
 import { getEntryErrorKey } from '~/utils/entry-validation'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 import type { BackSource } from '~/utils/back-handlers'
@@ -136,7 +137,7 @@ const {
   resetForm,
 } = useEntryForm(computed(() => entryModal.value.entryKind), mainCurrency)
 
-const performAddEntry = async (entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
+const performAddEntry = async (entryData: EntryFormData) => {
   if (!entryModal.value.monthId || !entryModal.value.entryKind) {
     throw new Error(t('entry.monthIdRequired'))
   }
@@ -155,7 +156,7 @@ const performAddEntry = async (entryData: { description: string, amount: number,
   )
 }
 
-const performUpdateEntry = async (entryId: string, entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
+const performUpdateEntry = async (entryId: string, entryData: EntryFormData) => {
   await budgetStore.updateEntry(entryId, {
     description: entryData.description,
     amount: entryData.amount,

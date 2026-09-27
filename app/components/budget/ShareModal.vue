@@ -211,6 +211,7 @@
 </template>
 
 <script setup lang="ts">
+import type { AccessLevel } from '~~/shared/types'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 import type { BackSource } from '~/utils/back-handlers'
@@ -218,7 +219,7 @@ import type { BackSource } from '~/utils/back-handlers'
 interface ShareEntry {
   id: string
   username: string
-  access: 'read' | 'write'
+  access: AccessLevel
   createdAt?: Date | string
 }
 

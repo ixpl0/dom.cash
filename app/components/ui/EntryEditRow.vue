@@ -85,11 +85,12 @@
 </template>
 
 <script setup lang="ts">
+import type { EntryKind } from '~~/shared/types'
 import type { EntryFormData } from '~/composables/budget/useEntryForm'
 
 export interface UiEntryEditRowProps {
   modelValue: EntryFormData
-  entryKind: 'balance' | 'income' | 'expense'
+  entryKind: EntryKind
   isSaving: boolean
   isNew?: boolean
   descriptionPlaceholder?: string

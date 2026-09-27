@@ -1,11 +1,11 @@
-import type { MonthData, BalanceSourceData, IncomeEntryData, ExpenseEntryData } from '~~/shared/types/budget'
-import type { EntryKind } from '~~/server/db/schema'
+import type { MonthData, BalanceSourceData, IncomeEntryData, ExpenseEntryData, BudgetEntry, SavedEntry } from '~~/shared/types/budget'
+import { ENTRY_KINDS, type EntryKind } from '~~/shared/schemas/common'
 
 interface EntryConfig {
   titleKey: string
   emptyMessageKey: string
   arrayKey: keyof MonthData
-  createEntry: (data: { id: string, description: string, amount: number, currency: string, date?: string | null, isOptional?: boolean }) => BalanceSourceData | IncomeEntryData | ExpenseEntryData
+  createEntry: (data: SavedEntry) => BudgetEntry
 }
 
 export const entryStrategies: Record<EntryKind, EntryConfig> = {
@@ -57,17 +57,17 @@ export const monthHasEntry = (
   entryId: string,
 ): boolean => {
   const config = getEntryConfig(entryKind)
-  const entries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
+  const entries = month[config.arrayKey] as BudgetEntry[]
   return entries.some(entry => entry.id === entryId)
 }
 
 export const updateMonthWithNewEntry = (
   month: MonthData,
   entryKind: EntryKind,
-  newEntry: BalanceSourceData | IncomeEntryData | ExpenseEntryData,
+  newEntry: BudgetEntry,
 ): MonthData => {
   const config = getEntryConfig(entryKind)
-  const currentEntries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
+  const currentEntries = month[config.arrayKey] as BudgetEntry[]
 
   return {
     ...month,
@@ -82,7 +82,7 @@ export const updateMonthWithUpdatedEntry = (
   updateData: { description?: string, amount?: number, currency?: string, date?: string | null, isOptional?: boolean },
 ): MonthData => {
   const config = getEntryConfig(entryKind)
-  const currentEntries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
+  const currentEntries = month[config.arrayKey] as BudgetEntry[]
 
   const entryIndex = currentEntries.findIndex(entry => entry.id === entryId)
   if (entryIndex === -1) {
@@ -119,7 +119,7 @@ export const updateMonthWithDeletedEntry = (
   entryId: string,
 ): MonthData => {
   const config = getEntryConfig(entryKind)
-  const currentEntries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
+  const currentEntries = month[config.arrayKey] as BudgetEntry[]
 
   return {
     ...month,
@@ -127,16 +127,5 @@ export const updateMonthWithDeletedEntry = (
   }
 }
 
-export const findEntryKindByEntryId = (month: MonthData, entryId: string): EntryKind | null => {
-  const strategies: EntryKind[] = ['balance', 'income', 'expense']
-
-  for (const kind of strategies) {
-    const config = getEntryConfig(kind)
-    const entries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
-    if (entries.some(entry => entry.id === entryId)) {
-      return kind
-    }
-  }
-
-  return null
-}
+export const findEntryKindByEntryId = (month: MonthData, entryId: string): EntryKind | null =>
+  ENTRY_KINDS.find(kind => monthHasEntry(month, kind, entryId)) ?? null

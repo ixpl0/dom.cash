@@ -1,3 +1,7 @@
+import type { z } from 'zod'
+import type { AccessLevel } from '~~/shared/schemas/common'
+import type { updateEntrySchema } from '~~/shared/schemas/budget'
+
 export interface MonthData {
   id: string
   year: number
@@ -10,7 +14,7 @@ export interface MonthData {
   isPlanOnly?: boolean
 }
 
-export type BudgetAccess = 'owner' | 'read' | 'write'
+export type BudgetAccess = 'owner' | AccessLevel
 
 export interface BudgetData {
   user: {
@@ -102,6 +106,13 @@ export interface ExpenseEntryData extends BaseBudgetEntry {
 }
 
 export type BudgetEntry = BalanceSourceData | IncomeEntryData | ExpenseEntryData
+
+export interface SavedEntry extends BaseBudgetEntry {
+  date?: string | null
+  isOptional?: boolean
+}
+
+export type EntryPayload = z.infer<typeof updateEntrySchema>
 
 export interface YearInfo {
   year: number

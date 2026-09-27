@@ -18,7 +18,7 @@ import {
   budgetExportPlanSchema,
   budgetExportSchema,
   budgetImportOptionsSchema,
-} from '../../shared/types/export-import'
+} from '../../shared/schemas/export-import'
 import { CURRENCY_CODES } from '../../shared/utils/shared/currencies'
 
 interface Validator {

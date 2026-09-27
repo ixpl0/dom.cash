@@ -1,4 +1,4 @@
-import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo, BudgetData, YearsData } from '~~/shared/types/budget'
+import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo, BudgetData, YearsData, EntryPayload, SavedEntry } from '~~/shared/types/budget'
 import type { EntryKind } from '~~/shared/types'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth, sortMonthsNewestFirst } from '~~/shared/utils/budget/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId, monthHasEntry } from '~~/shared/utils/budget/entry-strategies'
@@ -41,23 +41,6 @@ const createSyntheticPlanMonth = (planRow: PlanData): MonthData => ({
   exchangeRatesSource: '',
   isPlanOnly: true,
 })
-
-interface EntryInput {
-  description: string
-  amount: number
-  currency: string
-  date?: string
-  isOptional?: boolean
-}
-
-interface SavedEntry {
-  id: string
-  description: string
-  amount: number
-  currency: string
-  date?: string | null
-  isOptional?: boolean
-}
 
 interface EntryLocation {
   month: MonthData
@@ -443,7 +426,7 @@ export const useBudgetStore = defineStore('budget', () => {
     await createMonth(year, month, copyFromId)
   }
 
-  const addEntry = async (monthId: string, entryKind: EntryKind, entryData: EntryInput & { id?: string }): Promise<void> => {
+  const addEntry = async (monthId: string, entryKind: EntryKind, entryData: EntryPayload & { id?: string }): Promise<void> => {
     const savedEntry = await $fetch<SavedEntry>('/api/budget/entries', {
       method: 'POST',
       body: { monthId, kind: entryKind, ...entryData },
@@ -457,7 +440,7 @@ export const useBudgetStore = defineStore('budget', () => {
     replaceMonth(updateMonthWithNewEntry(month, entryKind, getEntryConfig(entryKind).createEntry(savedEntry)))
   }
 
-  const updateEntry = async (entryId: string, entryData: EntryInput): Promise<void> => {
+  const updateEntry = async (entryId: string, entryData: EntryPayload): Promise<void> => {
     try {
       const savedEntry = await $fetch<SavedEntry>(`/api/budget/entries/${entryId}`, {
         method: 'PUT',

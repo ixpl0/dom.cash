@@ -1,14 +1,11 @@
-import type { CurrencyRates, User as DBUser } from '~~/server/db/schema'
+export type { EntryKind, AccessLevel } from '~~/shared/schemas/common'
 
-export type { Session, Month, Entry, EntryKind, CurrencyRates } from '~~/server/db/schema'
-
-export type User = Pick<DBUser, 'id' | 'username' | 'mainCurrency' | 'isAdmin'> & {
+export interface User {
+  id: string
+  username: string
+  mainCurrency: string
+  isAdmin: boolean
   impersonatedBy?: string
-}
-
-export interface Currency {
-  date: string
-  rates: CurrencyRates
 }
 
 export interface LoginCredentials {

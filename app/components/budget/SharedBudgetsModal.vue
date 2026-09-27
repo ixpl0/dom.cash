@@ -71,12 +71,13 @@
 </template>
 
 <script setup lang="ts">
+import type { AccessLevel } from '~~/shared/types'
 import { useModalsStore } from '~/stores/budget/modals'
 
 interface SharedBudget {
   id: string
   username: string
-  access: 'read' | 'write'
+  access: AccessLevel
   createdAt?: Date
 }
 

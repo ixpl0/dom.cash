@@ -14,7 +14,6 @@ import type {
   BudgetImportOptions,
   BudgetImportResult,
   BudgetImportError,
-  BudgetExportSchema,
 } from '~~/shared/types/export-import'
 
 export const exportBudget = async (userId: string, event: H3Event): Promise<BudgetExportData> => {
@@ -128,7 +127,7 @@ const loadExistingPlanKeys = async (
 const importSingleMonth = async (
   db: ReturnType<typeof useDatabase>,
   userId: string,
-  importMonth: BudgetExportSchema['months'][number],
+  importMonth: BudgetExportMonth,
   strategy: BudgetImportOptions['strategy'],
   existingMonthId: string | undefined,
 ): Promise<MonthImportOutcome> => {
@@ -184,7 +183,7 @@ const importSingleMonth = async (
 const runImportSafely = async (
   db: ReturnType<typeof useDatabase>,
   userId: string,
-  importMonth: BudgetExportSchema['months'][number],
+  importMonth: BudgetExportMonth,
   strategy: BudgetImportOptions['strategy'],
   existingMonthId: string | undefined,
 ): Promise<MonthImportOutcome> => {
@@ -208,14 +207,14 @@ const runImportSafely = async (
 
 export const importBudget = async (
   userId: string,
-  importData: BudgetExportSchema,
+  importData: BudgetExportData,
   options: BudgetImportOptions,
   event: H3Event,
 ): Promise<BudgetImportResult> => {
   const db = useDatabase(event)
   const knownMonthIds = await loadExistingMonthIds(db, userId)
 
-  const deduplicatedMonths = new Map<ExistingMonthKey, BudgetExportSchema['months'][number]>()
+  const deduplicatedMonths = new Map<ExistingMonthKey, BudgetExportMonth>()
   for (const candidate of importData.months) {
     const key = makeMonthKey(candidate.year, candidate.month)
     if (!deduplicatedMonths.has(key)) {
@@ -267,7 +266,7 @@ export const importBudget = async (
 
   const existingPlanKeys = await loadExistingPlanKeys(db, userId)
 
-  type ImportPlan = NonNullable<BudgetExportSchema['plans']>[number]
+  type ImportPlan = BudgetExportPlan
   const deduplicatedPlans = new Map<ExistingMonthKey, ImportPlan>()
   for (const candidate of importData.plans ?? []) {
     const key = makeMonthKey(candidate.year, candidate.month)

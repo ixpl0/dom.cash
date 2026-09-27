@@ -68,6 +68,8 @@
 </template>
 
 <script setup lang="ts">
+import type { EntryKind } from '~~/shared/types'
+
 export interface EntryTableEntry {
   id: string
   description: string
@@ -87,7 +89,7 @@ export interface EntryTableLabels {
 
 interface Props {
   entries: ReadonlyArray<EntryTableEntry>
-  entryKind: 'balance' | 'income' | 'expense'
+  entryKind: EntryKind
   labels: EntryTableLabels
   formatDate: (date: string | null | undefined) => string
 }

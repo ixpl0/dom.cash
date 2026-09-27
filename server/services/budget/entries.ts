@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { entry, month } from '~~/server/db/schema'
-import type { EntryKind } from '~~/server/db/schema'
+import type { EntryKind } from '~~/shared/schemas/common'
 
 export interface CreateEntryParams {
   id?: string

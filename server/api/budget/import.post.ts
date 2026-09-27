@@ -5,7 +5,7 @@ import { parseBody } from '~~/server/utils/validation'
 import { importBudget } from '~~/server/services/budget/import-export'
 import { resolveBudget } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
-import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/types/export-import'
+import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/schemas/export-import'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const maxImportPayloadBytes = 1 * 1024 * 1024

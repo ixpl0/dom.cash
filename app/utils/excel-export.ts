@@ -1,3 +1,4 @@
+import type { EntryKind } from '~~/shared/types'
 import XLSX from 'xlsx-js-style'
 import type { BudgetExportData, BudgetExportEntry, BudgetExportMonth } from '~~/shared/types/export-import'
 
@@ -49,7 +50,7 @@ const createDataStyle = (bgColor: string, textColor: string, isAmount = false): 
 const convertEntriesToMainCurrency = (
   entries: BudgetExportEntry[],
   mainCurrency: string,
-  exchangeRates: Record<string, number>,
+  exchangeRates: Record<string, number> = {},
 ): number => {
   return entries.reduce((total, entryData) => {
     if (entryData.currency === mainCurrency) {
@@ -137,7 +138,7 @@ export const generateExcelFromBudgetData = (exportData: BudgetExportData): Blob 
       const incomeEntries = monthData.entries.filter(e => e.kind === 'income')
       const expenseEntries = monthData.entries.filter(e => e.kind === 'expense')
 
-      const addEntryRows = (entries: BudgetExportEntry[], colorKey: 'balance' | 'income' | 'expense') => {
+      const addEntryRows = (entries: BudgetExportEntry[], colorKey: EntryKind) => {
         const colors = COLORS[colorKey]
         for (const entryData of entries) {
           const typeLabel = entryData.kind.charAt(0).toUpperCase() + entryData.kind.slice(1)

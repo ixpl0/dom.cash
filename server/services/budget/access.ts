@@ -6,8 +6,7 @@ import { findUser } from '~~/server/utils/auth'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 import type { User } from '~~/shared/types'
 import type { BudgetAccess } from '~~/shared/types/budget'
-
-export type BudgetAccessLevel = 'read' | 'write'
+import type { AccessLevel } from '~~/shared/schemas/common'
 
 export type BudgetOwner = Pick<typeof user.$inferSelect, 'id' | 'username' | 'mainCurrency'>
 
@@ -34,7 +33,7 @@ export const findBudgetAccess = async (ownerId: string, viewerId: string, event:
   return share?.access ?? null
 }
 
-export const allowsAccessLevel = (access: BudgetAccess | null, level: BudgetAccessLevel): boolean => {
+export const allowsAccessLevel = (access: BudgetAccess | null, level: AccessLevel): boolean => {
   if (access === null) {
     return false
   }
@@ -45,7 +44,7 @@ export const resolveBudget = async (
   event: H3Event,
   currentUser: User,
   username: string | undefined,
-  level: BudgetAccessLevel,
+  level: AccessLevel,
   forbiddenKey: ErrorKey = ERROR_KEYS.ACCESS_DENIED,
 ): Promise<ResolvedBudget> => {
   const owner = username ? await findUser(username, event) : currentUser

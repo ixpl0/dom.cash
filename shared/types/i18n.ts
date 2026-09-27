@@ -1,4 +1,4 @@
-import type { EntryKind } from '~~/server/db/schema'
+import type { AccessLevel, EntryKind } from '~~/shared/schemas/common'
 
 export type NotificationType
   = | 'budget_currency_changed'
@@ -16,8 +16,6 @@ export type NotificationType
     | 'todo_updated'
     | 'todo_deleted'
     | 'todo_toggled'
-
-export type AccessLevel = 'read' | 'write'
 
 export type MonthKey
   = | 'january'

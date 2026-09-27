@@ -256,6 +256,7 @@
 </template>
 
 <script setup lang="ts">
+import type { EntryKind } from '~~/shared/types'
 import type { BudgetEntry } from '~~/shared/types/budget'
 import type { EntryFormData } from '~/composables/budget/useEntryForm'
 
@@ -263,7 +264,7 @@ export interface UiEntryModalProps {
   isOpen: boolean
   title: string
   entries: ReadonlyArray<BudgetEntry>
-  entryKind: 'balance' | 'income' | 'expense'
+  entryKind: EntryKind
   isReadOnly?: boolean
   emptyMessage: string
   editingEntryId: string | null

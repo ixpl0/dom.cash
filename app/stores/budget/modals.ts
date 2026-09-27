@@ -1,7 +1,9 @@
+import type { EntryKind } from '~~/shared/types'
+
 interface EntryModalState {
   isOpen: boolean
   monthId: string | null
-  entryKind: 'balance' | 'income' | 'expense' | null
+  entryKind: EntryKind | null
   isReadOnly: boolean
 }
 
@@ -77,7 +79,7 @@ export const useModalsStore = defineStore('modals', () => {
 
   const openEntryModal = (params: {
     monthId: string
-    entryKind: 'balance' | 'income' | 'expense'
+    entryKind: EntryKind
     isReadOnly: boolean
   }) => {
     entryModal.value = {

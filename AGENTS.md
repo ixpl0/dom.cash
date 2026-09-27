@@ -35,6 +35,7 @@
   * Throw `createError({ statusCode, message: ERROR_KEYS.X })` with a key from `shared/utils/shared/error-keys.ts`. Every key needs a `serverErrors` translation in both locales (a unit test checks it).
   * Validate input with `parseBody` / `parseQuery` (`server/utils/validation.ts`): they answer 400 with an error key and list the failed fields in `data.issues`.
   * Request schemas live in `shared/schemas` (auth, budget, todo, common): the server parses requests with them and forms check the same schemas before sending. Budget years are 2000–2100; income and expense amounts are greater than zero, a balance may be zero.
+  * Derive types from the schemas (`z.infer`) and enums from `ENTRY_KINDS` / `ACCESS_LEVELS` (`shared/schemas/common.ts`), which the Drizzle schema uses too. `shared/` never imports from `server/`.
   * Show errors with `useServerError().formatError(error, fallback)`: it translates error keys and shows the fallback for anything else.
 * **Dates**: date-only values are `YYYY-MM-DD` strings. Use `shared/utils/shared/dates.ts` to get the local date and to format dates; `toISOString()` gives the UTC date.
 * **Money**: amounts are stored as entered, from 0 up to `MAX_AMOUNT` (`shared/schemas/common.ts`). Show them with `useMoneyFormat` (up to 2 decimals, BTC up to 8, metals up to 4; the rounded format drops cents) and take the sign for colours and "+" from `getShownSign`, so a value shown as 0 is never coloured as a gain or a loss.
@@ -85,7 +86,7 @@
   * `utils/` — Server-side utilities
 * `migrations/` — Wrangler D1 SQL migration files
 * `shared/` — Shared between client and server (isomorphic code)
-  * `schemas/` — Zod validation schemas (auth, common, recurrence)
+  * `schemas/` — Zod validation schemas (auth, budget, common, export-import, recurrence, todo)
   * `types/` — TypeScript types (budget, todo, i18n, recurrence, export-import)
   * `utils/` — Shared utilities (budget calculations, recurrence, currencies, dates, error keys)
 * `tests/unit/` — Unit tests (`*.test.ts`, Node test runner)
