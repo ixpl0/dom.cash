@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
   const existingUser = await findUser(email, event)
 
   if (existingUser) {
-    throw createError({ statusCode: 400, message: ERROR_KEYS.USER_ALREADY_EXISTS })
+    throw createError({ statusCode: 409, message: ERROR_KEYS.USER_ALREADY_EXISTS })
   }
 
   const existingCode = await getExistingCode(event, email)

@@ -1,8 +1,6 @@
-import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
 import { budgetShare } from '~~/server/db/schema'
-import type { NewBudgetShare } from '~~/server/db/schema'
 import { findUser } from '~~/server/utils/auth'
 import { requireAuth } from '~~/server/utils/session'
 import { accessSchema, usernameSchema } from '~~/shared/schemas/common'
@@ -36,36 +34,29 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const existingShare = await db
-    .select()
-    .from(budgetShare)
-    .where(and(
-      eq(budgetShare.ownerId, currentUser.id),
-      eq(budgetShare.sharedWithId, targetUser.id),
-    ))
-    .limit(1)
+  const [createdShare] = await db
+    .insert(budgetShare)
+    .values({
+      id: crypto.randomUUID(),
+      ownerId: currentUser.id,
+      sharedWithId: targetUser.id,
+      access,
+      createdAt: new Date(),
+    })
+    .onConflictDoNothing({ target: [budgetShare.ownerId, budgetShare.sharedWithId] })
+    .returning({ id: budgetShare.id, createdAt: budgetShare.createdAt })
 
-  if (existingShare.length > 0) {
+  if (!createdShare) {
     throw createError({
       statusCode: 409,
       message: ERROR_KEYS.ALREADY_SHARED,
     })
   }
 
-  const newShare: NewBudgetShare = {
-    id: crypto.randomUUID(),
-    ownerId: currentUser.id,
-    sharedWithId: targetUser.id,
-    access,
-    createdAt: new Date(),
-  }
-
-  await db.insert(budgetShare).values(newShare)
-
   return {
-    id: newShare.id,
+    id: createdShare.id,
     username: targetUser.username,
     access,
-    createdAt: newShare.createdAt,
+    createdAt: createdShare.createdAt,
   }
 })

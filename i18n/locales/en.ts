@@ -534,7 +534,6 @@ export default {
     entry_conflict: 'Entry conflict, please refresh the page',
     share_not_found: 'Share not found',
     invalid_currency_format: 'Invalid currency format',
-    failed_to_create_user: 'Failed to create user',
     failed_to_update_currency: 'Failed to update currency',
     failed_to_import_budget: 'Failed to import budget',
     failed_to_export_budget: 'Failed to export budget',

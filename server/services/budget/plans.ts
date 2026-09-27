@@ -29,46 +29,27 @@ export const upsertPlan = async (
   comment: string | null,
   event: H3Event,
 ): Promise<PlanData> => {
-  const db = useDatabase(event)
-
-  const existing = await db
-    .select({ id: plan.id })
-    .from(plan)
-    .where(and(
-      eq(plan.userId, userId),
-      eq(plan.year, year),
-      eq(plan.month, month),
-    ))
-    .limit(1)
-
-  const existingPlan = existing[0]
-
-  if (existingPlan) {
-    await db
-      .update(plan)
-      .set({ plannedBalanceChange, comment })
-      .where(eq(plan.id, existingPlan.id))
-
-    return {
-      id: existingPlan.id,
+  const [savedPlan] = await useDatabase(event)
+    .insert(plan)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
       year,
       month,
       plannedBalanceChange,
       comment,
-    }
+    })
+    .onConflictDoUpdate({
+      target: [plan.userId, plan.year, plan.month],
+      set: { plannedBalanceChange, comment },
+    })
+    .returning({ id: plan.id })
+
+  if (!savedPlan) {
+    throw new Error('Plan was not saved')
   }
 
-  const id = crypto.randomUUID()
-  await db.insert(plan).values({
-    id,
-    userId,
-    year,
-    month,
-    plannedBalanceChange,
-    comment,
-  })
-
-  return { id, year, month, plannedBalanceChange, comment }
+  return { id: savedPlan.id, year, month, plannedBalanceChange, comment }
 }
 
 export const deletePlan = async (
@@ -77,29 +58,14 @@ export const deletePlan = async (
   month: number,
   event: H3Event,
 ): Promise<boolean> => {
-  const db = useDatabase(event)
-
-  const existing = await db
-    .select({ id: plan.id })
-    .from(plan)
-    .where(and(
-      eq(plan.userId, userId),
-      eq(plan.year, year),
-      eq(plan.month, month),
-    ))
-    .limit(1)
-
-  if (existing.length === 0) {
-    return false
-  }
-
-  await db
+  const deletedPlans = await useDatabase(event)
     .delete(plan)
     .where(and(
       eq(plan.userId, userId),
       eq(plan.year, year),
       eq(plan.month, month),
     ))
+    .returning({ id: plan.id })
 
-  return true
+  return deletedPlans.length > 0
 }

@@ -7,6 +7,7 @@ import { entry, month, plan } from '~~/server/db/schema'
 import type { MonthData, YearInfo } from '~~/shared/types/budget'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
+import { isUniqueConstraintError } from '~~/server/utils/database-errors'
 import { getExchangeRatesForMonth, loadExchangeRates } from '~~/server/services/budget/rates'
 import type { ExchangeRatesData } from '~~/server/services/budget/rates'
 
@@ -185,7 +186,10 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
     .limit(1)
 
   if (existingMonth.length > 0) {
-    throw new Error('Month already exists')
+    throw createError({
+      statusCode: 409,
+      message: ERROR_KEYS.MONTH_ALREADY_EXISTS,
+    })
   }
 
   const exchangeRatesData = await getExchangeRatesForMonth(year, monthNumber, event)
@@ -214,10 +218,21 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
   const insertEntryStatements = chunkArray(copiedEntries, getRowsPerInsertStatement(entry))
     .map(entryChunk => db.insert(entry).values(entryChunk))
 
-  await db.batch([
-    db.insert(month).values({ ...createdMonth, userId: targetUserId }),
-    ...insertEntryStatements,
-  ])
+  try {
+    await db.batch([
+      db.insert(month).values({ ...createdMonth, userId: targetUserId }),
+      ...insertEntryStatements,
+    ])
+  }
+  catch (error) {
+    if (isUniqueConstraintError(error)) {
+      throw createError({
+        statusCode: 409,
+        message: ERROR_KEYS.MONTH_ALREADY_EXISTS,
+      })
+    }
+    throw error
+  }
 
   return toMonthData(createdMonth, copiedEntries, exchangeRatesData)
 }

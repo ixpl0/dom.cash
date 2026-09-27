@@ -534,7 +534,6 @@ export default {
     entry_conflict: 'Конфликт записи, обновите страницу',
     share_not_found: 'Общий доступ не найден',
     invalid_currency_format: 'Неверный формат валюты',
-    failed_to_create_user: 'Не удалось создать пользователя',
     failed_to_update_currency: 'Не удалось обновить валюту',
     failed_to_import_budget: 'Не удалось импортировать бюджет',
     failed_to_export_budget: 'Не удалось экспортировать бюджет',

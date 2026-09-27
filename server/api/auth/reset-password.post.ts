@@ -1,12 +1,12 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { user, session } from '~~/server/db/schema'
+import { emailVerificationCode, session, user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { findUser, hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/shared/schemas/auth'
-import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
+import { verifyCode, throwVerifyCodeError, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const resetPasswordSchema = z.object({
@@ -41,16 +41,11 @@ export default defineEventHandler(async (event) => {
 
   const passwordHash = await hashPassword(newPassword)
 
-  await db
-    .update(user)
-    .set({ passwordHash })
-    .where(eq(user.id, existingUser.id))
-
-  await db
-    .delete(session)
-    .where(eq(session.userId, existingUser.id))
-
-  await deleteVerificationCode(event, email)
+  await db.batch([
+    db.update(user).set({ passwordHash }).where(eq(user.id, existingUser.id)),
+    db.delete(session).where(eq(session.userId, existingUser.id)),
+    db.delete(emailVerificationCode).where(eq(emailVerificationCode.id, verifyResult.record.id)),
+  ])
 
   return { success: true }
 })

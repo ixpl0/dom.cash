@@ -50,13 +50,6 @@ export default defineEventHandler(async (event) => {
 
     secureLog.error('Error creating month:', error)
 
-    if (error instanceof Error && error.message === 'Month already exists') {
-      throw createError({
-        statusCode: 409,
-        message: ERROR_KEYS.MONTH_ALREADY_EXISTS,
-      })
-    }
-
     throw createError({
       statusCode: 500,
       message: ERROR_KEYS.FAILED_TO_CREATE_MONTH,

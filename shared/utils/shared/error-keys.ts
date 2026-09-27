@@ -13,7 +13,6 @@ export const ERROR_KEYS = {
   ENTRY_CONFLICT: 'serverErrors.entry_conflict',
   SHARE_NOT_FOUND: 'serverErrors.share_not_found',
   INVALID_CURRENCY_FORMAT: 'serverErrors.invalid_currency_format',
-  FAILED_TO_CREATE_USER: 'serverErrors.failed_to_create_user',
   FAILED_TO_UPDATE_CURRENCY: 'serverErrors.failed_to_update_currency',
   FAILED_TO_IMPORT_BUDGET: 'serverErrors.failed_to_import_budget',
   FAILED_TO_EXPORT_BUDGET: 'serverErrors.failed_to_export_budget',

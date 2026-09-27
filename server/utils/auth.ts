@@ -149,10 +149,11 @@ export const createUserInDb = async (event: H3Event, params: CreateUserParams) =
       googleId: params.googleId,
       emailVerified: params.emailVerified ?? false,
     })
+    .onConflictDoNothing()
     .returning(authUserColumns)
 
   if (!created) {
-    throw createError({ statusCode: 500, message: ERROR_KEYS.FAILED_TO_CREATE_USER })
+    throw createError({ statusCode: 409, message: ERROR_KEYS.USER_ALREADY_EXISTS })
   }
 
   return created
