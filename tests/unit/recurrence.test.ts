@@ -9,13 +9,11 @@ import {
 } from '../../shared/utils/recurrence'
 
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const MONTH_OVERFLOW = 'P2-03 month overflow'
 
 interface DateCase {
   pattern: RecurrencePattern
   from: string
   expected: string
-  bug?: string
 }
 
 interface SameRecurrenceCase {
@@ -23,7 +21,6 @@ interface SameRecurrenceCase {
   first: RecurrencePattern | null
   second: RecurrencePattern | null
   expected: boolean
-  bug?: string
 }
 
 const interval = (unit: IntervalUnit, value: number): RecurrencePattern => ({ type: 'interval', unit, value })
@@ -69,13 +66,13 @@ const nextDateCases: DateCase[] = [
   { pattern: interval('week', 2), from: '2026-12-24', expected: '2027-01-07' },
   { pattern: interval('month', 1), from: '2026-01-15', expected: '2026-02-15' },
   { pattern: interval('month', 1), from: '2026-12-15', expected: '2027-01-15' },
-  { pattern: interval('month', 1), from: '2026-01-31', expected: '2026-02-28', bug: MONTH_OVERFLOW },
-  { pattern: interval('month', 1), from: '2026-03-31', expected: '2026-04-30', bug: MONTH_OVERFLOW },
-  { pattern: interval('month', 1), from: '2028-01-31', expected: '2028-02-29', bug: MONTH_OVERFLOW },
-  { pattern: interval('month', 3), from: '2026-11-30', expected: '2027-02-28', bug: MONTH_OVERFLOW },
+  { pattern: interval('month', 1), from: '2026-01-31', expected: '2026-02-28' },
+  { pattern: interval('month', 1), from: '2026-03-31', expected: '2026-04-30' },
+  { pattern: interval('month', 1), from: '2028-01-31', expected: '2028-02-29' },
+  { pattern: interval('month', 3), from: '2026-11-30', expected: '2027-02-28' },
   { pattern: interval('year', 1), from: '2026-06-15', expected: '2027-06-15' },
   { pattern: interval('year', 4), from: '2028-02-29', expected: '2032-02-29' },
-  { pattern: interval('year', 1), from: '2028-02-29', expected: '2029-02-28', bug: MONTH_OVERFLOW },
+  { pattern: interval('year', 1), from: '2028-02-29', expected: '2029-02-28' },
   { pattern: weekdays(1, 3, 5), from: '2026-01-05', expected: '2026-01-07' },
   { pattern: weekdays(1, 3, 5), from: '2026-01-07', expected: '2026-01-09' },
   { pattern: weekdays(1, 3, 5), from: '2026-01-09', expected: '2026-01-12' },
@@ -97,17 +94,17 @@ const nextDateCases: DateCase[] = [
   { pattern: dayOfMonth(31), from: '2026-12-31', expected: '2027-01-31' },
   { pattern: dayOfMonth(29), from: '2028-01-29', expected: '2028-02-29' },
   { pattern: dayOfMonth(29), from: '2028-02-29', expected: '2028-03-29' },
-  { pattern: dayOfMonth(31), from: '2026-01-31', expected: '2026-02-28', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(31), from: '2026-02-28', expected: '2026-03-31', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(31), from: '2026-03-31', expected: '2026-04-30', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(31), from: '2026-04-30', expected: '2026-05-31', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(15), from: '2026-01-31', expected: '2026-02-15', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(30), from: '2028-01-30', expected: '2028-02-29', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(31), from: '2028-02-29', expected: '2028-03-31', bug: MONTH_OVERFLOW },
+  { pattern: dayOfMonth(31), from: '2026-01-31', expected: '2026-02-28' },
+  { pattern: dayOfMonth(31), from: '2026-02-28', expected: '2026-03-31' },
+  { pattern: dayOfMonth(31), from: '2026-03-31', expected: '2026-04-30' },
+  { pattern: dayOfMonth(31), from: '2026-04-30', expected: '2026-05-31' },
+  { pattern: dayOfMonth(15), from: '2026-01-31', expected: '2026-02-15' },
+  { pattern: dayOfMonth(30), from: '2028-01-30', expected: '2028-02-29' },
+  { pattern: dayOfMonth(31), from: '2028-02-29', expected: '2028-03-31' },
 ]
 
-nextDateCases.forEach(({ pattern, from, expected, bug }) => {
-  test(`calculateNextDate ${describePattern(pattern)} after ${describeDay(from)} is ${describeDay(expected)}`, { todo: bug }, () => {
+nextDateCases.forEach(({ pattern, from, expected }) => {
+  test(`calculateNextDate ${describePattern(pattern)} after ${describeDay(from)} is ${describeDay(expected)}`, () => {
     assert.equal(toDay(calculateNextDate(pattern, localDate(from), 'planned')), expected)
   })
 })
@@ -163,13 +160,13 @@ const initialDateCases: DateCase[] = [
   { pattern: dayOfMonth(31), from: '2026-04-30', expected: '2026-04-30' },
   { pattern: dayOfMonth(29), from: '2028-02-01', expected: '2028-02-29' },
   { pattern: dayOfMonth(29), from: '2027-02-01', expected: '2027-02-28' },
-  { pattern: dayOfMonth(15), from: '2026-01-31', expected: '2026-02-15', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(30), from: '2026-01-31', expected: '2026-02-28', bug: MONTH_OVERFLOW },
-  { pattern: dayOfMonth(28), from: '2026-03-31', expected: '2026-04-28', bug: MONTH_OVERFLOW },
+  { pattern: dayOfMonth(15), from: '2026-01-31', expected: '2026-02-15' },
+  { pattern: dayOfMonth(30), from: '2026-01-31', expected: '2026-02-28' },
+  { pattern: dayOfMonth(28), from: '2026-03-31', expected: '2026-04-28' },
 ]
 
-initialDateCases.forEach(({ pattern, from, expected, bug }) => {
-  test(`calculateInitialDate ${describePattern(pattern)} from ${describeDay(from)} is ${describeDay(expected)}`, { todo: bug }, () => {
+initialDateCases.forEach(({ pattern, from, expected }) => {
+  test(`calculateInitialDate ${describePattern(pattern)} from ${describeDay(from)} is ${describeDay(expected)}`, () => {
     assert.equal(toDay(calculateInitialDate(pattern, localDate(from))), expected)
   })
 })
@@ -212,12 +209,11 @@ const sameRecurrenceCases: SameRecurrenceCase[] = [
     first: weekdays(1, 1, 3),
     second: weekdays(1, 3, 5),
     expected: false,
-    bug: 'a repeated weekday makes the comparison one-sided',
   },
 ]
 
-sameRecurrenceCases.forEach(({ name, first, second, expected, bug }) => {
-  test(`isSameRecurrence says ${name} are ${expected ? 'the same' : 'different'}`, { todo: bug }, () => {
+sameRecurrenceCases.forEach(({ name, first, second, expected }) => {
+  test(`isSameRecurrence says ${name} are ${expected ? 'the same' : 'different'}`, () => {
     assert.equal(isSameRecurrence(first, second), expected)
   })
 })

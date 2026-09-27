@@ -6,71 +6,81 @@ import type {
   WeekdaysRecurrence,
 } from '~~/shared/types/recurrence'
 
+const DAYS_IN_WEEK = 7
+const MONTHS_IN_YEAR = 12
+
+const getDaysInMonth = (year: number, monthIndex: number): number =>
+  new Date(year, monthIndex + 1, 0).getDate()
+
+const createDateLike = (baseDate: Date, year: number, monthIndex: number, day: number): Date =>
+  new Date(
+    year,
+    monthIndex,
+    day,
+    baseDate.getHours(),
+    baseDate.getMinutes(),
+    baseDate.getSeconds(),
+    baseDate.getMilliseconds(),
+  )
+
+const addDays = (baseDate: Date, days: number): Date =>
+  createDateLike(baseDate, baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + days)
+
+const getDayInMonth = (baseDate: Date, monthOffset: number, day: number): Date => {
+  const firstDayOfTargetMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + monthOffset, 1)
+  const year = firstDayOfTargetMonth.getFullYear()
+  const monthIndex = firstDayOfTargetMonth.getMonth()
+  return createDateLike(baseDate, year, monthIndex, Math.min(day, getDaysInMonth(year, monthIndex)))
+}
+
 const calculateIntervalNextDate = (
   baseDate: Date,
   pattern: IntervalRecurrence,
 ): Date => {
-  const result = new Date(baseDate)
-
   switch (pattern.unit) {
     case 'day': {
-      result.setDate(result.getDate() + pattern.value)
-      break
+      return addDays(baseDate, pattern.value)
     }
     case 'week': {
-      result.setDate(result.getDate() + pattern.value * 7)
-      break
+      return addDays(baseDate, pattern.value * DAYS_IN_WEEK)
     }
     case 'month': {
-      result.setMonth(result.getMonth() + pattern.value)
-      break
+      return getDayInMonth(baseDate, pattern.value, baseDate.getDate())
     }
     case 'year': {
-      result.setFullYear(result.getFullYear() + pattern.value)
-      break
+      return getDayInMonth(baseDate, pattern.value * MONTHS_IN_YEAR, baseDate.getDate())
     }
   }
+}
 
-  return result
+const getDaysUntilNextWeekday = (currentDay: number, days: readonly number[], isCurrentDayIncluded: boolean): number => {
+  const sortedDays = [...days].sort((a, b) => a - b)
+
+  if (isCurrentDayIncluded && sortedDays.includes(currentDay)) {
+    return 0
+  }
+
+  const nextDay = sortedDays.find(day => day > currentDay)
+  if (nextDay !== undefined) {
+    return nextDay - currentDay
+  }
+
+  return DAYS_IN_WEEK - currentDay + (sortedDays[0] ?? 0)
 }
 
 const calculateWeekdaysNextDate = (
   baseDate: Date,
   pattern: WeekdaysRecurrence,
-): Date => {
-  const result = new Date(baseDate)
-  const sortedDays = [...pattern.days].sort((a, b) => a - b)
-  const currentDay = result.getDay()
-
-  const nextDay = sortedDays.find(d => d > currentDay)
-
-  if (nextDay !== undefined) {
-    result.setDate(result.getDate() + (nextDay - currentDay))
-  }
-  else {
-    const firstDay = sortedDays[0] ?? 0
-    const daysToAdd = 7 - currentDay + firstDay
-    result.setDate(result.getDate() + daysToAdd)
-  }
-
-  return result
-}
+): Date => addDays(baseDate, getDaysUntilNextWeekday(baseDate.getDay(), pattern.days, false))
 
 const calculateDayOfMonthNextDate = (
   baseDate: Date,
   pattern: DayOfMonthRecurrence,
 ): Date => {
-  const result = new Date(baseDate)
-
-  if (result.getDate() >= pattern.day) {
-    result.setMonth(result.getMonth() + 1)
-  }
-
-  const daysInMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate()
-  const targetDay = Math.min(pattern.day, daysInMonth)
-  result.setDate(targetDay)
-
-  return result
+  const dayInCurrentMonth = getDayInMonth(baseDate, 0, pattern.day)
+  return dayInCurrentMonth.getTime() > baseDate.getTime()
+    ? dayInCurrentMonth
+    : getDayInMonth(baseDate, 1, pattern.day)
 }
 
 export const calculateNextDate = (
@@ -103,49 +113,16 @@ export const formatDateForDb = (date: Date): string => {
 const calculateWeekdaysInitialDate = (
   baseDate: Date,
   pattern: WeekdaysRecurrence,
-): Date => {
-  const result = new Date(baseDate)
-  const sortedDays = [...pattern.days].sort((a, b) => a - b)
-  const currentDay = result.getDay()
-
-  if (sortedDays.includes(currentDay)) {
-    return result
-  }
-
-  const nextDay = sortedDays.find(d => d > currentDay)
-
-  if (nextDay !== undefined) {
-    result.setDate(result.getDate() + (nextDay - currentDay))
-  }
-  else {
-    const firstDay = sortedDays[0] ?? 0
-    const daysToAdd = 7 - currentDay + firstDay
-    result.setDate(result.getDate() + daysToAdd)
-  }
-
-  return result
-}
+): Date => addDays(baseDate, getDaysUntilNextWeekday(baseDate.getDay(), pattern.days, true))
 
 const calculateDayOfMonthInitialDate = (
   baseDate: Date,
   pattern: DayOfMonthRecurrence,
 ): Date => {
-  const result = new Date(baseDate)
-  const currentDayOfMonth = result.getDate()
-
-  if (currentDayOfMonth === pattern.day) {
-    return result
-  }
-
-  if (currentDayOfMonth > pattern.day) {
-    result.setMonth(result.getMonth() + 1)
-  }
-
-  const daysInMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate()
-  const targetDay = Math.min(pattern.day, daysInMonth)
-  result.setDate(targetDay)
-
-  return result
+  const dayInCurrentMonth = getDayInMonth(baseDate, 0, pattern.day)
+  return dayInCurrentMonth.getTime() >= baseDate.getTime()
+    ? dayInCurrentMonth
+    : getDayInMonth(baseDate, 1, pattern.day)
 }
 
 export const calculateInitialDate = (
@@ -167,8 +144,11 @@ export const calculateInitialDate = (
   }
 }
 
-const hasSameDays = (firstDays: readonly number[], secondDays: readonly number[]): boolean =>
-  firstDays.length === secondDays.length && firstDays.every(day => secondDays.includes(day))
+const hasSameDays = (firstDays: readonly number[], secondDays: readonly number[]): boolean => {
+  const firstDaySet = new Set(firstDays)
+  const secondDaySet = new Set(secondDays)
+  return firstDaySet.size === secondDaySet.size && [...firstDaySet].every(day => secondDaySet.has(day))
+}
 
 export const isSameRecurrence = (
   first: RecurrencePattern | null,
