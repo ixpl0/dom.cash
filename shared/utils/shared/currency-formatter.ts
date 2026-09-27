@@ -184,6 +184,9 @@ const getFormatter = (
   return formatter
 }
 
+const isShownAsZero = (amount: number, maxFractionDigits: number): boolean =>
+  Math.abs(amount) < 0.5 / 10 ** maxFractionDigits
+
 export const formatCurrency = (
   amount: number,
   currency: string,
@@ -192,7 +195,7 @@ export const formatCurrency = (
   const locale = getLocaleForCurrency(currency)
   const minFraction = 0
   const maxFraction = options?.rounded ? 0 : 2
-  const value = options?.rounded ? Math.round(amount) : amount
+  const value = isShownAsZero(amount, maxFraction) ? 0 : amount
 
   const formatter = getFormatter(locale, currency, minFraction, maxFraction)
   return formatter.format(value)

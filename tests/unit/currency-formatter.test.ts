@@ -4,8 +4,6 @@ import { formatAmount, formatAmountRounded } from '../../shared/utils/budget/bud
 import { CURRENCY_CODES } from '../../shared/utils/shared/currencies'
 import { formatCurrency, formatCurrencyRounded } from '../../shared/utils/shared/currency-formatter'
 
-const NEGATIVE_ZERO = '"-0" is shown for amounts that round to zero'
-
 const normalizeSpaces = (text: string): string => text.replace(/\s/g, ' ')
 
 const formatCases = [
@@ -60,11 +58,11 @@ const negativeZeroCases = [
 ]
 
 negativeZeroCases.forEach(({ name, format, expected }) => {
-  test(`${name} as "${expected}" without a minus sign`, { todo: NEGATIVE_ZERO }, () => {
+  test(`${name} as "${expected}" without a minus sign`, () => {
     assert.equal(normalizeSpaces(format()), expected)
   })
 })
 
-test('formatCurrencyRounded rounds a negative half away from zero like a positive one', { todo: 'Math.round turns -1234.5 into -1234' }, () => {
+test('formatCurrencyRounded rounds a negative half away from zero like a positive one', () => {
   assert.equal(normalizeSpaces(formatCurrencyRounded(-1234.5, 'USD')), '-$1,235')
 })
