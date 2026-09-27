@@ -448,11 +448,6 @@ export default {
     selectLanguage: 'Select language',
   },
 
-  outdated: {
-    message: 'The data on the page is outdated and may not be current',
-    refresh: 'Refresh page',
-  },
-
   meta: {
     title: 'dom.cash - Budget Tracker',
     description: 'Transparent home finances. Personal budget tracking with multi-currency support.',

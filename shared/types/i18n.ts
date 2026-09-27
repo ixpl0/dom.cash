@@ -68,3 +68,9 @@ export interface NotificationPayload {
   type: NotificationType
   params: NotificationParams
 }
+
+export interface NotificationEvent extends NotificationPayload {
+  id: string
+  budgetOwnerId: string
+  createdAt: string
+}

@@ -1,9 +1,9 @@
 import { test as base, expect } from '@playwright/test'
 import { mkdir } from 'fs/promises'
 import { join } from 'path'
-import { waitForHydration } from './helpers/wait-for-hydration'
 import { createTestEmail, createUniqueId } from './helpers/users'
-import { AUTH_DIR, BASE_URL, DEV_VERIFICATION_CODE } from './constants'
+import { AUTH_DIR, BASE_URL } from './constants'
+import { registerUser } from './helpers/auth'
 
 const PASSWORD = 'TestPassword123!'
 const SERVER_READY_TIMEOUT = 120000
@@ -67,29 +67,7 @@ export const test = base.extend<
     const page = await context.newPage()
 
     try {
-      await page.goto('/auth', { timeout: 60000 })
-      await waitForHydration(page)
-
-      const emailInput = page.locator('[data-testid="email-input"]').first()
-      await emailInput.waitFor({ state: 'visible', timeout: 15000 })
-      await emailInput.fill(workerCredentials.email)
-
-      const passwordInput = page.locator('[data-testid="password-input"]').first()
-      await passwordInput.fill(workerCredentials.password)
-
-      const registerBtn = page.locator('[data-testid="register-btn"]').first()
-      await registerBtn.click()
-
-      const verificationInput = page.locator('[data-testid="verification-code-input"]').first()
-      await verificationInput.waitFor({ state: 'visible', timeout: 30000 })
-      await verificationInput.fill(DEV_VERIFICATION_CODE)
-
-      const verifyBtn = page.locator('[data-testid="verify-code-btn"]').first()
-      await verifyBtn.click()
-
-      await page.waitForURL('/', { timeout: 30000 })
-      await waitForHydration(page)
-
+      await registerUser(page, workerCredentials.email, workerCredentials.password)
       await context.storageState({ path: storagePath })
     }
     finally {

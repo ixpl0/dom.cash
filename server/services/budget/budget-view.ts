@@ -15,6 +15,7 @@ export const getBudgetView = async (
 
   return {
     user: {
+      id: owner.id,
       username: owner.username,
       mainCurrency: owner.mainCurrency,
     },

@@ -9,6 +9,8 @@ export const useTodoStore = defineStore('todo', () => {
   const connections = ref<TodoConnection[]>([])
   const loadError = ref<{ message: string } | null>(null)
   const isLoading = ref(false)
+  const isStale = ref(false)
+  const lastLoadAt = ref<number | null>(null)
   const togglingIds = ref<Set<string>>(new Set())
   const leavingIds = ref<Set<string>>(new Set())
 
@@ -83,6 +85,7 @@ export const useTodoStore = defineStore('todo', () => {
       data.value = todoData
       connections.value = connectionsData
       loadError.value = null
+      isStale.value = false
     }
     catch (err) {
       if (!data.value) {
@@ -91,7 +94,22 @@ export const useTodoStore = defineStore('todo', () => {
     }
     finally {
       isLoading.value = false
+      lastLoadAt.value = Date.now()
     }
+  }
+
+  const markStale = (): void => {
+    if (data.value) {
+      isStale.value = true
+    }
+  }
+
+  const refreshIfStale = async (): Promise<void> => {
+    if (!isStale.value) {
+      return
+    }
+    isStale.value = false
+    await load()
   }
 
   const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
@@ -229,6 +247,8 @@ export const useTodoStore = defineStore('todo', () => {
     isLoading.value = false
     togglingIds.value = new Set()
     leavingIds.value = new Set()
+    isStale.value = false
+    lastLoadAt.value = null
   }
 
   const isToggling = (id: string): boolean => {
@@ -252,6 +272,10 @@ export const useTodoStore = defineStore('todo', () => {
     isToggling,
     isLeaving,
     load,
+    isStale,
+    lastLoadAt,
+    markStale,
+    refreshIfStale,
     createTodo,
     updateTodo,
     deleteTodo,

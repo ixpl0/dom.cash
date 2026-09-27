@@ -62,6 +62,8 @@ export const useBudgetStore = defineStore('budget', () => {
   const plans = ref<PlanData[]>([])
   const plansLoaded = ref(false)
   const isPlansLoading = ref(false)
+  const isStale = ref(false)
+  const lastLoadAt = ref<number | null>(null)
 
   const isOwnBudget = computed(() => data.value?.access === 'owner')
   const { user: currentUser } = useAuthState()
@@ -253,6 +255,8 @@ export const useBudgetStore = defineStore('budget', () => {
     plans.value = []
     plansLoaded.value = false
     isPlansLoading.value = false
+    isStale.value = false
+    lastLoadAt.value = null
   }
 
   const isShowingBudgetOf = (targetUsername: string | undefined): boolean => {
@@ -279,6 +283,7 @@ export const useBudgetStore = defineStore('budget', () => {
     canEdit.value = budgetData.access === 'owner' || budgetData.access === 'write'
     canView.value = true
     loadError.value = null
+    isStale.value = false
   }
 
   const loadNewBudget = async (requestFetch: RequestFetch, targetUsername: string | undefined, isLatestLoad: () => boolean): Promise<boolean> => {
@@ -326,6 +331,10 @@ export const useBudgetStore = defineStore('budget', () => {
     }
     catch (err) {
       console.error('Error refreshing budget:', err)
+      if (isLatestLoad() && readServerErrorKey(err) !== null) {
+        $reset()
+        loadError.value = toLoadError(err)
+      }
       return false
     }
   }
@@ -338,9 +347,32 @@ export const useBudgetStore = defineStore('budget', () => {
     const loadId = latestLoadId
     const isLatestLoad = (): boolean => loadId === latestLoadId
 
-    return isShowingBudgetOf(targetUsername)
-      ? refreshShownBudget(requestFetch, targetUsername, isLatestLoad)
-      : loadNewBudget(requestFetch, targetUsername, isLatestLoad)
+    const isLoaded = isShowingBudgetOf(targetUsername)
+      ? await refreshShownBudget(requestFetch, targetUsername, isLatestLoad)
+      : await loadNewBudget(requestFetch, targetUsername, isLatestLoad)
+    lastLoadAt.value = Date.now()
+    return isLoaded
+  }
+
+  const reload = (): Promise<boolean> => {
+    if (!data.value) {
+      return Promise.resolve(false)
+    }
+    return load(isOwnBudget.value ? undefined : data.value.user.username)
+  }
+
+  const markStale = (): void => {
+    if (data.value) {
+      isStale.value = true
+    }
+  }
+
+  const refreshIfStale = async (): Promise<void> => {
+    if (!isStale.value) {
+      return
+    }
+    isStale.value = false
+    await reload()
   }
 
   const createMonth = async (year: number, month: number, copyFromMonthId?: string) => {
@@ -848,6 +880,11 @@ export const useBudgetStore = defineStore('budget', () => {
     getYearSummary,
     getRollingAverageExpenses,
     load,
+    reload,
+    isStale,
+    lastLoadAt,
+    markStale,
+    refreshIfStale,
     loadYear,
     createMonth,
     createNextMonth,

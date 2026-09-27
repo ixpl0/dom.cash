@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare } from '~~/server/db/schema'
-import type { NotificationType, NotificationParams } from '~~/shared/types/i18n'
+import type { NotificationEvent, NotificationType, NotificationParams } from '~~/shared/types/i18n'
 import { secureLog } from '~~/server/utils/secure-logger'
 
 export type { NotificationType }
@@ -13,13 +13,6 @@ export interface CreateNotificationParams {
   type: NotificationType
   params: NotificationParams
   targetUserId?: string
-}
-
-export interface NotificationEvent {
-  id: string
-  type: NotificationType
-  params: NotificationParams
-  createdAt: Date
 }
 
 interface NotificationConnection {
@@ -161,7 +154,8 @@ export const createNotification = async (event: H3Event, notificationParams: Cre
     id: crypto.randomUUID(),
     type: notificationParams.type,
     params: notificationParams.params,
-    createdAt: new Date(),
+    budgetOwnerId: notificationParams.budgetOwnerId,
+    createdAt: new Date().toISOString(),
   }
 
   for (const targetUserId of targetUsers) {

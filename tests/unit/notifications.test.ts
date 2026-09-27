@@ -96,6 +96,31 @@ test('financial notifications reach the owner and current readers and writers on
   assert.equal(unrelatedMessages().length, 0)
 })
 
+test('a notification tells the recipient which budget it belongs to', async (context) => {
+  const ownerId = crypto.randomUUID()
+  const viewerId = crypto.randomUUID()
+  const viewerMessages = listen(context, viewerId)
+  const event = createDatabaseEvent(() => [{ ownerId, userId: viewerId, access: 'read' }])
+
+  subscribeToBudget(viewerId, ownerId)
+  await createNotification(event, {
+    sourceUserId: ownerId,
+    budgetOwnerId: ownerId,
+    type: 'budget_month_added',
+    params: { month: 'march', year: 2026 },
+  })
+
+  const [message] = viewerMessages()
+  assert.ok(message?.startsWith('data: '))
+  const payload: unknown = JSON.parse(message.slice('data: '.length))
+  assert.deepEqual(
+    payload && typeof payload === 'object' && 'budgetOwnerId' in payload && 'type' in payload
+      ? { budgetOwnerId: payload.budgetOwnerId, type: payload.type }
+      : null,
+    { budgetOwnerId: ownerId, type: 'budget_month_added' },
+  )
+})
+
 test('revoking access blocks an existing subscription without disconnecting its stream', async (context) => {
   const ownerId = crypto.randomUUID()
   const viewerId = crypto.randomUUID()

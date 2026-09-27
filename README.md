@@ -329,7 +329,7 @@ Production runs at `https://domcash.ixplo.ai`.
 
 ### Real-time Notifications (SSE) Across Worker Instances
 
-Active SSE connections and budget subscriptions live in module-level `Map` objects (`server/services/notifications.ts`). Cloudflare may run several Worker instances, and an event created in one instance does not reach connections held by another. This limitation is accepted: delivery is best-effort, and the page still shows fresh data after a reload.
+Active SSE connections and budget subscriptions live in module-level `Map` objects (`server/services/notifications.ts`). Cloudflare may run several Worker instances, and an event created in one instance does not reach connections held by another. This limitation is accepted: delivery is best-effort, and data older than 15 minutes is reloaded anyway.
 
 ## Contributing
 

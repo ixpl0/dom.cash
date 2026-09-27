@@ -1,5 +1,5 @@
 export const useMonthNames = () => {
-  const { t } = useI18n()
+  const t = useT()
 
   const monthNames = computed(() => [
     t('month.january'),

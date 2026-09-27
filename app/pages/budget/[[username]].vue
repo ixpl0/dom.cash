@@ -29,31 +29,12 @@ const routeUsername = Array.isArray(route.params.username)
 const targetUsername = routeUsername || undefined
 
 const budgetStore = useBudgetStore()
-const { subscribeToBudgetByUsername, unsubscribeFromBudgetByUsername } = useNotifications()
-const { hideWarningBanner } = useOutdatedBanner()
 
-useVisibilityRefresh(async () => {
-  await budgetStore.load(targetUsername)
-  hideWarningBanner()
-})
+useLiveBudget(() => budgetStore.canView ? budgetStore.data?.user.username : undefined)
 
 await callOnce('budget-page', () => budgetStore.load(targetUsername), { mode: 'navigation' })
 
 if (targetUsername) {
   lastSharedBudgetCookie.value = budgetStore.loadError ? null : targetUsername
 }
-
-onMounted(async () => {
-  if (budgetStore.data && budgetStore.canView) {
-    const budgetOwnerUsername = budgetStore.data.user.username
-    await subscribeToBudgetByUsername(budgetOwnerUsername)
-  }
-})
-
-onBeforeUnmount(async () => {
-  if (budgetStore.data) {
-    const budgetOwnerUsername = budgetStore.data.user.username
-    await unsubscribeFromBudgetByUsername(budgetOwnerUsername)
-  }
-})
 </script>

@@ -1,5 +1,20 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test'
-import { BASE_URL } from '../constants'
+import { BASE_URL, DEV_VERIFICATION_CODE } from '../constants'
+import { waitForHydration } from './wait-for-hydration'
+
+const REGISTRATION_NAVIGATION_TIMEOUT = 60000
+
+export const registerUser = async (page: Page, email: string, password: string): Promise<void> => {
+  await page.goto('/auth', { timeout: REGISTRATION_NAVIGATION_TIMEOUT })
+  await waitForHydration(page)
+  await page.getByTestId('email-input').fill(email)
+  await page.getByTestId('password-input').fill(password)
+  await page.getByTestId('register-btn').click()
+  await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+  await page.getByTestId('verify-code-btn').click()
+  await page.waitForURL('/', { timeout: REGISTRATION_NAVIGATION_TIMEOUT })
+  await waitForHydration(page)
+}
 
 const SKIPPED_STATUSES = [400, 401]
 

@@ -28,7 +28,7 @@
   * Stores load data in a `load` action with `useRequestFetch()`: during SSR it forwards the request cookies, in the browser it is `$fetch`. Call it before the first `await` of the action.
   * Never call `useFetch` or `useAsyncData` inside store actions: outside a component they keep the first response for the whole session.
   * Pages start loading with `await callOnce(key, () => store.load(), { mode: 'navigation' })`: it runs during SSR, is skipped during hydration and runs again on every client navigation.
-  * `useVisibilityRefresh` reloads a page's data in place when the tab comes back after 15 minutes; it waits while an overlay or edit mode is open. Do not reload the whole app to refresh data.
+  * Keep data fresh with the store's `markStale()`: the `live-data` plugin reloads stale stores in place when the tab is visible and no overlay or edit mode is open, and marks data older than 15 minutes stale. Do not reload the whole app to refresh data.
   * Use `$fetch` for mutations (POST/PUT/DELETE).
   * Pass query parameters through the `query` option so they are encoded.
 * **Errors**:
@@ -43,11 +43,14 @@
   * **Back button & Escape**: every overlay or edit mode must close on browser/mobile "back" before any page navigation. Register it with `useBackHandler(isEnabled, onBack)` (`app/composables/shared/useBackHandler.ts`): the latest enabled handler wins, `onBack` receives `'history'` or `'escape'`. `UiDialog` registers itself (so the confirmation modal treats back as cancel), DaisyUI focus dropdowns use `useDropdownBackHandler`. Ask via `useUnsavedChanges().confirmDiscardChanges` before discarding user input. History syncing lives in `app/utils/back-handlers.ts`.
 * **State Management**: Pinia stores in `app/stores/`
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
+  * `useI18n()` works only at the top of a component `setup`. Code that stores or plugins may call uses `useT()` (`app/utils/i18n.ts`), which reads the global `$i18n`.
 * **Icons**: @nuxt/icon with @iconify-json/heroicons
 * **Excel import/export**: xlsx-js-style, loaded only when exporting
 * **Charts**: ECharts via vue-echarts
 * **Linting**: Husky + lint-staged for pre-commit hooks
-* **Real-time Notifications**: Server-Sent Events (SSE) via `useNotifications` composable.
+* **Real-time Notifications**: Server-Sent Events (SSE) handled by the `live-data` client plugin (`app/plugins/live-data.client.ts`).
+  * One connection per tab while signed in. After every (re)connect the plugin subscribes again to the budget the page watches (`useLiveBudget`), because the server drops subscriptions with the last connection.
+  * An event shows a toast and marks the affected store stale (`app/utils/notifications.ts` decides which); a reconnect marks everything stale because events may have been missed.
   * **Known limitation (accepted)**: SSE state (`activeConnections`, `budgetSubscriptions`) lives in a module-level `Map` in `server/services/notifications.ts`. In Cloudflare Workers there is no guarantee of a single isolate, so parallel viewers landing in different isolates may not receive each other's events. This is intentional and not considered critical — best-effort delivery is acceptable; do not "fix" by introducing Durable Objects without explicit ask.
 * Commands:
   * `pnpm check` — lint, type-check the app and the tests, run unit tests (run before committing)
@@ -66,7 +69,7 @@
   * `composables/` — Composables organized by feature (auth/, budget/, shared/)
   * `layouts/` — Nuxt layouts (default.vue)
   * `middleware/` — Client middleware (auth.global.ts)
-  * `plugins/` — Nuxt plugins (auth, favicon, animate-on-scroll, back-handlers)
+  * `plugins/` — Nuxt plugins (auth, favicon, animate-on-scroll, back-handlers, live-data)
   * `stores/` — Pinia stores organized by feature (budget/, todo/, preferences)
   * `types/` — App-specific type definitions
   * `utils/` — Client-side utilities

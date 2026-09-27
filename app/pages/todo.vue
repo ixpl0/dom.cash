@@ -6,14 +6,6 @@
 
 <script setup lang="ts">
 const todoStore = useTodoStore()
-const { hideWarningBanner } = useOutdatedBanner()
-
-useNotifications()
-
-useVisibilityRefresh(async () => {
-  await todoStore.load()
-  hideWarningBanner()
-})
 
 const isLoadedByAuthPlugin = import.meta.server && todoStore.data !== null
 

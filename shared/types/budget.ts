@@ -14,6 +14,7 @@ export type BudgetAccess = 'owner' | 'read' | 'write'
 
 export interface BudgetData {
   user: {
+    id: string
     username: string
     mainCurrency: string
   }
