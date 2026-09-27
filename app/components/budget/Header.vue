@@ -28,7 +28,6 @@
         <UiCurrencyPicker
           v-if="budgetStore.canEdit"
           :model-value="budgetStore.data.user.mainCurrency"
-          :placeholder="t('budget.mainCurrency')"
           class="w-full sm:w-70"
           @change="$emit('currency-change', $event)"
         />
@@ -106,7 +105,7 @@
         v-if="isViewingOwnBudgetUrl"
         class="btn btn-ghost btn-sm"
         data-testid="share-button"
-        @click="modalsStore.openShareModal('')"
+        @click="modalsStore.openShareModal()"
       >
         <Icon
           name="heroicons:share"
@@ -118,6 +117,7 @@
       <button
         v-if="!isViewingOwnBudgetUrl"
         class="btn btn-outline btn-sm"
+        data-testid="to-own-budget-button"
         @click="$emit('navigate-to-own')"
       >
         {{ t('budget.toOwnBudget') }}

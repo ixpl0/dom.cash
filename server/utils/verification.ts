@@ -12,14 +12,7 @@ export const generateVerificationCode = (): string => {
   return String(100000 + (randomValue % 900000))
 }
 
-type RateLimit = {
-  readonly attempt: number
-  readonly delaySeconds: number
-}
-
 type VerificationConfig = {
-  readonly rateLimits: ReadonlyArray<RateLimit>
-  readonly maxAttempts: number
   readonly expirationMinutes: number
   readonly cooldownMinutes?: number
   readonly maxVerifyAttempts: number
@@ -27,15 +20,11 @@ type VerificationConfig = {
 
 export const VERIFICATION_CONFIG = {
   registration: {
-    rateLimits: [],
-    maxAttempts: 5,
     expirationMinutes: 60,
     cooldownMinutes: 60,
     maxVerifyAttempts: 3,
   },
   passwordReset: {
-    rateLimits: [],
-    maxAttempts: 5,
     expirationMinutes: 60,
     cooldownMinutes: 60,
     maxVerifyAttempts: 3,
@@ -56,54 +45,6 @@ export const getExistingCode = async (event: H3Event, email: string) => {
 
   return db.query.emailVerificationCode.findFirst({
     where: eq(emailVerificationCode.email, email),
-  })
-}
-
-type RateLimitCheckResult = {
-  readonly allowed: boolean
-  readonly waitSeconds?: number
-  readonly attemptCount?: number
-}
-
-export const checkRateLimit = (
-  existingCode: { attemptCount: number, lastSentAt: Date | null, expiresAt: Date } | undefined,
-  config: VerificationConfig,
-  now: Date,
-): RateLimitCheckResult => {
-  if (!existingCode || existingCode.expiresAt <= now) {
-    return { allowed: true }
-  }
-
-  if (existingCode.attemptCount >= config.maxAttempts) {
-    return { allowed: false, attemptCount: existingCode.attemptCount }
-  }
-
-  if (existingCode.lastSentAt) {
-    const rateLimit = config.rateLimits.find(r => r.attempt === existingCode.attemptCount)
-    const delayMs = (rateLimit?.delaySeconds || 300) * 1000
-    const nextAllowedTime = new Date(existingCode.lastSentAt.getTime() + delayMs)
-
-    if (now < nextAllowedTime) {
-      const waitSeconds = Math.ceil((nextAllowedTime.getTime() - now.getTime()) / 1000)
-      return { allowed: false, waitSeconds, attemptCount: existingCode.attemptCount }
-    }
-  }
-
-  return { allowed: true }
-}
-
-export const throwRateLimitError = (result: RateLimitCheckResult): never => {
-  if (result.waitSeconds) {
-    throw createError({
-      statusCode: 429,
-      message: ERROR_KEYS.RATE_LIMIT_WAIT,
-      data: { params: { seconds: result.waitSeconds }, attemptCount: result.attemptCount },
-    })
-  }
-
-  throw createError({
-    statusCode: 429,
-    message: ERROR_KEYS.RATE_LIMIT_EXCEEDED,
   })
 }
 

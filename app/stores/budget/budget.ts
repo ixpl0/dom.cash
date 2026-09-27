@@ -81,10 +81,10 @@ export const useBudgetStore = defineStore('budget', () => {
   const isPlansLoading = ref(false)
 
   const isOwnBudget = computed(() => data.value?.access === 'owner')
-  const { mainCurrency } = useUser()
+  const { user: currentUser } = useAuthState()
   const { monthNames } = useMonthNames()
 
-  const effectiveMainCurrency = computed(() => data.value?.user?.mainCurrency || mainCurrency.value)
+  const effectiveMainCurrency = computed(() => data.value?.user?.mainCurrency || currentUser.value?.mainCurrency || 'USD')
 
   const targetUsernameForApi = computed(() =>
     !isOwnBudget.value && data.value?.user?.username ? data.value.user.username : undefined,

@@ -10,16 +10,6 @@ export interface EntryFormData {
   isOptional?: boolean
 }
 
-export interface EntryFormState {
-  isAdding: Ref<boolean>
-  isDeleting: Ref<string | null>
-  editingEntryId: Ref<string | null>
-  isSaving: Ref<boolean>
-  isAddingNewEntry: Ref<boolean>
-  editingEntry: Ref<EntryFormData>
-  newEntry: Ref<EntryFormData>
-}
-
 export const useEntryForm = (
   entryKind: MaybeRef<'balance' | 'income' | 'expense' | null>,
   defaultCurrency: MaybeRef<string> = '',

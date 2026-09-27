@@ -24,7 +24,6 @@ import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 interface Props {
   year: number
   months: MonthData[]
-  monthNames: string[]
 }
 
 const props = defineProps<Props>()

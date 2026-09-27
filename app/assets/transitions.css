@@ -13,19 +13,6 @@
   transform: translateY(-8px);
 }
 
-.fade-enter-active {
-  transition: opacity 0.3s ease-out;
-}
-
-.fade-leave-active {
-  transition: opacity 0.2s ease-out;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 .fade-delayed-enter-active {
   transition: opacity 0.3s ease-out 0.4s;
 }

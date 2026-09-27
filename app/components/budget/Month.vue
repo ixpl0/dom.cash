@@ -58,7 +58,6 @@ const monthData = computed(() => {
 })
 
 const isReadOnly = computed(() => !budgetStore.canEdit)
-const targetUsername = computed(() => !budgetStore.isOwnBudget ? budgetStore.data?.user?.username : undefined)
 
 const isCurrentMonthValue = ref(false)
 const isPastMonthValue = ref(false)
@@ -200,7 +199,6 @@ const openBalanceModal = (): void => {
     monthId: monthData.value.id,
     entryKind: 'balance',
     isReadOnly: isReadOnly.value,
-    targetUsername: targetUsername.value,
   })
 }
 
@@ -209,7 +207,6 @@ const openIncomeModal = (): void => {
     monthId: monthData.value.id,
     entryKind: 'income',
     isReadOnly: isReadOnly.value,
-    targetUsername: targetUsername.value,
   })
 }
 
@@ -218,13 +215,11 @@ const openExpenseModal = (): void => {
     monthId: monthData.value.id,
     entryKind: 'expense',
     isReadOnly: isReadOnly.value,
-    targetUsername: targetUsername.value,
   })
 }
 
 const openCurrencyRatesModal = (): void => {
   modalsStore.openCurrencyRatesModal({
-    monthId: Number(monthData.value.id),
     monthTitle: `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`,
     rates: monthData.value.exchangeRates,
     isUsingOtherMonthRates: monthData.value.isUsingOtherMonthRates,

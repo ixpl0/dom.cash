@@ -167,9 +167,3 @@ export const buildChartOption = (options: ChartConfigOptions): ChartOption => {
 
   return baseOption
 }
-
-export const useChartConfig = () => {
-  return {
-    buildChartOption,
-  }
-}

@@ -55,16 +55,6 @@ export const hasCurrencyRates = async (date: string, event: H3Event): Promise<bo
   return rates !== null
 }
 
-export const hasRatesForCurrentMonth = async (event?: H3Event): Promise<boolean> => {
-  if (!event) {
-    throw new Error('hasRatesForCurrentMonth requires H3Event context')
-  }
-  const now = new Date()
-  const firstDayOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-  const dateString = firstDayOfMonth.toISOString().slice(0, 10)
-  return hasCurrencyRates(dateString, event)
-}
-
 export const saveHistoricalRatesForCurrentMonth = async (event?: H3Event): Promise<void> => {
   if (!event) {
     throw new Error('saveHistoricalRatesForCurrentMonth requires H3Event context')

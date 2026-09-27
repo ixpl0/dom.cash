@@ -1,7 +1,6 @@
 import type { FaviconColors } from '~/utils/favicon'
 import { COOKIE_NAMES, UI_COOKIE_OPTIONS } from '~/utils/cookies'
 import { generateFaviconDataUrl } from '~/utils/favicon'
-import { migrateThemeFromLocalStorage } from '~/utils/theme-migration'
 
 export const DAISY_THEMES = [
   'kekdark',
@@ -60,9 +59,6 @@ export const useTheme = () => {
     default: () => null,
   })
 
-  // TODO: Remove after 2026-03-03
-  migrateThemeFromLocalStorage(themeCookie, isValidTheme, AUTO)
-
   const validatedTheme = computed((): ThemeSelection => {
     if (themeCookie.value === AUTO) {
       return AUTO
@@ -83,6 +79,7 @@ export const useTheme = () => {
 
     const colors = parseFaviconColors(faviconColorsCookie.value)
     return [{
+      key: 'theme-favicon',
       rel: 'icon',
       type: 'image/svg+xml',
       href: generateFaviconDataUrl(colors),

@@ -112,12 +112,6 @@ const totalAmount = computed(() => {
   return formatAmountRounded(total, baseCurrency)
 })
 
-const emit = defineEmits<{
-  added: []
-  deleted: [entryId: string]
-  updated: [entryId: string]
-}>()
-
 const { confirmDiscardChanges } = useUnsavedChanges()
 
 const {
@@ -140,18 +134,6 @@ const {
   resetForm,
 } = useEntryForm(computed(() => entryModal.value.entryKind), mainCurrency)
 
-const emitWrapper = (event: 'added' | 'deleted' | 'updated', entryId?: string) => {
-  if (event === 'added') {
-    emit('added')
-  }
-  else if (event === 'deleted' && entryId) {
-    emit('deleted', entryId)
-  }
-  else if (event === 'updated' && entryId) {
-    emit('updated', entryId)
-  }
-}
-
 const performAddEntry = async (entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
   if (!entryModal.value.monthId || !entryModal.value.entryKind) {
     throw new Error(t('entry.monthIdRequired'))
@@ -169,8 +151,6 @@ const performAddEntry = async (entryData: { description: string, amount: number,
       isOptional: entryModal.value.entryKind === 'expense' ? entryData.isOptional : undefined,
     },
   )
-
-  emitWrapper('added')
 }
 
 const performUpdateEntry = async (entryId: string, entryData: { description: string, amount: number, currency: string, date: string, isOptional?: boolean }) => {
@@ -181,13 +161,10 @@ const performUpdateEntry = async (entryId: string, entryData: { description: str
     date: entryModal.value.entryKind !== 'balance' ? entryData.date : undefined,
     isOptional: entryModal.value.entryKind === 'expense' ? entryData.isOptional : undefined,
   })
-
-  emitWrapper('updated', entryId)
 }
 
 const performDeleteEntry = async (entryId: string) => {
   await budgetStore.deleteEntry(entryId)
-  emitWrapper('deleted', entryId)
 }
 
 const focusField = ref<string | null>(null)

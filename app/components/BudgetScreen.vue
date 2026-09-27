@@ -126,7 +126,6 @@
               :key="year"
               :year="year"
               :months="groupedData[year] || []"
-              :month-names="monthNames"
             />
           </div>
         </div>

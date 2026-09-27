@@ -151,12 +151,6 @@ export const createUserInDb = async (event: H3Event, params: CreateUserParams) =
   return created
 }
 
-export const createUser = async (username: string, password: string, event: H3Event) => {
-  const passwordHash = await hashPassword(password)
-
-  return createUserInDb(event, { username, passwordHash })
-}
-
 export const createGoogleUser = async (username: string, googleId: string, event: H3Event) => {
   return createUserInDb(event, { username, googleId, emailVerified: true })
 }
@@ -167,26 +161,6 @@ export const findUserByGoogleId = async (googleId: string, event: H3Event) => {
     where: eq(user.googleId, googleId),
     columns: { id: true, username: true, googleId: true, mainCurrency: true, isAdmin: true },
   })
-}
-
-export const ensureUser = async (username: string, password: string, event: H3Event) => {
-  const existing = await findUser(username, event)
-
-  if (!existing) {
-    return await createUser(username, password, event)
-  }
-
-  if (!existing.passwordHash) {
-    throw createError({ statusCode: 401, message: ERROR_KEYS.ACCOUNT_EXISTS_GOOGLE })
-  }
-
-  const isPasswordValid = await verifyPassword(password, existing.passwordHash)
-
-  if (!isPasswordValid) {
-    throw createError({ statusCode: 401, message: ERROR_KEYS.INVALID_CREDENTIALS })
-  }
-
-  return existing
 }
 
 export const createSession = async (userId: string, now: Date, event: H3Event): Promise<string> => {

@@ -16,21 +16,9 @@ import {
   LegendComponent,
   TooltipComponent,
   DataZoomComponent,
-  ToolboxComponent,
 } from 'echarts/components'
-import type { ComposeOption } from 'echarts/core'
-import type { LineSeriesOption, BarSeriesOption } from 'echarts/charts'
-import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, DataZoomComponentOption } from 'echarts/components'
 import VChart from 'vue-echarts'
-
-type ECOption = ComposeOption<
-  | LineSeriesOption
-  | BarSeriesOption
-  | GridComponentOption
-  | LegendComponentOption
-  | TooltipComponentOption
-  | DataZoomComponentOption
->
+import type { ChartOption } from '~/composables/shared/useChartConfig'
 
 use([
   CanvasRenderer,
@@ -40,7 +28,6 @@ use([
   LegendComponent,
   TooltipComponent,
   DataZoomComponent,
-  ToolboxComponent,
 ])
 
 defineOptions({
@@ -50,7 +37,7 @@ defineOptions({
 })
 
 interface Props {
-  option: ECOption
+  option: ChartOption
 }
 
 interface Emits {
