@@ -1,10 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { user } from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
-import { createSession, setAuthCookie, hashPassword, createUserInDb } from '~~/server/utils/auth'
-import { useDatabase } from '~~/server/db'
+import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
 import { emailSchema } from '~~/shared/schemas/auth'
 import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
@@ -23,12 +20,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const { email, password } = await parseBody(event, registerSchema)
-  const db = useDatabase(event)
   const now = new Date()
 
-  const existingUser = await db.query.user.findFirst({
-    where: eq(user.username, email),
-  })
+  const existingUser = await findUser(email, event)
 
   if (existingUser) {
     throw createError({

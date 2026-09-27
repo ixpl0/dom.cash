@@ -95,6 +95,7 @@
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
 * **Metrics**: Analytics dashboard with charts
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
+  * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
 
 ## Code Style (required)
 

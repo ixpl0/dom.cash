@@ -1,7 +1,7 @@
 import { createError, getRouterParam } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { unsubscribeFromBudget } from '~~/server/services/notifications'
-import { findUserByUsername } from '~~/server/services/budget/access'
+import { findUser } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const targetUser = await findUserByUsername(username, event)
+  const targetUser = await findUser(username, event)
   if (!targetUser) {
     throw createError({
       statusCode: 404,

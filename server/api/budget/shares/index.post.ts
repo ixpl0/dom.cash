@@ -1,15 +1,16 @@
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, user } from '~~/server/db/schema'
+import { budgetShare } from '~~/server/db/schema'
 import type { NewBudgetShare } from '~~/server/db/schema'
+import { findUser } from '~~/server/utils/auth'
 import { requireAuth } from '~~/server/utils/session'
-import { accessSchema } from '~~/shared/schemas/common'
+import { accessSchema, usernameSchema } from '~~/shared/schemas/common'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { parseBody } from '~~/server/utils/validation'
 
 const createShareSchema = z.object({
-  username: z.string().min(1),
+  username: usernameSchema,
   access: accessSchema,
 })
 
@@ -19,28 +20,16 @@ export default defineEventHandler(async (event) => {
 
   const { username, access } = await parseBody(event, createShareSchema)
 
-  const targetUser = await db
-    .select()
-    .from(user)
-    .where(eq(user.username, username))
-    .limit(1)
+  const targetUser = await findUser(username, event)
 
-  if (targetUser.length === 0) {
+  if (!targetUser) {
     throw createError({
       statusCode: 404,
       message: ERROR_KEYS.USER_NOT_FOUND,
     })
   }
 
-  const targetUserData = targetUser[0]
-  if (!targetUserData) {
-    throw createError({
-      statusCode: 404,
-      message: ERROR_KEYS.USER_NOT_FOUND,
-    })
-  }
-
-  if (targetUserData.id === currentUser.id) {
+  if (targetUser.id === currentUser.id) {
     throw createError({
       statusCode: 400,
       message: ERROR_KEYS.CANNOT_SHARE_WITH_YOURSELF,
@@ -52,7 +41,7 @@ export default defineEventHandler(async (event) => {
     .from(budgetShare)
     .where(and(
       eq(budgetShare.ownerId, currentUser.id),
-      eq(budgetShare.sharedWithId, targetUserData.id),
+      eq(budgetShare.sharedWithId, targetUser.id),
     ))
     .limit(1)
 
@@ -66,7 +55,7 @@ export default defineEventHandler(async (event) => {
   const newShare: NewBudgetShare = {
     id: crypto.randomUUID(),
     ownerId: currentUser.id,
-    sharedWithId: targetUserData.id,
+    sharedWithId: targetUser.id,
     access,
     createdAt: new Date(),
   }
@@ -75,7 +64,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     id: newShare.id,
-    username,
+    username: targetUser.username,
     access,
     createdAt: newShare.createdAt,
   }

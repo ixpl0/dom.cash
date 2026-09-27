@@ -1,7 +1,8 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, user } from '~~/server/db/schema'
+import { budgetShare, type user } from '~~/server/db/schema'
+import { findUser } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import type { User } from '~~/shared/types'
 import type { BudgetAccess } from '~~/shared/types/budget'
@@ -13,17 +14,6 @@ export type BudgetOwner = Pick<typeof user.$inferSelect, 'id' | 'username' | 'ma
 export interface ResolvedBudget {
   owner: BudgetOwner
   access: BudgetAccess
-}
-
-export const findUserByUsername = async (username: string, event: H3Event): Promise<typeof user.$inferSelect | null> => {
-  const db = useDatabase(event)
-  const [foundUser] = await db
-    .select()
-    .from(user)
-    .where(sql`lower(${user.username}) = ${username.trim().toLowerCase()}`)
-    .limit(1)
-
-  return foundUser ?? null
 }
 
 export const findBudgetAccess = async (ownerId: string, viewerId: string, event: H3Event): Promise<BudgetAccess | null> => {
@@ -58,7 +48,7 @@ export const resolveBudget = async (
   level: BudgetAccessLevel,
   forbiddenKey: string = ERROR_KEYS.ACCESS_DENIED,
 ): Promise<ResolvedBudget> => {
-  const owner = username ? await findUserByUsername(username, event) : currentUser
+  const owner = username ? await findUser(username, event) : currentUser
 
   if (!owner) {
     throw createError({

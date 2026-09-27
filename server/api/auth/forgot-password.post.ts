@@ -1,9 +1,7 @@
 import { defineEventHandler } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { user } from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
-import { useDatabase } from '~~/server/db'
+import { findUser } from '~~/server/utils/auth'
 import { emailSchema } from '~~/shared/schemas/auth'
 import {
   cleanupExpiredCodes,
@@ -21,15 +19,12 @@ const forgotPasswordSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const { email } = await parseBody(event, forgotPasswordSchema)
-  const db = useDatabase(event)
   const now = new Date()
   const config = VERIFICATION_CONFIG.passwordReset
 
   await cleanupExpiredCodes(event)
 
-  const existingUser = await db.query.user.findFirst({
-    where: eq(user.username, email),
-  })
+  const existingUser = await findUser(email, event)
 
   if (!existingUser) {
     return { success: true, attemptCount: 0 }

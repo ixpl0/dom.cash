@@ -1,9 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { user } from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
-import { useDatabase } from '~~/server/db'
+import { findUser } from '~~/server/utils/auth'
 import { emailSchema } from '~~/shared/schemas/auth'
 import {
   cleanupExpiredCodes,
@@ -22,15 +20,12 @@ const sendCodeSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const { email } = await parseBody(event, sendCodeSchema)
-  const db = useDatabase(event)
   const now = new Date()
   const config = VERIFICATION_CONFIG.registration
 
   await cleanupExpiredCodes(event)
 
-  const existingUser = await db.query.user.findFirst({
-    where: eq(user.username, email),
-  })
+  const existingUser = await findUser(email, event)
 
   if (existingUser) {
     throw createError({ statusCode: 400, message: ERROR_KEYS.USER_ALREADY_EXISTS })

@@ -167,6 +167,29 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL('/auth')
   })
 
+  test('logs in with the email typed in another case', async ({ page }) => {
+    const testUsername = createTestEmail('auth')
+    const password = 'TestPassword123!'
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(password)
+    await page.getByTestId('register-btn').click()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
+    await page.waitForURL('/')
+
+    await page.context().clearCookies()
+    await page.goto('/auth')
+    await waitForHydration(page)
+
+    await page.getByTestId('email-input').fill(testUsername.toUpperCase())
+    await page.getByTestId('password-input').fill(password)
+    await page.getByTestId('login-btn').click()
+
+    await page.waitForURL('/')
+    await expect(page.getByTestId('user-dropdown')).toBeVisible()
+  })
+
   test('blocks verification after 3 failed attempts', async ({ page }) => {
     const testUsername = createTestEmail('auth')
     const testPassword = 'TestPassword123!'

@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { createError, setCookie, type H3Event } from 'h3'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
@@ -107,12 +107,25 @@ export const generateSessionToken = (): string => {
   return toBase64(bytes).replace(/[+/]/g, c => c === '+' ? '-' : '_').replace(/=/g, '')
 }
 
+const authUserColumns = {
+  id: user.id,
+  username: user.username,
+  passwordHash: user.passwordHash,
+  googleId: user.googleId,
+  mainCurrency: user.mainCurrency,
+  isAdmin: user.isAdmin,
+}
+
+export const normalizeUsername = (username: string): string => username.trim().toLowerCase()
+
 export const findUser = async (username: string, event: H3Event) => {
-  const database = useDatabase(event)
-  return database.query.user.findFirst({
-    where: eq(user.username, username),
-    columns: { id: true, username: true, passwordHash: true, googleId: true, mainCurrency: true, isAdmin: true },
-  })
+  const [foundUser] = await useDatabase(event)
+    .select(authUserColumns)
+    .from(user)
+    .where(sql`lower(${user.username}) = ${normalizeUsername(username)}`)
+    .limit(1)
+
+  return foundUser
 }
 
 type CreateUserParams = {
@@ -124,23 +137,19 @@ type CreateUserParams = {
 }
 
 export const createUserInDb = async (event: H3Event, params: CreateUserParams) => {
-  const database = useDatabase(event)
-  const mainCurrency = params.mainCurrency ?? 'USD'
-  const emailVerified = params.emailVerified ?? false
-  const createdAt = new Date()
-
-  await database.insert(user).values({
-    id: crypto.randomUUID(),
-    username: params.username,
-    mainCurrency,
-    createdAt,
-    isAdmin: false,
-    passwordHash: params.passwordHash,
-    googleId: params.googleId,
-    emailVerified,
-  })
-
-  const created = await findUser(params.username, event)
+  const [created] = await useDatabase(event)
+    .insert(user)
+    .values({
+      id: crypto.randomUUID(),
+      username: normalizeUsername(params.username),
+      mainCurrency: params.mainCurrency ?? 'USD',
+      createdAt: new Date(),
+      isAdmin: false,
+      passwordHash: params.passwordHash,
+      googleId: params.googleId,
+      emailVerified: params.emailVerified ?? false,
+    })
+    .returning(authUserColumns)
 
   if (!created) {
     throw createError({ statusCode: 500, message: ERROR_KEYS.FAILED_TO_CREATE_USER })

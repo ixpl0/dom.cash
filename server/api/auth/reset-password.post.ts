@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
 import { user, session } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { hashPassword } from '~~/server/utils/auth'
+import { findUser, hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { emailSchema } from '~~/shared/schemas/auth'
 import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
@@ -30,9 +30,7 @@ export default defineEventHandler(async (event) => {
     return throwVerifyCodeError(verifyResult.reason)
   }
 
-  const existingUser = await db.query.user.findFirst({
-    where: eq(user.username, email),
-  })
+  const existingUser = await findUser(email, event)
 
   if (!existingUser) {
     throw createError({
@@ -46,7 +44,7 @@ export default defineEventHandler(async (event) => {
   await db
     .update(user)
     .set({ passwordHash })
-    .where(eq(user.username, email))
+    .where(eq(user.id, existingUser.id))
 
   await db
     .delete(session)

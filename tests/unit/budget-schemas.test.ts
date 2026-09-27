@@ -276,6 +276,10 @@ test('emailSchema trims spaces around an address', () => {
   assert.equal(emailSchema.parse('  user@example.com  '), 'user@example.com')
 })
 
+test('emailSchema lowercases an address', () => {
+  assert.equal(emailSchema.parse('First.Last+Budget@Example.COM'), 'first.last+budget@example.com')
+})
+
 test('recurrencePatternSchema drops fields that do not belong to the pattern', () => {
   assert.deepEqual(
     recurrencePatternSchema.parse({ type: 'dayOfMonth', day: 5, unit: 'day', days: [1] }),

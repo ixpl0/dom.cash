@@ -3,10 +3,11 @@ import { z } from 'zod'
 export const emailSchema = z
   .string()
   .trim()
+  .toLowerCase()
   .min(3)
   .max(64)
   .regex(
-    /^[a-zA-Z0-9]([a-zA-Z0-9+._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/,
+    /^[a-z0-9]([a-z0-9+._-]*[a-z0-9])?@[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/,
     'Invalid email format',
   )
 
