@@ -5,39 +5,43 @@ Deployed on Cloudflare Workers with D1 database.
 
 ## Architecture Overview
 
-### "Thin Handlers" Architecture
+### Server
 
-The application implements **Thin Handlers with Clean Services** pattern:
+- **API handlers** (`server/api/`) parse the request, check access and call services.
+- **Services** (`server/services/`) hold the business logic and database access. They receive the H3 event to reach D1.
+- **Shared code** (`shared/`) holds Zod schemas, types and pure calculations used by both the server and the client.
 
-- **Thin API handlers** - minimal adapters that handle HTTP concerns (auth, validation, error formatting)
-- **Pure business logic services** - all domain logic in `server/services/` directory
-- **Complete separation of concerns** - HTTP layer separate from business logic
-- **Framework independence** - services are pure functions, easily testable and portable
+The known gaps of this layering and the maintenance plan are described in `FOLLOWUPS.md`.
 
 ### Testing Strategy
 
 #### Unit Tests
 
-Проверки серверной логики запускаются через Node.js и `tsx`, без dev-сервера и внешних сервисов:
+Unit tests run on the Node.js test runner through `tsx`, without a dev server or external services:
 
 ```bash
 pnpm test:unit
 ```
 
-Тесты находятся в `tests/unit/`. Для отдельной проверки их типов:
+Tests live in `tests/unit/`. They cover budget calculations, month helpers, recurrence, Zod schemas, currency formatting, exchange rates, notifications and back navigation.
 
 ```bash
-pnpm exec tsc --noEmit --project tests/unit/tsconfig.json
+# Type-check unit and e2e tests
+pnpm typecheck:tests
+
+# Lint, type-check the app and the tests, run unit tests
+pnpm check
 ```
 
 #### E2E Tests
 
-Приложение использует **Playwright** для end-to-end тестирования:
+The application uses **Playwright** for end-to-end testing:
 
-- **Аутентификация** - автоматическая setup-фаза создает тестового пользователя и сохраняет состояние аутентификации
-- **Параллельное тестирование** - тесты запускаются на Chromium, Firefox и WebKit
-- **Изоляция тестов** - каждый тестовый запуск использует уникального пользователя с временной меткой
-- **Автоматическая очистка** - teardown-фаза удаляет тестовые данные после прогона
+- **Users**: every worker registers its own test user and reuses its session.
+- **Browser**: Desktop Chrome.
+- **Isolation**: authenticated tests delete the user's budget data and todos after each test.
+- **Cleanup**: the global teardown deletes all test users (`test_*@example.com`).
+- **Server**: Playwright reuses a dev server on port 8787 (`pnpm preview:e2e`) or starts one.
 
 ##### Структура тестов
 
@@ -45,9 +49,9 @@ pnpm exec tsc --noEmit --project tests/unit/tsconfig.json
 - `tests/e2e/authenticated/` - тесты для аутентифицированных пользователей
   - `budget/` - тесты бюджета и модальных окон
   - `todo/` - тесты задач
-- `tests/e2e/helpers/` - вспомогательные функции (auth, confirmation, budget-setup, wait-for-hydration)
-- `tests/e2e/fixtures.ts` - фикстуры и константы для тестов
-- `tests/e2e/cleanup.teardown.spec.ts` - очистка тестовых данных после прогона
+- `tests/e2e/helpers/` - вспомогательные функции (auth, confirmation, budget-setup, wait-for-hydration, text, users)
+- `tests/e2e/fixtures.ts` - фикстуры Playwright
+- `tests/e2e/global-setup.ts`, `tests/e2e/global-teardown.ts` - подготовка и очистка тестовых данных
 
 ##### Запуск тестов
 
@@ -71,24 +75,18 @@ pnpm run test:e2e:headed
 
 ### Frontend Architecture Principles
 
-#### Server-Side Rendering (SSR) with Complete Data Preloading
-- **No lazy loading** - all required data is fetched and rendered server-side
-- **Full data hydration** on initial page load
-- **Optimized Time to First Byte (TTFB)** and First Contentful Paint (FCP)
-- **SEO-friendly** with complete content available for crawlers
+#### Server-Side Rendering (SSR)
+- Budget and todo data are fetched during SSR and hydrated on the client.
+- Older budget years load on demand.
 
 #### API Calls in SSR Context
 - **useFetch for SSR** - Use `useFetch` for GET requests that need cookie/header forwarding during SSR
 - **$fetch for client operations** - Use `$fetch` for client-only POST/PUT/DELETE operations
 - **Cloudflare Workers compatibility** - `$fetch` doesn't properly forward cookies during SSR in CF Workers
 
-#### Optimistic UI Updates
-The application uses **Optimistic UI** pattern for modal interactions:
-
-- **Parallel state persistence** - UI updates immediately while backend saves asynchronously
-- **No reload required** - frontend state reflects changes instantly
-- **Graceful error handling** - rollback on failure with user notification
-- **Enhanced UX** - zero perceived latency for user interactions
+#### Local State Updates
+- After a successful request the store patches its state with the server response instead of reloading everything.
+- A failed request shows a toast and keeps the data that is already loaded.
 
 #### Dynamic Column Width Synchronization
 Budget timeline implements **responsive column width synchronization**:
@@ -106,8 +104,8 @@ Styles are split into logical CSS files in `app/assets/`:
 - **base.css** - CSS reset and base styles
 - **themes.css** - DaisyUI theme customizations
 - **components.css** - Custom component styles
-- **animations.css** - Keyframe animations (fade-up, pulse, etc.)
-- **transitions.css** - Vue transition definitions (modal-fade, todo-card, etc.)
+- **animations.css** - Keyframe animations
+- **transitions.css** - Vue transition definitions
 - **app.css** - Main entry point that imports all CSS files
 
 ## Tech Stack
@@ -115,7 +113,7 @@ Styles are split into logical CSS files in `app/assets/`:
 - **Framework**: Nuxt 4, Vue 3
 - **Backend**: Nitro, Cloudflare Workers
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
-- **Authentication**: JWT with secure HTTP-only cookies, Google OAuth
+- **Authentication**: random session tokens stored as SHA-256 hashes in D1, HTTP-only cookies, sliding 90-day sessions, Google OAuth
 - **Styling**: Tailwind CSS 4 + DaisyUI 5
 - **Type Safety**: TypeScript 5 with strict mode
 - **Validation**: Zod for runtime type checking
@@ -128,7 +126,7 @@ Styles are split into logical CSS files in `app/assets/`:
 
 ### Prerequisites
 
-- Node.js 20.16.0 (pinned in package.json)
+- Node.js 22.12+ (see `.nvmrc`)
 - pnpm 10+
 - Wrangler CLI (for Cloudflare deployment)
 
@@ -158,50 +156,29 @@ Visit `http://localhost:3000`
 
 ### Environment Variables
 
+Local development reads variables from two files:
+
+- `.env` — read by `nuxt dev` into `process.env`: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `OPENEXCHANGERATES_APP_ID`, `DISABLE_EMAIL_VERIFICATION`.
+- `.dev.vars` — the Cloudflare environment of the Worker: `RESEND_API_KEY`.
+
+On deployed Workers all of them are secrets (`wrangler secret put NAME`). Workers expose secrets through `process.env` because `nodejs_compat` is enabled in `wrangler.toml`.
+
 #### DISABLE_EMAIL_VERIFICATION
 
 Disables mandatory email verification during registration. Useful for development and testing.
 
-**Behavior**:
-- **Disabled** (default, empty or unset): Registration requires email confirmation via verification code
-- **Enabled** (any truthy value): Registration happens immediately without sending a code. User is created with `emailVerified = false`
+- **Unset or empty** (default): registration requires email confirmation via verification code.
+- **Any non-empty value**: registration happens immediately without sending a code. The user is created with `emailVerified = false`.
 
-**Usage**:
-
-```bash
-# In .dev.vars for local development
-DISABLE_EMAIL_VERIFICATION=1
-# or
-DISABLE_EMAIL_VERIFICATION=true
-# or any non-empty value
-
-# Via wrangler for remote environments
-wrangler secret put DISABLE_EMAIL_VERIFICATION
-# Enter any truthy value: 1, true, yes, etc.
-```
-
-**Important**: All users have an `emailVerified` field in the database that indicates whether their email has been verified. This allows requiring verification from users with `emailVerified = false` in the future.
+All users have an `emailVerified` field, so verification can be required later from users who skipped it.
 
 #### Google OAuth
 
-To enable Google OAuth authentication:
-
-```bash
-# In .dev.vars for local development
-GOOGLE_OAUTH_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
-
-# Via wrangler for remote environments
-wrangler secret put GOOGLE_OAUTH_CLIENT_ID
-wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET
-```
-
 **Setup in Google Cloud Console**:
 1. Create a new project or select an existing one
-2. Enable Google+ API
-3. Configure OAuth consent screen
-4. Create OAuth 2.0 credentials (Web application)
-5. Add authorized redirect URI: `https://your-domain.com/api/auth/google-redirect`
+2. Configure OAuth consent screen
+3. Create OAuth 2.0 credentials (Web application)
+4. Add authorized redirect URI: `https://your-domain.com/api/auth/google-redirect`
 
 ## Database Migrations
 
@@ -220,7 +197,7 @@ This project uses **Wrangler D1 migrations** for Cloudflare deployment (NOT Driz
 wrangler d1 migrations create DB migration_name
 ```
 
-This creates a file like `migrations/0003_migration_name.sql`
+This creates a numbered file in `migrations/`.
 
 ### Applying Migrations
 
@@ -252,6 +229,10 @@ pnpm run db:migrate:prod
 - `0013_remove-memo-type-field.sql` - Remove memo type field
 - `0014_rename_memo_to_todo.sql` - Rename memo to todo
 - `0015_add_todo_recurrence.sql` - Add recurring todos support
+- `0016_add_planned_balance_change_to_month.sql` - Add planned balance change to month
+- `0017_create_plan_table.sql` - Move plans into a separate table
+- `0018_allow_null_plan_amount.sql` - Allow plans without an amount
+- `0019_add_comment_to_plan.sql` - Add a comment to plans
 
 ### Database Commands
 
@@ -270,13 +251,15 @@ pnpm run db:migrate:prod
 - **NO Drizzle-kit generate** - we use Wrangler D1 migrations
 - **Manual SQL** - write migrations manually in SQL
 - **Test first** - always test migrations locally before deploying
+- **Never drop a referenced table** - SQLite deletes child rows of `ON DELETE CASCADE` references
 - **Commit migrations** to version control
 
 ## Code Quality
 
-### Проверка качества кода
-
 ```bash
+# Lint, type-check the app and the tests, run unit tests
+pnpm run check
+
 # Run TypeScript checks
 pnpm run typecheck
 
@@ -287,6 +270,8 @@ pnpm run lint
 pnpm run lint:fix
 ```
 
+GitHub Actions runs `pnpm run check` on pushes to `main` and on pull requests. Every deploy script runs it before building.
+
 ### Deploy Commands
 
 ```bash
@@ -295,39 +280,12 @@ pnpm run deploy:test
 
 # Deploy to production
 pnpm run deploy:prod
+
+# Deploy to both
+pnpm run deploy:all
 ```
 
-After deployment:
-- Test: `https://dom-cash-test.{account}.workers.dev`
-- Production: `https://dom-cash.{account}.workers.dev`
-
-## Development Commands
-
-```bash
-# Development
-pnpm run dev            # Start dev server
-pnpm run build          # Build for production
-
-# Database operations
-pnpm run db:migrate     # Apply migrations locally
-pnpm run db:migrate:test # Apply to test DB
-pnpm run db:migrate:prod # Apply to production DB
-pnpm run db:backup      # Backup local DB
-pnpm run db:reset       # Reset local DB
-
-# Deployment
-pnpm run deploy:test    # Deploy to test environment
-pnpm run deploy:prod    # Deploy to production
-
-# Code quality
-pnpm run lint:fix       # Auto-fix ESLint issues
-pnpm run typecheck      # Check TypeScript errors
-
-# E2E testing
-pnpm run test:e2e       # Run all e2e tests
-pnpm run test:e2e:ui    # Run tests with interactive UI
-pnpm run test:e2e:headed # Run tests with visible browser
-```
+Production runs at `https://domcash.ixplo.ai`.
 
 ## Project Structure
 
@@ -343,68 +301,42 @@ pnpm run test:e2e:headed # Run tests with visible browser
 │   ├── plugins/        # Nuxt plugins
 │   └── utils/          # Frontend utilities
 ├── server/
-│   ├── api/            # Thin API handlers (HTTP adapters)
-│   ├── services/       # Pure business logic (fully tested)
+│   ├── api/            # API handlers
+│   ├── services/       # Business logic and database access
 │   ├── db/             # Database schema and connection
-│   ├── utils/          # Backend utilities (auth, validation)
-│   └── schemas/        # Zod validation schemas
+│   ├── middleware/     # Server middleware
+│   └── utils/          # Backend utilities (auth, validation, rates, logging)
 ├── shared/
 │   ├── types/          # Shared TypeScript types
 │   ├── schemas/        # Shared Zod schemas
-│   ├── utils/          # Shared business logic
-│   └── validators/     # Custom validators
+│   └── utils/          # Shared business logic
 ├── i18n/
 │   └── locales/        # Translation files (ru, en)
-├── tests/e2e/
-│   ├── public/         # Tests for public pages
-│   ├── authenticated/  # Tests for authenticated pages
-│   └── helpers/        # Test helpers
+├── tests/
+│   ├── unit/           # Unit tests
+│   └── e2e/            # Playwright tests
 ├── migrations/         # Wrangler D1 SQL migrations
 ```
 
 ## Known Issues
 
-### Real-time Notifications (SSE) Not Production-Ready for Cloudflare Workers
+### Real-time Notifications (SSE) Across Worker Instances
 
-**Problem**: The current SSE (Server-Sent Events) implementation stores active connections and budget subscriptions in global `Map` objects (`server/services/notifications.ts`). This architecture doesn't scale in Cloudflare Workers environment:
-
-- **Memory isolation**: Each Worker instance has isolated memory, connections on Worker A are invisible to Worker B
-- **Request distribution**: Multiple Worker instances handle requests simultaneously, causing notification delivery failures
-- **Lost subscriptions**: User subscriptions and connections will be lost when requests hit different instances
-
-**Impact**:
-- Works correctly in development (single instance)
-- Works for low-traffic deployments (single Worker instance)
-- Fails under load when Cloudflare scales to multiple instances
-
-**Solution Plan**:
-1. Migrate connection state to **Cloudflare Durable Objects** (available on free tier)
-2. Create a Durable Object class to manage SSE connections per user/budget
-3. Update `server/services/notifications.ts` to use Durable Object stubs instead of Maps
-4. Update `server/api/notifications/events.get.ts` to connect through Durable Object
-5. Add Durable Object binding configuration to `wrangler.toml`
-
-**References**:
-- [Cloudflare Durable Objects Docs](https://developers.cloudflare.com/durable-objects/)
-- [Durable Objects Free Tier](https://developers.cloudflare.com/changelog/2025-04-07-durable-objects-free-tier/)
+Active SSE connections and budget subscriptions live in module-level `Map` objects (`server/services/notifications.ts`). Cloudflare may run several Worker instances, and an event created in one instance does not reach connections held by another. This limitation is accepted: delivery is best-effort, and the page still shows fresh data after a reload.
 
 ## Contributing
 
 ### Development Guidelines
 
-1. **Services** - All business logic goes in `server/services/` as pure functions
-2. **Handlers** - Keep API handlers thin, only handle HTTP concerns
-3. **TypeScript** - Follow strict mode, no `any` types
-4. **Code Style** - Use ESLint, follow existing patterns
+1. **Services** - business logic and database access go to `server/services/`
+2. **Handlers** - keep API handlers thin: parse, check access, call a service
+3. **TypeScript** - follow strict mode, no `any` types
+4. **Code Style** - see `AGENTS.md`
 
 ### Before Submitting PR
 
 ```bash
-# Check TypeScript
-pnpm run typecheck
-
-# Fix linting issues
-pnpm run lint:fix
+pnpm run check
 ```
 
 ## Internationalization (i18n)
@@ -448,14 +380,7 @@ const { t } = useI18n()
 
 ## Themes
 
-The application supports multiple DaisyUI themes:
-
-- **light** - Light theme (default)
-- **dark** - Dark theme
-- **autumn** - Warm autumn colors
-- **nord** - Nord color palette
-- **valentine** - Pink/red theme
-- **coffee** - Coffee-inspired dark theme
+The application ships DaisyUI themes defined in `app/assets/themes.css`: kekdark, kekdarker, keklight, keklighter, summerhaze, ritualhabitual, crystalclear, grayscale and grayscaledark. The default `auto` follows the system color scheme.
 
 ### Theme Switching
 
