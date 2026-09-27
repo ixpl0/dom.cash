@@ -6,16 +6,16 @@
       data-testid="recurrence-type-select"
     >
       <option value="none">
-        {{ noneLabel }}
+        {{ t('todo.recurrence.none') }}
       </option>
       <option value="interval">
-        {{ intervalLabel }}
+        {{ t('todo.recurrence.interval') }}
       </option>
       <option value="weekdays">
-        {{ weekdaysLabel }}
+        {{ t('todo.recurrence.weekdays') }}
       </option>
       <option value="dayOfMonth">
-        {{ dayOfMonthLabel }}
+        {{ t('todo.recurrence.dayOfMonth') }}
       </option>
     </select>
 
@@ -37,16 +37,16 @@
         data-testid="recurrence-interval-unit"
       >
         <option value="day">
-          {{ unitDayLabel }}
+          {{ t('todo.recurrence.units.day') }}
         </option>
         <option value="week">
-          {{ unitWeekLabel }}
+          {{ t('todo.recurrence.units.week') }}
         </option>
         <option value="month">
-          {{ unitMonthLabel }}
+          {{ t('todo.recurrence.units.month') }}
         </option>
         <option value="year">
-          {{ unitYearLabel }}
+          {{ t('todo.recurrence.units.year') }}
         </option>
       </select>
     </div>
@@ -76,7 +76,7 @@
       v-if="selectedType === 'dayOfMonth'"
       class="flex items-center gap-2"
     >
-      <span>{{ dayOfMonthPrefix }}</span>
+      <span>{{ t('todo.recurrence.dayOfMonthPrefix') }}</span>
       <input
         v-model.number="dayOfMonthValue"
         type="number"
@@ -85,7 +85,7 @@
         class="input input-bordered w-20"
         data-testid="recurrence-day-of-month"
       >
-      <span>{{ dayOfMonthSuffix }}</span>
+      <span>{{ t('todo.recurrence.dayOfMonthSuffix') }}</span>
     </div>
   </div>
 </template>
@@ -95,20 +95,11 @@ import type { IntervalUnit, RecurrencePattern } from '~~/shared/types/recurrence
 
 interface Props {
   modelValue: RecurrencePattern | null
-  noneLabel: string
-  intervalLabel: string
-  weekdaysLabel: string
-  dayOfMonthLabel: string
-  unitDayLabel: string
-  unitWeekLabel: string
-  unitMonthLabel: string
-  unitYearLabel: string
-  weekdayNames: string[]
-  dayOfMonthPrefix: string
-  dayOfMonthSuffix: string
 }
 
 const props = defineProps<Props>()
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:modelValue': [value: RecurrencePattern | null]
@@ -120,13 +111,19 @@ const intervalUnit = ref<IntervalUnit>('day')
 const selectedWeekdays = ref<number[]>([])
 const dayOfMonthValue = ref(1)
 
-const weekdaysWithIndex = computed(() => {
-  const mondayFirstOrder = [1, 2, 3, 4, 5, 6, 0]
-  return mondayFirstOrder.map((jsIndex, i) => ({
-    day: props.weekdayNames[i] ?? '',
-    jsIndex,
-  }))
-})
+const WEEKDAYS = [
+  { key: 'mon', jsIndex: 1 },
+  { key: 'tue', jsIndex: 2 },
+  { key: 'wed', jsIndex: 3 },
+  { key: 'thu', jsIndex: 4 },
+  { key: 'fri', jsIndex: 5 },
+  { key: 'sat', jsIndex: 6 },
+  { key: 'sun', jsIndex: 0 },
+] as const
+
+const weekdaysWithIndex = computed(() =>
+  WEEKDAYS.map(({ key, jsIndex }) => ({ day: t(`todo.recurrence.weekdayNames.${key}`), jsIndex })),
+)
 
 const arraysEqual = (a: number[], b: number[]) => {
   if (a.length !== b.length) {

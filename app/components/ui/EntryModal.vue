@@ -38,13 +38,6 @@
               :model-value="editingEntry"
               :entry-kind="entryKind"
               :is-saving="isSaving"
-              :description-label="descriptionLabel"
-              :amount-label="amountLabel"
-              :currency-label="currencyLabel"
-              :date-label="dateLabel"
-              :optional-label="optionalLabel"
-              :description-placeholder="descriptionPlaceholder"
-              :amount-placeholder="amountPlaceholder"
               @update:model-value="$emit('update:editingEntry', $event)"
               @save="$emit('saveEdit')"
               @cancel="$emit('cancelEdit')"
@@ -59,7 +52,6 @@
               :date-text="entryKind !== 'balance' ? formatEntryDate(entry) : ''"
               :show-optional="entryKind === 'expense'"
               :is-optional="'isOptional' in entry && entry.isOptional"
-              :optional-label="optionalLabel"
               :is-read-only="isReadOnly"
               :is-deleting="deletingEntryId === entry.id"
               @edit="$emit('startEdit', entry)"
@@ -73,13 +65,6 @@
             :entry-kind="entryKind"
             :is-saving="isAdding"
             :is-new="true"
-            :description-label="descriptionLabel"
-            :amount-label="amountLabel"
-            :currency-label="currencyLabel"
-            :date-label="dateLabel"
-            :optional-label="optionalLabel"
-            :description-placeholder="descriptionPlaceholder"
-            :amount-placeholder="amountPlaceholder"
             @update:model-value="$emit('update:newEntry', $event)"
             @save="$emit('saveNew')"
             @cancel="$emit('cancelNew')"
@@ -93,17 +78,17 @@
           <table class="table text-center min-w-[600px]">
             <thead>
               <tr>
-                <th>{{ descriptionLabel }}</th>
-                <th>{{ amountLabel }}</th>
-                <th>{{ currencyLabel }}</th>
+                <th>{{ t('entry.description') }}</th>
+                <th>{{ t('entry.amount') }}</th>
+                <th>{{ t('entry.currency') }}</th>
                 <th v-if="entryKind !== 'balance'">
-                  {{ dateLabel }}
+                  {{ t('entry.date') }}
                 </th>
                 <th v-if="entryKind === 'expense'">
-                  {{ optionalLabel }}
+                  {{ t('entry.optional') }}
                 </th>
                 <th class="w-1">
-                  {{ actionsLabel }}
+                  {{ t('entry.actions') }}
                 </th>
               </tr>
             </thead>
@@ -117,8 +102,6 @@
                   :model-value="editingEntry"
                   :entry-kind="entryKind"
                   :is-saving="isSaving"
-                  :description-placeholder="descriptionPlaceholder"
-                  :amount-placeholder="amountPlaceholder"
                   @update:model-value="$emit('update:editingEntry', $event)"
                   @save="$emit('saveEdit')"
                   @cancel="$emit('cancelEdit')"
@@ -212,8 +195,6 @@
                 :entry-kind="entryKind"
                 :is-saving="isAdding"
                 :is-new="true"
-                :description-placeholder="descriptionPlaceholder"
-                :amount-placeholder="amountPlaceholder"
                 @update:model-value="$emit('update:newEntry', $event)"
                 @save="$emit('saveNew')"
                 @cancel="$emit('cancelNew')"
@@ -229,7 +210,7 @@
             data-testid="add-entry-button"
             @click="$emit('startNew')"
           >
-            {{ addButtonLabel }}
+            {{ t('entry.addNew') }}
           </button>
         </div>
       </div>
@@ -248,7 +229,7 @@
           data-testid="add-entry-button"
           @click="$emit('startNew')"
         >
-          {{ addButtonLabel }}
+          {{ t('entry.addNew') }}
         </button>
       </div>
     </div>
@@ -274,15 +255,6 @@ export interface UiEntryModalProps {
   isAdding: boolean
   isSaving: boolean
   deletingEntryId: string | null
-  descriptionLabel: string
-  amountLabel: string
-  currencyLabel: string
-  dateLabel: string
-  optionalLabel: string
-  actionsLabel: string
-  addButtonLabel: string
-  descriptionPlaceholder?: string
-  amountPlaceholder?: string
   formatDate: (date: string | null | undefined) => string
   getAmountTooltip?: (entry: BudgetEntry) => string | undefined
   totalAmount?: string
@@ -290,11 +262,11 @@ export interface UiEntryModalProps {
 
 const props = withDefaults(defineProps<UiEntryModalProps>(), {
   isReadOnly: false,
-  descriptionPlaceholder: '',
-  amountPlaceholder: '',
   getAmountTooltip: undefined,
   totalAmount: undefined,
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'close': []

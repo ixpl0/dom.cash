@@ -13,7 +13,6 @@
       :date-text="entryKind !== 'balance' ? formatEntryDate(entry) : ''"
       :show-optional="entryKind === 'expense'"
       :is-optional="entry.isOptional"
-      :optional-label="labels.optional"
       :is-read-only="true"
     />
   </div>
@@ -24,14 +23,14 @@
     <table class="table text-center">
       <thead>
         <tr>
-          <th>{{ labels.description }}</th>
-          <th>{{ labels.amount }}</th>
-          <th>{{ labels.currency }}</th>
+          <th>{{ t('entry.description') }}</th>
+          <th>{{ t('entry.amount') }}</th>
+          <th>{{ t('entry.currency') }}</th>
           <th v-if="entryKind !== 'balance'">
-            {{ labels.date }}
+            {{ t('entry.date') }}
           </th>
           <th v-if="entryKind === 'expense'">
-            {{ labels.optional }}
+            {{ t('entry.optional') }}
           </th>
         </tr>
       </thead>
@@ -79,22 +78,15 @@ export interface EntryTableEntry {
   isOptional?: boolean
 }
 
-export interface EntryTableLabels {
-  description: string
-  amount: string
-  currency: string
-  date: string
-  optional: string
-}
-
 interface Props {
   entries: ReadonlyArray<EntryTableEntry>
   entryKind: EntryKind
-  labels: EntryTableLabels
   formatDate: (date: string | null | undefined) => string
 }
 
 const props = defineProps<Props>()
+
+const { t } = useI18n()
 
 const { isMobileViewport } = useIsMobileViewport()
 const { formatMoney } = useMoneyFormat()

@@ -108,7 +108,6 @@
             <UiYear
               :year="demoData.year"
               :stats="demoData.yearStats"
-              :labels="yearLabels"
               :format-amount="formatDemoAmount"
               :amount-sign="getDemoAmountSign"
             >
@@ -126,7 +125,6 @@
                 :currency-fluctuation-tooltip="t('home.demo.currencyTooltip')"
                 :optional-expenses-tooltip="t('home.demo.optionalTooltip')"
                 :data="month.data"
-                :labels="monthLabels"
                 :is-current-month="index === 0"
                 :is-read-only="true"
                 :can-delete="false"
@@ -200,7 +198,6 @@
           <UiEntryTable
             :entries="demoEntries"
             :entry-kind="'expense'"
-            :labels="entryTableLabels"
             :format-date="formatDemoDate"
           />
         </div>
@@ -310,9 +307,9 @@
 </template>
 
 <script setup lang="ts">
-import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
-import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
-import type { EntryTableEntry, EntryTableLabels } from '~/components/ui/EntryTable.vue'
+import type { UiMonthData } from '~/components/ui/Month.vue'
+import type { UiYearStats } from '~/components/ui/Year.vue'
+import type { EntryTableEntry } from '~/components/ui/EntryTable.vue'
 import type { ChartOption, ChartSeriesConfig } from '~/composables/shared/useChartConfig'
 import { formatPlainDate } from '~~/shared/utils/shared/dates'
 
@@ -330,71 +327,6 @@ const formatDemoAmount = (amount: number): string => {
 }
 
 const getDemoAmountSign = (amount: number): number => getRoundedMoneySign(amount, DEMO_CURRENCY)
-
-const monthLabels = computed((): UiMonthLabels => ({
-  deleteMonth: t('budget.month.deleteMonth'),
-  addPlan: t('budget.month.addPlan'),
-  balance: t('budget.year.balance'),
-  income: t('budget.year.income'),
-  majorExpenses: `${t('budget.year.majorExpensesLine1')} ${t('budget.year.majorExpensesLine2')}`,
-  pocketExpenses: `${t('budget.year.pocketExpensesLine1')} ${t('budget.year.pocketExpensesLine2')}`,
-  allExpenses: t('budget.year.allExpenses'),
-  balanceChange: `${t('budget.year.balanceChangeLine1')} ${t('budget.year.balanceChangeLine2')}`,
-  currencyFluctuations: `${t('budget.year.currencyFluctuationsLine1')} ${t('budget.year.currencyFluctuationsLine2')}`,
-  optionalExpenses: `${t('budget.year.optionalExpensesLine1')} ${t('budget.year.optionalExpensesLine2')}`,
-  planned: `${t('budget.year.plannedLine1')} ${t('budget.year.plannedLine2')}`,
-  expectedBalance: `${t('budget.year.expectedBalanceLine1')} ${t('budget.year.expectedBalanceLine2')}`,
-  planComment: t('budget.year.planComment'),
-}))
-
-const yearLabels = computed((): UiYearLabels => ({
-  balance: t('budget.year.balance'),
-  balanceTooltip: t('budget.year.balanceTooltip'),
-  averageBalance: t('budget.year.averageBalance'),
-  income: t('budget.year.income'),
-  incomeTooltip: t('budget.year.incomeTooltip'),
-  totalIncome: t('budget.year.totalIncome'),
-  averageIncome: t('budget.year.averageIncome'),
-  majorExpensesLine1: t('budget.year.majorExpensesLine1'),
-  majorExpensesLine2: t('budget.year.majorExpensesLine2'),
-  majorExpensesTooltip: t('budget.year.majorExpensesTooltip'),
-  totalMajorExpenses: t('budget.year.totalMajorExpenses'),
-  averageMajorExpenses: t('budget.year.averageMajorExpenses'),
-  pocketExpensesLine1: t('budget.year.pocketExpensesLine1'),
-  pocketExpensesLine2: t('budget.year.pocketExpensesLine2'),
-  pocketExpensesFormula: t('budget.year.pocketExpensesFormula'),
-  totalPocketExpenses: t('budget.year.totalPocketExpenses'),
-  averagePocketExpenses: t('budget.year.averagePocketExpenses'),
-  allExpenses: t('budget.year.allExpenses'),
-  allExpensesFormula: t('budget.year.allExpensesFormula'),
-  totalAllExpenses: t('budget.year.totalAllExpenses'),
-  averageAllExpenses: t('budget.year.averageAllExpenses'),
-  balanceChangeLine1: t('budget.year.balanceChangeLine1'),
-  balanceChangeLine2: t('budget.year.balanceChangeLine2'),
-  balanceChangeFormula: t('budget.year.balanceChangeFormula'),
-  totalBalanceChange: t('budget.year.totalBalanceChange'),
-  averageBalanceChange: t('budget.year.averageBalanceChange'),
-  currencyFluctuationsLine1: t('budget.year.currencyFluctuationsLine1'),
-  currencyFluctuationsLine2: t('budget.year.currencyFluctuationsLine2'),
-  currencyFluctuationsFormula: t('budget.year.currencyFluctuationsFormula'),
-  totalCurrencyFluctuations: t('budget.year.totalCurrencyFluctuations'),
-  averageCurrencyFluctuations: t('budget.year.averageCurrencyFluctuations'),
-  optionalExpensesLine1: t('budget.year.optionalExpensesLine1'),
-  optionalExpensesLine2: t('budget.year.optionalExpensesLine2'),
-  optionalExpensesTooltip: t('budget.year.optionalExpensesTooltip'),
-  totalOptionalExpenses: t('budget.year.totalOptionalExpenses'),
-  averageOptionalExpenses: t('budget.year.averageOptionalExpenses'),
-  plannedLine1: t('budget.year.plannedLine1'),
-  plannedLine2: t('budget.year.plannedLine2'),
-  plannedFormula: t('budget.year.plannedFormula'),
-  totalPlanned: t('budget.year.totalPlanned'),
-  totalPlannedDiff: t('budget.year.totalPlannedDiff'),
-  expectedBalanceLine1: t('budget.year.expectedBalanceLine1'),
-  expectedBalanceLine2: t('budget.year.expectedBalanceLine2'),
-  expectedBalanceTooltip: t('budget.year.expectedBalanceTooltip'),
-  endOfYearExpectedBalance: t('budget.year.endOfYearExpectedBalance'),
-  planComment: t('budget.year.planComment'),
-}))
 
 interface DemoMonth {
   monthIndex: number
@@ -534,14 +466,6 @@ const demoChartOption = computed((): ChartOption => {
     yAxisFormatter: (value: number) => formatMoneyRounded(value, DEMO_CURRENCY),
   })
 })
-
-const entryTableLabels = computed((): EntryTableLabels => ({
-  description: t('entry.description'),
-  amount: t('entry.amount'),
-  currency: t('entry.currency'),
-  date: t('entry.date'),
-  optional: t('entry.optional'),
-}))
 
 const demoEntries = computed((): EntryTableEntry[] => {
   const currentDate = new Date()

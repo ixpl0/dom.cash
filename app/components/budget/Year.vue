@@ -2,7 +2,6 @@
   <UiYear
     :year="year"
     :stats="yearStats"
-    :labels="labels"
     :is-planning-mode="budgetStore.isPlanningMode"
     :format-amount="formatAmountForDisplay"
     :amount-sign="getAmountSignForDisplay"
@@ -19,7 +18,7 @@
 import type { MonthData } from '~~/shared/types/budget'
 import { createMonthId } from '~~/shared/utils/budget/budget-calculations'
 import { useBudgetStore } from '~/stores/budget/budget'
-import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
+import type { UiYearStats } from '~/components/ui/Year.vue'
 
 interface Props {
   year: number
@@ -28,7 +27,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { t } = useI18n()
 const { formatMoneyRounded, getRoundedMoneySign } = useMoneyFormat()
 const budgetStore = useBudgetStore()
 
@@ -82,55 +80,6 @@ const yearStats = computed((): UiYearStats => {
     endOfYearExpectedBalance: summary.endOfYearExpectedBalance,
   }
 })
-
-const labels = computed((): UiYearLabels => ({
-  balance: t('budget.year.balance'),
-  balanceTooltip: t('budget.year.balanceTooltip'),
-  averageBalance: t('budget.year.averageBalance'),
-  income: t('budget.year.income'),
-  incomeTooltip: t('budget.year.incomeTooltip'),
-  totalIncome: t('budget.year.totalIncome'),
-  averageIncome: t('budget.year.averageIncome'),
-  majorExpensesLine1: t('budget.year.majorExpensesLine1'),
-  majorExpensesLine2: t('budget.year.majorExpensesLine2'),
-  majorExpensesTooltip: t('budget.year.majorExpensesTooltip'),
-  totalMajorExpenses: t('budget.year.totalMajorExpenses'),
-  averageMajorExpenses: t('budget.year.averageMajorExpenses'),
-  pocketExpensesLine1: t('budget.year.pocketExpensesLine1'),
-  pocketExpensesLine2: t('budget.year.pocketExpensesLine2'),
-  pocketExpensesFormula: t('budget.year.pocketExpensesFormula'),
-  totalPocketExpenses: t('budget.year.totalPocketExpenses'),
-  averagePocketExpenses: t('budget.year.averagePocketExpenses'),
-  allExpenses: t('budget.year.allExpenses'),
-  allExpensesFormula: t('budget.year.allExpensesFormula'),
-  totalAllExpenses: t('budget.year.totalAllExpenses'),
-  averageAllExpenses: t('budget.year.averageAllExpenses'),
-  balanceChangeLine1: t('budget.year.balanceChangeLine1'),
-  balanceChangeLine2: t('budget.year.balanceChangeLine2'),
-  balanceChangeFormula: t('budget.year.balanceChangeFormula'),
-  totalBalanceChange: t('budget.year.totalBalanceChange'),
-  averageBalanceChange: t('budget.year.averageBalanceChange'),
-  currencyFluctuationsLine1: t('budget.year.currencyFluctuationsLine1'),
-  currencyFluctuationsLine2: t('budget.year.currencyFluctuationsLine2'),
-  currencyFluctuationsFormula: t('budget.year.currencyFluctuationsFormula'),
-  totalCurrencyFluctuations: t('budget.year.totalCurrencyFluctuations'),
-  averageCurrencyFluctuations: t('budget.year.averageCurrencyFluctuations'),
-  optionalExpensesLine1: t('budget.year.optionalExpensesLine1'),
-  optionalExpensesLine2: t('budget.year.optionalExpensesLine2'),
-  optionalExpensesTooltip: t('budget.year.optionalExpensesTooltip'),
-  totalOptionalExpenses: t('budget.year.totalOptionalExpenses'),
-  averageOptionalExpenses: t('budget.year.averageOptionalExpenses'),
-  plannedLine1: t('budget.year.plannedLine1'),
-  plannedLine2: t('budget.year.plannedLine2'),
-  plannedFormula: t('budget.year.plannedFormula'),
-  totalPlanned: t('budget.year.totalPlanned'),
-  totalPlannedDiff: t('budget.year.totalPlannedDiff'),
-  expectedBalanceLine1: t('budget.year.expectedBalanceLine1'),
-  expectedBalanceLine2: t('budget.year.expectedBalanceLine2'),
-  expectedBalanceTooltip: t('budget.year.expectedBalanceTooltip'),
-  endOfYearExpectedBalance: t('budget.year.endOfYearExpectedBalance'),
-  planComment: t('budget.year.planComment'),
-}))
 
 const formatAmountForDisplay = (amount: number): string => {
   return formatMoneyRounded(amount, budgetStore.effectiveMainCurrency)

@@ -4,7 +4,7 @@
       <input
         :value="modelValue.description"
         type="text"
-        :placeholder="isNew ? descriptionPlaceholder : undefined"
+        :placeholder="isNew ? t('entryEdit.descriptionPlaceholder') : undefined"
         class="input input-bordered w-full"
         data-testid="entry-description-input"
         @input="updateField('description', ($event.target as HTMLInputElement).value)"
@@ -17,7 +17,7 @@
         type="number"
         min="0"
         step="0.01"
-        :placeholder="isNew ? amountPlaceholder : undefined"
+        :placeholder="isNew ? t('entryEdit.amountPlaceholder') : undefined"
         class="input input-bordered w-full [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         data-testid="entry-amount-input"
         @input="updateField('amount', parseFloat(($event.target as HTMLInputElement).value) || 0)"
@@ -93,15 +93,13 @@ export interface UiEntryEditRowProps {
   entryKind: EntryKind
   isSaving: boolean
   isNew?: boolean
-  descriptionPlaceholder?: string
-  amountPlaceholder?: string
 }
 
 const props = withDefaults(defineProps<UiEntryEditRowProps>(), {
   isNew: false,
-  descriptionPlaceholder: '',
-  amountPlaceholder: '',
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:modelValue': [value: EntryFormData]

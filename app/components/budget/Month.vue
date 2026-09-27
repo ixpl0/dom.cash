@@ -14,7 +14,6 @@
     :planned-balance-change-tooltip="plannedBalanceChangeTooltip"
     :expected-balance-tooltip="expectedBalanceTooltip"
     :data="uiMonthData"
-    :labels="labels"
     :is-current-month="isCurrentMonthValue"
     :is-read-only="isReadOnly"
     :can-delete="canDeleteMonth"
@@ -36,7 +35,7 @@ import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/budge
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
-import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
+import type { UiMonthData } from '~/components/ui/Month.vue'
 
 interface Props {
   monthId: string
@@ -98,22 +97,6 @@ const uiMonthData = computed((): UiMonthData => ({
   plannedVsActualDiff: monthData.value.plannedVsActualDiff,
   expectedBalance: monthData.value.expectedBalance,
   planComment: monthData.value.planComment,
-}))
-
-const labels = computed((): UiMonthLabels => ({
-  deleteMonth: t('budget.month.deleteMonth'),
-  addPlan: t('budget.month.addPlan'),
-  balance: t('budget.year.balance'),
-  income: t('budget.year.income'),
-  majorExpenses: `${t('budget.year.majorExpensesLine1')} ${t('budget.year.majorExpensesLine2')}`,
-  pocketExpenses: `${t('budget.year.pocketExpensesLine1')} ${t('budget.year.pocketExpensesLine2')}`,
-  allExpenses: t('budget.year.allExpenses'),
-  balanceChange: `${t('budget.year.balanceChangeLine1')} ${t('budget.year.balanceChangeLine2')}`,
-  currencyFluctuations: `${t('budget.year.currencyFluctuationsLine1')} ${t('budget.year.currencyFluctuationsLine2')}`,
-  optionalExpenses: `${t('budget.year.optionalExpensesLine1')} ${t('budget.year.optionalExpensesLine2')}`,
-  planned: `${t('budget.year.plannedLine1')} ${t('budget.year.plannedLine2')}`,
-  expectedBalance: `${t('budget.year.expectedBalanceLine1')} ${t('budget.year.expectedBalanceLine2')}`,
-  planComment: t('budget.year.planComment'),
 }))
 
 const monthBadgeTooltip = computed(() => {

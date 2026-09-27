@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-3 rounded-box bg-base-200 p-3">
     <label class="flex flex-col gap-1">
-      <span class="label-text">{{ descriptionLabel }}</span>
+      <span class="label-text">{{ t('entry.description') }}</span>
       <input
         :value="modelValue.description"
         type="text"
-        :placeholder="isNew ? descriptionPlaceholder : undefined"
+        :placeholder="isNew ? t('entryEdit.descriptionPlaceholder') : undefined"
         class="input input-bordered w-full"
         data-testid="entry-description-input"
         @input="updateField('description', ($event.target as HTMLInputElement).value)"
@@ -14,13 +14,13 @@
     </label>
 
     <label class="flex flex-col gap-1">
-      <span class="label-text">{{ amountLabel }}</span>
+      <span class="label-text">{{ t('entry.amount') }}</span>
       <input
         :value="modelValue.amount"
         type="number"
         min="0"
         step="0.01"
-        :placeholder="isNew ? amountPlaceholder : undefined"
+        :placeholder="isNew ? t('entryEdit.amountPlaceholder') : undefined"
         class="input input-bordered w-full [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         data-testid="entry-amount-input"
         @input="updateField('amount', parseFloat(($event.target as HTMLInputElement).value) || 0)"
@@ -29,7 +29,7 @@
     </label>
 
     <div class="flex flex-col gap-1">
-      <span class="label-text">{{ currencyLabel }}</span>
+      <span class="label-text">{{ t('entry.currency') }}</span>
       <UiCurrencyPicker
         :model-value="modelValue.currency"
         class="w-full"
@@ -41,7 +41,7 @@
       v-if="entryKind !== 'balance'"
       class="flex flex-col gap-1"
     >
-      <span class="label-text">{{ dateLabel }}</span>
+      <span class="label-text">{{ t('entry.date') }}</span>
       <input
         :value="modelValue.date"
         type="date"
@@ -62,7 +62,7 @@
         data-testid="entry-optional-checkbox"
         @input="updateField('isOptional', ($event.target as HTMLInputElement).checked)"
       >
-      <span class="label-text">{{ optionalLabel }}</span>
+      <span class="label-text">{{ t('entry.optional') }}</span>
     </label>
 
     <div class="flex justify-end gap-2">
@@ -106,21 +106,14 @@ interface Props {
   modelValue: EntryFormData
   entryKind: EntryKind
   isSaving: boolean
-  descriptionLabel: string
-  amountLabel: string
-  currencyLabel: string
-  dateLabel: string
-  optionalLabel: string
   isNew?: boolean
-  descriptionPlaceholder?: string
-  amountPlaceholder?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isNew: false,
-  descriptionPlaceholder: '',
-  amountPlaceholder: '',
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:modelValue': [value: EntryFormData]

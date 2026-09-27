@@ -46,7 +46,7 @@
             name="heroicons:check"
             size="16"
           />
-          {{ optionalLabel }}
+          {{ t('entry.optional') }}
         </span>
       </div>
 
@@ -96,7 +96,6 @@ interface Props {
   dateText?: string
   showOptional?: boolean
   isOptional?: boolean
-  optionalLabel?: string
   isReadOnly?: boolean
   isDeleting?: boolean
 }
@@ -106,10 +105,11 @@ const props = withDefaults(defineProps<Props>(), {
   dateText: '',
   showOptional: false,
   isOptional: false,
-  optionalLabel: '',
   isReadOnly: false,
   isDeleting: false,
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   edit: []

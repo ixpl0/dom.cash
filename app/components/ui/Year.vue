@@ -40,15 +40,15 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-                :data-tip="labels.balanceTooltip"
+                :data-tip="t('budget.year.balanceTooltip')"
               >
-                {{ labels.balance }}
+                {{ t('budget.year.balance') }}
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.averageBalance, 'text-primary', 'text-base-content')"
-                  :data-tip="labels.averageBalance"
+                  :data-tip="t('budget.year.averageBalance')"
                   data-testid="year-average-balance"
                 >
                   <div class="font-bold">
@@ -66,15 +66,15 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-                :data-tip="labels.incomeTooltip"
+                :data-tip="t('budget.year.incomeTooltip')"
               >
-                {{ labels.income }}
+                {{ t('budget.year.income') }}
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalIncome, 'text-success', 'text-base-content')"
-                  :data-tip="labels.totalIncome"
+                  :data-tip="t('budget.year.totalIncome')"
                   data-testid="year-total-income"
                 >
                   <div class="font-bold">
@@ -84,7 +84,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averageIncome, 'text-success/80', 'text-base-content/80', 'text-base-content/80')"
-                  :data-tip="labels.averageIncome"
+                  :data-tip="t('budget.year.averageIncome')"
                   data-testid="year-average-income"
                 >
                   {{ formatAmount(stats.averageIncome) }}
@@ -100,16 +100,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.majorExpensesTooltip"
+                :data-tip="t('budget.year.majorExpensesTooltip')"
               >
-                <span>{{ labels.majorExpensesLine1 }}</span>
-                <span>{{ labels.majorExpensesLine2 }}</span>
+                <span>{{ t('budget.year.majorExpensesLine1') }}</span>
+                <span>{{ t('budget.year.majorExpensesLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalExpenses, 'text-error', 'text-base-content')"
-                  :data-tip="labels.totalMajorExpenses"
+                  :data-tip="t('budget.year.totalMajorExpenses')"
                   data-testid="year-total-expenses"
                 >
                   <div class="font-bold">
@@ -119,7 +119,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averageExpenses, 'text-error/80', 'text-base-content/80', 'text-base-content/80')"
-                  :data-tip="labels.averageMajorExpenses"
+                  :data-tip="t('budget.year.averageMajorExpenses')"
                   data-testid="year-average-expenses"
                 >
                   {{ formatAmount(stats.averageExpenses) }}
@@ -135,16 +135,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.pocketExpensesFormula"
+                :data-tip="t('budget.year.pocketExpensesFormula')"
               >
-                <span>{{ labels.pocketExpensesLine1 }}</span>
-                <span>{{ labels.pocketExpensesLine2 }}</span>
+                <span>{{ t('budget.year.pocketExpensesLine1') }}</span>
+                <span>{{ t('budget.year.pocketExpensesLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalPocketExpenses, 'text-error', 'text-warning')"
-                  :data-tip="labels.totalPocketExpenses"
+                  :data-tip="t('budget.year.totalPocketExpenses')"
                   data-testid="year-total-pocket-expenses"
                 >
                   <div class="font-bold">
@@ -154,7 +154,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averagePocketExpenses, 'text-error/80', 'text-warning/80', 'text-base-content/80')"
-                  :data-tip="labels.averagePocketExpenses"
+                  :data-tip="t('budget.year.averagePocketExpenses')"
                   data-testid="year-average-pocket-expenses"
                 >
                   {{ formatAmount(stats.averagePocketExpenses) }}
@@ -170,15 +170,15 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex justify-center"
-                :data-tip="labels.allExpensesFormula"
+                :data-tip="t('budget.year.allExpensesFormula')"
               >
-                {{ labels.allExpenses }}
+                {{ t('budget.year.allExpenses') }}
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalAllExpenses, 'text-error', 'text-warning')"
-                  :data-tip="labels.totalAllExpenses"
+                  :data-tip="t('budget.year.totalAllExpenses')"
                   data-testid="year-total-all-expenses"
                 >
                   <div class="font-bold">
@@ -188,7 +188,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averageAllExpenses, 'text-error/80', 'text-warning/80', 'text-base-content/80')"
-                  :data-tip="labels.averageAllExpenses"
+                  :data-tip="t('budget.year.averageAllExpenses')"
                   data-testid="year-average-all-expenses"
                 >
                   {{ formatAmount(stats.averageAllExpenses) }}
@@ -201,16 +201,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.balanceChangeFormula"
+                :data-tip="t('budget.year.balanceChangeFormula')"
               >
-                <span>{{ labels.balanceChangeLine1 }}</span>
-                <span>{{ labels.balanceChangeLine2 }}</span>
+                <span>{{ t('budget.year.balanceChangeLine1') }}</span>
+                <span>{{ t('budget.year.balanceChangeLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalBalanceChange, 'text-success', 'text-error')"
-                  :data-tip="labels.totalBalanceChange"
+                  :data-tip="t('budget.year.totalBalanceChange')"
                   data-testid="year-total-balance-change"
                 >
                   <div class="font-bold">
@@ -220,7 +220,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averageBalanceChange, 'text-success/80', 'text-error/80', 'text-base-content/80')"
-                  :data-tip="labels.averageBalanceChange"
+                  :data-tip="t('budget.year.averageBalanceChange')"
                   data-testid="year-average-balance-change"
                 >
                   {{ formatAmount(stats.averageBalanceChange) }}
@@ -236,16 +236,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.currencyFluctuationsFormula"
+                :data-tip="t('budget.year.currencyFluctuationsFormula')"
               >
-                <span>{{ labels.currencyFluctuationsLine1 }}</span>
-                <span>{{ labels.currencyFluctuationsLine2 }}</span>
+                <span>{{ t('budget.year.currencyFluctuationsLine1') }}</span>
+                <span>{{ t('budget.year.currencyFluctuationsLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalCurrencyProfitLoss, 'text-success', 'text-error')"
-                  :data-tip="labels.totalCurrencyFluctuations"
+                  :data-tip="t('budget.year.totalCurrencyFluctuations')"
                   data-testid="year-total-currency-profit-loss"
                 >
                   <div class="font-bold">
@@ -255,7 +255,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averageCurrencyProfitLoss, 'text-success/80', 'text-error/80', 'text-base-content/80')"
-                  :data-tip="labels.averageCurrencyFluctuations"
+                  :data-tip="t('budget.year.averageCurrencyFluctuations')"
                   data-testid="year-average-currency-profit-loss"
                 >
                   {{ formatAmount(stats.averageCurrencyProfitLoss) }}
@@ -271,16 +271,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.optionalExpensesTooltip"
+                :data-tip="t('budget.year.optionalExpensesTooltip')"
               >
-                <span>{{ labels.optionalExpensesLine1 }}</span>
-                <span>{{ labels.optionalExpensesLine2 }}</span>
+                <span>{{ t('budget.year.optionalExpensesLine1') }}</span>
+                <span>{{ t('budget.year.optionalExpensesLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalOptionalExpenses, 'text-error', 'text-base-content')"
-                  :data-tip="labels.totalOptionalExpenses"
+                  :data-tip="t('budget.year.totalOptionalExpenses')"
                   data-testid="year-total-optional-expenses"
                 >
                   <div class="font-bold">
@@ -290,7 +290,7 @@
                 <div
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.averageOptionalExpenses, 'text-error/80', 'text-base-content/80', 'text-base-content/80')"
-                  :data-tip="labels.averageOptionalExpenses"
+                  :data-tip="t('budget.year.averageOptionalExpenses')"
                   data-testid="year-average-optional-expenses"
                 >
                   {{ formatAmount(stats.averageOptionalExpenses) }}
@@ -306,16 +306,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.plannedFormula"
+                :data-tip="t('budget.year.plannedFormula')"
               >
-                <span>{{ labels.plannedLine1 }}</span>
-                <span>{{ labels.plannedLine2 }}</span>
+                <span>{{ t('budget.year.plannedLine1') }}</span>
+                <span>{{ t('budget.year.plannedLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.totalPlannedBalanceChange, 'text-info', 'text-warning')"
-                  :data-tip="labels.totalPlanned"
+                  :data-tip="t('budget.year.totalPlanned')"
                   data-testid="year-total-planned"
                 >
                   <div class="font-bold">
@@ -326,7 +326,7 @@
                   v-if="stats.plannedDiffMonthCount > 0"
                   class="text-sm tooltip tooltip-top"
                   :class="signedValueClass(stats.totalPlannedVsActualDiff, 'text-success', 'text-error', 'text-base-content/80')"
-                  :data-tip="labels.totalPlannedDiff"
+                  :data-tip="t('budget.year.totalPlannedDiff')"
                   data-testid="year-total-planned-diff"
                 >
                   {{ amountSign(stats.totalPlannedVsActualDiff) > 0 ? '+' : '' }}{{ formatAmount(stats.totalPlannedVsActualDiff) }}
@@ -342,16 +342,16 @@
             <div class="column-content w-fit whitespace-nowrap overflow-visible mx-auto text-center">
               <div
                 class="text-sm text-base-content/70 font-semibold tooltip tooltip-top h-12 flex flex-col items-center"
-                :data-tip="labels.expectedBalanceTooltip"
+                :data-tip="t('budget.year.expectedBalanceTooltip')"
               >
-                <span>{{ labels.expectedBalanceLine1 }}</span>
-                <span>{{ labels.expectedBalanceLine2 }}</span>
+                <span>{{ t('budget.year.expectedBalanceLine1') }}</span>
+                <span>{{ t('budget.year.expectedBalanceLine2') }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <div
                   class="tooltip tooltip-top"
                   :class="signedValueClass(stats.endOfYearExpectedBalance, 'text-primary', 'text-error')"
-                  :data-tip="labels.endOfYearExpectedBalance"
+                  :data-tip="t('budget.year.endOfYearExpectedBalance')"
                   data-testid="year-end-expected-balance"
                 >
                   <div class="font-bold">
@@ -368,7 +368,7 @@
           >
             <div class="column-content w-fit max-w-xs mx-auto px-2 text-center">
               <div class="text-sm text-base-content/70 font-semibold h-12 flex items-center justify-center">
-                {{ labels.planComment }}
+                {{ t('budget.year.planComment') }}
               </div>
             </div>
           </div>
@@ -414,59 +414,9 @@ export interface UiYearStats {
   endOfYearExpectedBalance: number | null
 }
 
-export interface UiYearLabels {
-  balance: string
-  balanceTooltip: string
-  averageBalance: string
-  income: string
-  incomeTooltip: string
-  totalIncome: string
-  averageIncome: string
-  majorExpensesLine1: string
-  majorExpensesLine2: string
-  majorExpensesTooltip: string
-  totalMajorExpenses: string
-  averageMajorExpenses: string
-  pocketExpensesLine1: string
-  pocketExpensesLine2: string
-  pocketExpensesFormula: string
-  totalPocketExpenses: string
-  averagePocketExpenses: string
-  allExpenses: string
-  allExpensesFormula: string
-  totalAllExpenses: string
-  averageAllExpenses: string
-  balanceChangeLine1: string
-  balanceChangeLine2: string
-  balanceChangeFormula: string
-  totalBalanceChange: string
-  averageBalanceChange: string
-  currencyFluctuationsLine1: string
-  currencyFluctuationsLine2: string
-  currencyFluctuationsFormula: string
-  totalCurrencyFluctuations: string
-  averageCurrencyFluctuations: string
-  optionalExpensesLine1: string
-  optionalExpensesLine2: string
-  optionalExpensesTooltip: string
-  totalOptionalExpenses: string
-  averageOptionalExpenses: string
-  plannedLine1: string
-  plannedLine2: string
-  plannedFormula: string
-  totalPlanned: string
-  totalPlannedDiff: string
-  expectedBalanceLine1: string
-  expectedBalanceLine2: string
-  expectedBalanceTooltip: string
-  endOfYearExpectedBalance: string
-  planComment: string
-}
-
 interface Props {
   year: number
   stats: UiYearStats
-  labels: UiYearLabels
   formatAmount: (amount: number) => string
   amountSign: (amount: number) => number
   isPlanningMode?: boolean
@@ -475,6 +425,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   isPlanningMode: false,
 })
+
+const { t } = useI18n()
 
 const { isMobileViewport } = useIsMobileViewport()
 
@@ -507,7 +459,7 @@ const signedValueClass = (
 const mobileStats = computed((): YearStatItem[] => {
   const balanceStat: YearStatItem = {
     key: 'balance',
-    label: props.labels.balance,
+    label: t('budget.year.balance'),
     valueText: props.formatAmount(props.stats.averageBalance),
     valueClass: signedValueClass(props.stats.averageBalance, 'text-primary', 'text-primary'),
     testId: 'year-average-balance',
@@ -515,7 +467,7 @@ const mobileStats = computed((): YearStatItem[] => {
 
   const balanceChangeStat: YearStatItem = {
     key: 'balanceChange',
-    label: `${props.labels.balanceChangeLine1} ${props.labels.balanceChangeLine2}`,
+    label: `${t('budget.year.balanceChangeLine1')} ${t('budget.year.balanceChangeLine2')}`,
     valueText: props.formatAmount(props.stats.totalBalanceChange),
     valueClass: signedValueClass(props.stats.totalBalanceChange, 'text-success', 'text-error'),
     secondaryText: props.formatAmount(props.stats.averageBalanceChange),
@@ -529,7 +481,7 @@ const mobileStats = computed((): YearStatItem[] => {
       balanceChangeStat,
       {
         key: 'planned',
-        label: `${props.labels.plannedLine1} ${props.labels.plannedLine2}`,
+        label: `${t('budget.year.plannedLine1')} ${t('budget.year.plannedLine2')}`,
         valueText: props.stats.plannedMonthCount > 0 ? props.formatAmount(props.stats.totalPlannedBalanceChange) : '—',
         valueClass: signedValueClass(props.stats.totalPlannedBalanceChange, 'text-info', 'text-warning'),
         secondaryText: props.stats.plannedDiffMonthCount > 0
@@ -540,7 +492,7 @@ const mobileStats = computed((): YearStatItem[] => {
       },
       {
         key: 'expectedBalance',
-        label: `${props.labels.expectedBalanceLine1} ${props.labels.expectedBalanceLine2}`,
+        label: `${t('budget.year.expectedBalanceLine1')} ${t('budget.year.expectedBalanceLine2')}`,
         valueText: props.stats.endOfYearExpectedBalance !== null ? props.formatAmount(props.stats.endOfYearExpectedBalance) : '—',
         valueClass: signedValueClass(props.stats.endOfYearExpectedBalance, 'text-primary', 'text-error'),
         testId: 'year-end-expected-balance',
@@ -552,7 +504,7 @@ const mobileStats = computed((): YearStatItem[] => {
     balanceStat,
     {
       key: 'income',
-      label: props.labels.income,
+      label: t('budget.year.income'),
       valueText: props.formatAmount(props.stats.totalIncome),
       valueClass: signedValueClass(props.stats.totalIncome, 'text-success', 'text-success'),
       secondaryText: props.formatAmount(props.stats.averageIncome),
@@ -561,7 +513,7 @@ const mobileStats = computed((): YearStatItem[] => {
     },
     {
       key: 'majorExpenses',
-      label: `${props.labels.majorExpensesLine1} ${props.labels.majorExpensesLine2}`,
+      label: `${t('budget.year.majorExpensesLine1')} ${t('budget.year.majorExpensesLine2')}`,
       valueText: props.formatAmount(props.stats.totalExpenses),
       valueClass: signedValueClass(props.stats.totalExpenses, 'text-error', 'text-error'),
       secondaryText: props.formatAmount(props.stats.averageExpenses),
@@ -570,7 +522,7 @@ const mobileStats = computed((): YearStatItem[] => {
     },
     {
       key: 'pocketExpenses',
-      label: `${props.labels.pocketExpensesLine1} ${props.labels.pocketExpensesLine2}`,
+      label: `${t('budget.year.pocketExpensesLine1')} ${t('budget.year.pocketExpensesLine2')}`,
       valueText: props.formatAmount(props.stats.totalPocketExpenses),
       valueClass: signedValueClass(props.stats.totalPocketExpenses, 'text-error', 'text-warning'),
       secondaryText: props.formatAmount(props.stats.averagePocketExpenses),
@@ -579,7 +531,7 @@ const mobileStats = computed((): YearStatItem[] => {
     },
     {
       key: 'allExpenses',
-      label: props.labels.allExpenses,
+      label: t('budget.year.allExpenses'),
       valueText: props.formatAmount(props.stats.totalAllExpenses),
       valueClass: signedValueClass(props.stats.totalAllExpenses, 'text-error', 'text-warning'),
       secondaryText: props.formatAmount(props.stats.averageAllExpenses),
@@ -589,7 +541,7 @@ const mobileStats = computed((): YearStatItem[] => {
     balanceChangeStat,
     {
       key: 'currencyFluctuations',
-      label: `${props.labels.currencyFluctuationsLine1} ${props.labels.currencyFluctuationsLine2}`,
+      label: `${t('budget.year.currencyFluctuationsLine1')} ${t('budget.year.currencyFluctuationsLine2')}`,
       valueText: props.formatAmount(props.stats.totalCurrencyProfitLoss),
       valueClass: signedValueClass(props.stats.totalCurrencyProfitLoss, 'text-success', 'text-error'),
       secondaryText: props.formatAmount(props.stats.averageCurrencyProfitLoss),
@@ -598,7 +550,7 @@ const mobileStats = computed((): YearStatItem[] => {
     },
     {
       key: 'optionalExpenses',
-      label: `${props.labels.optionalExpensesLine1} ${props.labels.optionalExpensesLine2}`,
+      label: `${t('budget.year.optionalExpensesLine1')} ${t('budget.year.optionalExpensesLine2')}`,
       valueText: props.formatAmount(props.stats.totalOptionalExpenses),
       valueClass: signedValueClass(props.stats.totalOptionalExpenses, 'text-error', 'text-error'),
       secondaryText: props.formatAmount(props.stats.averageOptionalExpenses),

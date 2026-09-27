@@ -7,7 +7,7 @@
   >
     <div class="flex items-center justify-between mb-4">
       <h2 class="card-title">
-        {{ isEditing ? editTitle : createTitle }}
+        {{ isEditing ? t('todo.modal.editTitle') : t('todo.modal.createTitle') }}
       </h2>
       <button
         class="btn btn-ghost btn-sm btn-square"
@@ -24,7 +24,7 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-control mb-6">
         <label class="label pb-1">
-          <span class="label-text">{{ contentLabel }}</span>
+          <span class="label-text">{{ t('todo.modal.contentLabel') }}</span>
           <span
             class="label-text-alt"
             :class="{ 'text-error': form.content.length > maxContentLength }"
@@ -38,14 +38,14 @@
           v-model="form.content"
           class="textarea textarea-bordered w-full h-32"
           :class="{ 'textarea-error': form.content.length > maxContentLength }"
-          :placeholder="contentPlaceholder"
+          :placeholder="t('todo.modal.contentPlaceholder')"
           data-testid="todo-modal-content-input"
         />
       </div>
 
       <div class="form-control mb-6">
         <label class="label pb-1">
-          <span class="label-text">{{ dateLabel }}</span>
+          <span class="label-text">{{ t('todo.modal.dateLabel') }}</span>
         </label>
         <input
           v-model="form.plannedDate"
@@ -57,21 +57,10 @@
 
       <div class="form-control mb-6">
         <label class="label pb-1">
-          <span class="label-text">{{ recurrenceLabel }}</span>
+          <span class="label-text">{{ t('todo.recurrence.label') }}</span>
         </label>
         <UiRecurrenceSelect
           v-model="form.recurrence"
-          :none-label="recurrenceNoneLabel"
-          :interval-label="recurrenceIntervalLabel"
-          :weekdays-label="recurrenceWeekdaysLabel"
-          :day-of-month-label="recurrenceDayOfMonthLabel"
-          :unit-day-label="recurrenceUnitDayLabel"
-          :unit-week-label="recurrenceUnitWeekLabel"
-          :unit-month-label="recurrenceUnitMonthLabel"
-          :unit-year-label="recurrenceUnitYearLabel"
-          :weekday-names="recurrenceWeekdayNames"
-          :day-of-month-prefix="recurrenceDayOfMonthPrefix"
-          :day-of-month-suffix="recurrenceDayOfMonthSuffix"
         />
       </div>
 
@@ -83,7 +72,7 @@
           v-if="connections.length > 0"
           class="label pb-1"
         >
-          <span class="label-text">{{ shareLabel }}</span>
+          <span class="label-text">{{ t('todo.modal.shareLabel') }}</span>
         </label>
         <div
           v-if="connections.length > 0"
@@ -109,11 +98,11 @@
           class="label pt-1"
         >
           <span class="label-text-alt text-base-content/60">
-            {{ sharePrivate }}
+            {{ t('todo.modal.sharePrivate') }}
           </span>
         </label>
         <p class="text-xs text-base-content/50 pt-1">
-          {{ shareHint }}
+          {{ connections.length > 0 ? t('todo.modal.shareHint') : t('todo.modal.noConnections') }}
         </p>
       </div>
 
@@ -124,7 +113,7 @@
           data-testid="todo-modal-cancel-button"
           @click="$emit('close', false)"
         >
-          {{ cancelText }}
+          {{ t('todo.modal.cancel') }}
         </button>
         <button
           type="submit"
@@ -136,7 +125,7 @@
             v-if="isSaving"
             class="loading loading-spinner loading-sm"
           />
-          {{ saveText }}
+          {{ t('todo.modal.save') }}
         </button>
       </div>
     </form>
@@ -153,28 +142,6 @@ interface Props {
   isEditing: boolean
   isSaving: boolean
   isOwner: boolean
-  createTitle: string
-  editTitle: string
-  contentLabel: string
-  contentPlaceholder: string
-  dateLabel: string
-  recurrenceLabel: string
-  recurrenceNoneLabel: string
-  recurrenceIntervalLabel: string
-  recurrenceWeekdaysLabel: string
-  recurrenceDayOfMonthLabel: string
-  recurrenceUnitDayLabel: string
-  recurrenceUnitWeekLabel: string
-  recurrenceUnitMonthLabel: string
-  recurrenceUnitYearLabel: string
-  recurrenceWeekdayNames: string[]
-  recurrenceDayOfMonthPrefix: string
-  recurrenceDayOfMonthSuffix: string
-  shareLabel: string
-  sharePrivate: string
-  shareHint: string
-  cancelText: string
-  saveText: string
   connections: TodoConnection[]
   maxContentLength: number
   isFormValid: (form: { content: string, recurrence: RecurrencePattern | null }) => boolean
@@ -190,6 +157,8 @@ const props = withDefaults(defineProps<Props>(), {
   initialRecurrence: null,
   initialSharedWithUserIds: () => [],
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   close: [hasUnsavedChanges: boolean]

@@ -333,22 +333,6 @@ export interface UiMonthData {
   planComment: string | null
 }
 
-export interface UiMonthLabels {
-  deleteMonth: string
-  addPlan: string
-  balance: string
-  income: string
-  majorExpenses: string
-  pocketExpenses: string
-  allExpenses: string
-  balanceChange: string
-  currencyFluctuations: string
-  optionalExpenses: string
-  planned: string
-  expectedBalance: string
-  planComment: string
-}
-
 type MonthStatEvent = 'balanceClick' | 'incomeClick' | 'expenseClick' | 'planClick' | 'planCommentClick'
 
 interface MonthStatItem {
@@ -379,7 +363,6 @@ interface Props {
   plannedBalanceChangeTooltip?: string
   expectedBalanceTooltip?: string
   data: UiMonthData
-  labels: UiMonthLabels
   isCurrentMonth?: boolean
   isReadOnly?: boolean
   canDelete?: boolean
@@ -400,6 +383,26 @@ const props = withDefaults(defineProps<Props>(), {
   isPastMonth: false,
 })
 
+const { t } = useI18n()
+
+const joinLines = (keyPrefix: string): string => `${t(`${keyPrefix}Line1`)} ${t(`${keyPrefix}Line2`)}`
+
+const labels = computed(() => ({
+  deleteMonth: t('budget.month.deleteMonth'),
+  addPlan: t('budget.month.addPlan'),
+  balance: t('budget.year.balance'),
+  income: t('budget.year.income'),
+  majorExpenses: joinLines('budget.year.majorExpenses'),
+  pocketExpenses: joinLines('budget.year.pocketExpenses'),
+  allExpenses: t('budget.year.allExpenses'),
+  balanceChange: joinLines('budget.year.balanceChange'),
+  currencyFluctuations: joinLines('budget.year.currencyFluctuations'),
+  optionalExpenses: joinLines('budget.year.optionalExpenses'),
+  planned: joinLines('budget.year.planned'),
+  expectedBalance: joinLines('budget.year.expectedBalance'),
+  planComment: t('budget.year.planComment'),
+}))
+
 const emit = defineEmits<{
   balanceClick: []
   incomeClick: []
@@ -418,7 +421,7 @@ const planMainText = computed(() => {
   if (props.isPastMonth || props.isReadOnly) {
     return '—'
   }
-  return props.labels.addPlan
+  return labels.value.addPlan
 })
 
 const formatOrDash = (value: number | null): string => {
@@ -439,7 +442,7 @@ const signedValueClass = (value: number | null, positiveClass: string, negativeC
 const mobileStats = computed((): MonthStatItem[] => {
   const balanceStat: MonthStatItem = {
     key: 'balance',
-    label: props.labels.balance,
+    label: labels.value.balance,
     valueText: formatOrDash(props.data.startBalance),
     valueClass: signedValueClass(props.data.startBalance, 'text-primary', 'text-primary'),
     clickable: true,
@@ -450,7 +453,7 @@ const mobileStats = computed((): MonthStatItem[] => {
 
   const balanceChangeStat: MonthStatItem = {
     key: 'balanceChange',
-    label: props.labels.balanceChange,
+    label: labels.value.balanceChange,
     valueText: formatOrDash(props.data.calculatedBalanceChange),
     valueClass: signedValueClass(props.data.calculatedBalanceChange, 'text-success', 'text-error'),
     clickable: false,
@@ -464,7 +467,7 @@ const mobileStats = computed((): MonthStatItem[] => {
       balanceChangeStat,
       {
         key: 'planned',
-        label: props.labels.planned,
+        label: labels.value.planned,
         valueText: planMainText.value,
         valueClass: signedValueClass(props.data.plannedBalanceChange, 'text-info', 'text-warning'),
         secondaryText: plannedDiff !== null
@@ -478,7 +481,7 @@ const mobileStats = computed((): MonthStatItem[] => {
       },
       {
         key: 'expectedBalance',
-        label: props.labels.expectedBalance,
+        label: labels.value.expectedBalance,
         valueText: formatOrDash(props.data.expectedBalance),
         valueClass: signedValueClass(props.data.expectedBalance, 'text-primary', 'text-error'),
         clickable: false,
@@ -486,7 +489,7 @@ const mobileStats = computed((): MonthStatItem[] => {
       },
       {
         key: 'planComment',
-        label: props.labels.planComment,
+        label: labels.value.planComment,
         valueText: props.data.planComment || '—',
         valueClass: props.data.planComment ? 'font-normal text-sm text-base-content' : 'text-base-content/50',
         clickable: true,
@@ -501,7 +504,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     balanceStat,
     {
       key: 'income',
-      label: props.labels.income,
+      label: labels.value.income,
       valueText: props.formatAmount(props.data.totalIncome),
       valueClass: signedValueClass(props.data.totalIncome, 'text-success', 'text-success'),
       clickable: true,
@@ -511,7 +514,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     },
     {
       key: 'majorExpenses',
-      label: props.labels.majorExpenses,
+      label: labels.value.majorExpenses,
       valueText: props.formatAmount(props.data.totalExpenses),
       valueClass: signedValueClass(props.data.totalExpenses, 'text-error', 'text-error'),
       clickable: true,
@@ -521,7 +524,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     },
     {
       key: 'pocketExpenses',
-      label: props.labels.pocketExpenses,
+      label: labels.value.pocketExpenses,
       valueText: formatOrDash(props.data.calculatedPocketExpenses),
       valueClass: signedValueClass(props.data.calculatedPocketExpenses, 'text-error', 'text-warning'),
       clickable: false,
@@ -529,7 +532,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     },
     {
       key: 'allExpenses',
-      label: props.labels.allExpenses,
+      label: labels.value.allExpenses,
       valueText: formatOrDash(props.data.totalAllExpenses),
       valueClass: signedValueClass(props.data.totalAllExpenses, 'text-error', 'text-warning'),
       clickable: false,
@@ -538,7 +541,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     balanceChangeStat,
     {
       key: 'currencyFluctuations',
-      label: props.labels.currencyFluctuations,
+      label: labels.value.currencyFluctuations,
       valueText: formatOrDash(props.data.currencyProfitLoss),
       valueClass: signedValueClass(props.data.currencyProfitLoss, 'text-success', 'text-error'),
       clickable: false,
@@ -546,7 +549,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     },
     {
       key: 'optionalExpenses',
-      label: props.labels.optionalExpenses,
+      label: labels.value.optionalExpenses,
       valueText: props.formatAmount(props.data.totalOptionalExpenses),
       valueClass: signedValueClass(props.data.totalOptionalExpenses, 'text-error', 'text-error'),
       clickable: false,
