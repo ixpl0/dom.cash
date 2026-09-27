@@ -5,12 +5,19 @@ export default withNuxt([
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
+      'curly': ['error', 'all'],
+      '@stylistic/brace-style': ['error', 'stroustrup', { allowSingleLine: false }],
+      'func-style': ['error', 'expression'],
+      'prefer-arrow-callback': 'error',
     },
   },
   {
-    files: ['**/*.test.ts', '**/*.spec.ts', 'tests/**/*.ts'],
+    files: ['app/**/*.{ts,vue}', 'server/**/*.ts', 'shared/**/*.ts'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      'no-restricted-syntax': ['warn', {
+        selector: 'CallExpression[callee.property.name=/^(push|pop|shift|unshift|splice|reverse|fill)$/]',
+        message: 'Do not mutate arrays. Use map, filter, reduce, concat or slice instead.',
+      }],
     },
   },
 ])

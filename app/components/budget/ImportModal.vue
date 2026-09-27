@@ -213,7 +213,9 @@ const options = computed<BudgetImportOptions>(() => ({
 }))
 
 const totalEntries = computed(() => {
-  if (!previewData.value) return 0
+  if (!previewData.value) {
+    return 0
+  }
   return previewData.value.months.reduce((sum, month) => sum + month.entries.length, 0)
 })
 
@@ -249,7 +251,9 @@ const handleFileSelect = async (event: Event) => {
 }
 
 const handleImport = async () => {
-  if (!selectedFile.value || !previewData.value) return
+  if (!selectedFile.value || !previewData.value) {
+    return
+  }
 
   isImporting.value = true
   error.value = ''

@@ -376,7 +376,9 @@ const getAccessText = (access: ShareEntry['access']): string => {
 }
 
 const loadShares = async (): Promise<void> => {
-  if (isLoading.value) return
+  if (isLoading.value) {
+    return
+  }
 
   isLoading.value = true
   try {

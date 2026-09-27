@@ -3,6 +3,7 @@ import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
 import { cleanupUserData } from '../../helpers/auth'
+import { readDecimal, readDigits } from '../../helpers/text'
 
 test.describe('Budget page isolated tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -104,12 +105,12 @@ test.describe('Budget page isolated tests', () => {
     const tableRows = modal.locator('tbody tr')
     await expect(tableRows).toHaveCount(balanceEntries.length)
 
-    for (let i = 0; i < balanceEntries.length; i++) {
-      const row = tableRows.nth(i)
-      await expect(row).toContainText(balanceEntries[i].description)
+    for (const [index, entry] of balanceEntries.entries()) {
+      const row = tableRows.nth(index)
+      await expect(row).toContainText(entry.description)
       const rowText = await row.textContent()
-      expect(rowText).toContain(balanceEntries[i].description)
-      expect(rowText?.replace(/[\s,.']/g, '')).toContain(balanceEntries[i].amount)
+      expect(rowText).toContain(entry.description)
+      expect(rowText?.replace(/[\s,.']/g, '')).toContain(entry.amount)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')
@@ -158,12 +159,12 @@ test.describe('Budget page isolated tests', () => {
     const tableRows = modal.locator('tbody tr')
     await expect(tableRows).toHaveCount(incomeEntries.length)
 
-    for (let i = 0; i < incomeEntries.length; i++) {
-      const row = tableRows.nth(i)
-      await expect(row).toContainText(incomeEntries[i].description)
+    for (const [index, entry] of incomeEntries.entries()) {
+      const row = tableRows.nth(index)
+      await expect(row).toContainText(entry.description)
       const rowText = await row.textContent()
-      expect(rowText).toContain(incomeEntries[i].description)
-      expect(rowText?.replace(/[\s,.']/g, '')).toContain(incomeEntries[i].amount)
+      expect(rowText).toContain(entry.description)
+      expect(rowText?.replace(/[\s,.']/g, '')).toContain(entry.amount)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')
@@ -212,12 +213,12 @@ test.describe('Budget page isolated tests', () => {
     const tableRows = modal.locator('tbody tr')
     await expect(tableRows).toHaveCount(expenseEntries.length)
 
-    for (let i = 0; i < expenseEntries.length; i++) {
-      const row = tableRows.nth(i)
-      await expect(row).toContainText(expenseEntries[i].description)
+    for (const [index, entry] of expenseEntries.entries()) {
+      const row = tableRows.nth(index)
+      await expect(row).toContainText(entry.description)
       const rowText = await row.textContent()
-      expect(rowText).toContain(expenseEntries[i].description)
-      expect(rowText?.replace(/[\s,.']/g, '')).toContain(expenseEntries[i].amount)
+      expect(rowText).toContain(entry.description)
+      expect(rowText?.replace(/[\s,.']/g, '')).toContain(entry.amount)
     }
 
     const closeButton = modal.getByTestId('modal-close-button')
@@ -242,8 +243,7 @@ test.describe('Budget page isolated tests', () => {
       const rateElement = currencyRatesModal.getByTestId(`rate-${currency}`)
       await expect(rateElement).toBeVisible()
 
-      const rateText = await rateElement.textContent()
-      const rate = parseFloat(rateText?.replace(/[^\d.]/g, ''))
+      const rate = await readDecimal(rateElement)
 
       expect(rate).toBeGreaterThan(0)
     }
@@ -281,8 +281,7 @@ test.describe('Budget page isolated tests', () => {
       const rateElement = currencyRatesModal.getByTestId(`rate-${currency}`)
       await expect(rateElement).toBeVisible()
 
-      const rateText = await rateElement.textContent()
-      const rate = parseFloat(rateText?.replace(/[^\d.]/g, ''))
+      const rate = await readDecimal(rateElement)
 
       expect(rate).toBeGreaterThan(0)
 
@@ -307,13 +306,9 @@ test.describe('Budget page isolated tests', () => {
     const incomesButton = page.getByTestId('incomes-button').first()
     const expensesButton = page.getByTestId('expenses-button').first()
 
-    const balanceText = await balanceButton.textContent()
-    const incomesText = await incomesButton.textContent()
-    const expensesText = await expensesButton.textContent()
-
-    const balanceTotal = parseInt(balanceText?.replace(/\D/g, ''), 10)
-    const incomesTotal = parseInt(incomesText?.replace(/\D/g, ''), 10)
-    const expensesTotal = parseInt(expensesText?.replace(/\D/g, ''), 10)
+    const balanceTotal = await readDigits(balanceButton)
+    const incomesTotal = await readDigits(incomesButton)
+    const expensesTotal = await readDigits(expensesButton)
 
     expect(balanceTotal).toBeGreaterThan(0)
     expect(incomesTotal).toBeGreaterThan(0)
@@ -347,13 +342,9 @@ test.describe('Budget page isolated tests', () => {
     await expect(incomesButton).not.toHaveText(oldIncomesText || '')
     await expect(expensesButton).not.toHaveText(oldExpensesText || '')
 
-    const balanceText = await balanceButton.textContent()
-    const incomesText = await incomesButton.textContent()
-    const expensesText = await expensesButton.textContent()
-
-    const balanceTotal = parseInt(balanceText?.replace(/\D/g, ''), 10)
-    const incomesTotal = parseInt(incomesText?.replace(/\D/g, ''), 10)
-    const expensesTotal = parseInt(expensesText?.replace(/\D/g, ''), 10)
+    const balanceTotal = await readDigits(balanceButton)
+    const incomesTotal = await readDigits(incomesButton)
+    const expensesTotal = await readDigits(expensesButton)
 
     expect(balanceTotal).toBeGreaterThan(0)
     expect(incomesTotal).toBeGreaterThan(0)
@@ -392,15 +383,13 @@ test.describe('Budget page isolated tests', () => {
 
     await expect(button).not.toHaveText(oldButtonText || '')
 
-    const updatedButtonText = await button.textContent()
-    const updatedTotal = parseInt(updatedButtonText?.replace(/\D/g, ''), 10)
+    const updatedTotal = await readDigits(button)
 
     await page.reload()
     await waitForHydration(page)
 
     const buttonAfterReload = page.getByTestId('balance-button').first()
-    const buttonTextAfterReload = await buttonAfterReload.textContent()
-    const displayedTotal = parseInt(buttonTextAfterReload?.replace(/\D/g, ''), 10)
+    const displayedTotal = await readDigits(buttonAfterReload)
 
     expect(displayedTotal).toBe(updatedTotal)
   })
@@ -439,21 +428,18 @@ test.describe('Budget page isolated tests', () => {
 
       await expect(button).not.toHaveText(oldButtonText || '')
 
-      const updatedButtonText = await button.textContent()
-      const updatedTotal = parseInt(updatedButtonText?.replace(/\D/g, ''), 10)
+      const updatedTotal = await readDigits(button)
       updatedTotals.push(updatedTotal)
     }
 
     await page.reload()
     await waitForHydration(page)
 
-    for (let i = 0; i < deleteOperations.length; i++) {
-      const operation = deleteOperations[i]
+    for (const [index, operation] of deleteOperations.entries()) {
       const button = page.getByTestId(operation.testId).first()
-      const buttonText = await button.textContent()
-      const displayedTotal = parseInt(buttonText?.replace(/\D/g, ''), 10)
+      const displayedTotal = await readDigits(button)
 
-      expect(displayedTotal).toBe(updatedTotals[i])
+      expect(displayedTotal).toBe(updatedTotals[index])
     }
   })
 
@@ -482,8 +468,7 @@ test.describe('Budget page isolated tests', () => {
 
     const previousMonth = months.first()
     const previousMonthBalanceButton = previousMonth.getByTestId('balance-button')
-    const previousMonthBalanceText = await previousMonthBalanceButton.textContent()
-    const previousMonthBalanceTotal = parseInt(previousMonthBalanceText?.replace(/\D/g, ''), 10)
+    const previousMonthBalanceTotal = await readDigits(previousMonthBalanceButton)
 
     const addMonthTopButton = page.getByTestId('add-month-next')
     await expect(addMonthTopButton).toBeVisible()
@@ -501,13 +486,9 @@ test.describe('Budget page isolated tests', () => {
     await expect(newMonthIncomesButton).toBeVisible()
     await expect(newMonthExpensesButton).toBeVisible()
 
-    const newMonthBalanceText = await newMonthBalanceButton.textContent()
-    const newMonthIncomesText = await newMonthIncomesButton.textContent()
-    const newMonthExpensesText = await newMonthExpensesButton.textContent()
-
-    const newMonthBalanceTotal = parseInt(newMonthBalanceText?.replace(/\D/g, ''), 10)
-    const newMonthIncomesTotal = parseInt(newMonthIncomesText?.replace(/\D/g, ''), 10)
-    const newMonthExpensesTotal = parseInt(newMonthExpensesText?.replace(/\D/g, ''), 10)
+    const newMonthBalanceTotal = await readDigits(newMonthBalanceButton)
+    const newMonthIncomesTotal = await readDigits(newMonthIncomesButton)
+    const newMonthExpensesTotal = await readDigits(newMonthExpensesButton)
 
     expect(newMonthBalanceTotal).toBe(previousMonthBalanceTotal)
     expect(newMonthIncomesTotal).toBe(0)

@@ -232,7 +232,9 @@ const navigateToOwnBudget = async (): Promise<void> => {
 
 const groupedData = computed(() => {
   const months = budgetStore.months
-  if (!months || !Array.isArray(months)) return {}
+  if (!months || !Array.isArray(months)) {
+    return {}
+  }
 
   return months.reduce((acc: Record<number, typeof months>, month) => {
     if (!acc[month.year]) {
@@ -268,7 +270,9 @@ const getPreviousMonthText = (): string => {
 }
 
 const handleCreateNextMonth = async (): Promise<void> => {
-  if (!budgetStore.canEdit) return
+  if (!budgetStore.canEdit) {
+    return
+  }
 
   isCreatingNextMonth.value = true
 
@@ -285,7 +289,9 @@ const handleCreateNextMonth = async (): Promise<void> => {
 }
 
 const handleCreatePreviousMonth = async (): Promise<void> => {
-  if (!budgetStore.canEdit) return
+  if (!budgetStore.canEdit) {
+    return
+  }
 
   isCreatingPreviousMonth.value = true
 
@@ -302,7 +308,9 @@ const handleCreatePreviousMonth = async (): Promise<void> => {
 }
 
 const createCurrentMonth = async (): Promise<void> => {
-  if (!budgetStore.canEdit) return
+  if (!budgetStore.canEdit) {
+    return
+  }
 
   isCreatingCurrentMonth.value = true
 
@@ -335,7 +343,9 @@ const saveCurrency = async (newCurrency: string): Promise<void> => {
 }
 
 const handleLoadPreviousYear = async (): Promise<void> => {
-  if (!budgetStore.nextYearToLoad) return
+  if (!budgetStore.nextYearToLoad) {
+    return
+  }
 
   try {
     await budgetStore.loadYear(budgetStore.nextYearToLoad.year, targetUsername.value)

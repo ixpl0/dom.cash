@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { cleanupUserData } from '../../helpers/auth'
+import { toLocalIsoDate } from '../../helpers/text'
 
 test.describe('Todo edge cases', () => {
   test.beforeEach(async ({ page }) => {
@@ -329,8 +330,7 @@ test.describe('Todo edge cases', () => {
   })
 
   test('should display today styling for todo with today date', async ({ page }) => {
-    const today = new Date()
-    const formattedDate = today.toISOString().split('T')[0]
+    const formattedDate = toLocalIsoDate(new Date())
 
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
@@ -349,7 +349,7 @@ test.describe('Todo edge cases', () => {
   test('should not show overdue styling for future date', async ({ page }) => {
     const futureDate = new Date()
     futureDate.setFullYear(futureDate.getFullYear() + 1)
-    const formattedDate = futureDate.toISOString().split('T')[0]
+    const formattedDate = toLocalIsoDate(futureDate)
 
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()

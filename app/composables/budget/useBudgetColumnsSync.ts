@@ -97,7 +97,9 @@ export const useBudgetColumnsSync = () => {
   }
 
   const startObserving = () => {
-    if (!isClient || isUnmounting.value) return
+    if (!isClient || isUnmounting.value) {
+      return
+    }
 
     if (observer.value) {
       observer.value.disconnect()

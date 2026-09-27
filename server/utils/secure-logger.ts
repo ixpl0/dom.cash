@@ -22,16 +22,22 @@ const SENSITIVE_KEYS = new Set([
 
 const maskSensitiveValue = (value: unknown): unknown => {
   if (typeof value === 'string') {
-    if (value.length <= 4) return '[REDACTED]'
+    if (value.length <= 4) {
+      return '[REDACTED]'
+    }
     return value.slice(0, 2) + '*'.repeat(Math.min(6, value.length - 4)) + value.slice(-2)
   }
   return '[REDACTED]'
 }
 
 const sanitizeObject = (obj: unknown, depth = 0): unknown => {
-  if (depth > 5) return '[MAX_DEPTH]'
+  if (depth > 5) {
+    return '[MAX_DEPTH]'
+  }
 
-  if (obj === null || obj === undefined) return obj
+  if (obj === null || obj === undefined) {
+    return obj
+  }
 
   if (typeof obj === 'string') {
     return SENSITIVE_PATTERNS.some(pattern => pattern.test(obj))
@@ -39,7 +45,9 @@ const sanitizeObject = (obj: unknown, depth = 0): unknown => {
       : obj
   }
 
-  if (typeof obj !== 'object') return obj
+  if (typeof obj !== 'object') {
+    return obj
+  }
 
   if (Array.isArray(obj)) {
     return obj.map(item => sanitizeObject(item, depth + 1))
@@ -87,7 +95,11 @@ export const secureLog = {
 }
 
 export const maskApiKey = (key: string | undefined): string => {
-  if (!key) return '[NOT_SET]'
-  if (key.length <= 8) return '[MASKED]'
+  if (!key) {
+    return '[NOT_SET]'
+  }
+  if (key.length <= 8) {
+    return '[MASKED]'
+  }
   return `${key.slice(0, 4)}...${key.slice(-4)}`
 }

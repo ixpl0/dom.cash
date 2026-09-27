@@ -132,7 +132,9 @@ const revokeAccess = async (id: string): Promise<void> => {
 }
 
 const loadSharedBudgets = async (): Promise<void> => {
-  if (isLoading.value) return
+  if (isLoading.value) {
+    return
+  }
 
   isLoading.value = true
   try {

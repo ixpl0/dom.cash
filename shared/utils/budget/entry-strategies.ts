@@ -85,10 +85,14 @@ export const updateMonthWithUpdatedEntry = (
   const currentEntries = month[config.arrayKey] as Array<BalanceSourceData | IncomeEntryData | ExpenseEntryData>
 
   const entryIndex = currentEntries.findIndex(entry => entry.id === entryId)
-  if (entryIndex === -1) return month
+  if (entryIndex === -1) {
+    return month
+  }
 
   const currentEntry = currentEntries[entryIndex]
-  if (!currentEntry) return month
+  if (!currentEntry) {
+    return month
+  }
 
   const updatedEntry = config.createEntry({
     id: currentEntry.id,

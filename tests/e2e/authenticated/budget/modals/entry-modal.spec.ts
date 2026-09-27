@@ -376,9 +376,9 @@ test.describe('Entry Modal functionality', () => {
       const entryRows = modal.getByTestId('entry-row')
       await expect(entryRows).toHaveCount(3)
 
-      for (let i = 0; i < currencies.length; i++) {
-        const row = entryRows.nth(i)
-        await expect(row).toContainText(currencies[i])
+      for (const [index, currency] of currencies.entries()) {
+        const row = entryRows.nth(index)
+        await expect(row).toContainText(currency)
       }
     })
 

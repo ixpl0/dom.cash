@@ -3,6 +3,7 @@ import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { acceptConfirmModal } from '../../helpers/confirmation'
 import { initBudget } from '../../helpers/budget-setup'
 import { cleanupUserData } from '../../helpers/auth'
+import { readSignedInteger } from '../../helpers/text'
 
 test.describe('Budget page historical testing', () => {
   test.beforeEach(async ({ page }) => {
@@ -130,8 +131,7 @@ test.describe('Budget page historical testing', () => {
     const yearElements = page.getByTestId('budget-year')
     const firstYear = yearElements.first()
     const yearAverageBalanceElement = firstYear.getByTestId('year-average-balance')
-    const originalAverageBalanceText = await yearAverageBalanceElement.textContent()
-    const originalAverageBalance = parseInt(originalAverageBalanceText?.replace(/[^-\d]/g, ''), 10)
+    const originalAverageBalance = await readSignedInteger(yearAverageBalanceElement)
 
     const exportButton = page.getByTestId('export-button')
     await exportButton.click()
@@ -187,8 +187,7 @@ test.describe('Budget page historical testing', () => {
     const restoredYearElements = page.getByTestId('budget-year')
     const restoredFirstYear = restoredYearElements.first()
     const restoredYearAverageBalanceElement = restoredFirstYear.getByTestId('year-average-balance')
-    const restoredAverageBalanceText = await restoredYearAverageBalanceElement.textContent()
-    const restoredAverageBalance = parseInt(restoredAverageBalanceText?.replace(/[^-\d]/g, ''), 10)
+    const restoredAverageBalance = await readSignedInteger(restoredYearAverageBalanceElement)
 
     expect(restoredAverageBalance).toBe(originalAverageBalance)
 

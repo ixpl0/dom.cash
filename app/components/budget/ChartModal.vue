@@ -144,7 +144,9 @@ const loadLegendSelected = () => {
 }
 
 const saveLegendSelected = (selected: Record<string, boolean>) => {
-  if (!import.meta.client) return
+  if (!import.meta.client) {
+    return
+  }
 
   try {
     localStorage.setItem(LEGEND_STORAGE_KEY, JSON.stringify(selected))

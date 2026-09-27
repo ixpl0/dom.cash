@@ -7,7 +7,9 @@ export const getNextMonth = (currentMonths: MonthData[]): { year: number, month:
   }
 
   const sortedMonths = [...currentMonths].sort((a, b) => {
-    if (a.year !== b.year) return b.year - a.year
+    if (a.year !== b.year) {
+      return b.year - a.year
+    }
     return b.month - a.month
   })
 
@@ -25,7 +27,9 @@ export const getPreviousMonth = (currentMonths: MonthData[]): { year: number, mo
   }
 
   const sortedMonths = [...currentMonths].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year
+    if (a.year !== b.year) {
+      return a.year - b.year
+    }
     return a.month - b.month
   })
 
@@ -42,11 +46,15 @@ export const findClosestMonthForCopy = (
   targetMonth: number,
   direction: 'next' | 'previous',
 ): string | undefined => {
-  if (monthsData.length === 0) return undefined
+  if (monthsData.length === 0) {
+    return undefined
+  }
 
   if (direction === 'next') {
     const sortedMonths = [...monthsData].sort((a, b) => {
-      if (a.year !== b.year) return b.year - a.year
+      if (a.year !== b.year) {
+        return b.year - a.year
+      }
       return b.month - a.month
     })
 
@@ -72,7 +80,9 @@ export const findClosestMonthForCopy = (
   }
   else {
     const sortedMonths = [...monthsData].sort((a, b) => {
-      if (a.year !== b.year) return a.year - b.year
+      if (a.year !== b.year) {
+        return a.year - b.year
+      }
       return a.month - b.month
     })
 
@@ -99,11 +109,17 @@ export const findClosestMonthForCopy = (
 }
 
 export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
-  if (allMonths.length === 0) return false
-  if (allMonths.length === 1) return true
+  if (allMonths.length === 0) {
+    return false
+  }
+  if (allMonths.length === 1) {
+    return true
+  }
 
   const sortedMonths = [...allMonths].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year
+    if (a.year !== b.year) {
+      return a.year - b.year
+    }
     return a.month - b.month
   })
 
@@ -112,10 +128,14 @@ export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): bool
 }
 
 export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean => {
-  if (allMonths.length <= 1) return false
+  if (allMonths.length <= 1) {
+    return false
+  }
 
   const sortedMonths = [...allMonths].sort((a, b) => {
-    if (a.year !== b.year) return b.year - a.year
+    if (a.year !== b.year) {
+      return b.year - a.year
+    }
     return b.month - a.month
   })
 

@@ -1,5 +1,8 @@
 {
   "extends": "../../.nuxt/tsconfig.server.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+  },
   "include": [
     "./**/*.ts",
     "../../.nuxt/types/nitro-nuxt.d.ts",
