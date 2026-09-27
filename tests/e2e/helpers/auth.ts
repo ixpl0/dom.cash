@@ -1,23 +1,14 @@
 import type { APIRequestContext } from '@playwright/test'
+import { BASE_URL } from '../constants'
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:8787'
+const SKIPPED_STATUSES = [400, 401]
 
 export const cleanupUserData = async (request: APIRequestContext) => {
-  try {
-    const response = await request.delete(`${BASE_URL}/api/test/cleanup-user-data`)
+  const response = await request.delete(`${BASE_URL}/api/test/cleanup-user-data`)
 
-    if (response.status() === 401 || response.status() === 400) {
-      return response
-    }
-
-    if (!response.ok()) {
-      const body = await response.text()
-      console.warn(`User data cleanup warning: ${response.status()} - ${body}`)
-    }
-
-    return response
+  if (!response.ok() && !SKIPPED_STATUSES.includes(response.status())) {
+    throw new Error(`User data cleanup failed with status ${response.status()}: ${await response.text()}`)
   }
-  catch {
-    return null
-  }
+
+  return response
 }

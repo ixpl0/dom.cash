@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { INPUT_LIMITS, DEV_VERIFICATION_CODE } from '../constants'
 import { waitForHydration } from '../helpers/wait-for-hydration'
+import { createTestEmail } from '../helpers/users'
 
 test.describe('Forgot Password', () => {
   test.beforeEach(async ({ page }) => {
@@ -57,7 +58,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('sends reset code for existing user and shows step 2', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const testPassword = 'TestPassword123!'
 
     await page.getByTestId('email-input').fill(testUsername)
@@ -85,7 +86,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('reset password step 2 has correct input attributes', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const testPassword = 'TestPassword123!'
 
     await page.getByTestId('email-input').fill(testUsername)
@@ -121,7 +122,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('back to login from step 2 returns to login form', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const testPassword = 'TestPassword123!'
 
     await page.getByTestId('email-input').fill(testUsername)
@@ -151,7 +152,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('successfully resets password and can login with new password', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const originalPassword = 'TestPassword123!'
     const newPassword = 'NewPassword456!'
 
@@ -190,7 +191,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('cannot login with old password after reset', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const originalPassword = 'TestPassword123!'
     const newPassword = 'NewPassword456!'
 
@@ -227,7 +228,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('blocks password reset after 3 failed code attempts', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const testPassword = 'TestPassword123!'
     const wrongCode = '000000'
 
@@ -263,7 +264,7 @@ test.describe('Forgot Password', () => {
   })
 
   test('password reset works after failed attempts within limit', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('reset')
     const testPassword = 'TestPassword123!'
     const newPassword = 'NewPassword456!'
     const wrongCode = '000000'

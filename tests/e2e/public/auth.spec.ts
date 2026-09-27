@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { INPUT_LIMITS, DEV_VERIFICATION_CODE } from '../constants'
 import { waitForHydration } from '../helpers/wait-for-hydration'
+import { createTestEmail } from '../helpers/users'
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
@@ -53,7 +54,7 @@ test.describe('Authentication', () => {
   })
 
   test('successful registration redirects to home page', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('auth')
 
     await page.getByTestId('email-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
@@ -72,7 +73,7 @@ test.describe('Authentication', () => {
     await page.goto('/auth?redirect=/budget')
     await waitForHydration(page)
 
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('auth')
 
     await page.getByTestId('email-input').fill(testUsername)
     await page.getByTestId('password-input').fill('TestPassword123!')
@@ -135,7 +136,7 @@ test.describe('Authentication', () => {
   })
 
   test('shows error for incorrect password', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('auth')
     const correctPassword = 'TestPassword123!'
     const incorrectPassword = 'WrongPassword456!'
 
@@ -167,7 +168,7 @@ test.describe('Authentication', () => {
   })
 
   test('blocks verification after 3 failed attempts', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('auth')
     const testPassword = 'TestPassword123!'
     const wrongCode = '000000'
 
@@ -188,7 +189,7 @@ test.describe('Authentication', () => {
   })
 
   test('correct code works after failed attempts within limit', async ({ page }) => {
-    const testUsername = `test_${Date.now()}@example.com`
+    const testUsername = createTestEmail('auth')
     const testPassword = 'TestPassword123!'
     const wrongCode = '000000'
 

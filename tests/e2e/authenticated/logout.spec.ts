@@ -1,13 +1,13 @@
 import { test as base, expect } from '@playwright/test'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 import { DEV_VERIFICATION_CODE } from '../constants'
+import { createTestEmail } from '../helpers/users'
 
 const test = base.extend<{ isolatedPage: typeof base }>({})
 
 test.describe('Logout', () => {
   test('should logout user and clear localStorage when clicking logout button', async ({ page }) => {
-    const uniqueId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    const email = `logout_test_${uniqueId}@example.com`
+    const email = createTestEmail('logout')
     const password = 'TestPassword123!'
 
     await page.goto('/auth')

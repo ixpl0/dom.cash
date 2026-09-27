@@ -1,18 +1,14 @@
+import { eq, inArray, or } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { month, entry, budgetShare, user as userTable } from '~~/server/db/schema'
-import { eq, inArray } from 'drizzle-orm'
+import { budgetShare, entry, month, plan, todo, todoShare, user as userTable } from '~~/server/db/schema'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {
-  const isDevelopment = process.env.NODE_ENV === 'development'
-  const isTest = process.env.NODE_ENV === 'test'
-  const isE2E = process.env.E2E_TESTING === 'true'
-
-  if (!isDevelopment && !isTest && !isE2E) {
+  if (!import.meta.dev) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Cleanup endpoint is only available in development/test/e2e mode',
+      statusCode: 404,
+      statusMessage: 'Not found',
     })
   }
 
@@ -25,30 +21,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const db = await useDatabase(event)
+  const db = useDatabase(event)
+  const userMonthIds = db.select({ id: month.id }).from(month).where(eq(month.userId, user.id))
+  const userTodoIds = db.select({ id: todo.id }).from(todo).where(eq(todo.userId, user.id))
 
   try {
-    await db.delete(budgetShare).where(eq(budgetShare.sharedWithId, user.id))
-    await db.delete(budgetShare).where(eq(budgetShare.ownerId, user.id))
+    await db.batch([
+      db.delete(budgetShare).where(or(eq(budgetShare.sharedWithId, user.id), eq(budgetShare.ownerId, user.id))),
+      db.delete(todoShare).where(or(eq(todoShare.sharedWithId, user.id), inArray(todoShare.todoId, userTodoIds))),
+      db.delete(todo).where(eq(todo.userId, user.id)),
+      db.delete(entry).where(inArray(entry.monthId, userMonthIds)),
+      db.delete(month).where(eq(month.userId, user.id)),
+      db.delete(plan).where(eq(plan.userId, user.id)),
+      db.update(userTable).set({ mainCurrency: 'USD' }).where(eq(userTable.id, user.id)),
+    ])
 
-    const userMonths = await db
-      .select({ id: month.id })
-      .from(month)
-      .where(eq(month.userId, user.id))
-
-    if (userMonths.length > 0) {
-      const monthIds = userMonths.map((m: { id: string }) => m.id)
-      await db.delete(entry).where(inArray(entry.monthId, monthIds))
-    }
-
-    await db.delete(month).where(eq(month.userId, user.id))
-
-    await db.update(userTable).set({ mainCurrency: 'USD' }).where(eq(userTable.id, user.id))
-
-    return {
-      message: 'User data cleaned up successfully',
-      deletedMonths: userMonths.length,
-    }
+    return { message: 'User data cleaned up successfully' }
   }
   catch (error) {
     secureLog.error('User data cleanup failed:', error)

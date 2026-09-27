@@ -1,3 +1,5 @@
+import { join } from 'path'
+
 export const INPUT_LIMITS = {
   USERNAME_MIN: 3,
   USERNAME_MAX: 64,
@@ -6,3 +8,7 @@ export const INPUT_LIMITS = {
 }
 
 export const DEV_VERIFICATION_CODE = '111111'
+
+export const BASE_URL = process.env.BASE_URL || 'http://localhost:8787'
+
+export const AUTH_DIR = join(process.cwd(), '.auth')

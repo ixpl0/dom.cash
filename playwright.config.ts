@@ -1,16 +1,19 @@
 import { defineConfig, devices } from '@playwright/test'
+import { BASE_URL } from './tests/e2e/constants'
 
 export default defineConfig({
   workers: 4,
   fullyParallel: false,
   testDir: 'tests/e2e',
-  retries: 2,
+  globalSetup: './tests/e2e/global-setup.ts',
+  globalTeardown: './tests/e2e/global-teardown.ts',
+  retries: process.env.CI ? 2 : 0,
   timeout: 60000,
   expect: {
     timeout: 10000,
   },
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:8787',
+    baseURL: BASE_URL,
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -30,19 +33,8 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      testIgnore: [/.*\.teardown\.spec\.ts/, '**/public/**'],
       testMatch: '**/authenticated/**',
-      dependencies: ['chromium-public'],
-    },
-    {
-      name: 'teardown',
-      testMatch: /.*\.teardown\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.BASE_URL || 'http://localhost:8787',
-      },
-      dependencies: ['chromium'],
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 })
