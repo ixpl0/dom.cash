@@ -55,3 +55,7 @@ tests/.auth/
 
 # Local tool configs
 .crime/
+
+# E2E build
+.nuxt-e2e
+.output-e2e

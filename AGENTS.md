@@ -54,9 +54,9 @@
   * `pnpm typecheck` / `pnpm typecheck:tests` — type-check the app / the tests
   * `pnpm lint` / `pnpm lint:fix` — run ESLint
   * `pnpm test:unit` — run unit tests (Node test runner via tsx, no server needed)
-  * `pnpm test:e2e` — run Playwright tests
-  * `pnpm test:e2e:ui` — run Playwright tests with UI mode
-  * `pnpm test:e2e:headed` — run Playwright tests in headed browser
+  * `pnpm test:e2e` — build the app in e2e mode and run all Playwright tests against it
+  * `pnpm test:e2e:dev` — run Playwright tests against the dev server (`pnpm preview:e2e`), handy while writing a test
+  * `pnpm test:e2e:ui` / `pnpm test:e2e:headed` — the same against the dev server, with UI mode / a visible browser
 
 ## Project Structure
 
@@ -91,6 +91,7 @@
   * `fixtures/budgets/` — JSON budget fixtures for import tests
   * `constants.ts` — Test constants
   * `global-setup.ts` / `global-teardown.ts` — Clean `.auth/` before a run and delete test users after it
+  * `server.ts` — Starts the e2e build: recreates the local D1 in `.wrangler/e2e`, applies migrations, runs `wrangler dev`
 * `FOLLOWUPS.md` — Architecture review and maintenance backlog
 * `PROJECT_REVIEW.md` — Bug review (P1/P2 items)
 
@@ -122,7 +123,8 @@
 
 * **Unit Tests**: `tests/unit/*.test.ts`, run with `pnpm test:unit`. Cover pure logic in `shared/`; test server services against `createTestDatabase()` (`tests/unit/helpers/test-database.ts`): an in-memory SQLite with all migrations that D1 code can use through `event`, and that counts the queries. Compute expected values by hand, never copy them from the output; record known bugs as `{ todo: 'reason' }` tests with the correct expectation.
 * **E2E Tests**: Use Playwright with TypeScript
-  * Playwright reuses a dev server on port 8787 (`pnpm preview:e2e`) and starts one if none is running.
+  * `pnpm test:e2e` runs against a production-like build (`nuxt build --envName e2e` into `.output-e2e`) served by `wrangler dev` on port 8787, with a fresh local D1 in `.wrangler/e2e` on every run. `playwright.dev.config.ts` targets the dev server instead.
+  * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
   * Only Desktop Chrome is configured. Tests retry only on CI.
 * **Test structure**: `tests/e2e/` with `public/` for public pages and `authenticated/` for pages requiring auth
 * **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)

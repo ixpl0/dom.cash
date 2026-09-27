@@ -37,11 +37,13 @@ pnpm check
 
 The application uses **Playwright** for end-to-end testing:
 
+- **Server**: `pnpm test:e2e` builds the app in e2e mode (`.output-e2e`) and serves it with `wrangler dev` on port 8787, the same runtime as production.
+- **Database**: every run starts from an empty local D1 in `.wrangler/e2e` with all migrations; it never touches the data of `pnpm dev`.
+- **Test mode**: the e2e build and `nuxt dev` use the verification code `111111`, log codes instead of emailing them and expose `/api/test/*`. Production builds contain none of this.
 - **Users**: every worker registers its own test user and reuses its session.
 - **Browser**: Desktop Chrome.
 - **Isolation**: authenticated tests delete the user's budget data and todos after each test.
 - **Cleanup**: the global teardown deletes all test users (`test_*@example.com`).
-- **Server**: Playwright reuses a dev server on port 8787 (`pnpm preview:e2e`) or starts one.
 
 ##### Структура тестов
 
@@ -56,15 +58,20 @@ The application uses **Playwright** for end-to-end testing:
 ##### Запуск тестов
 
 ```bash
-# Запуск всех e2e тестов
+# Сборка в e2e-режиме и запуск всех e2e тестов
 pnpm run test:e2e
 
-# Запуск в режиме отладки с UI
+# Запуск против dev-сервера (pnpm preview:e2e) — удобно, когда пишешь тест
+pnpm run test:e2e:dev
+
+# Запуск в режиме отладки с UI (против dev-сервера)
 pnpm run test:e2e:ui
 
-# Запуск тестов с видимым браузером
+# Запуск тестов с видимым браузером (против dev-сервера)
 pnpm run test:e2e:headed
 ```
+
+Тесты против dev-сервера пишут в ту же локальную D1, что и `pnpm dev`; тестовых пользователей удаляет global teardown.
 
 ##### Покрытие тестами
 

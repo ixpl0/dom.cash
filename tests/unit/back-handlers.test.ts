@@ -496,6 +496,23 @@ test('skips a forward guard entry the user returns to', async () => {
   assert.equal(fakeRouter.getReceivedPopStates(), 0)
 })
 
+test('keeps the page after reload when the guard entry was forgotten before leaving', async () => {
+  const { browser, manager } = setup()
+
+  browser.activate()
+  manager.addHandler(() => undefined)
+  await settle()
+  manager.forgetGuardEntry()
+
+  assert.equal(readGuardId(browser.getEntries()[1]), null)
+
+  const reloadedManager = createBackHandlerManager(browser.window)
+  reloadedManager.syncHistory()
+  await settle()
+
+  assert.equal(browser.getIndex(), 1)
+})
+
 test('leaves a guard entry restored after page reload', async () => {
   const pageState = createRouterState('/budget', 0)
   const { browser, fakeRouter, manager } = setup([

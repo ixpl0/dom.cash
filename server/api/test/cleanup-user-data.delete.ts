@@ -3,9 +3,10 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, entry, month, plan, todo, todoShare, user as userTable } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { isTestMode } from '~~/server/utils/test-mode'
 
 export default defineEventHandler(async (event) => {
-  if (!import.meta.dev) {
+  if (!isTestMode()) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Not found',

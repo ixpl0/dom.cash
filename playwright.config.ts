@@ -21,9 +21,10 @@ export default defineConfig({
     navigationTimeout: 30000,
   },
   webServer: {
-    command: 'pnpm preview:e2e',
-    url: 'http://localhost:8787',
-    reuseExistingServer: !process.env.CI,
+    command: 'pnpm exec tsx tests/e2e/server.ts',
+    url: BASE_URL,
+    reuseExistingServer: false,
+    timeout: 120000,
   },
   projects: [
     {

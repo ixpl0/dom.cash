@@ -2,11 +2,12 @@ import { inArray, or, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, emailVerificationCode, entry, month, plan, session, todo, todoShare, user } from '~~/server/db/schema'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { isTestMode } from '~~/server/utils/test-mode'
 
 const TEST_EMAIL_PATTERN = 'test_*@example.com'
 
 export default defineEventHandler(async (event) => {
-  if (!import.meta.dev) {
+  if (!isTestMode()) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Not found',

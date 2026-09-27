@@ -2,6 +2,7 @@ import type { User, LoginCredentials } from '~~/shared/types'
 
 export const useAuth = () => {
   const { user, setUser, clearUser, isAuthenticated } = useAuthState()
+  const { $backHandlers } = useNuxtApp()
   const lastSharedBudgetCookie = useCookie<string | null>(COOKIE_NAMES.lastSharedBudget)
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
@@ -27,7 +28,8 @@ export const useAuth = () => {
     if (import.meta.client) {
       localStorage.removeItem('hasSession')
       await nextTick()
-      reloadNuxtApp({ path: '/', force: true })
+      $backHandlers.forgetGuardEntry()
+      window.location.replace('/')
       return
     }
 

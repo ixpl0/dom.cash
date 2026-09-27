@@ -2,6 +2,16 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@pinia/nuxt', '@nuxt/icon', '@nuxtjs/i18n'],
+  $env: {
+    e2e: {
+      buildDir: '.nuxt-e2e',
+      typescript: { typeCheck: false },
+      nitro: {
+        output: { dir: '.output-e2e' },
+        replace: { 'process.env.E2E_TEST_MODE': JSON.stringify('true') },
+      },
+    },
+  },
   imports: {
     dirs: [
       'composables/**',
@@ -29,6 +39,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-10-10',
   nitro: {
     preset: 'cloudflare-module',
+    replace: { 'process.env.E2E_TEST_MODE': JSON.stringify('false') },
     routeRules: {
       '/**': {
         headers: {

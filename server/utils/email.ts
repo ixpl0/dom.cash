@@ -1,5 +1,6 @@
 import { createError, type H3Event } from 'h3'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
+import { isTestMode } from '~~/server/utils/test-mode'
 
 type EmailTemplate = 'verification' | 'reset-password'
 type EmailLanguage = 'en' | 'ru'
@@ -78,9 +79,7 @@ const buildText = (template: EmailTemplate, code: string, language: EmailLanguag
 
 export const sendVerificationEmail = async (params: EmailParams): Promise<void> => {
   const { event, to, code, template, language = 'en' } = params
-  const isProduction = process.env.NODE_ENV === 'production'
-
-  if (!isProduction) {
+  if (isTestMode()) {
     const templateName = template === 'verification' ? 'Verification' : 'Password reset'
     console.log(`[DEV] ${templateName} code for ${to}: ${code}`)
     return

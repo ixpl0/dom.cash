@@ -4,6 +4,7 @@ import { emailVerificationCode } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { timingSafeCompareStrings } from '~~/server/utils/crypto'
+import { isTestMode } from '~~/server/utils/test-mode'
 
 export const DEV_VERIFICATION_CODE = '111111'
 
@@ -120,13 +121,12 @@ export const prepareVerificationCode = (
   config: VerificationConfig,
   now: Date,
 ): PrepareCodeResult => {
-  const isProduction = process.env.NODE_ENV === 'production'
   const isExistingCodeValid = existingCode && existingCode.expiresAt > now
 
   return {
     code: isExistingCodeValid
       ? existingCode.code
-      : (isProduction ? generateVerificationCode() : DEV_VERIFICATION_CODE),
+      : (isTestMode() ? DEV_VERIFICATION_CODE : generateVerificationCode()),
     expiresAt: isExistingCodeValid
       ? existingCode.expiresAt
       : new Date(now.getTime() + config.expirationMinutes * 60 * 1000),

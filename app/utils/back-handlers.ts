@@ -23,6 +23,7 @@ export interface BackHandlerRouter {
 export interface BackHandlerManager {
   addHandler: (onBack: BackHandler) => () => void
   hasHandlers: () => boolean
+  forgetGuardEntry: () => void
   syncHistory: () => void
   connectRouter: (router: BackHandlerRouter) => void
 }
@@ -326,6 +327,13 @@ export const createBackHandlerManager = (browserWindow: Window = window): BackHa
     }
   }
 
+  const forgetGuardEntry = (): void => {
+    if (readGuardId(history.state) !== null) {
+      history.replaceState({ ...readCurrentState(), [BACK_GUARD_STATE_KEY]: null }, '')
+    }
+    currentGuardId = null
+  }
+
   const leftoverGuardId = readGuardId(history.state)
 
   if (leftoverGuardId !== null) {
@@ -389,6 +397,7 @@ export const createBackHandlerManager = (browserWindow: Window = window): BackHa
   return {
     addHandler,
     hasHandlers: () => handlers.length > 0,
+    forgetGuardEntry,
     syncHistory,
     connectRouter,
   }
