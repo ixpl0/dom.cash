@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
-import { emailVerificationCode, session, user } from '~~/server/db/schema'
+import { session, user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { findUser, hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
@@ -44,7 +44,6 @@ export default defineEventHandler(async (event) => {
   await db.batch([
     db.update(user).set({ passwordHash }).where(eq(user.id, existingUser.id)),
     db.delete(session).where(eq(session.userId, existingUser.id)),
-    db.delete(emailVerificationCode).where(eq(emailVerificationCode.id, verifyResult.record.id)),
   ])
 
   return { success: true }

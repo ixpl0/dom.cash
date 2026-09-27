@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
 import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
 import { emailSchema, passwordSchema, verificationCodeSchema } from '~~/shared/schemas/auth'
-import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
+import { verifyCode, throwVerifyCodeError, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const verifyCodeSchema = z.object({
@@ -41,8 +41,6 @@ export default defineEventHandler(async (event) => {
     event,
     { username: email, passwordHash, emailVerified: true },
   )
-
-  await deleteVerificationCode(event, email)
 
   const token = await createSession(newUser.id, new Date(), event)
   setAuthCookie(event, token)

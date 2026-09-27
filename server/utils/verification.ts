@@ -1,5 +1,5 @@
 import { createError, type H3Event } from 'h3'
-import { eq, lt } from 'drizzle-orm'
+import { and, eq, lt, sql } from 'drizzle-orm'
 import { emailVerificationCode } from '~~/server/db/schema'
 import { useDatabase } from '~~/server/db'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
@@ -160,7 +160,7 @@ export const requestVerificationCode = async (event: H3Event, email: string, pur
 
 type VerifyCodeErrorReason = 'not_found' | 'expired' | 'invalid_code' | 'max_attempts_exceeded'
 
-type VerifyCodeSuccess = { readonly valid: true, readonly record: { id: string, email: string } }
+type VerifyCodeSuccess = { readonly valid: true }
 type VerifyCodeFailure = { readonly valid: false, readonly reason: VerifyCodeErrorReason }
 type VerifyCodeResult = VerifyCodeSuccess | VerifyCodeFailure
 
@@ -188,24 +188,35 @@ export const verifyCode = async (params: VerifyCodeParams): Promise<VerifyCodeRe
     return { valid: false, reason: 'expired' }
   }
 
-  if (record.verifyAttemptCount >= config.maxVerifyAttempts) {
+  const [attempt] = await db
+    .update(emailVerificationCode)
+    .set({ verifyAttemptCount: sql`${emailVerificationCode.verifyAttemptCount} + 1` })
+    .where(and(
+      eq(emailVerificationCode.id, record.id),
+      lt(emailVerificationCode.verifyAttemptCount, config.maxVerifyAttempts),
+    ))
+    .returning({ code: emailVerificationCode.code, verifyAttemptCount: emailVerificationCode.verifyAttemptCount })
+
+  if (!attempt) {
     return { valid: false, reason: 'max_attempts_exceeded' }
   }
 
-  if (!timingSafeCompareStrings(record.code, code)) {
-    await db
-      .update(emailVerificationCode)
-      .set({ verifyAttemptCount: record.verifyAttemptCount + 1 })
-      .where(eq(emailVerificationCode.id, record.id))
-
-    if (record.verifyAttemptCount + 1 >= config.maxVerifyAttempts) {
-      return { valid: false, reason: 'max_attempts_exceeded' }
-    }
-
-    return { valid: false, reason: 'invalid_code' }
+  if (!timingSafeCompareStrings(attempt.code, code)) {
+    return attempt.verifyAttemptCount >= config.maxVerifyAttempts
+      ? { valid: false, reason: 'max_attempts_exceeded' }
+      : { valid: false, reason: 'invalid_code' }
   }
 
-  return { valid: true, record: { id: record.id, email: record.email } }
+  const [consumed] = await db
+    .delete(emailVerificationCode)
+    .where(eq(emailVerificationCode.id, record.id))
+    .returning({ id: emailVerificationCode.id })
+
+  if (!consumed) {
+    return { valid: false, reason: 'not_found' }
+  }
+
+  return { valid: true }
 }
 
 export const throwVerifyCodeError = (reason: VerifyCodeErrorReason): never => {
@@ -220,12 +231,4 @@ export const throwVerifyCodeError = (reason: VerifyCodeErrorReason): never => {
     statusCode: 400,
     message: ERROR_KEYS.INVALID_VERIFICATION_CODE,
   })
-}
-
-export const deleteVerificationCode = async (event: H3Event, email: string): Promise<void> => {
-  const db = useDatabase(event)
-
-  await db
-    .delete(emailVerificationCode)
-    .where(eq(emailVerificationCode.email, email))
 }
