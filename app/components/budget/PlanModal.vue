@@ -64,7 +64,7 @@
           v-model="commentInput"
           type="text"
           class="input input-bordered w-full"
-          maxlength="2000"
+          :maxlength="PLAN_COMMENT_MAX_LENGTH"
           :placeholder="t('budget.plan.commentPlaceholder')"
           data-testid="plan-comment-input"
         >
@@ -121,6 +121,7 @@
 <script setup lang="ts">
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
+import { PLAN_COMMENT_MAX_LENGTH, plannedBalanceChangeSchema } from '~~/shared/schemas/budget'
 
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
@@ -149,9 +150,15 @@ const isAmountFilled = computed(() => {
   return false
 })
 
-const isValid = computed(() => {
-  return isAmountFilled.value || commentInput.value.trim() !== ''
-})
+const plannedBalanceChange = computed((): number | null =>
+  isAmountFilled.value ? Math.round(Number(amountInput.value)) : null,
+)
+
+const isValid = computed((): boolean =>
+  plannedBalanceChange.value === null
+    ? commentInput.value.trim() !== ''
+    : plannedBalanceChangeSchema.safeParse(plannedBalanceChange.value).success,
+)
 
 const normalizeInputValue = (value: number | string | null): string =>
   value === null ? '' : String(value).trim()
@@ -184,16 +191,12 @@ const save = async (): Promise<void> => {
     return
   }
 
-  const plannedBalanceChange = isAmountFilled.value
-    ? Math.round(typeof amountInput.value === 'number' ? amountInput.value : Number(amountInput.value))
-    : null
-
   const trimmedComment = commentInput.value.trim()
   const commentToSave = trimmedComment.length === 0 ? null : trimmedComment
 
   isSaving.value = true
   try {
-    await budgetStore.upsertPlan(currentYear, currentMonth, plannedBalanceChange, commentToSave)
+    await budgetStore.upsertPlan(currentYear, currentMonth, plannedBalanceChange.value, commentToSave)
     toast({ type: 'success', message: t('budget.plan.savedToast') })
     hide()
   }

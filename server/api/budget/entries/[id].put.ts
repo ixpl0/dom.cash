@@ -1,20 +1,11 @@
-import { z } from 'zod'
 import { createError, getRouterParam } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
-import { parseBody } from '~~/server/utils/validation'
+import { parseBody, validateInput } from '~~/server/utils/validation'
 import { getEntryWithMonth, updateEntry } from '~~/server/services/budget/entries'
 import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
-import { currencySchema, descriptionSchema, amountSchema } from '~~/shared/schemas/common'
+import { entryAmountForKindSchema, updateEntrySchema } from '~~/shared/schemas/budget'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
-
-const updateEntrySchema = z.object({
-  description: descriptionSchema,
-  amount: amountSchema,
-  currency: currencySchema,
-  date: z.string().optional(),
-  isOptional: z.boolean().optional(),
-})
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
@@ -37,6 +28,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await requireBudgetWriteAccess(entryRecord.month.userId, currentUser, event, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE)
+  validateInput({ kind: entryRecord.entry.kind, amount: data.amount }, entryAmountForKindSchema, ERROR_KEYS.VALIDATION_FAILED)
 
   const updatedEntry = await updateEntry(entryId, {
     description: data.description,

@@ -27,6 +27,8 @@
     :cancel-text="t('todo.modal.cancel')"
     :save-text="t('todo.modal.save')"
     :connections="todoStore.connections"
+    :max-content-length="TODO_CONTENT_MAX_LENGTH"
+    :is-form-valid="isTodoFormValid"
     :initial-content="initialContent"
     :initial-planned-date="initialPlannedDate"
     :initial-recurrence="initialRecurrence"
@@ -38,6 +40,7 @@
 
 <script setup lang="ts">
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
+import { TODO_CONTENT_MAX_LENGTH, todoFormSchema } from '~~/shared/schemas/todo'
 
 const todoStore = useTodoStore()
 const todoModalsStore = useTodoModalsStore()
@@ -46,6 +49,9 @@ const { toast } = useToast()
 const { confirmDiscardChanges } = useUnsavedChanges()
 
 const isSaving = ref(false)
+
+const isTodoFormValid = (form: { content: string, recurrence: RecurrencePattern | null }): boolean =>
+  todoFormSchema.safeParse(form).success
 
 const weekdayNames = computed(() => [
   t('todo.recurrence.weekdayNames.mon'),

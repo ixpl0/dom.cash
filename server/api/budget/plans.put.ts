@@ -9,12 +9,13 @@ import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { MONTH_KEYS } from '~~/shared/types/i18n'
+import { monthIndexSchema, planCommentSchema, plannedBalanceChangeSchema, yearSchema } from '~~/shared/schemas/budget'
 
 const bodySchema = z.object({
-  year: z.number().int().min(1900).max(2100),
-  month: z.number().int().min(0).max(11),
-  plannedBalanceChange: z.number().int().nullable(),
-  comment: z.string().max(2000).nullable().optional(),
+  year: yearSchema,
+  month: monthIndexSchema,
+  plannedBalanceChange: plannedBalanceChangeSchema.nullable(),
+  comment: planCommentSchema.nullable().optional(),
   username: z.string().optional(),
 })
 

@@ -8,10 +8,11 @@ import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { MONTH_KEYS } from '~~/shared/types/i18n'
+import { monthIndexSchema, yearSchema } from '~~/shared/schemas/budget'
 
 const querySchema = z.object({
-  year: z.coerce.number().int().min(1900).max(2100),
-  month: z.coerce.number().int().min(0).max(11),
+  year: z.coerce.number().pipe(yearSchema),
+  month: z.coerce.number().pipe(monthIndexSchema),
   username: z.string().optional(),
 })
 

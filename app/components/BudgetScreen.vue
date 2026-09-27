@@ -131,7 +131,7 @@
         </div>
 
         <UiTimelineAddButton
-          v-if="budgetStore.canEdit && !budgetStore.nextYearToLoad && !budgetStore.isPlanningMode"
+          v-if="budgetStore.canEdit && canAddPreviousMonth"
           direction="previous"
           :month-text="getPreviousMonthText()"
           :is-loading="isCreatingPreviousMonth"
@@ -184,6 +184,7 @@
 
 <script setup lang="ts">
 import { findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
+import { yearSchema } from '~~/shared/schemas/budget'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { timelineColumnsSyncKey } from '~/types/timeline'
 import type { BudgetExportFormat } from '~/composables/budget/useBudgetExport'
@@ -258,12 +259,18 @@ const getNextMonthText = (): string => {
 }
 
 const canAddNextMonth = computed((): boolean => {
-  if (!budgetStore.isPlanningMode) {
-    return true
-  }
   const next = budgetStore.getNextMonth()
-  return !isPastMonth(next.year, next.month)
+  if (!yearSchema.safeParse(next.year).success) {
+    return false
+  }
+  return !budgetStore.isPlanningMode || !isPastMonth(next.year, next.month)
 })
+
+const canAddPreviousMonth = computed((): boolean =>
+  !budgetStore.isPlanningMode
+  && !budgetStore.nextYearToLoad
+  && yearSchema.safeParse(budgetStore.getPreviousMonth().year).success,
+)
 
 const getPreviousMonthText = (): string => {
   const prevMonth = budgetStore.getPreviousMonth()

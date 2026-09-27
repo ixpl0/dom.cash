@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { currencySchema, usernameSchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
+import { amountForKindRule, hasAmountAllowedForKind, monthIndexSchema, planCommentSchema, plannedBalanceChangeSchema, yearSchema } from '~~/shared/schemas/budget'
 
 export interface BudgetExportData {
   version: '1.0'
@@ -64,20 +65,20 @@ export const budgetExportEntrySchema = z.object({
   currency: currencySchema,
   date: z.iso.date().optional(),
   isOptional: z.boolean().optional(),
-})
+}).refine(hasAmountAllowedForKind, amountForKindRule)
 
 export const budgetExportMonthSchema = z.object({
-  year: z.number().int().min(1900).max(2100),
-  month: z.number().int().min(0).max(11),
+  year: yearSchema,
+  month: monthIndexSchema,
   entries: z.array(budgetExportEntrySchema),
   exchangeRates: z.record(z.string(), z.number()).optional(),
 })
 
 export const budgetExportPlanSchema = z.object({
-  year: z.number().int().min(1900).max(2100),
-  month: z.number().int().min(0).max(11),
-  plannedBalanceChange: z.number().int().nullable(),
-  comment: z.string().max(2000).nullable().optional(),
+  year: yearSchema,
+  month: monthIndexSchema,
+  plannedBalanceChange: plannedBalanceChangeSchema.nullable(),
+  comment: planCommentSchema.nullable().optional(),
 })
 
 export const budgetExportSchema = z.object({

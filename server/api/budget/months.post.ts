@@ -8,10 +8,11 @@ import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { MONTH_KEYS } from '~~/shared/types/i18n'
+import { monthIndexSchema, yearSchema } from '~~/shared/schemas/budget'
 
 const createMonthSchema = z.object({
-  year: z.number().int().min(2020).max(2100),
-  month: z.number().int().min(0).max(11),
+  year: yearSchema,
+  month: monthIndexSchema,
   copyFromMonthId: z.string().optional(),
   username: z.string().optional(),
 })

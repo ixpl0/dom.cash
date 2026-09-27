@@ -312,7 +312,9 @@ export default {
 
     errors: {
       descriptionRequired: 'Введите описание',
+      descriptionTooLong: 'Описание не должно превышать 255 символов',
       amountRequired: 'Укажите сумму',
+      amountTooLarge: 'Слишком большая сумма',
       amountPositive: 'Сумма должна быть больше нуля',
       amountNonNegative: 'Сумма не может быть отрицательной',
       addFailed: 'Не удалось добавить запись',

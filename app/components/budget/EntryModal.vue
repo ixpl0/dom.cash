@@ -44,6 +44,8 @@
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { BudgetEntry } from '~~/shared/types/budget'
+import type { EntryKind } from '~~/shared/types'
+import { getEntryErrorKey } from '~/utils/entry-validation'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 import type { BackSource } from '~/utils/back-handlers'
 
@@ -179,25 +181,9 @@ const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
   startEdit(entry)
 }
 
-const validateEntry = (entry: { description: string, amount: number | null | undefined }, entryKind: string | null): string | null => {
-  if (!entry.description.trim()) {
-    return t('entry.errors.descriptionRequired')
-  }
-
-  if (entry.amount === null || entry.amount === undefined) {
-    return t('entry.errors.amountRequired')
-  }
-
-  const isBalanceEntry = entryKind === 'balance'
-  if (isBalanceEntry && entry.amount < 0) {
-    return t('entry.errors.amountNonNegative')
-  }
-
-  if (!isBalanceEntry && entry.amount <= 0) {
-    return t('entry.errors.amountPositive')
-  }
-
-  return null
+const validateEntry = (entry: { description: string, amount: number | null | undefined }, entryKind: EntryKind | null): string | null => {
+  const errorKey = entryKind ? getEntryErrorKey(entry, entryKind) : null
+  return errorKey ? t(errorKey) : null
 }
 
 const addEntry = async (): Promise<void> => {

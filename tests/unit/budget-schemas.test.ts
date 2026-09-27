@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { authSchema, emailSchema } from '../../shared/schemas/auth'
-import { accessSchema, currencySchema } from '../../shared/schemas/common'
+import { accessSchema, currencySchema, MAX_AMOUNT } from '../../shared/schemas/common'
+import { createEntrySchema, entryAmountForKindSchema } from '../../shared/schemas/budget'
+import { todoFormSchema } from '../../shared/schemas/todo'
 import {
   dateReferenceSchema,
   dayOfMonthRecurrenceSchema,
@@ -43,6 +45,7 @@ const readFixture = (name: string): unknown => JSON.parse(readFileSync(new URL(n
 
 const emailOfLength = (length: number): string => `${'a'.repeat(length - '@b.com'.length)}@b.com`
 
+const MONTH_ID = '6f1c1b0a-8d8f-4f6e-9a57-3b8f4f0c2d11'
 const validEntry = { kind: 'expense', description: 'Rent', amount: 1200, currency: 'USD' }
 const validMonth = { year: 2026, month: 2, entries: [validEntry], exchangeRates: { USD: 1, GEL: 2.7 } }
 const validPlan = { year: 2026, month: 3, plannedBalanceChange: 500, comment: 'Save for a trip' }
@@ -85,9 +88,9 @@ const validationGroups: ValidationGroup[] = [
       { name: 'month -1', input: { ...validMonth, month: -1 }, isValid: false },
       { name: 'month 12', input: { ...validMonth, month: 12 }, isValid: false },
       { name: 'a fractional month', input: { ...validMonth, month: 1.5 }, isValid: false },
-      { name: 'year 1900', input: { ...validMonth, year: 1900 }, isValid: true },
+      { name: 'year 2000', input: { ...validMonth, year: 2000 }, isValid: true },
       { name: 'year 2100', input: { ...validMonth, year: 2100 }, isValid: true },
-      { name: 'year 1899', input: { ...validMonth, year: 1899 }, isValid: false },
+      { name: 'year 1999', input: { ...validMonth, year: 1999 }, isValid: false },
       { name: 'year 2101', input: { ...validMonth, year: 2101 }, isValid: false },
       { name: 'a month without exchange rates', input: { ...validMonth, exchangeRates: undefined }, isValid: true },
       { name: 'an exchange rate written as text', input: { ...validMonth, exchangeRates: { GEL: '2.7' } }, isValid: false },
@@ -109,6 +112,8 @@ const validationGroups: ValidationGroup[] = [
       { name: 'a 2001-character comment', input: { ...validPlan, comment: 'a'.repeat(2001) }, isValid: false },
       { name: 'month 12', input: { ...validPlan, month: 12 }, isValid: false },
       { name: 'year 2101', input: { ...validPlan, year: 2101 }, isValid: false },
+      { name: 'year 1999', input: { ...validPlan, year: 1999 }, isValid: false },
+      { name: 'a planned change above the limit', input: { ...validPlan, plannedBalanceChange: MAX_AMOUNT + 1 }, isValid: false },
     ],
   },
   {
@@ -119,7 +124,12 @@ const validationGroups: ValidationGroup[] = [
       { name: 'an income entry', input: { ...validEntry, kind: 'income' }, isValid: true },
       { name: 'an expense entry with a date', input: { ...validEntry, date: '2026-03-05' }, isValid: true },
       { name: 'an unknown entry kind', input: { ...validEntry, kind: 'transfer' }, isValid: false },
-      { name: 'a zero amount', input: { ...validEntry, amount: 0 }, isValid: true },
+      { name: 'a zero balance', input: { ...validEntry, kind: 'balance', amount: 0 }, isValid: true },
+      { name: 'a zero income', input: { ...validEntry, kind: 'income', amount: 0 }, isValid: false },
+      { name: 'a zero expense', input: { ...validEntry, amount: 0 }, isValid: false },
+      { name: 'the largest amount', input: { ...validEntry, amount: MAX_AMOUNT }, isValid: true },
+      { name: 'an amount above the limit', input: { ...validEntry, amount: MAX_AMOUNT + 1 }, isValid: false },
+      { name: 'a description of spaces only', input: { ...validEntry, description: '   ' }, isValid: false },
       { name: 'a negative amount', input: { ...validEntry, amount: -0.01 }, isValid: false },
       { name: 'an infinite amount', input: { ...validEntry, amount: Number.POSITIVE_INFINITY }, isValid: false },
       { name: 'an amount written as text', input: { ...validEntry, amount: '1200' }, isValid: false },
@@ -242,6 +252,36 @@ const validationGroups: ValidationGroup[] = [
       { name: 'the planned date', input: 'planned', isValid: true },
       { name: 'the current date', input: 'now', isValid: true },
       { name: 'an unknown reference', input: 'today', isValid: false },
+    ],
+  },
+  {
+    schemaName: 'createEntrySchema',
+    schema: createEntrySchema,
+    cases: [
+      { name: 'an expense', input: { ...validEntry, monthId: MONTH_ID }, isValid: true },
+      { name: 'a zero balance', input: { ...validEntry, kind: 'balance', amount: 0, monthId: MONTH_ID }, isValid: true },
+      { name: 'a zero expense', input: { ...validEntry, amount: 0, monthId: MONTH_ID }, isValid: false },
+      { name: 'an entry without a month', input: validEntry, isValid: false },
+    ],
+  },
+  {
+    schemaName: 'entryAmountForKindSchema',
+    schema: entryAmountForKindSchema,
+    cases: [
+      { name: 'a zero balance', input: { kind: 'balance', amount: 0 }, isValid: true },
+      { name: 'a zero income', input: { kind: 'income', amount: 0 }, isValid: false },
+      { name: 'a positive income', input: { kind: 'income', amount: 0.01 }, isValid: true },
+    ],
+  },
+  {
+    schemaName: 'todoFormSchema',
+    schema: todoFormSchema,
+    cases: [
+      { name: 'a task without recurrence', input: { content: 'Call the bank', recurrence: null }, isValid: true },
+      { name: 'content of spaces only', input: { content: '   ', recurrence: null }, isValid: false },
+      { name: '10000 characters', input: { content: 'a'.repeat(10000), recurrence: null }, isValid: true },
+      { name: '10001 characters', input: { content: 'a'.repeat(10001), recurrence: null }, isValid: false },
+      { name: 'weekdays without days', input: { content: 'Gym', recurrence: { type: 'weekdays', days: [] } }, isValid: false },
     ],
   },
 ]

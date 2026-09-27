@@ -34,6 +34,7 @@
 * **Errors**:
   * Throw `createError({ statusCode, message: ERROR_KEYS.X })` with a key from `shared/utils/shared/error-keys.ts`. Every key needs a `serverErrors` translation in both locales (a unit test checks it).
   * Validate input with `parseBody` / `parseQuery` (`server/utils/validation.ts`): they answer 400 with an error key and list the failed fields in `data.issues`.
+  * Request schemas live in `shared/schemas` (auth, budget, todo, common): the server parses requests with them and forms check the same schemas before sending. Budget years are 2000–2100; income and expense amounts are greater than zero, a balance may be zero.
   * Show errors with `useServerError().formatError(error, fallback)`: it translates error keys and shows the fallback for anything else.
 * **Dates**: date-only values are `YYYY-MM-DD` strings. Use `shared/utils/shared/dates.ts` to get the local date and to format dates; `toISOString()` gives the UTC date.
 * UI:

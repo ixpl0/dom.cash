@@ -61,7 +61,7 @@
         {
           "kind": "income",
           "description": "Freelance",
-          "amount": 0,
+          "amount": 800,
           "currency": "CAD"
         },
         {
@@ -73,7 +73,7 @@
         {
           "kind": "expense",
           "description": "Groceries",
-          "amount": 0,
+          "amount": 12000,
           "currency": "AUD"
         }
       ]

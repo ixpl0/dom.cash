@@ -27,17 +27,17 @@
           <span class="label-text">{{ contentLabel }}</span>
           <span
             class="label-text-alt"
-            :class="{ 'text-error': form.content.length > MAX_CONTENT_LENGTH }"
+            :class="{ 'text-error': form.content.length > maxContentLength }"
             data-testid="todo-modal-content-count"
           >
-            {{ form.content.length }} / {{ MAX_CONTENT_LENGTH }}
+            {{ form.content.length }} / {{ maxContentLength }}
           </span>
         </label>
         <textarea
           ref="contentInput"
           v-model="form.content"
           class="textarea textarea-bordered w-full h-32"
-          :class="{ 'textarea-error': form.content.length > MAX_CONTENT_LENGTH }"
+          :class="{ 'textarea-error': form.content.length > maxContentLength }"
           :placeholder="contentPlaceholder"
           data-testid="todo-modal-content-input"
         />
@@ -148,8 +148,6 @@ import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import type { TodoConnection } from '~~/shared/types/todo'
 import { calculateInitialDate, formatDateForDb, isSameRecurrence } from '~~/shared/utils/recurrence'
 
-const MAX_CONTENT_LENGTH = 10000
-
 interface Props {
   isOpen: boolean
   isEditing: boolean
@@ -178,6 +176,8 @@ interface Props {
   cancelText: string
   saveText: string
   connections: TodoConnection[]
+  maxContentLength: number
+  isFormValid: (form: { content: string, recurrence: RecurrencePattern | null }) => boolean
   initialContent?: string
   initialPlannedDate?: string | null
   initialRecurrence?: RecurrencePattern | null
@@ -217,18 +217,7 @@ const form = reactive({
   sharedWithUserIds: [...props.initialSharedWithUserIds],
 })
 
-const isValid = computed(() => {
-  if (!form.content.trim()) {
-    return false
-  }
-  if (form.content.length > MAX_CONTENT_LENGTH) {
-    return false
-  }
-  if (form.recurrence?.type === 'weekdays' && form.recurrence.days.length === 0) {
-    return false
-  }
-  return true
-})
+const isValid = computed(() => props.isFormValid({ content: form.content, recurrence: form.recurrence }))
 
 const hasSameUserIds = (firstUserIds: readonly string[], secondUserIds: readonly string[]): boolean =>
   firstUserIds.length === secondUserIds.length && firstUserIds.every(userId => secondUserIds.includes(userId))

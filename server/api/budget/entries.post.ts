@@ -1,22 +1,10 @@
-import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { getMonthOwner, getEntryWithMonth, createEntry, updateEntry } from '~~/server/services/budget/entries'
 import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
-import { currencySchema, descriptionSchema, amountSchema, entryKindSchema } from '~~/shared/schemas/common'
+import { createEntrySchema } from '~~/shared/schemas/budget'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
-
-const createEntrySchema = z.object({
-  id: z.uuid().optional(),
-  monthId: z.uuid(),
-  kind: entryKindSchema,
-  description: descriptionSchema,
-  amount: amountSchema,
-  currency: currencySchema,
-  date: z.string().optional(),
-  isOptional: z.boolean().optional(),
-})
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)

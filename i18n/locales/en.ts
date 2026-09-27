@@ -312,7 +312,9 @@ export default {
 
     errors: {
       descriptionRequired: 'Please enter a description',
+      descriptionTooLong: 'Description must not exceed 255 characters',
       amountRequired: 'Please enter an amount',
+      amountTooLarge: 'Amount is too large',
       amountPositive: 'Amount must be greater than zero',
       amountNonNegative: 'Amount cannot be negative',
       addFailed: 'Failed to add entry',
