@@ -16,7 +16,6 @@
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { formatAmountRounded } from '~~/shared/utils/budget/budget'
 import { createMonthId } from '~~/shared/utils/budget/budget-calculations'
 import { useBudgetStore } from '~/stores/budget/budget'
 import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
@@ -29,6 +28,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { t } = useI18n()
+const { formatMoneyRounded } = useMoneyFormat()
 const budgetStore = useBudgetStore()
 
 const yearStats = computed((): UiYearStats => {
@@ -132,6 +132,6 @@ const labels = computed((): UiYearLabels => ({
 }))
 
 const formatAmountForDisplay = (amount: number): string => {
-  return formatAmountRounded(amount, budgetStore.effectiveMainCurrency)
+  return formatMoneyRounded(amount, budgetStore.effectiveMainCurrency)
 }
 </script>

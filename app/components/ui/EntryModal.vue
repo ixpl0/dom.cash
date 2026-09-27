@@ -52,7 +52,7 @@
             <UiEntryCard
               v-else
               :description="entry.description"
-              :amount-text="formatAmount(entry.amount, entry.currency)"
+              :amount-text="formatMoney(entry.amount, entry.currency)"
               :amount-class="getEntryAmountClass(entryKind, entry.amount)"
               :converted-amount-text="props.getAmountTooltip?.(entry)"
               :currency="entry.currency"
@@ -145,7 +145,7 @@
                       ]"
                       :data-tip="props.getAmountTooltip?.(entry)"
                     >
-                      <span :class="getEntryAmountClass(entryKind, entry.amount)">{{ formatAmount(entry.amount, entry.currency) }}</span>
+                      <span :class="getEntryAmountClass(entryKind, entry.amount)">{{ formatMoney(entry.amount, entry.currency) }}</span>
                     </div>
                   </td>
                   <td
@@ -256,7 +256,6 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount } from '~~/shared/utils/budget/budget'
 import type { BudgetEntry } from '~~/shared/types/budget'
 import type { EntryFormData } from '~/composables/budget/useEntryForm'
 
@@ -311,6 +310,7 @@ const emit = defineEmits<{
 }>()
 
 const { isMobileViewport } = useIsMobileViewport()
+const { formatMoney } = useMoneyFormat()
 
 const getEntryDate = (entry: BudgetEntry): string | null => {
   return 'date' in entry ? entry.date : null

@@ -45,7 +45,6 @@ import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import { type ChartOption, type TooltipFormatter, buildChartOption, type ChartSeriesConfig } from '~/composables/shared/useChartConfig'
 import { useChartTheme } from '~/composables/shared/useChartTheme'
-import { formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
 
 type TooltipParams = Parameters<TooltipFormatter>[0]
 
@@ -78,6 +77,7 @@ const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget
 
 const budgetStore = useBudgetStore()
 const { t } = useI18n()
+const { formatMoneyRounded } = useMoneyFormat()
 const modalsStore = useModalsStore()
 const isOpen = computed(() => modalsStore.chartModal.isOpen)
 
@@ -111,7 +111,7 @@ const chartData = computed(() => {
 })
 
 const formatChartValue = (value: number): string =>
-  formatCurrencyRounded(value, budgetStore.effectiveMainCurrency)
+  formatMoneyRounded(value, budgetStore.effectiveMainCurrency)
 
 const { colors: themeColors } = useChartTheme()
 

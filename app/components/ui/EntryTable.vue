@@ -7,7 +7,7 @@
       v-for="entry in entries"
       :key="entry.id"
       :description="entry.description"
-      :amount-text="formatAmount(entry.amount, entry.currency)"
+      :amount-text="formatMoney(entry.amount, entry.currency)"
       :amount-class="getEntryAmountClass(entryKind, entry.amount)"
       :currency="entry.currency"
       :date-text="entryKind !== 'balance' ? formatEntryDate(entry) : ''"
@@ -45,7 +45,7 @@
             <span>{{ entry.description }}</span>
           </td>
           <td>
-            <span :class="getEntryAmountClass(entryKind, entry.amount)">{{ formatAmount(entry.amount, entry.currency) }}</span>
+            <span :class="getEntryAmountClass(entryKind, entry.amount)">{{ formatMoney(entry.amount, entry.currency) }}</span>
           </td>
           <td>
             <span>{{ entry.currency }}</span>
@@ -68,8 +68,6 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount } from '~~/shared/utils/budget/budget'
-
 export interface EntryTableEntry {
   id: string
   description: string
@@ -97,6 +95,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { isMobileViewport } = useIsMobileViewport()
+const { formatMoney } = useMoneyFormat()
 
 const formatEntryDate = (entry: EntryTableEntry): string => {
   return props.formatDate(entry.date)

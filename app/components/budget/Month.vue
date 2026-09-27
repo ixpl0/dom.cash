@@ -30,7 +30,6 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmountRounded } from '~~/shared/utils/budget/budget'
 import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
@@ -46,6 +45,7 @@ const props = defineProps<Props>()
 const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const { t } = useI18n()
+const { formatMoneyRounded } = useMoneyFormat()
 const { formatError } = useServerError()
 const { toast } = useToast()
 
@@ -191,7 +191,7 @@ const expectedBalanceTooltip = computed(() => {
 })
 
 const formatAmountForDisplay = (amount: number): string => {
-  return formatAmountRounded(amount, budgetStore.effectiveMainCurrency)
+  return formatMoneyRounded(amount, budgetStore.effectiveMainCurrency)
 }
 
 const openBalanceModal = (): void => {

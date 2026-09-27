@@ -312,19 +312,19 @@ import type { UiMonthData, UiMonthLabels } from '~/components/ui/Month.vue'
 import type { UiYearStats, UiYearLabels } from '~/components/ui/Year.vue'
 import type { EntryTableEntry, EntryTableLabels } from '~/components/ui/EntryTable.vue'
 import type { ChartOption, ChartSeriesConfig } from '~/composables/shared/useChartConfig'
-import { formatCurrencyRounded } from '~~/shared/utils/shared/currency-formatter'
 import { formatPlainDate } from '~~/shared/utils/shared/dates'
 
 const BudgetChartClient = defineAsyncComponent(() => import('~/components/budget/BudgetChartClient.client.vue'))
 
 const { t, locale } = useI18n()
+const { formatMoneyRounded } = useMoneyFormat()
 const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
 
 const DEMO_CURRENCY = 'USD'
 
 const formatDemoAmount = (amount: number): string => {
-  return formatCurrencyRounded(amount, DEMO_CURRENCY)
+  return formatMoneyRounded(amount, DEMO_CURRENCY)
 }
 
 const monthLabels = computed((): UiMonthLabels => ({
@@ -527,7 +527,7 @@ const demoChartOption = computed((): ChartOption => {
     colors: themeColors.value,
     labels: demoChartLabels.value,
     series: demoChartSeriesConfigs.value,
-    yAxisFormatter: (value: number) => formatCurrencyRounded(value, DEMO_CURRENCY),
+    yAxisFormatter: (value: number) => formatMoneyRounded(value, DEMO_CURRENCY),
   })
 })
 

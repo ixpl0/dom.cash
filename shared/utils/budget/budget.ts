@@ -1,13 +1,4 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
-import { formatCurrency, formatCurrencyRounded } from '../shared/currency-formatter'
-
-export const formatAmount = (amount: number, currency: string): string => {
-  return formatCurrency(amount, currency)
-}
-
-export const formatAmountRounded = (amount: number, currency: string): string => {
-  return formatCurrencyRounded(amount, currency)
-}
 
 export const calculateTotalBalance = (
   entries: BudgetEntry[],

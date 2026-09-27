@@ -9,7 +9,7 @@ import type {
   MonthData,
 } from '../../shared/types/budget'
 import { budgetExportSchema, type BudgetExportSchema } from '../../shared/types/export-import'
-import { formatAmount } from '../../shared/utils/budget/budget'
+import { formatCurrency } from '../../shared/utils/shared/currency-formatter'
 import {
   computeExpectedBalances,
   computeMonthData,
@@ -396,7 +396,7 @@ test('computeMonthData shows zero pocket expenses for a month that balances exac
   const { calculatedPocketExpenses } = computeMonthData(month, [month, nextMonth], 'USD', MONTH_NAMES)
 
   assert.ok(calculatedPocketExpenses !== null)
-  assert.equal(formatAmount(calculatedPocketExpenses, 'USD'), '$0')
+  assert.equal(formatCurrency(calculatedPocketExpenses, 'USD', 'en'), '$0')
 })
 
 const fixtureCases = [

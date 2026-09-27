@@ -41,7 +41,6 @@
 </template>
 
 <script setup lang="ts">
-import { formatAmount, formatAmountRounded } from '~~/shared/utils/budget/budget'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { BudgetEntry } from '~~/shared/types/budget'
@@ -51,6 +50,7 @@ import type { BackSource } from '~/utils/back-handlers'
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
 const { t } = useI18n()
+const { formatMoney, formatMoneyRounded } = useMoneyFormat()
 const { formatError } = useServerError()
 const { toast } = useToast()
 const entryModal = computed(() => modalsStore.entryModal)
@@ -78,7 +78,7 @@ const getAmountTooltip = (entry: BudgetEntry): string | undefined => {
   const toRate = rates[baseCurrency] || 1
   const converted = (entry.amount / fromRate) * toRate
 
-  return formatAmountRounded(converted, baseCurrency)
+  return formatMoneyRounded(converted, baseCurrency)
 }
 
 const currentEntries = computed(() => {
@@ -109,7 +109,7 @@ const totalAmount = computed(() => {
     return undefined
   }
 
-  return formatAmountRounded(total, baseCurrency)
+  return formatMoneyRounded(total, baseCurrency)
 })
 
 const { confirmDiscardChanges } = useUnsavedChanges()
@@ -233,7 +233,7 @@ const getDeleteEntryConfirmMessage = (
   `${t('entry.deleteMessageWithEntry', { entryType })}:`,
   { text: entry.description, isBold: true },
   { isDivider: true },
-  { text: formatAmount(entry.amount, entry.currency), isBold: true },
+  { text: formatMoney(entry.amount, entry.currency), isBold: true },
 ]
 
 const deleteEntry = async (entryId: string): Promise<void> => {
