@@ -26,13 +26,9 @@ const createMonth = (year: number, month: number): MonthData => ({
   id: toMonthLabel(year, month),
   year,
   month,
-  userMonthId: `user-${toMonthLabel(year, month)}`,
   balanceSources: [],
   incomeEntries: [],
   expenseEntries: [],
-  balanceChange: 0,
-  pocketExpenses: 0,
-  income: 0,
   exchangeRates: { USD: 1 },
   exchangeRatesSource: `${year}-${String(month + 1).padStart(2, '0')}-01`,
 })

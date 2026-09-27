@@ -1,18 +1,19 @@
-import { getQuery, createError } from 'h3'
+import { createError, getQuery } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
-import { getAvailableYears, getInitialYearsToLoad, findUserByUsername } from '~~/server/services/budget/months'
-import { checkReadPermission } from '~~/server/services/auth/users'
+import { getAvailableYears, getInitialYearsToLoad } from '~~/server/services/budget/months'
+import { resolveBudget } from '~~/server/services/budget/access'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import type { YearsData } from '~~/shared/types/budget'
 
-export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
-  const query = getQuery(event)
+const querySchema = z.object({
+  username: z.string().optional(),
+})
 
-  const querySchema = z.object({
-    username: z.string().optional(),
-  })
-  const parsed = querySchema.safeParse(query)
+export default defineEventHandler(async (event): Promise<YearsData> => {
+  const currentUser = await requireAuth(event)
+
+  const parsed = querySchema.safeParse(getQuery(event))
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
@@ -20,34 +21,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const targetUsername = parsed.data.username
-
-  let targetUserId = user.id
-
-  if (targetUsername) {
-    const targetUser = await findUserByUsername(targetUsername, event)
-    if (!targetUser) {
-      throw createError({
-        statusCode: 404,
-        message: ERROR_KEYS.USER_NOT_FOUND,
-      })
-    }
-    targetUserId = targetUser.id
-
-    const hasReadPermission = await checkReadPermission(targetUserId, user.id, event)
-    if (!hasReadPermission) {
-      throw createError({
-        statusCode: 403,
-        message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_VIEW,
-      })
-    }
-  }
-
-  const availableYears = await getAvailableYears(targetUserId, event)
-  const initialYears = getInitialYearsToLoad(availableYears)
+  const { owner } = await resolveBudget(event, currentUser, parsed.data.username, 'read', ERROR_KEYS.INSUFFICIENT_PERMISSIONS_VIEW)
+  const availableYears = await getAvailableYears(owner.id, event)
 
   return {
     availableYears,
-    initialYears,
+    initialYears: getInitialYearsToLoad(availableYears),
   }
 })

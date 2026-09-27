@@ -3,6 +3,7 @@ import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare } from '~~/server/db/schema'
 import type { NotificationType, NotificationParams } from '~~/shared/types/i18n'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 export type { NotificationType }
 
@@ -107,7 +108,7 @@ const sendNotificationToUser = (userId: string, notification: NotificationEvent)
       connection.write(data)
     }
     catch (error) {
-      console.error('Error sending notification to user:', error)
+      secureLog.error('Error sending notification to user:', error)
       removeConnection(userId, connectionId)
     }
   }
@@ -138,6 +139,15 @@ const getNotificationRecipients = async (
   const authorizedUsers = new Set([budgetOwnerId, ...shares.map(share => share.userId)])
 
   return targetUsers.filter(userId => authorizedUsers.has(userId))
+}
+
+export const sendNotification = async (event: H3Event, notificationParams: CreateNotificationParams): Promise<void> => {
+  try {
+    await createNotification(event, notificationParams)
+  }
+  catch (error) {
+    secureLog.error('Error creating notification:', error)
+  }
 }
 
 export const createNotification = async (event: H3Event, notificationParams: CreateNotificationParams): Promise<void> => {

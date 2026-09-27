@@ -1,92 +1,61 @@
-import { createError } from 'h3'
+import { createError, isError } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { findUserByUsername } from '~~/server/services/budget/months'
 import { upsertPlan } from '~~/server/services/budget/plans'
-import { checkBudgetWritePermission } from '~~/server/utils/auth'
+import { resolveBudget } from '~~/server/services/budget/access'
+import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { isPastMonth } from '~~/shared/utils/budget/month-helpers'
+import { MONTH_KEYS } from '~~/shared/types/i18n'
 
 const bodySchema = z.object({
   year: z.number().int().min(1900).max(2100),
   month: z.number().int().min(0).max(11),
   plannedBalanceChange: z.number().int().nullable(),
   comment: z.string().max(2000).nullable().optional(),
-  targetUsername: z.string().optional(),
+  username: z.string().optional(),
 })
 
+const normalizeComment = (comment: string | null | undefined): string | null => {
+  const trimmedComment = comment?.trim() ?? ''
+  return trimmedComment.length === 0 ? null : trimmedComment
+}
+
 export default defineEventHandler(async (event) => {
+  const currentUser = await requireAuth(event)
+  const { year, month, plannedBalanceChange, comment, username } = await parseBody(event, bodySchema)
+
+  const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.NO_PERMISSION_UPDATE_PLAN)
+
+  if (isPastMonth(year, month)) {
+    throw createError({
+      statusCode: 400,
+      message: ERROR_KEYS.CANNOT_PLAN_PAST_MONTH,
+    })
+  }
+
   try {
-    const currentUser = await requireAuth(event)
-    const { year, month, plannedBalanceChange, comment, targetUsername } = await parseBody(event, bodySchema)
+    const saved = await upsertPlan(owner.id, year, month, plannedBalanceChange, normalizeComment(comment), event)
 
-    let targetUserId = currentUser.id
-
-    if (targetUsername) {
-      const targetUser = await findUserByUsername(targetUsername, event)
-      if (!targetUser) {
-        throw createError({
-          statusCode: 404,
-          message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
-        })
-      }
-
-      if (targetUser.id !== currentUser.id) {
-        const hasPermission = await checkBudgetWritePermission(targetUser.id, currentUser.id, event)
-        if (!hasPermission) {
-          throw createError({
-            statusCode: 403,
-            message: ERROR_KEYS.NO_PERMISSION_UPDATE_PLAN,
-          })
-        }
-      }
-
-      targetUserId = targetUser.id
-    }
-
-    if (isPastMonth(year, month)) {
-      throw createError({
-        statusCode: 400,
-        message: ERROR_KEYS.CANNOT_PLAN_PAST_MONTH,
-      })
-    }
-
-    const normalizedComment = (() => {
-      if (comment === undefined || comment === null) {
-        return null
-      }
-      const trimmed = comment.trim()
-      return trimmed.length === 0 ? null : trimmed
-    })()
-
-    const saved = await upsertPlan(targetUserId, year, month, plannedBalanceChange, normalizedComment, event)
-
-    try {
-      const { createNotification } = await import('~~/server/services/notifications')
-      const { MONTH_KEYS } = await import('~~/shared/types/i18n')
-      await createNotification(event, {
-        sourceUserId: currentUser.id,
-        budgetOwnerId: targetUserId,
-        type: 'budget_plan_updated',
-        params: {
-          username: currentUser.username,
-          month: MONTH_KEYS[month],
-          year,
-        },
-      })
-    }
-    catch (notificationError) {
-      secureLog.error('Error creating plan update notification:', notificationError)
-    }
+    await sendNotification(event, {
+      sourceUserId: currentUser.id,
+      budgetOwnerId: owner.id,
+      type: 'budget_plan_updated',
+      params: {
+        username: currentUser.username,
+        month: MONTH_KEYS[month],
+        year,
+      },
+    })
 
     return saved
   }
   catch (error) {
     secureLog.error('Upsert plan error:', error)
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (isError(error)) {
       throw error
     }
 

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { user, month, entry, plan } from '~~/server/db/schema'
-import { getUserMonths } from './months'
+import { loadMonths } from './months'
 import { getUserPlans, upsertPlan } from './plans'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
@@ -33,7 +33,7 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
     throw new Error('User not found')
   }
 
-  const monthsData = await getUserMonths(userId, event)
+  const monthsData = await loadMonths(userId, 'all', event)
 
   const exportMonths: BudgetExportMonth[] = monthsData.map((monthData) => {
     const entries: BudgetExportEntry[] = [

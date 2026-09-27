@@ -2,16 +2,28 @@ export interface MonthData {
   id: string
   year: number
   month: number
-  userMonthId: string
   balanceSources: BalanceSourceData[]
   incomeEntries: IncomeEntryData[]
   expenseEntries: ExpenseEntryData[]
-  balanceChange: number
-  pocketExpenses: number
-  income: number
   exchangeRates: Record<string, number>
   exchangeRatesSource: string
   isPlanOnly?: boolean
+}
+
+export type BudgetAccess = 'owner' | 'read' | 'write'
+
+export interface BudgetData {
+  user: {
+    username: string
+    mainCurrency: string
+  }
+  access: BudgetAccess
+  months: MonthData[]
+}
+
+export interface YearsData {
+  availableYears: YearInfo[]
+  initialYears: number[]
 }
 
 export interface PlanData {

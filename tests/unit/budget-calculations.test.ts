@@ -93,13 +93,9 @@ const createMonth = ({
   id: `month-${toMonthKey(year, month)}`,
   year,
   month,
-  userMonthId: `user-month-${toMonthKey(year, month)}`,
   balanceSources: balances,
   incomeEntries: incomes,
   expenseEntries: expenses,
-  balanceChange: 0,
-  pocketExpenses: 0,
-  income: 0,
   exchangeRates: rates,
   exchangeRatesSource: ratesSource,
 })

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { TestContext } from 'node:test'
 import type { H3Event } from 'h3'
-import { createMonth, getExchangeRatesForMonth } from '../../server/services/budget/months'
+import { createMonth } from '../../server/services/budget/months'
+import { getExchangeRatesForMonth } from '../../server/services/budget/rates'
 import { hasCurrencyRates } from '../../server/utils/rates/database'
 
 interface StoredRates {

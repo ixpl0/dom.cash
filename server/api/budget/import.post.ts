@@ -1,11 +1,11 @@
+import { z } from 'zod'
+import { createError, isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
 import { importBudget } from '~~/server/services/budget/import-export'
+import { resolveBudget } from '~~/server/services/budget/access'
+import { sendNotification } from '~~/server/services/notifications'
 import { budgetExportSchema, budgetImportOptionsSchema } from '~~/shared/types/export-import'
-import { findUserByUsername } from '~~/server/services/budget/months'
-import { checkBudgetWritePermission } from '~~/server/utils/auth'
-import { z } from 'zod'
-import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const maxImportPayloadBytes = 1 * 1024 * 1024
@@ -13,7 +13,7 @@ const maxImportPayloadBytes = 1 * 1024 * 1024
 const importRequestSchema = z.object({
   data: budgetExportSchema,
   options: budgetImportOptionsSchema,
-  targetUsername: z.string().optional(),
+  username: z.string().optional(),
 }).refine(
   payload => JSON.stringify(payload).length <= maxImportPayloadBytes,
   { message: ERROR_KEYS.IMPORT_FILE_TOO_LARGE },
@@ -21,52 +21,24 @@ const importRequestSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
-  const { data, options, targetUsername } = await parseBody(event, importRequestSchema)
+  const { data, options, username } = await parseBody(event, importRequestSchema)
 
-  let targetUserId = currentUser.id
-
-  if (targetUsername) {
-    const targetUser = await findUserByUsername(targetUsername, event)
-    if (!targetUser) {
-      throw createError({
-        statusCode: 404,
-        message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
-      })
-    }
-
-    if (targetUser.id !== currentUser.id) {
-      const hasPermission = await checkBudgetWritePermission(targetUser.id, currentUser.id, event)
-      if (!hasPermission) {
-        throw createError({
-          statusCode: 403,
-          message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_IMPORT,
-        })
-      }
-    }
-
-    targetUserId = targetUser.id
-  }
+  const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.INSUFFICIENT_PERMISSIONS_IMPORT)
 
   try {
-    const result = await importBudget(targetUserId, data, options, event)
+    const result = await importBudget(owner.id, data, options, event)
 
     if (result.importedMonths > 0 || result.importedEntries > 0) {
-      try {
-        const { createNotification } = await import('~~/server/services/notifications')
-        await createNotification(event, {
-          sourceUserId: currentUser.id,
-          budgetOwnerId: targetUserId,
-          type: 'budget_imported',
-          params: {
-            username: currentUser.username,
-            monthsCount: result.importedMonths,
-            entriesCount: result.importedEntries,
-          },
-        })
-      }
-      catch (error) {
-        secureLog.error('Error creating notification:', error)
-      }
+      await sendNotification(event, {
+        sourceUserId: currentUser.id,
+        budgetOwnerId: owner.id,
+        type: 'budget_imported',
+        params: {
+          username: currentUser.username,
+          monthsCount: result.importedMonths,
+          entriesCount: result.importedEntries,
+        },
+      })
     }
 
     if (!result.success) {
@@ -80,7 +52,7 @@ export default defineEventHandler(async (event) => {
     return result
   }
   catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (isError(error)) {
       throw error
     }
 

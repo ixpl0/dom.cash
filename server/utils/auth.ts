@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import { createError, setCookie, getCookie, type H3Event } from 'h3'
 import { eq, gt, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { user, session, budgetShare } from '~~/server/db/schema'
+import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { timingSafeCompare } from '~~/server/utils/crypto'
 import { resolveImpersonation } from '~~/server/utils/impersonation'
@@ -224,22 +224,4 @@ export const getUserFromRequest = async (event: H3Event): Promise<User | null> =
   const impersonatedUser = await resolveImpersonation(event, userRecord)
 
   return impersonatedUser ?? userRecord
-}
-
-export const checkBudgetWritePermission = async (ownerId: string, requesterId: string, event: H3Event): Promise<boolean> => {
-  if (ownerId === requesterId) {
-    return true
-  }
-
-  const db = useDatabase(event)
-  const shareRecord = await db
-    .select({ access: budgetShare.access })
-    .from(budgetShare)
-    .where(and(
-      eq(budgetShare.ownerId, ownerId),
-      eq(budgetShare.sharedWithId, requesterId),
-    ))
-    .limit(1)
-
-  return shareRecord.length > 0 && shareRecord[0]?.access === 'write'
 }

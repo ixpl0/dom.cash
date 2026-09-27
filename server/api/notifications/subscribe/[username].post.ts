@@ -1,16 +1,11 @@
-import { getUserFromRequest } from '~~/server/utils/auth'
+import { createError, getRouterParam } from 'h3'
+import { requireAuth } from '~~/server/utils/session'
 import { subscribeToBudget } from '~~/server/services/notifications'
-import { findUserByUsername, checkReadPermission } from '~~/server/services/auth/users'
+import { resolveBudget } from '~~/server/services/budget/access'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
-  const user = await getUserFromRequest(event)
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: ERROR_KEYS.UNAUTHORIZED,
-    })
-  }
+  const currentUser = await requireAuth(event)
 
   const username = getRouterParam(event, 'username')
   if (!username) {
@@ -20,23 +15,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const targetUser = await findUserByUsername(username, event)
-  if (!targetUser) {
-    throw createError({
-      statusCode: 404,
-      message: ERROR_KEYS.USER_NOT_FOUND,
-    })
-  }
+  const { owner } = await resolveBudget(event, currentUser, username, 'read', ERROR_KEYS.NO_ACCESS_TO_BUDGET)
 
-  const hasAccess = await checkReadPermission(targetUser.id, user.id, event)
-  if (!hasAccess) {
-    throw createError({
-      statusCode: 403,
-      message: ERROR_KEYS.NO_ACCESS_TO_BUDGET,
-    })
-  }
-
-  subscribeToBudget(user.id, targetUser.id)
+  subscribeToBudget(currentUser.id, owner.id)
 
   return { success: true }
 })

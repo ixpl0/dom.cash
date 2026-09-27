@@ -1,83 +1,49 @@
+import { eq } from 'drizzle-orm'
+import { createError, getRouterParam, isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
-import { deleteMonth } from '~~/server/services/budget/months'
-import { checkBudgetWritePermission } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
 import { month } from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { deleteMonth } from '~~/server/services/budget/months'
+import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
+import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
-
-const isHttpError = (error: unknown): error is { statusCode: number } => {
-  return Boolean(
-    error
-    && typeof error === 'object'
-    && 'statusCode' in error
-    && typeof error.statusCode === 'number',
-  )
-}
+import { MONTH_KEYS } from '~~/shared/types/i18n'
 
 export default defineEventHandler(async (event) => {
+  const currentUser = await requireAuth(event)
+  const monthId = getRouterParam(event, 'id')
+
+  if (!monthId) {
+    throw createError({
+      statusCode: 400,
+      message: ERROR_KEYS.MONTH_ID_REQUIRED,
+    })
+  }
+
   const db = useDatabase(event)
+  const [monthRecord] = await db
+    .select({ userId: month.userId, year: month.year, month: month.month })
+    .from(month)
+    .where(eq(month.id, monthId))
+    .limit(1)
+
+  if (!monthRecord) {
+    throw createError({
+      statusCode: 404,
+      message: ERROR_KEYS.MONTH_NOT_FOUND,
+    })
+  }
+
+  await requireBudgetWriteAccess(monthRecord.userId, currentUser, event, ERROR_KEYS.NO_PERMISSION_DELETE_MONTH)
+
   try {
-    const user = await requireAuth(event)
-    const monthId = getRouterParam(event, 'id')
-
-    if (!monthId) {
-      throw createError({
-        statusCode: 400,
-        message: ERROR_KEYS.MONTH_ID_REQUIRED,
-      })
-    }
-
-    const monthRecord = await db
-      .select({ userId: month.userId, year: month.year, month: month.month })
-      .from(month)
-      .where(eq(month.id, monthId))
-      .limit(1)
-
-    if (monthRecord.length === 0) {
-      throw createError({
-        statusCode: 404,
-        message: ERROR_KEYS.MONTH_NOT_FOUND,
-      })
-    }
-
-    const monthData = monthRecord[0]!
-    const hasPermission = await checkBudgetWritePermission(monthData.userId, user.id, event)
-
-    if (!hasPermission) {
-      throw createError({
-        statusCode: 403,
-        message: ERROR_KEYS.NO_PERMISSION_DELETE_MONTH,
-      })
-    }
-
     await deleteMonth(monthId, event)
-
-    try {
-      const { createNotification } = await import('~~/server/services/notifications')
-      const { MONTH_KEYS } = await import('~~/shared/types/i18n')
-      await createNotification(event, {
-        sourceUserId: user.id,
-        budgetOwnerId: monthData.userId,
-        type: 'budget_month_deleted',
-        params: {
-          username: user.username,
-          month: MONTH_KEYS[monthData.month],
-          year: monthData.year,
-        },
-      })
-    }
-    catch (error) {
-      secureLog.error('Error creating notification:', error)
-    }
-
-    return { success: true }
   }
   catch (error) {
     secureLog.error('Delete month error:', error)
 
-    if (isHttpError(error)) {
+    if (isError(error)) {
       throw error
     }
 
@@ -86,4 +52,17 @@ export default defineEventHandler(async (event) => {
       message: ERROR_KEYS.FAILED_TO_DELETE_MONTH,
     })
   }
+
+  await sendNotification(event, {
+    sourceUserId: currentUser.id,
+    budgetOwnerId: monthRecord.userId,
+    type: 'budget_month_deleted',
+    params: {
+      username: currentUser.username,
+      month: MONTH_KEYS[monthRecord.month],
+      year: monthRecord.year,
+    },
+  })
+
+  return { success: true }
 })

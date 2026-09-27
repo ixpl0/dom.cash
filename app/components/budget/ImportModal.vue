@@ -264,7 +264,7 @@ const handleImport = async () => {
       body: {
         data: previewData.value,
         options: options.value,
-        targetUsername: props.targetUsername,
+        username: props.targetUsername,
       },
     })
 

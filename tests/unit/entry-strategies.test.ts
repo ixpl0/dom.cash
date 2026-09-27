@@ -37,7 +37,6 @@ const createMonth = (): MonthData => ({
   id: 'month-2026-03',
   year: 2026,
   month: 2,
-  userMonthId: 'user-month-2026-03',
   balanceSources: [
     { id: 'cash', description: 'Cash', amount: 1000, currency: 'USD' },
     { id: 'card', description: 'Card', amount: 500, currency: 'GEL' },
@@ -49,9 +48,6 @@ const createMonth = (): MonthData => ({
     { id: 'rent', description: 'Rent', amount: 1200, currency: 'USD', date: '2026-03-01', isOptional: false },
     { id: 'cinema', description: 'Cinema', amount: 30, currency: 'GEL', date: null, isOptional: true },
   ],
-  balanceChange: 0,
-  pocketExpenses: 0,
-  income: 0,
   exchangeRates: { USD: 1, GEL: 2.5 },
   exchangeRatesSource: '2026-03-01',
 })

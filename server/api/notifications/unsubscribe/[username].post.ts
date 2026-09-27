@@ -1,6 +1,7 @@
+import { createError, getRouterParam } from 'h3'
 import { getUserFromRequest } from '~~/server/utils/auth'
 import { unsubscribeFromBudget } from '~~/server/services/notifications'
-import { findUserByUsername } from '~~/server/services/auth/users'
+import { findUserByUsername } from '~~/server/services/budget/access'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {

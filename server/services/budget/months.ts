@@ -1,220 +1,138 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
 import { createError } from 'h3'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { currency, entry, month, user } from '~~/server/db/schema'
+import { entry, month, plan } from '~~/server/db/schema'
 import type { MonthData, YearInfo } from '~~/shared/types/budget'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
-import { isValidRates } from '~~/server/utils/rates/validation'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
+import { getExchangeRatesForMonth } from '~~/server/services/budget/rates'
+import type { ExchangeRatesData } from '~~/server/services/budget/rates'
 
-const groupEntriesByMonthId = (entries: (typeof entry.$inferSelect)[]): Map<string, (typeof entry.$inferSelect)[]> => {
-  const map = new Map<string, (typeof entry.$inferSelect)[]>()
-  for (const e of entries) {
-    const list = map.get(e.monthId) || []
-    map.set(e.monthId, [...list, e])
-  }
-  return map
-}
+type EntryRow = Pick<typeof entry.$inferSelect, 'id' | 'monthId' | 'kind' | 'description' | 'amount' | 'currency' | 'date' | 'isOptional'>
 
-const canAttemptUpdate = (year: number, monthNumber: number, lastAttempt: Date | null | undefined): boolean => {
-  const now = new Date()
-  const currentYear = now.getUTCFullYear()
-  const currentMonth = now.getUTCMonth()
-  const currentHour = now.getUTCHours()
-  const currentMinute = now.getUTCMinutes()
+type MonthRow = Pick<typeof month.$inferSelect, 'id' | 'year' | 'month'>
 
-  const isCurrentMonth = year === currentYear && monthNumber === currentMonth
-  const isAfter0005UTC = currentHour > 0 || (currentHour === 0 && currentMinute >= 5)
+const MAX_REQUESTED_YEARS = 50
 
-  if (!isCurrentMonth || !isAfter0005UTC) {
-    return false
-  }
-
-  if (!lastAttempt) {
-    return true
-  }
-
-  const oneHourInMs = 60 * 60 * 1000
-
-  return Date.now() - lastAttempt.getTime() >= oneHourInMs
-}
-
-const markUpdateAttempt = async (year: number, monthNumber: number, event: H3Event): Promise<void> => {
-  const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
-  const db = useDatabase(event)
-
-  await db
-    .insert(currency)
-    .values({
-      date: rateDate,
-      rates: {},
-      lastUpdateAttempt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: currency.date,
-      set: {
-        lastUpdateAttempt: new Date(),
-      },
-    })
-}
-
-export const getExchangeRatesForMonth = async (year: number, monthNumber: number, event: H3Event): Promise<{ rates: Record<string, number>, source: string }> => {
-  const rateDate = `${year}-${String(monthNumber + 1).padStart(2, '0')}-01`
-
-  const db = useDatabase(event)
-  const currencyData = await db
-    .select()
-    .from(currency)
-    .where(eq(currency.date, rateDate))
-    .limit(1)
-
-  const currentRates = currencyData[0]?.rates
-  if (isValidRates(currentRates)) {
-    return { rates: currentRates, source: rateDate }
-  }
-
-  const shouldUpdate = canAttemptUpdate(year, monthNumber, currencyData[0]?.lastUpdateAttempt)
-  if (shouldUpdate) {
-    await markUpdateAttempt(year, monthNumber, event)
-
-    try {
-      const { saveHistoricalRatesForCurrentMonth } = await import('~~/server/utils/rates/database')
-      await saveHistoricalRatesForCurrentMonth(event)
-
-      const updatedCurrencyData = await db
-        .select()
-        .from(currency)
-        .where(eq(currency.date, rateDate))
-        .limit(1)
-
-      const updatedRates = updatedCurrencyData[0]?.rates
-      if (isValidRates(updatedRates)) {
-        return { rates: updatedRates, source: rateDate }
-      }
-    }
-    catch (error) {
-      console.error(`Failed to auto-update currency rates for ${rateDate}:`, error)
-    }
-  }
-
-  const validStoredRates = sql`json_type(${currency.rates}) = 'object'
-    AND EXISTS (SELECT 1 FROM json_each(${currency.rates}))
-    AND NOT EXISTS (
-      SELECT 1 FROM json_each(${currency.rates})
-      WHERE type NOT IN ('integer', 'real') OR value <= 0
-    )`
-
-  const [beforeOrEqual, afterOrEqual] = await Promise.all([
-    db
-      .select()
-      .from(currency)
-      .where(and(sql`${currency.date} <= ${rateDate}`, validStoredRates))
-      .orderBy(desc(currency.date))
-      .limit(1),
-    db
-      .select()
-      .from(currency)
-      .where(and(sql`${currency.date} >= ${rateDate}`, validStoredRates))
-      .orderBy(currency.date)
-      .limit(1),
-  ])
-
-  const candidates = [...beforeOrEqual, ...afterOrEqual].filter(
-    candidate => isValidRates(candidate.rates),
+const groupEntriesByMonthId = (entries: EntryRow[]): Map<string, EntryRow[]> =>
+  entries.reduce(
+    (entriesByMonthId, entryRow) => entriesByMonthId.set(entryRow.monthId, [...(entriesByMonthId.get(entryRow.monthId) ?? []), entryRow]),
+    new Map<string, EntryRow[]>(),
   )
 
-  if (candidates.length === 0) {
-    throw createError({
-      statusCode: 503,
-      message: ERROR_KEYS.FAILED_TO_UPDATE_RATES,
-    })
+export const toMonthData = (monthRow: MonthRow, entries: EntryRow[], exchangeRatesData: ExchangeRatesData): MonthData => ({
+  id: monthRow.id,
+  year: monthRow.year,
+  month: monthRow.month,
+  balanceSources: entries
+    .filter(entryRow => entryRow.kind === 'balance')
+    .map(entryRow => ({
+      id: entryRow.id,
+      description: entryRow.description,
+      amount: entryRow.amount,
+      currency: entryRow.currency,
+    })),
+  incomeEntries: entries
+    .filter(entryRow => entryRow.kind === 'income')
+    .map(entryRow => ({
+      id: entryRow.id,
+      description: entryRow.description,
+      amount: entryRow.amount,
+      currency: entryRow.currency,
+      date: entryRow.date,
+    })),
+  expenseEntries: entries
+    .filter(entryRow => entryRow.kind === 'expense')
+    .map(entryRow => ({
+      id: entryRow.id,
+      description: entryRow.description,
+      amount: entryRow.amount,
+      currency: entryRow.currency,
+      date: entryRow.date,
+      isOptional: entryRow.isOptional ?? false,
+    })),
+  exchangeRates: exchangeRatesData.rates,
+  exchangeRatesSource: exchangeRatesData.source,
+})
+
+export const loadMonths = async (ownerId: string, years: number[] | 'all', event: H3Event): Promise<MonthData[]> => {
+  const db = useDatabase(event)
+  const yearFilter: SQL | undefined = years === 'all'
+    ? undefined
+    : years.length > 0 ? inArray(month.year, years) : sql`1 = 0`
+  const monthFilter = and(eq(month.userId, ownerId), yearFilter)
+
+  const monthRows = await db
+    .select({ id: month.id, year: month.year, month: month.month })
+    .from(month)
+    .where(monthFilter)
+    .orderBy(desc(month.year), desc(month.month))
+
+  if (monthRows.length === 0) {
+    return []
   }
 
-  const targetDate = new Date(rateDate)
-  const closestData = candidates.reduce((closest, current) => {
-    const closestDiff = Math.abs(new Date(closest.date).getTime() - targetDate.getTime())
-    const currentDiff = Math.abs(new Date(current.date).getTime() - targetDate.getTime())
-    return currentDiff < closestDiff ? current : closest
-  })
+  const entryRows = await db
+    .select()
+    .from(entry)
+    .where(inArray(entry.monthId, db.select({ id: month.id }).from(month).where(monthFilter)))
 
-  return { rates: closestData.rates, source: closestData.date }
+  const entriesByMonthId = groupEntriesByMonthId(entryRows)
+
+  return Promise.all(monthRows.map(async monthRow => toMonthData(
+    monthRow,
+    entriesByMonthId.get(monthRow.id) ?? [],
+    await getExchangeRatesForMonth(monthRow.year, monthRow.month, event),
+  )))
 }
 
-export const getUserMonths = async (userId: string, event: H3Event): Promise<MonthData[]> => {
+export const parseRequestedYears = (yearsParam: string): number[] => [
+  ...new Set(yearsParam.split(',').map(year => parseInt(year, 10)).filter(year => !Number.isNaN(year))),
+].slice(0, MAX_REQUESTED_YEARS)
+
+export const getAvailableYears = async (userId: string, event: H3Event): Promise<YearInfo[]> => {
   const db = useDatabase(event)
   const monthsData = await db
-    .select()
+    .select({ year: month.year, month: month.month })
     .from(month)
     .where(eq(month.userId, userId))
     .orderBy(desc(month.year), desc(month.month))
 
-  if (monthsData.length === 0) {
+  const monthsByYear = monthsData.reduce(
+    (yearMonths, monthData) => yearMonths.set(monthData.year, [...(yearMonths.get(monthData.year) ?? []), monthData.month]),
+    new Map<number, number[]>(),
+  )
+
+  return [...monthsByYear]
+    .map(([year, months]) => ({
+      year,
+      monthCount: months.length,
+      months: [...months].sort((a, b) => a - b),
+    }))
+    .sort((a, b) => b.year - a.year)
+}
+
+export const getInitialYearsToLoad = (years: YearInfo[]): number[] => {
+  const [latestYear, secondYear] = years
+
+  if (!latestYear) {
     return []
   }
 
-  const monthIds = monthsData.map(m => m.id)
-  const allEntries = await db
-    .select()
-    .from(entry)
-    .where(inArray(entry.monthId, monthIds))
+  return latestYear.monthCount < 3 && secondYear
+    ? [latestYear.year, secondYear.year]
+    : [latestYear.year]
+}
 
-  const entriesByMonthId = groupEntriesByMonthId(allEntries)
+export const loadBudgetMonths = async (ownerId: string, yearsParam: string | undefined, event: H3Event): Promise<MonthData[]> => {
+  if (yearsParam) {
+    return loadMonths(ownerId, parseRequestedYears(yearsParam), event)
+  }
 
-  return await Promise.all(
-    monthsData.map(async (monthData) => {
-      const entries = entriesByMonthId.get(monthData.id) || []
-
-      const balanceSources = entries
-        .filter(e => e.kind === 'balance')
-        .map(e => ({
-          id: e.id,
-          description: e.description,
-          currency: e.currency,
-          amount: e.amount,
-        }))
-
-      const incomeEntries = entries
-        .filter(e => e.kind === 'income')
-        .map(e => ({
-          id: e.id,
-          description: e.description,
-          amount: e.amount,
-          currency: e.currency,
-          date: e.date,
-        }))
-
-      const expenseEntries = entries
-        .filter(e => e.kind === 'expense')
-        .map(e => ({
-          id: e.id,
-          description: e.description,
-          amount: e.amount,
-          currency: e.currency,
-          date: e.date,
-          isOptional: e.isOptional || false,
-        }))
-
-      const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
-
-      const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
-
-      return {
-        id: monthData.id,
-        year: monthData.year,
-        month: monthData.month,
-        userMonthId: monthData.id,
-        balanceSources,
-        incomeEntries,
-        expenseEntries,
-        balanceChange: 0,
-        pocketExpenses: 0,
-        income: totalIncome,
-        exchangeRates: exchangeRatesData.rates,
-        exchangeRatesSource: exchangeRatesData.source,
-      }
-    }),
-  )
+  const availableYears = await getAvailableYears(ownerId, event)
+  return loadMonths(ownerId, getInitialYearsToLoad(availableYears), event)
 }
 
 export interface CreateMonthParams {
@@ -251,70 +169,12 @@ const findBalanceEntriesToCopy = async (sourceMonthId: string, ownerId: string, 
     ))
 }
 
-const buildMonthData = async (
-  monthRecord: Pick<typeof month.$inferSelect, 'id' | 'year' | 'month'>,
-  exchangeRatesData: Awaited<ReturnType<typeof getExchangeRatesForMonth>>,
-  event: H3Event,
-): Promise<MonthData> => {
-  const db = useDatabase(event)
-  const entries = await db
-    .select()
-    .from(entry)
-    .where(eq(entry.monthId, monthRecord.id))
-
-  const balanceSources = entries
-    .filter(e => e.kind === 'balance')
-    .map(e => ({
-      id: e.id,
-      description: e.description,
-      currency: e.currency,
-      amount: e.amount,
-    }))
-
-  const incomeEntries = entries
-    .filter(e => e.kind === 'income')
-    .map(e => ({
-      id: e.id,
-      description: e.description,
-      amount: e.amount,
-      currency: e.currency,
-      date: e.date,
-    }))
-
-  const expenseEntries = entries
-    .filter(e => e.kind === 'expense')
-    .map(e => ({
-      id: e.id,
-      description: e.description,
-      amount: e.amount,
-      currency: e.currency,
-      date: e.date,
-    }))
-
-  const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
-
-  return {
-    id: monthRecord.id,
-    year: monthRecord.year,
-    month: monthRecord.month,
-    userMonthId: monthRecord.id,
-    balanceSources,
-    incomeEntries,
-    expenseEntries,
-    balanceChange: 0,
-    pocketExpenses: 0,
-    income: totalIncome,
-    exchangeRates: exchangeRatesData.rates,
-    exchangeRatesSource: exchangeRatesData.source,
-  }
-}
-
 export const createMonth = async (params: CreateMonthParams, event: H3Event): Promise<MonthData> => {
   const { year, month: monthNumber, copyFromMonthId, targetUserId } = params
 
   const db = useDatabase(event)
   const existingMonth = await db
-    .select()
+    .select({ id: month.id })
     .from(month)
     .where(and(
       eq(month.userId, targetUserId),
@@ -333,13 +193,13 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
     ? await findBalanceEntriesToCopy(copyFromMonthId, targetUserId, event)
     : []
 
-  const createdMonth = {
+  const createdMonth: MonthRow = {
     id: crypto.randomUUID(),
     year,
     month: monthNumber,
   }
 
-  const copiedEntries = entriesToCopy.map(sourceEntry => ({
+  const copiedEntries: EntryRow[] = entriesToCopy.map(sourceEntry => ({
     id: crypto.randomUUID(),
     monthId: createdMonth.id,
     kind: sourceEntry.kind,
@@ -358,167 +218,28 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
     ...insertEntryStatements,
   ])
 
-  return await buildMonthData(createdMonth, exchangeRatesData, event)
-}
-
-export const findUserByUsername = async (username: string, event: H3Event): Promise<typeof user.$inferSelect | null> => {
-  const db = useDatabase(event)
-  const users = await db
-    .select()
-    .from(user)
-    .where(eq(user.username, username))
-    .limit(1)
-
-  return users[0] ?? null
+  return toMonthData(createdMonth, copiedEntries, exchangeRatesData)
 }
 
 export const deleteMonth = async (monthId: string, event: H3Event): Promise<void> => {
   const db = useDatabase(event)
-  const monthToDelete = await db
+  const [monthRecord] = await db
     .select()
     .from(month)
     .where(eq(month.id, monthId))
     .limit(1)
 
-  const monthRecord = monthToDelete[0]
   if (!monthRecord) {
     throw new Error('Month not found')
   }
 
-  const { executeBatch } = await import('~~/server/utils/d1-batch')
-
-  await executeBatch(event, [
-    { sql: 'DELETE FROM entry WHERE month_id = ?', params: [monthId] },
-    { sql: 'DELETE FROM month WHERE id = ?', params: [monthId] },
-    {
-      sql: 'DELETE FROM plan WHERE user_id = ? AND year = ? AND month = ?',
-      params: [monthRecord.userId, monthRecord.year, monthRecord.month],
-    },
+  await db.batch([
+    db.delete(entry).where(eq(entry.monthId, monthId)),
+    db.delete(month).where(eq(month.id, monthId)),
+    db.delete(plan).where(and(
+      eq(plan.userId, monthRecord.userId),
+      eq(plan.year, monthRecord.year),
+      eq(plan.month, monthRecord.month),
+    )),
   ])
-}
-
-export const getAvailableYears = async (userId: string, event: H3Event): Promise<YearInfo[]> => {
-  const db = useDatabase(event)
-  const monthsData = await db
-    .select({ year: month.year, month: month.month })
-    .from(month)
-    .where(eq(month.userId, userId))
-    .orderBy(desc(month.year), desc(month.month))
-
-  const yearMap = new Map<number, number[]>()
-
-  for (const monthData of monthsData) {
-    const months = yearMap.get(monthData.year) || []
-    months.push(monthData.month)
-    yearMap.set(monthData.year, months)
-  }
-
-  return Array.from(yearMap.entries())
-    .map(([year, months]) => ({
-      year,
-      monthCount: months.length,
-      months: months.sort((a, b) => a - b),
-    }))
-    .sort((a, b) => b.year - a.year)
-}
-
-export const getInitialYearsToLoad = (years: YearInfo[]): number[] => {
-  if (years.length === 0) {
-    return []
-  }
-
-  const latestYear = years[0]
-  if (!latestYear) {
-    return []
-  }
-
-  const result = [latestYear.year]
-
-  if (latestYear.monthCount < 3 && years.length > 1) {
-    const secondYear = years[1]
-    if (secondYear) {
-      result.push(secondYear.year)
-    }
-  }
-
-  return result
-}
-
-export const getUserMonthsByYears = async (userId: string, years: number[], event: H3Event): Promise<MonthData[]> => {
-  const db = useDatabase(event)
-  const monthsData = await db
-    .select()
-    .from(month)
-    .where(and(
-      eq(month.userId, userId),
-      years.length > 0 ? sql`${month.year} IN (${sql.join(years.map(year => sql`${year}`), sql`, `)})` : sql`1 = 0`,
-    ))
-    .orderBy(desc(month.year), desc(month.month))
-
-  if (monthsData.length === 0) {
-    return []
-  }
-
-  const monthIds = monthsData.map(m => m.id)
-  const allEntries = await db
-    .select()
-    .from(entry)
-    .where(inArray(entry.monthId, monthIds))
-
-  const entriesByMonthId = groupEntriesByMonthId(allEntries)
-
-  return await Promise.all(
-    monthsData.map(async (monthData) => {
-      const entries = entriesByMonthId.get(monthData.id) || []
-
-      const balanceSources = entries
-        .filter(e => e.kind === 'balance')
-        .map(e => ({
-          id: e.id,
-          description: e.description,
-          currency: e.currency,
-          amount: e.amount,
-        }))
-
-      const incomeEntries = entries
-        .filter(e => e.kind === 'income')
-        .map(e => ({
-          id: e.id,
-          description: e.description,
-          amount: e.amount,
-          currency: e.currency,
-          date: e.date,
-        }))
-
-      const expenseEntries = entries
-        .filter(e => e.kind === 'expense')
-        .map(e => ({
-          id: e.id,
-          description: e.description,
-          amount: e.amount,
-          currency: e.currency,
-          date: e.date,
-          isOptional: e.isOptional || false,
-        }))
-
-      const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
-
-      const exchangeRatesData = await getExchangeRatesForMonth(monthData.year, monthData.month, event)
-
-      return {
-        id: monthData.id,
-        year: monthData.year,
-        month: monthData.month,
-        userMonthId: monthData.id,
-        balanceSources,
-        incomeEntries,
-        expenseEntries,
-        balanceChange: 0,
-        pocketExpenses: 0,
-        income: totalIncome,
-        exchangeRates: exchangeRatesData.rates,
-        exchangeRatesSource: exchangeRatesData.source,
-      }
-    }),
-  )
 }

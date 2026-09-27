@@ -1,11 +1,12 @@
+import { createError, getRouterParam } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { getEntryWithMonth, deleteEntry } from '~~/server/services/budget/entries'
-import { checkBudgetWritePermission } from '~~/server/utils/auth'
-import { secureLog } from '~~/server/utils/secure-logger'
+import { requireBudgetWriteAccess } from '~~/server/services/budget/access'
+import { sendNotification } from '~~/server/services/notifications'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
+  const currentUser = await requireAuth(event)
   const entryId = getRouterParam(event, 'id')
 
   if (!entryId) {
@@ -23,34 +24,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hasPermission = await checkBudgetWritePermission(entryRecord.month.userId, user.id, event)
-  if (!hasPermission) {
-    throw createError({
-      statusCode: 403,
-      message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_DELETE,
-    })
-  }
+  await requireBudgetWriteAccess(entryRecord.month.userId, currentUser, event, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_DELETE)
 
   await deleteEntry(entryId, event)
 
-  try {
-    const { createNotification } = await import('~~/server/services/notifications')
-    await createNotification(event, {
-      sourceUserId: user.id,
-      budgetOwnerId: entryRecord.month.userId,
-      type: 'budget_entry_deleted',
-      params: {
-        username: user.username,
-        description: entryRecord.entry.description,
-        kind: entryRecord.entry.kind,
-        amount: entryRecord.entry.amount,
-        entryCurrency: entryRecord.entry.currency,
-      },
-    })
-  }
-  catch (error) {
-    secureLog.error('Error creating notification:', error)
-  }
+  await sendNotification(event, {
+    sourceUserId: currentUser.id,
+    budgetOwnerId: entryRecord.month.userId,
+    type: 'budget_entry_deleted',
+    params: {
+      username: currentUser.username,
+      description: entryRecord.entry.description,
+      kind: entryRecord.entry.kind,
+      amount: entryRecord.entry.amount,
+      entryCurrency: entryRecord.entry.currency,
+    },
+  })
 
   return { success: true }
 })

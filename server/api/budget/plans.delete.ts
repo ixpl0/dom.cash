@@ -1,82 +1,53 @@
-import { createError, getQuery } from 'h3'
+import { createError, getQuery, isError } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
-import { findUserByUsername } from '~~/server/services/budget/months'
 import { deletePlan } from '~~/server/services/budget/plans'
-import { checkBudgetWritePermission } from '~~/server/utils/auth'
+import { resolveBudget } from '~~/server/services/budget/access'
+import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { MONTH_KEYS } from '~~/shared/types/i18n'
 
 const querySchema = z.object({
   year: z.coerce.number().int().min(1900).max(2100),
   month: z.coerce.number().int().min(0).max(11),
-  targetUsername: z.string().optional(),
+  username: z.string().optional(),
 })
 
 export default defineEventHandler(async (event) => {
+  const currentUser = await requireAuth(event)
+
+  const parsed = querySchema.safeParse(getQuery(event))
+  if (!parsed.success) {
+    throw createError({
+      statusCode: 400,
+      message: ERROR_KEYS.INVALID_QUERY_PARAMETERS,
+    })
+  }
+
+  const { year, month, username } = parsed.data
+  const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.NO_PERMISSION_UPDATE_PLAN)
+
   try {
-    const currentUser = await requireAuth(event)
-    const parsed = querySchema.safeParse(getQuery(event))
+    const removed = await deletePlan(owner.id, year, month, event)
 
-    if (!parsed.success) {
-      throw createError({
-        statusCode: 400,
-        message: parsed.error.issues.map(issue => issue.message).join('; '),
-      })
-    }
-
-    const { year, month, targetUsername } = parsed.data
-
-    let targetUserId = currentUser.id
-
-    if (targetUsername) {
-      const targetUser = await findUserByUsername(targetUsername, event)
-      if (!targetUser) {
-        throw createError({
-          statusCode: 404,
-          message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
-        })
-      }
-
-      if (targetUser.id !== currentUser.id) {
-        const hasPermission = await checkBudgetWritePermission(targetUser.id, currentUser.id, event)
-        if (!hasPermission) {
-          throw createError({
-            statusCode: 403,
-            message: ERROR_KEYS.NO_PERMISSION_UPDATE_PLAN,
-          })
-        }
-      }
-
-      targetUserId = targetUser.id
-    }
-
-    const removed = await deletePlan(targetUserId, year, month, event)
-
-    try {
-      const { createNotification } = await import('~~/server/services/notifications')
-      const { MONTH_KEYS } = await import('~~/shared/types/i18n')
-      await createNotification(event, {
-        sourceUserId: currentUser.id,
-        budgetOwnerId: targetUserId,
-        type: 'budget_plan_updated',
-        params: {
-          username: currentUser.username,
-          month: MONTH_KEYS[month],
-          year,
-        },
-      })
-    }
-    catch (notificationError) {
-      secureLog.error('Error creating plan delete notification:', notificationError)
-    }
+    await sendNotification(event, {
+      sourceUserId: currentUser.id,
+      budgetOwnerId: owner.id,
+      type: 'budget_plan_updated',
+      params: {
+        username: currentUser.username,
+        month: MONTH_KEYS[month],
+        year,
+      },
+    })
 
     return { success: removed }
   }
   catch (error) {
     secureLog.error('Delete plan error:', error)
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (isError(error)) {
       throw error
     }
 

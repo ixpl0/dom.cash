@@ -1,0 +1,99 @@
+import { and, eq, sql } from 'drizzle-orm'
+import { createError, type H3Event } from 'h3'
+import { useDatabase } from '~~/server/db'
+import { budgetShare, user } from '~~/server/db/schema'
+import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import type { User } from '~~/shared/types'
+import type { BudgetAccess } from '~~/shared/types/budget'
+
+export type BudgetAccessLevel = 'read' | 'write'
+
+export type BudgetOwner = Pick<typeof user.$inferSelect, 'id' | 'username' | 'mainCurrency'>
+
+export interface ResolvedBudget {
+  owner: BudgetOwner
+  access: BudgetAccess
+}
+
+export const findUserByUsername = async (username: string, event: H3Event): Promise<typeof user.$inferSelect | null> => {
+  const db = useDatabase(event)
+  const [foundUser] = await db
+    .select()
+    .from(user)
+    .where(sql`lower(${user.username}) = ${username.trim().toLowerCase()}`)
+    .limit(1)
+
+  return foundUser ?? null
+}
+
+export const findBudgetAccess = async (ownerId: string, viewerId: string, event: H3Event): Promise<BudgetAccess | null> => {
+  if (ownerId === viewerId) {
+    return 'owner'
+  }
+
+  const db = useDatabase(event)
+  const [share] = await db
+    .select({ access: budgetShare.access })
+    .from(budgetShare)
+    .where(and(
+      eq(budgetShare.ownerId, ownerId),
+      eq(budgetShare.sharedWithId, viewerId),
+    ))
+    .limit(1)
+
+  return share?.access ?? null
+}
+
+export const allowsAccessLevel = (access: BudgetAccess | null, level: BudgetAccessLevel): boolean => {
+  if (access === null) {
+    return false
+  }
+  return level === 'read' || access !== 'read'
+}
+
+export const resolveBudget = async (
+  event: H3Event,
+  currentUser: User,
+  username: string | undefined,
+  level: BudgetAccessLevel,
+  forbiddenKey: string = ERROR_KEYS.ACCESS_DENIED,
+): Promise<ResolvedBudget> => {
+  const owner = username ? await findUserByUsername(username, event) : currentUser
+
+  if (!owner) {
+    throw createError({
+      statusCode: 404,
+      message: ERROR_KEYS.USER_NOT_FOUND,
+    })
+  }
+
+  const access = await findBudgetAccess(owner.id, currentUser.id, event)
+
+  if (!access || !allowsAccessLevel(access, level)) {
+    throw createError({
+      statusCode: 403,
+      message: forbiddenKey,
+    })
+  }
+
+  return {
+    owner: { id: owner.id, username: owner.username, mainCurrency: owner.mainCurrency },
+    access,
+  }
+}
+
+export const requireBudgetWriteAccess = async (
+  ownerId: string,
+  currentUser: User,
+  event: H3Event,
+  forbiddenKey: string,
+): Promise<void> => {
+  const access = await findBudgetAccess(ownerId, currentUser.id, event)
+
+  if (!allowsAccessLevel(access, 'write')) {
+    throw createError({
+      statusCode: 403,
+      message: forbiddenKey,
+    })
+  }
+}

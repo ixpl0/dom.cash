@@ -1,8 +1,8 @@
-import { getQuery, isError } from 'h3'
+import { createError, getQuery, isError, setHeader } from 'h3'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { exportBudget } from '~~/server/services/budget/import-export'
-import { checkReadPermission, findUserByUsername } from '~~/server/services/auth/users'
+import { resolveBudget } from '~~/server/services/budget/access'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 const exportQuerySchema = z.object({
@@ -20,28 +20,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { username } = parsedQuery.data
-  const owner = username ? await findUserByUsername(username, event) : null
-
-  if (username && !owner) {
-    throw createError({
-      statusCode: 404,
-      message: ERROR_KEYS.USER_NOT_FOUND,
-    })
-  }
-
-  const ownerId = owner?.id ?? currentUser.id
-  const hasReadAccess = await checkReadPermission(ownerId, currentUser.id, event)
-
-  if (!hasReadAccess) {
-    throw createError({
-      statusCode: 403,
-      message: ERROR_KEYS.ACCESS_DENIED,
-    })
-  }
+  const { owner } = await resolveBudget(event, currentUser, parsedQuery.data.username, 'read')
 
   try {
-    const exportData = await exportBudget(ownerId, event)
+    const exportData = await exportBudget(owner.id, event)
 
     setHeader(event, 'Content-Type', 'application/json')
 

@@ -1,5 +1,4 @@
-import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo } from '~~/shared/types/budget'
-import type { BudgetShareAccess } from '~~/server/db/schema'
+import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo, BudgetData, YearsData } from '~~/shared/types/budget'
 import type { BudgetExportData } from '~~/shared/types/export-import'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { FetchError } from 'ofetch'
@@ -37,31 +36,13 @@ const createSyntheticPlanMonth = (planRow: PlanData): MonthData => ({
   id: buildPlanOnlyId(planRow.year, planRow.month),
   year: planRow.year,
   month: planRow.month,
-  userMonthId: buildPlanOnlyId(planRow.year, planRow.month),
   balanceSources: [],
   incomeEntries: [],
   expenseEntries: [],
-  balanceChange: 0,
-  pocketExpenses: 0,
-  income: 0,
   exchangeRates: {},
   exchangeRatesSource: '',
   isPlanOnly: true,
 })
-
-export interface YearsData {
-  availableYears: YearInfo[]
-  initialYears: number[]
-}
-
-export interface BudgetData {
-  user: {
-    username: string
-    mainCurrency: string
-  }
-  access: BudgetShareAccess | 'owner'
-  months: MonthData[]
-}
 
 const toLoadError = (err: unknown): { message: string } => ({
   message: err instanceof FetchError ? String(err.data?.message ?? '') : '',
@@ -358,26 +339,17 @@ export const useBudgetStore = defineStore('budget', () => {
       return
     }
 
+    const budgetOwner = data.value.user.username
+
     try {
-      const requestBody: {
-        year: number
-        month: number
-        copyFromMonthId?: string
-        targetUsername?: string
-      } = { year, month }
-
-      if (copyFromMonthId) {
-        requestBody.copyFromMonthId = copyFromMonthId
-      }
-
-      if (data.value.user.username) {
-        requestBody.targetUsername = data.value.user.username
-      }
-
       const response = await $fetch<MonthData>('/api/budget/months', {
         method: 'POST',
-        body: requestBody,
+        body: { year, month, copyFromMonthId, username: targetUsernameForApi.value },
       })
+
+      if (!data.value || data.value.user.username !== budgetOwner) {
+        return
+      }
 
       const updatedMonths = [...data.value.months, response].sort((a, b) => {
         if (a.year !== b.year) {
@@ -645,18 +617,9 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const upsertPlan = async (year: number, month: number, plannedBalanceChange: number | null, comment: string | null = null): Promise<void> => {
     try {
-      const body: { year: number, month: number, plannedBalanceChange: number | null, comment: string | null, targetUsername?: string } = {
-        year,
-        month,
-        plannedBalanceChange,
-        comment,
-      }
-      if (targetUsernameForApi.value) {
-        body.targetUsername = targetUsernameForApi.value
-      }
       const response = await $fetch<PlanData>('/api/budget/plans', {
         method: 'PUT',
-        body,
+        body: { year, month, plannedBalanceChange, comment, username: targetUsernameForApi.value },
       })
       const key = createMonthId(year, month)
       const updatedPlans = plans.value.some(planRow => createMonthId(planRow.year, planRow.month) === key)
@@ -676,13 +639,9 @@ export const useBudgetStore = defineStore('budget', () => {
 
   const removePlan = async (year: number, month: number): Promise<void> => {
     try {
-      const query: Record<string, string | number> = { year, month }
-      if (targetUsernameForApi.value) {
-        query.targetUsername = targetUsernameForApi.value
-      }
       await $fetch('/api/budget/plans', {
         method: 'DELETE',
-        query,
+        query: { year, month, username: targetUsernameForApi.value },
       })
       const key = createMonthId(year, month)
       plans.value = toMutable(
@@ -737,7 +696,7 @@ export const useBudgetStore = defineStore('budget', () => {
     try {
       await $fetch('/api/user/currency', {
         method: 'PUT',
-        body: { currency, targetUsername: targetUsernameForApi.value },
+        body: { currency, username: targetUsernameForApi.value },
       })
 
       if (!data.value || data.value.user.username !== budgetUsername) {

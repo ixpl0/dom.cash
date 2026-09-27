@@ -1,72 +1,45 @@
 import { z } from 'zod'
-import { isError } from 'h3'
+import { createError, isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { createMonth, findUserByUsername } from '~~/server/services/budget/months'
-import { checkBudgetWritePermission } from '~~/server/utils/auth'
+import { createMonth } from '~~/server/services/budget/months'
+import { resolveBudget } from '~~/server/services/budget/access'
+import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { MONTH_KEYS } from '~~/shared/types/i18n'
 
 const createMonthSchema = z.object({
   year: z.number().int().min(2020).max(2100),
   month: z.number().int().min(0).max(11),
   copyFromMonthId: z.string().optional(),
-  targetUsername: z.string().optional(),
+  username: z.string().optional(),
 })
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
-  const { year, month: monthNumber, copyFromMonthId, targetUsername } = await parseBody(event, createMonthSchema)
+  const { year, month: monthNumber, copyFromMonthId, username } = await parseBody(event, createMonthSchema)
 
-  let targetUserId = currentUser.id
-
-  if (targetUsername) {
-    const targetUser = await findUserByUsername(targetUsername, event)
-    if (!targetUser) {
-      throw createError({
-        statusCode: 404,
-        message: ERROR_KEYS.TARGET_USER_NOT_FOUND,
-      })
-    }
-
-    if (targetUser.id !== currentUser.id) {
-      const hasPermission = await checkBudgetWritePermission(targetUser.id, currentUser.id, event)
-      if (!hasPermission) {
-        throw createError({
-          statusCode: 403,
-          message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_CREATE_MONTHS,
-        })
-      }
-    }
-
-    targetUserId = targetUser.id
-  }
+  const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.INSUFFICIENT_PERMISSIONS_CREATE_MONTHS)
 
   try {
     const createdMonth = await createMonth({
       year,
       month: monthNumber,
       copyFromMonthId,
-      targetUserId,
+      targetUserId: owner.id,
     }, event)
 
-    try {
-      const { createNotification } = await import('~~/server/services/notifications')
-      const { MONTH_KEYS } = await import('~~/shared/types/i18n')
-      await createNotification(event, {
-        sourceUserId: currentUser.id,
-        budgetOwnerId: targetUserId,
-        type: 'budget_month_added',
-        params: {
-          username: currentUser.username,
-          month: MONTH_KEYS[monthNumber],
-          year,
-        },
-      })
-    }
-    catch (error) {
-      secureLog.error('Error creating notification:', error)
-    }
+    await sendNotification(event, {
+      sourceUserId: currentUser.id,
+      budgetOwnerId: owner.id,
+      type: 'budget_month_added',
+      params: {
+        username: currentUser.username,
+        month: MONTH_KEYS[monthNumber],
+        year,
+      },
+    })
 
     return createdMonth
   }
@@ -75,19 +48,15 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-    if (error instanceof Error) {
-      secureLog.error('Error creating month:', error.message)
-      if (error.message === 'Month already exists') {
-        throw createError({
-          statusCode: 409,
-          message: ERROR_KEYS.MONTH_ALREADY_EXISTS,
-        })
-      }
+    secureLog.error('Error creating month:', error)
+
+    if (error instanceof Error && error.message === 'Month already exists') {
       throw createError({
-        statusCode: 500,
-        message: ERROR_KEYS.FAILED_TO_CREATE_MONTH,
+        statusCode: 409,
+        message: ERROR_KEYS.MONTH_ALREADY_EXISTS,
       })
     }
+
     throw createError({
       statusCode: 500,
       message: ERROR_KEYS.FAILED_TO_CREATE_MONTH,
