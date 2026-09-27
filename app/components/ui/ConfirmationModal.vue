@@ -11,18 +11,18 @@
     <div class="text-center">
       <div
         class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6"
-        :class="iconBgClass"
+        :class="variantStyle.iconBackgroundClass"
       >
         <Icon
           :name="iconName"
           size="32"
-          :class="iconClass"
+          :class="variantStyle.textClass"
         />
       </div>
 
       <h3
         class="font-bold text-xl mb-4"
-        :class="titleClass"
+        :class="variantStyle.textClass"
       >
         {{ title }}
       </h3>
@@ -69,7 +69,7 @@
           ref="confirmButton"
           type="button"
           class="btn min-w-24"
-          :class="confirmButtonClass"
+          :class="variantStyle.buttonClass"
           data-testid="confirmation-confirm-button"
           @click="handleConfirm"
         >
@@ -113,139 +113,56 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
+type ConfirmationVariant = NonNullable<ConfirmationModalOptions['variant']>
+
+interface VariantStyle {
+  titleKey: string
+  icon: string
+  iconBackgroundClass: string
+  textClass: string
+  buttonClass: string
+}
+
+const VARIANT_STYLES: Record<ConfirmationVariant, VariantStyle> = {
+  danger: {
+    titleKey: 'confirmation.titleDanger',
+    icon: 'heroicons:exclamation-triangle',
+    iconBackgroundClass: 'bg-error/20',
+    textClass: 'text-error',
+    buttonClass: 'btn-error',
+  },
+  warning: {
+    titleKey: 'confirmation.titleWarning',
+    icon: 'heroicons:exclamation-triangle',
+    iconBackgroundClass: 'bg-warning/20',
+    textClass: 'text-warning',
+    buttonClass: 'btn-warning',
+  },
+  info: {
+    titleKey: 'confirmation.titleInfo',
+    icon: 'heroicons:information-circle',
+    iconBackgroundClass: 'bg-info/20',
+    textClass: 'text-info',
+    buttonClass: 'btn-info',
+  },
+  success: {
+    titleKey: 'confirmation.titleSuccess',
+    icon: 'heroicons:check-circle',
+    iconBackgroundClass: 'bg-success/20',
+    textClass: 'text-success',
+    buttonClass: 'btn-success',
+  },
+}
+
 const confirmButton = ref<HTMLButtonElement>()
 const cancelButton = ref<HTMLButtonElement>()
 const { t } = useI18n()
 
-const title = computed(() => props.options.title || getDefaultTitle())
-
+const variantStyle = computed(() => VARIANT_STYLES[props.options.variant ?? 'danger'])
+const title = computed(() => props.options.title || t(variantStyle.value.titleKey))
+const iconName = computed(() => props.options.icon || variantStyle.value.icon)
 const confirmText = computed(() => props.options.confirmText || t('confirmation.confirm'))
 const cancelText = computed(() => props.options.cancelText || t('confirmation.cancel'))
-const variant = computed(() => props.options.variant || 'danger')
-
-const getDefaultTitle = (): string => {
-  switch (variant.value) {
-    case 'danger': {
-      return t('confirmation.titleDanger')
-    }
-    case 'warning': {
-      return t('confirmation.titleWarning')
-    }
-    case 'info': {
-      return t('confirmation.titleInfo')
-    }
-    case 'success': {
-      return t('confirmation.titleSuccess')
-    }
-    default: {
-      return t('confirmation.titleDefault')
-    }
-  }
-}
-
-const iconName = computed(() => {
-  if (props.options.icon) {
-    return props.options.icon
-  }
-
-  switch (variant.value) {
-    case 'danger': {
-      return 'heroicons:exclamation-triangle'
-    }
-    case 'warning': {
-      return 'heroicons:exclamation-triangle'
-    }
-    case 'info': {
-      return 'heroicons:information-circle'
-    }
-    case 'success': {
-      return 'heroicons:check-circle'
-    }
-    default: {
-      return 'heroicons:question-mark-circle'
-    }
-  }
-})
-
-const iconBgClass = computed(() => {
-  switch (variant.value) {
-    case 'danger': {
-      return 'bg-error/20'
-    }
-    case 'warning': {
-      return 'bg-warning/20'
-    }
-    case 'info': {
-      return 'bg-info/20'
-    }
-    case 'success': {
-      return 'bg-success/20'
-    }
-    default: {
-      return 'bg-base-300'
-    }
-  }
-})
-
-const iconClass = computed(() => {
-  switch (variant.value) {
-    case 'danger': {
-      return 'text-error'
-    }
-    case 'warning': {
-      return 'text-warning'
-    }
-    case 'info': {
-      return 'text-info'
-    }
-    case 'success': {
-      return 'text-success'
-    }
-    default: {
-      return 'text-base-content'
-    }
-  }
-})
-
-const titleClass = computed(() => {
-  switch (variant.value) {
-    case 'danger': {
-      return 'text-error'
-    }
-    case 'warning': {
-      return 'text-warning'
-    }
-    case 'info': {
-      return 'text-info'
-    }
-    case 'success': {
-      return 'text-success'
-    }
-    default: {
-      return 'text-base-content'
-    }
-  }
-})
-
-const confirmButtonClass = computed(() => {
-  switch (variant.value) {
-    case 'danger': {
-      return 'btn-error'
-    }
-    case 'warning': {
-      return 'btn-warning'
-    }
-    case 'info': {
-      return 'btn-info'
-    }
-    case 'success': {
-      return 'btn-success'
-    }
-    default: {
-      return 'btn-primary'
-    }
-  }
-})
 
 const handleConfirm = (): void => {
   emit('confirm')
@@ -256,15 +173,19 @@ const handleCancel = (): void => {
 }
 
 const handleKeydown = (event: KeyboardEvent): void => {
-  if (!props.isOpen) {
+  if (!props.isOpen || event.key !== 'Enter') {
     return
   }
 
-  if (event.key === 'Enter') {
-    event.preventDefault()
-    event.stopPropagation()
-    handleConfirm()
+  event.preventDefault()
+  event.stopPropagation()
+
+  if (event.target === cancelButton.value) {
+    handleCancel()
+    return
   }
+
+  handleConfirm()
 }
 
 onMounted(() => {
