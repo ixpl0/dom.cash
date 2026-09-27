@@ -1,81 +1,140 @@
-# Follow-ups
+# Архитектурное ревью — 27 сентября 2026
 
-Known issues to fix later. Each item: severity, location, problem, suggested fix.
+Проверены сервер, клиентское состояние, компоненты, доменная модель и контракты клиент↔сервер, тесты, инструменты и документация. На момент ревью `pnpm typecheck`, `pnpm lint` и `pnpm test:unit` (28/28) проходят. Баги прошлого ревью (P1/P2) описаны в `PROJECT_REVIEW.md`; здесь — архитектурные проблемы и баги, найденные попутно. Пункты подтверждены чтением кода; в браузере не воспроизводились.
 
-## High
+## Как читать
 
-### isPastMonth timezone inconsistency
-- **Where**: `server/api/budget/months/[id]/plan.put.ts:24-36` (local time), `server/services/budget/months.ts:20-22` (UTC), `shared/utils/budget/month-helpers.ts` (local time)
-- **Problem**: Same predicate is computed in two timezones across client/server. On a month boundary a user in UTC+N can see the UI allow editing while the server returns 400 `CANNOT_PLAN_PAST_MONTH` (or vice-versa).
-- **Fix**: Promote a single `isPastMonth(year, month)` to `shared/utils/budget/month-helpers.ts` using a consistent timezone (UTC is safest because the server runs on UTC). Reuse it everywhere; delete the local copies in `plan.put.ts`, `Month.vue`, etc.
+- **Польза** — итоговая выгода с учётом сложности, которую добавляет сама правка: ★★★★★ делать сейчас · ★★★★ стоит сделать · ★★★ полезно, лучше вместе с соседней задачей · ★★ косметика или спорно.
+- **Цена** — объём работы: S — до часа, M — около полудня, L — день и больше. Знак после запятой — как правка меняет сложность кода: − упрощает, = не меняет, + добавляет модуль или абстракцию.
+- Выполненные пункты отмечаются ✅ перед номером.
 
-### Overwrite import wipes plan when JSON is from old export
-- **Where**: `server/services/budget/import-export.ts` — the line that does `importMonth.plannedBalanceChange ?? null` then unconditionally writes it to an existing month under `overwrite` strategy.
-- **Problem**: An old JSON file (exported before the planning feature) has no `plannedBalanceChange`. On import-with-overwrite, the existing month's saved plan is wiped to `NULL`.
-- **Fix**: Only update `plannedBalanceChange` if the field is explicitly present in the import: check `'plannedBalanceChange' in importMonth` before adding the update statement.
+## 1. Попутные баги
 
-### PlanModal loses kopecks silently
-- **Where**: `app/components/budget/PlanModal.vue` — `step="any"` on the input combined with `Math.round(value)` before save.
-- **Problem**: User types `100.55`, it's silently rounded to `101`. No feedback.
-- **Fix**: Use `step="1"` + `inputmode="numeric"` so the browser disallows fractional input, OR show an inline hint that values are stored as whole units.
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| Б1 | **Утечка данных.** `copyFromMonthId` не проверяет владельца месяца-источника (`server/services/budget/months.ts:226`, `server/api/budget/months.post.ts:13`). Зная UUID чужого месяца (например, после отзыва доступа), можно скопировать его балансы к себе | Проверять, что месяц-источник принадлежит тому же владельцу; создание месяца и копирование — одним `db.batch` | S | ★★★★★ |
+| Б2 | На чужом бюджете экспорт (JSON и Excel) молча скачивает собственный бюджет: `server/api/budget/export.get.ts:10` берёт текущего пользователя, а кнопка показывается везде | Передавать владельца с проверкой права чтения или скрыть экспорт на чужом бюджете | S | ★★★★★ |
+| Б3 | В диалоге подтверждения Enter всегда подтверждает, даже когда фокус на «Отмена» (`app/components/ui/ConfirmationModal.vue:258`) | Удалить глобальный обработчик `keydown`: кнопка подтверждения и так получает фокус | S, − | ★★★★★ |
+| Б4 | В store одно поле `error` и для загрузки, и для изменений. Упавшее переключение задачи заменяет весь список сырым `[PUT] "/api/todo/…": 500` (`app/stores/todo/todo.ts:142,196,215,283`, `app/components/TodoScreen.vue:43`). Окно задачи при ошибке закрывается и теряет текст (`app/components/todo/TodoModal.vue:85-115`). Упавшее «Показать год» заменяет весь бюджет экраном «Ошибка доступа» (`app/stores/budget/budget.ts:853`, `app/components/BudgetScreen.vue:4`) | `loadError` — только для первой загрузки; изменения возвращают результат или бросают ошибку, интерфейс показывает toast и не закрывает окно | S, − | ★★★★★ |
+| Б5 | Cookie `lastSharedBudget`: после отзыва доступа `/budget` всегда перенаправляет на недоступный бюджет, а кнопка «К своему бюджету» ведёт на тот же `/budget` — петля на срок жизни cookie (год). `app/pages/budget/[[username]].vue:22`, `app/components/BudgetScreen.vue:16` | Сбрасывать cookie при 403/404 и при выходе; кнопку переключить на `navigateToOwnBudget` | S | ★★★★ |
+| Б6 | Имя владельца подставляется в `?username=` без кодирования (`app/stores/budget/budget.ts:273,332`): если в email есть `+`, те, с кем поделились бюджетом, не загрузят прошлые годы | Передавать параметры через опцию `query` | S | ★★★★ |
+| Б7 | Список задач строит `or(eq…)` по списку id (`server/api/todo/index.get.ts:40-57`): со 100 расшаренных задач запрос упрётся в лимит D1 (100 параметров; в других местах этот лимит уже чинили трижды). Заодно читаются строки `todo_share` всех пользователей | Подзапрос или join вместо списка id | S | ★★★★ |
+| Б8 | Выход не сбрасывает stores и кэш `useFetch` (`app/composables/auth/useAuth.ts:19-31`): следующий пользователь в той же вкладке видит чужой счётчик задач, ключ кэша `budget-year-N-own` не привязан к пользователю | При выходе `reloadNuxtApp({ path: '/' })` | S | ★★★★ |
+| Б9 | Дата новой записи берётся по UTC (`app/composables/budget/useEntryForm.ts:38`): в UTC+4 с 00:00 до 04:00 подставляется вчерашняя дата, 1-го числа — дата прошлого месяца. Отображение через `new Date('YYYY-MM-DD')` сдвигает даты у пользователей западнее UTC | Общий хелпер локальной даты | S | ★★★ |
+| Б10 | Если в наборе курсов нет одной валюты, для неё молча берётся курс 1 — остаток P1-03. Скопировано в 3 места: `shared/utils/budget/budget.ts:12-31`, `app/utils/excel-export.ts:48-63`, `app/components/budget/EntryModal.vue:69-81` | Общий `convertAmount`, возвращающий `null`, если курса нет, плюс предупреждение в интерфейсе | S, − | ★★★ |
+| Б11 | График превращает пустые значения в 0 (`app/components/budget/ChartModal.vue:98-103`) — текущий месяц всегда проваливается в ноль | Отдавать `null`, ECharts нарисует разрыв | S, − | ★★★ |
+| Б12 | Email зависит от регистра (`shared/schemas/auth.ts:3-11`, `server/db/schema.ts:11`): `Alice@x.com` и `alice@x.com` — два аккаунта; поделиться бюджетом с адресом, введённым с заглавной буквы, не выйдет | Приводить к нижнему регистру в схеме; существующие записи — миграцией с проверкой коллизий | S–M | ★★★ |
 
-### isCurrentMonth/isPastMonth captured once on mount
-- **Where**: `app/components/budget/Month.vue` — `isCurrentMonthValue`/`isPastMonthValue` computed in `onMounted`.
-- **Problem**: In a long-lived session crossing midnight on the last day of the month, the values become stale. Plan editability and styling won't update.
-- **Fix**: Convert to `computed` with a `Date.now()`-derived dependency (e.g., a reactive "now" updated by an interval), or simply re-evaluate via `computed` and accept that re-render only happens on reactivity triggers (acceptable for our case because data refreshes regularly).
+## 2. Архитектура: данные на клиенте
 
-## Medium
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| А1 | Данные грузятся через `useFetch` внутри действий Pinia (`app/stores/budget/budget.ts:272-284,844-851`, `app/stores/todo/todo.ts:77`). Вызванный из обработчика клика, он кэширует ответ до перезагрузки страницы — повторное «Показать год» отдаёт старые данные. Обходы: `forceRefresh` в обоих stores, третий путь загрузки в `BudgetScreen` (`:377-392`) и `reloadNuxtApp` через ~15 минут на открытой вкладке (`app/pages/budget/[[username]].vue:35-38`) — он стирает несохранённый ввод в обход `useUnsavedChanges` (коммит 22684df прямо называет причину). Корень — правило «useFetch для SSR GET» в инструкциях | Stores запрашивают данные через `useRequestFetch()`, страница один раз вызывает `useAsyncData`. Удалить `forceRefresh`, лишние пути и жёсткую перезагрузку (мягкое обновление, когда нет открытых окон). Поправить правило | M, − | ★★★★★ |
+| А2 | Актуальность данных поддерживают три механизма: перезагрузка раз в 15 минут, баннер SSE с `window.location.reload()`, мягкое обновление задач. SSE-клиент живёт внутри страницы (`app/composables/shared/useNotifications.ts`): каждый переход закрывает соединение, сервер сбрасывает подписки (причина P2-07); таймер переподключения переживает уход со страницы — «зомби»-соединение, после выхода бесконечные 401 | Один SSE-плагин на приложение, повторная подписка при каждом переподключении (закрывает P2-07); событие помечает store устаревшим, и он мягко обновляется | M, = | ★★★★ |
+| А3 | Сессия на клиенте восстанавливается в трёх местах: `app/plugins/auth.server.ts`, `app/middleware/auth.global.ts`, `app/plugins/auth.client.ts` с флагом `hasSession` в localStorage. Серверный рендер каждой авторизованной страницы ждёт полный список задач ради счётчика в шапке | Серверный плагин — единственный источник; счётчик — лёгким запросом, не блокируя рендер | S–M, − | ★★★ |
+| А4 | `app/pages/auth.vue` (794 строки) дублирует логику `useAuth`: завершение входа ×4, отправка кода с `alreadySent` ×3 — фикс P2-05 пришлось бы вносить в 2–3 места; валидация скопирована из `shared/schemas/auth.ts` | Перенести сценарии в `useAuth`, валидировать через `authSchema.safeParse` | M, − | ★★★ (вместе с P2-05) |
+| А5 | `app/stores/budget/budget.ts` — 945 строк: мёртвые методы, `toMutable` (JSON-копия всех месяцев с курсами на каждое изменение), 4 копии сортировки месяцев, скачивание файлов через DOM прямо в store | **Сократить, а не дробить**: после А1 и С2 вынести экспорт в `useBudgetExport`, удалить мёртвый код. Разбиение на несколько stores добавит синхронизацию владельца и сброса — там, где сейчас баги | M, − | ★★★ |
 
-### Mutations in reduce accumulators
-- **Where**: `shared/utils/budget/budget-calculations.ts` (~line 170-224), `app/components/BudgetScreen.vue:237-244`. Roughly 12 sites total.
-- **Problem**: Direct mutations like `acc[year] = [...]`, `acc.totalIncome += x`, `acc.count++` violate the project immutability rule.
-- **Fix**: Return a new object each iteration: `return { ...acc, totalIncome: acc.totalIncome + x }`. For nested year maps, use `{ ...acc, [year]: [...(acc[year] ?? []), value] }`.
+## 3. Архитектура: сервер
 
-### push/splice in useBudgetColumnsSync
-- **Where**: `app/composables/budget/useBudgetColumnsSync.ts` — three sites using `.push(...)`/`.splice(...)`.
-- **Problem**: Style guide forbids `push`/`splice`.
-- **Fix**: `registeredRows.value = [...registeredRows.value, el]` and `.filter()` for removal.
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| С1 | `MonthData` собирается в 4 местах: `server/services/budget/months.ts:143-217,257-313,439-516` и `server/api/budget/user/[username].get.ts:94-187`. Копии разошлись: в одной потерян `isOptional`, `balanceChange` считается по-разному. Поля `balanceChange`, `pocketExpenses`, `income`, `userMonthId` клиент не читает | Одна загрузка `loadMonths(ownerId, years)` и одна сборка `toMonthData()`; мёртвые поля удалить | S–M, −200 строк | ★★★★★ |
+| С2 | Доступ к бюджету проверяется по-разному: 6 вариантов запроса к `budget_share` (`server/utils/auth.ts:255`, `server/services/auth/users.ts:17`, `server/services/budget/sharing.ts:17`, `server/api/user/currency.put.ts:51`, `server/api/budget/user/[username].get.ts:54`, `server/api/budget/plans.get.ts:49`), 9 скопированных блоков «найти владельца → проверить право», 3 одинаковых `findUserByUsername`. Владельца передают 4 способами: в пути, `?username`, `?targetUsername`, `targetUsername` в теле. Б1 и Б2 — прямые следствия | `server/services/budget/access.ts`: `resolveBudgetAccess(event, username?)` → `{ owner, access }` и `requireBudgetAccess(level)`; одно имя параметра, адреса API не менять | M, +модуль, −150 строк | ★★★★ |
+| С3 | Два валидатора сессии: `validateAuthToken` продлевает сессию (`server/utils/auth-validation.ts`), `getUserFromRequest` — нет (`server/utils/auth.ts:221`), каждый примерно в 18 файлах. Ошибка БД превращается в «не залогинен», 401 приходит с сырым английским текстом | Один `getSessionUser`/`requireUser`. Правило: utils — без обращений к БД, services — всё, что трогает таблицы, обработчик: разбор → проверка прав → сервис → уведомление | M, −2 файла | ★★★★ |
+| С4 | Формат ошибок: `parseBody` склеивает сырые сообщения Zod (`server/utils/validation.ts:8-13`) — русскоязычный пользователь видит «Too big: expected string…». `useServerError` читает `data.params`, а Nitro кладёт их в `data.data`. `createI18nError` и 6 ключей в `server/utils/error-keys.ts` не используются | Код `VALIDATION_FAILED` с деталями в `data`; `UNAUTHORIZED` в `requireAuth`; `formatError` показывает запасной текст для всего, что не ключ перевода; `error-keys.ts` — в `shared/` | S, − | ★★★★ |
+| С5 | Курсы загружаются во время запроса пользователя (`server/services/budget/months.ts:42-141`): первый просмотр нового месяца ждёт openexchangerates без таймаута (`server/utils/rates/api.ts:27`); на каждый месяц 1–3 запроса к D1 (до 72 за два года; на бесплатном тарифе лимит — 50 запросов за вызов). Строка-заглушка `rates: {}` — корень P1-03 | Сейчас: `AbortSignal.timeout` и один запрос `IN (…)`. Потом: периодическая задача, которая заодно чистит протухшие сессии и коды | S, = / M, + | ★★★★ / ★★★ |
+| С6 | Неатомарные записи из нескольких шагов: создание месяца с копированием, замена участников задачи (удалить → вставить, `server/api/todo/[id].put.ts:110-124`), сброс пароля (`server/api/auth/reset-password.post.ts:46-55`). Два механизма пакетных запросов (`server/utils/d1-batch.ts` и `db.batch`). «Проверить, потом вставить» вместо upsert — гонка даёт 500 вместо 409 | `db.batch` везде, удалить `d1-batch.ts`; upsert, нарушение уникальности → 409 | S–M, − | ★★★ |
+| С7 | У задач нет сервисного слоя: 6 обработчиков `server/api/todo/*` с запросами Drizzle внутри, рассылка уведомлений ×4, проверка прав продублирована. PUT отвечает `{ success: true }`, клиент сам достраивает состояние | `server/services/todo.ts`; PUT возвращает готовую задачу | M, +модуль, −200 строк | ★★★ (вместе с P2-04) |
 
-### Set.add mutation in budget store
-- **Where**: `app/stores/budget/budget.ts` — `loadedYears.value.add(year)`.
-- **Problem**: Mutates a `Set` in-place.
-- **Fix**: `loadedYears.value = new Set([...loadedYears.value, year])`.
+## 4. Домен и контракты
 
-### isPastMonth duplication
-- **Where**: Defined or re-implemented in `shared/utils/budget/month-helpers.ts`, `server/api/budget/months/[id]/plan.put.ts`, `app/stores/budget/budget.ts` (local in `getRollingAverageExpenses`).
-- **Problem**: Three implementations drift apart (already drifted on timezone — see High above).
-- **Fix**: Single shared helper, imported everywhere.
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| Д1 | Валидация на клиенте и сервере разошлась: регулярки скопированы в `app/pages/auth.vue:416-434`; клиент требует сумму больше нуля (`app/components/budget/EntryModal.vue:205-223`), сервер пускает 0; минимальный год — 2020 при создании месяца и 1900 в планах и импорте. Клиент не использует `shared/schemas` | Схемы запросов в `shared/schemas`, клиент проверяет данные через `safeParse` до отправки | M, − (Zod в клиентском бандле) | ★★★ |
+| Д2 | Деньги: колонка `amount` объявлена `INTEGER` (`server/db/schema.ts:110`), но хранит дроби без округления и верхней границы (`shared/schemas/common.ts:16-17`); планы — только целые (`app/components/budget/PlanModal.vue:47,188`); бывает «-0 ₽» | Округлять до копеек и ограничить максимум в схеме; хелпер знака с допуском; записать правило про деньги в инструкции | S, = | ★★★ |
+| Д3 | Сущности описаны руками в разных местах: запись — около 14 раз, виды записи — 15 раз, уровень доступа — 5 определений; тип экспорта и его Zod-схема уже расходятся; `shared/` импортирует `server/db/schema` | Константы `ENTRY_KINDS`, `ACCESS_LEVELS` для enum в Drizzle и `z.enum`; типы запросов через `z.infer`; постепенно | M, − | ★★★ |
+| Д4 | Формат денег выбирается по валюте, а не по языку интерфейса (`shared/utils/shared/currency-formatter.ts:3-157`): на одном экране «$1,234.5», «1.234,5 €», «1 234,5 ₾»; EGP и SAR — арабскими цифрами | Форматировать по языку интерфейса | S, −160 строк | ★★★ ⚠ вопрос вкуса |
+| Д5 | Переводы: `i18n/locales/ru.ts` не проверяется на соответствие `en.ts`; 44 ключа не используются; `emails.*` дублирует `server/utils/email.ts:23-56` и уже разошёлся («10 минут» против «1 hour»); Excel-экспорт только на английском (`app/utils/excel-export.ts:4-7`) | `satisfies typeof en` в `ru.ts`, удалить лишние ключи, передавать перевод в генератор Excel | S, − | ★★★ |
 
-### currencyRatesModal.monthId typing
-- **Where**: `app/stores/budget/modals.ts` — `currencyRatesModal.monthId: number | null`. IDs are UUID strings.
-- **Problem**: Pre-existing bug. `Number(uuid) → NaN` in `Month.vue:206`. (Our new `planModal.monthId: string | null` is correct.)
-- **Fix**: Change type to `string | null` and audit call sites for `Number()` casts.
+## 5. Интерфейс
 
-### exchangeRates in import is parsed but ignored
-- **Where**: `shared/types/export-import.ts` — `exchangeRates` is in the import schema.
-- **Where**: `server/services/budget/import-export.ts` — importer never reads it.
-- **Problem**: Dead field; misleading.
-- **Fix**: Either drop it from the schema (only export uses it), or actually persist it on import.
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| У1 | Около 120 неизменных подписей передаются пропсами (`UiYearLabels` — 46 полей, `app/components/ui/Year.vue:482-529`); лендинг копирует их слово в слово (`app/pages/index.vue:329-392` ≡ `app/components/budget/Month.vue:102-116` + `app/components/budget/Year.vue:86-133`). 4 компонента из `ui/` уже сами вызывают `useI18n` | Разрешить `ui/` переводить неизменные тексты самим; пропсами передавать только данные; уточнить правило | M, −300 строк | ★★★★ ⚠ меняет трактовку правила |
+| У2 | Метрики месяца и года написаны вручную 4 раза (`app/components/ui/Month.vue`, `app/components/ui/Year.vue`: десктоп и мобильный), 76 встроенных условий цвета; колонки выравниваются по порядковому номеру после `.filter(Boolean)` — разошедшиеся `v-if` тихо ломают сетку | Конфиг колонок, `v-for`, общий `useColumnSyncRow` | L, −650 строк, +конфиг | ★★★ ⚠ при следующей правке метрик; под риском около 30 `data-testid` |
+| У3 | Month, Year и TodoCard окупают разделение на контейнер и ui-компонент (их переиспользует лендинг). `EntryModal` (25 пропсов, 11 событий, один потребитель; контейнер лезет в DOM ребёнка через `querySelector`, `app/components/budget/EntryModal.vue:347-391`) и `TodoModal` (31 проп, доменная логика в «глупой» половине) — нет | `EntryModal` и `TodoModal` объединить с контейнером или сократить интерфейс | M, − | ★★★ |
+| У4 | Мобильная вёрстка (около 750 строк) не покрыта e2e: Playwright запускает только десктопный Chrome | Мобильный проект Playwright с набором базовых тестов | S, = | ★★★ |
 
-## Low
+## 6. Тесты, инструменты, документация
 
-### Dynamic import of notifications service in hot paths
-- **Where**: `server/api/budget/months/[id]/plan.put.ts`, `server/api/budget/entries.post.ts`, others.
-- **Problem**: `await import('~~/server/services/notifications')` inside the handler. Adds latency on every write.
-- **Fix**: Static top-level import.
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| Т1 | Расчёты бюджета без unit-тестов: `computeMonthData`, ожидаемые балансы, итоги года, переходы между месяцами, повторы задач, схемы Zod. E2E проверяет только `> 0` и `toBeTruthy()`; агенты e2e не запускают | Табличные тесты на node:test для `shared/utils/**`, на вход — фикстуры бюджетов из e2e; для P2-03 кейсы уже есть | M, только тесты | ★★★★★ |
+| Т2 | CI нет, деплой ничем не защищён: перед коммитом только `eslint --fix`, `deploy:all` выкатывает test, затем prod без проверок | Скрипт `check` (lint + typecheck + проверка типов тестов + unit) в начале `deploy:*` и GitHub Action | S, +скрипт | ★★★★★ |
+| Т3 | Тесты не проходят проверку типов: команда из README для unit-тестов даёт 18 ошибок, у e2e нет tsconfig | DOM в `lib` для `tests/unit/tsconfig.json`, `tests/e2e/tsconfig.json`, скрипт `typecheck:tests` | S, = | ★★★★ |
+| Т4 | `playwright.config.ts:36`: проект `chromium` зависит от `chromium-public` (хвост удалённого `auth.setup`) — одно падение публичного теста пропускает 168 из 223 тестов и очистку; `retries: 2` всегда маскирует нестабильность | Убрать `dependencies`, очистку — в `globalTeardown`, `retries: process.env.CI ? 2 : 0` | S, − | ★★★★ |
+| Т5 | E2E-тесты влияют друг на друга: очистка (`server/api/test/cleanup-user-data.delete.ts:30-47`) не удаляет задачи и планы; просроченная задача 2020 года (`tests/e2e/authenticated/todo/todo.spec.ts:366-384`) сортируется первой, и `.first()` берёт её вместо созданной; пользователи `logout_test_*` не удаляются | Удалять задачи и планы; искать созданное по уникальному тексту; все тестовые email — одним хелпером | S, = | ★★★★ |
+| Т6 | E2E пишет в ту же локальную D1, что и `pnpm dev` | Отдельный `persistDir` и миграции в `globalSetup`; затем удалить `/api/test/cleanup` и проект teardown | M, − | ★★★ |
+| Т7 | Данные для e2e готовятся через интерфейс (`tests/e2e/helpers/budget-setup.ts`: 63 импорта через модальное окно, около 54 созданий задач) — правка окна импорта ломает 60+ несвязанных тестов | Готовить данные через API: `seedBudget`, `createTodo` | M, − | ★★★ |
+| Т8 | Инструкции разошлись с кодом и друг с другом: `AGENTS.md` ≠ `CLAUDE.md`; «Node 20.16, pinned in engines» — поля `engines` нет, а 20.16 ниже минимума Nuxt 4.1; про `test:unit` не сказано нигде; `README.md` пишет про JWT, Firefox/WebKit и секреты в `.dev.vars` (код читает `process.env`); у SSE три разных статуса в трёх документах | `AGENTS.md` — единственный источник, `CLAUDE.md` — ссылка `@AGENTS.md`; поправить README | S, − | ★★★★ |
+| Т9 | Зависимости отстали примерно на год, `nuxt` закреплён на 4.1.0 без записанной причины. `pnpm audit`: критическая уязвимость в `@nuxt/devtools` < 3.3.1 (RPC без авторизации выполняет команды на машине разработчика при `nuxt dev`); в Nuxt < 4.4.7 — XSS в `NuxtLink` и `navigateTo` | Одним PR обновить семейство Nuxt, drizzle, wrangler, playwright — после Т2 | M, = | ★★★★ ⚠ апгрейд может что-то сломать |
+| Т10 | ESLint не проверяет почти бесплатные правила: `curly: all` (29 нарушений, все автоисправляемые), `func-style`, `prefer-arrow-callback` (0 нарушений), `no-console` | Включить; изменяющие методы массивов — через `no-restricted-syntax`, сначала предупреждением (36 мест) | S, = | ★★★ |
+| Т11 | Санитайзер логов маскирует любое значение со словами key, auth, token, secret — включая тексты ошибок (`server/utils/secure-logger.ts:36-40`). В `wrangler.toml` нет `[observability]` | Маскировать по имени поля, а не по значению; включить observability | S, = | ★★★ |
+| Т12 | Бэкап каждый раз перезаписывает единственный файл окружения (`package.json:20-22`); «бэкап → миграция → деплой» выполняется вручную | Имена с датой, скрипт `release:prod` | S, +скрипт | ★★★ |
 
-### groupEntriesByMonthId uses for..of + map.set
-- **Where**: `server/services/budget/months.ts` — `groupEntriesByMonthId` helper.
-- **Fix**: Rewrite as `entries.reduce((map, e) => map.set(e.monthId, [...(map.get(e.monthId) ?? []), e]), new Map())`.
+## 7. Производительность и чистка
 
-### PlanModal autofocus unreliable
-- **Where**: `app/components/budget/PlanModal.vue` — relies on `autofocus` attribute through a transition.
-- **Fix**: `await nextTick(); inputRef.value?.focus()`.
+| # | Проблема | Правка | Цена | Польза |
+|---|---|---|---|---|
+| Ч1 | `xlsx-js-style` импортируется в budget store сразу (`app/stores/budget/budget.ts:9`): JS страницы `/budget` весит 960 КБ (348 КБ в gzip), около 90% — SheetJS, нужный только по кнопке «Excel» | `await import()` внутри действия экспорта | S, = | ★★★★★ |
+| Ч2 | Мёртвый код, вводящий в заблуждение. Сервер: `checkRateLimit` с конфигом лимитов (лимита на отправку писем на самом деле нет), `createUser`, `ensureUser`, `hasRatesForCurrentMonth`, маршрут `GET /api/auth/google-config`. Клиент: `useUser` (из-за него запасная валюта всегда USD), мёртвые поля stores модальных окон (включая `currencyRatesModal.monthId`), неиспользуемые события и пропсы, `useChartConfig()`, 4 CSS-класса, просроченная `app/utils/theme-migration.ts`, `types/global.d.ts` | Удалить; решить, слать ли уведомление `budget_share_granted` (переводы есть, но оно не отправляется) | S, − | ★★★ |
+| Ч3 | 27 динамических `await import()` внутри обработчиков без причины (циклов нет); обвязка уведомлений (try/catch и лог) повторена 16 раз | Статические импорты; `createNotification` сам ловит и логирует ошибки | S, − | ★★ |
 
-### Year `:key` includes isPlanningMode
-- **Where**: `app/components/budget/Year.vue` — key on `BudgetMonth` includes `budgetStore.isPlanningMode`.
-- **Problem**: Toggling planning mode remounts every month component (heavy).
-- **Fix**: Drop from key once column-sync handles toggle internally (already does via watch).
+## 8. Мелочи (★★)
 
-### Audit fields for plannedBalanceChange
-- Optional: add `plannedBalanceChangeUpdatedAt`/`...UpdatedBy` so shared-budget viewers can see who changed the plan.
+- Семь модальных окон сами рисуют заголовок и крестик → параметры `title`, `size` и встроенная кнопка закрытия в `UiDialog`.
+- Состояние легенды графика хранится по переведённым названиям серий — после смены языка теряется.
+- `useTheme()` с побочными эффектами вызывается в трёх местах → в `<head>` дублируется favicon.
+- `monthId` означает три разные вещи: UUID, ключ вида `"2026-08"` (месяцы с нуля — это сентябрь) и число → ключ переименовать в `monthKey`.
+- Планы хранятся без валюты: при смене основной валюты все планы молча начинают считаться в новой.
+- Версия формата экспорта всегда `1.0`, окно импорта принимает JSON без проверки схемой → поднять до `1.1` вместе с P2-02 и проверять через `budgetExportSchema`.
+- Тестовые эндпоинты попадают в продакшн-сборку и защищены только переменной окружения → проверка `import.meta.dev`.
+- Конфигурация читается тремя способами (`process.env`, `cloudflare.env`, `runtimeConfig`), `.env.example` неточен.
+- `package.json`: пакет `cookie` не используется, `ofetch` не объявлен, нет `engines` и `.nvmrc`, пакет называется `nuxt-app`.
+- `nuxt.config.ts`: `typeCheck: true` запускает vue-tsc и в dev (достаточно `'build'`), в CSP лишние домены Google, тестовый стенд индексируется поисковиками.
+- Миграция 0012 удаляет родительскую таблицу, на которую ссылался `ON DELETE CASCADE`; взятая за образец для пересборки `month` или `user`, она сотрёт записи → правило в инструкциях.
+
+## 9. Перенесено из прежнего FOLLOWUPS.md (всё ещё актуально)
+
+- **`isPastMonth` в разных часовых поясах.** Общий хелпер `shared/utils/budget/month-helpers.ts:134` считает в локальном времени, а сервер (`server/api/budget/plans.put.ts:49`) работает в UTC; локальные копии остались в `app/stores/budget/budget.ts:203` и `app/components/budget/Month.vue:66`. На границе месяца интерфейс разрешает правку плана, а сервер отвечает 400, или наоборот.
+- **PlanModal молча теряет копейки** (`app/components/budget/PlanModal.vue:47,188`: `step="any"` и `Math.round`) — решать вместе с Д2.
+- **`isCurrentMonth`/`isPastMonth` вычисляются один раз при монтировании** (`app/components/budget/Month.vue:63-83`) — в долгой сессии через полночь последнего дня месяца значения устаревают.
+- **Мутации в аккумуляторах `reduce`** (`shared/utils/budget/budget-calculations.ts:228-286`, `app/components/BudgetScreen.vue:237-244`), `push`/`splice` в `app/composables/budget/useBudgetColumnsSync.ts:13,26`, `loadedYears.value.add(year)` в `app/stores/budget/budget.ts:874` — нарушают правило неизменяемости.
+- **`exchangeRates` в схеме импорта разбирается, но игнорируется** (`shared/types/export-import.ts:71`) — удалить из схемы или сохранять.
+- **`isPlanningMode` в `:key` месяцев** (`app/components/budget/Year.vue:11`) пересоздаёт все месяцы при переключении режима. Убирать ключ можно только после того, как `app/components/ui/Month.vue` научится пересчитывать ширину колонок при переключении, иначе сетка разъедется.
+- **Необязательно:** поля аудита для плана (кто и когда изменил) — чтобы участники общего бюджета видели автора изменений.
+
+## 10. Рассмотрено и не рекомендуется
+
+- **Хранить деньги в копейках (целыми числами).** Миграция объёма L, у валют разная точность (JPY — 0 знаков, KWD — 3, у BTC и XAU минимальной единицы нет), а конвертация всё равно даёт дроби. Хватит округления из Д2.
+- **Дробить budget store.** Появится синхронизация владельца и сброса между stores — именно там сейчас баги.
+- **Переводить unit-тесты на vitest с `@nuxt/test-utils`.** Полдня работы, медленнее, ломается при апгрейдах Nuxt; для `shared/` хватает node:test. Полезнее заменить самописную подделку D1 в тестах на Miniflare (★★★).
+- **Durable Objects для SSE** — ограничение принято.
+- **Менять адреса API** на `/api/budget/[username]/…` — хватит единого имени параметра из С2.
+- **Упрощать обработку кнопки «назад»** — сложность продиктована ограничениями браузеров и покрыта 503 строками unit-тестов.
+- **Убирать stores модальных окон** — оправданы: одно окно открывается из многих карточек.
+- **Правила ESLint на `let`, циклы и `no-param-reassign`, переход на `defineModel`** — шум и косметика.
+
+## 11. Замечания к PROJECT_REVIEW.md
+
+- P1-03 помечен исправленным, но если в наборе курсов нет одной валюты, для неё всё ещё берётся курс 1 (Б10).
+- P2-01…P2-05 и P2-07 открыты. У P2-06 в трёх документах три разных статуса; по `CLAUDE.md` ограничение принято.
+
+## 12. Порядок работ
+
+1. **Страховка:** Т2, Т3, Т4, Т5, Т10 и Т1 — дальше рефакторинг идёт под защитой тестов.
+2. **Быстрые исправления:** Ч1, Б1–Б12, Ч2, Т8.
+3. **Архитектура, по одному блоку за раз:** А1 → С1 → С2 → С3 → С4 → С5 → С6 → А2 (с P2-07) → С7 (с P2-04) → А3 → А4 (с P2-05) → А5, затем Д1–Д5.
+4. **Обновление зависимостей (Т9)** — когда заработает CI.
+5. **Интерфейс и e2e-инфраструктура:** У1, У3, У4, Т6, Т7, У2, мелочи.
