@@ -1,9 +1,13 @@
-import { createError, type H3Event } from 'h3'
+import { createError, getCookie, type H3Event } from 'h3'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { isTestMode } from '~~/server/utils/test-mode'
+import { LOCALE_COOKIE_NAME } from '~~/shared/utils/shared/locale'
 
 export type EmailTemplate = 'verification' | 'reset-password'
 type EmailLanguage = 'en' | 'ru'
+
+const getEmailLanguage = (event: H3Event): EmailLanguage =>
+  getCookie(event, LOCALE_COOKIE_NAME) === 'ru' ? 'ru' : 'en'
 
 type EmailParams = {
   readonly event: H3Event
@@ -78,7 +82,7 @@ const buildText = (template: EmailTemplate, code: string, language: EmailLanguag
 }
 
 export const sendVerificationEmail = async (params: EmailParams): Promise<void> => {
-  const { event, to, code, template, language = 'en' } = params
+  const { event, to, code, template, language = getEmailLanguage(event) } = params
   if (isTestMode()) {
     const templateName = template === 'verification' ? 'Verification' : 'Password reset'
     console.log(`[DEV] ${templateName} code for ${to}: ${code}`)

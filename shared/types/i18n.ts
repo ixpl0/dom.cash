@@ -1,5 +1,7 @@
 import type { AccessLevel, EntryKind } from '~~/shared/schemas/common'
 
+export type Translate = (key: string, params?: Record<string, string | number>) => string
+
 export type NotificationType
   = | 'budget_currency_changed'
     | 'budget_month_added'

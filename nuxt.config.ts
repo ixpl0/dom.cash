@@ -1,3 +1,4 @@
+import { LOCALE_COOKIE_NAME } from './shared/utils/shared/locale'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
@@ -70,7 +71,7 @@ export default defineNuxtConfig({
     strategy: 'no_prefix',
     detectBrowserLanguage: {
       useCookie: true,
-      cookieKey: 'i18n_locale',
+      cookieKey: LOCALE_COOKIE_NAME,
       redirectOn: 'all',
     },
   },

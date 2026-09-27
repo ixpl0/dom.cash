@@ -6,6 +6,8 @@ export type BudgetExportFormat = 'json' | 'excel'
 
 export const useBudgetExport = () => {
   const budgetStore = useBudgetStore()
+  const { t } = useI18n()
+  const { monthNames } = useMonthNames()
 
   const fetchExportData = () => $fetch<BudgetExportData>('/api/budget/export', {
     query: { username: budgetStore.targetUsernameForApi },
@@ -19,7 +21,7 @@ export const useBudgetExport = () => {
         fetchExportData(),
         import('~/utils/excel-export'),
       ])
-      downloadFile(generateExcelFromBudgetData(exportData), `${fileName}.xlsx`)
+      downloadFile(generateExcelFromBudgetData(exportData, { t, monthNames: monthNames.value }), `${fileName}.xlsx`)
       return
     }
 

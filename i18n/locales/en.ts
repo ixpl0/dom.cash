@@ -5,15 +5,8 @@ export default {
     or: 'or',
     actions: 'Actions',
     cancel: 'Cancel',
-    close: 'Close',
     save: 'Save',
-    delete: 'Delete',
     loading: 'Loading...',
-    currency: 'Currency',
-    amount: 'Amount',
-    description: 'Description',
-    date: 'Date',
-    user: 'User',
   },
 
   header: {
@@ -35,13 +28,9 @@ export default {
     loginButton: 'Login',
     registerButton: 'Register',
     loggingIn: 'Logging in...',
-    registering: 'Registering...',
     googleLogin: 'Login with Google',
     googleLoggingIn: 'Logging in with Google...',
     goHome: 'Go to Home',
-    autoRegister: 'If you don\'t have an account, it will be created automatically',
-    hasAccount: 'Already have an account?',
-    noAccount: 'Don\'t have an account?',
     usernameMinLength: 'Email must contain at least 3 characters',
     usernameMaxLength: 'Email must not exceed 64 characters',
     usernameInvalid: 'Invalid email format',
@@ -59,9 +48,6 @@ export default {
     resendCode: 'Resend code',
     backToEmail: 'Back to email',
     checkSpamFolder: 'If you don\'t see the email, please check your spam folder',
-    checkSpamAndDelay: 'The email may arrive with a delay of a few minutes',
-    lastAttemptSent: 'This was the last email. If the code didn\'t arrive, try using an email from a different provider',
-    pleaseWait: 'Please wait {seconds} seconds before requesting a new code',
     forgotPassword: 'Forgot password?',
     resetPassword: 'Reset Password',
     sendResetCode: 'Send Reset Code',
@@ -141,7 +127,6 @@ export default {
     yearWord: 'year',
     currencyUpdateError: 'Failed to update currency. Please try again.',
     exportError: 'Failed to export budget. Please try again.',
-    exportOnlyOwnBudget: 'Export is only available for your own budget',
 
     toast: {
       createNextMonthError: 'Failed to create next month. Please try again.',
@@ -161,7 +146,6 @@ export default {
 
     month: {
       notFound: 'Month not found: {monthId}',
-      currentMonth: 'Current month',
       clickForRates: 'Click to view exchange rates',
       balanceTooltip: 'Total savings at the beginning of the month. This would be enough for',
       balanceTooltipMonths: 'months',
@@ -273,9 +257,6 @@ export default {
 
   entry: {
     monthIdRequired: 'Month ID and entry kind are required',
-    modalTitleBalance: 'Balance',
-    modalTitleIncome: 'Income',
-    modalTitleExpenses: 'Expenses',
     description: 'Description',
     amount: 'Amount',
     currency: 'Currency',
@@ -283,10 +264,6 @@ export default {
     optional: 'Optional',
     actions: 'Actions',
     addNew: '+ Add new entry',
-    emptyBalance: 'No balance sources yet',
-    emptyIncome: 'No income yet',
-    emptyExpenses: 'No expenses yet',
-    descriptionPlaceholder: 'Enter description...',
     deleteTitle: 'Delete entry',
     deleteBalance: 'balance',
     deleteIncome: 'income',
@@ -330,7 +307,6 @@ export default {
 
   currencyPicker: {
     placeholder: 'Select currency...',
-    searchNotFound: 'No currencies found',
   },
 
   currencyRates: {
@@ -345,8 +321,6 @@ export default {
   share: {
     title: 'Share your budget',
     username: 'Username',
-    accessLevel: 'Access level',
-    actions: 'Actions',
     usernamePlaceholder: 'Username',
     accessRead: 'Read only',
     accessWrite: 'Read and write',
@@ -367,8 +341,6 @@ export default {
 
   sharedBudgets: {
     title: 'Budgets shared with you',
-    user: 'User',
-    actions: 'Actions',
     goToBudget: 'Go to budget',
     empty: 'No budgets have been shared with you yet',
     revokeTitle: 'Revoke access',
@@ -421,7 +393,6 @@ export default {
   },
 
   confirmation: {
-    titleDefault: 'Confirmation',
     titleDanger: 'Confirm action',
     titleWarning: 'Warning',
     titleInfo: 'Information',
@@ -485,6 +456,23 @@ export default {
     balance: 'balance',
     income: 'income',
     expense: 'expense',
+  },
+
+  excel: {
+    budgetSheet: 'Budget',
+    summarySheet: 'Summary',
+    type: 'Type',
+    description: 'Description',
+    amount: 'Amount',
+    currency: 'Currency',
+    date: 'Date',
+    year: 'Year',
+    month: 'Month',
+    balanceTotal: 'Balance ({currency})',
+    incomeTotal: 'Income ({currency})',
+    expensesTotal: 'Expenses ({currency})',
+    yearIncomeTotal: 'Total income for {year} ({currency})',
+    yearExpensesTotal: 'Total expenses for {year} ({currency})',
   },
 
   accessLevel: {
@@ -605,7 +593,6 @@ export default {
     card: {
       author: 'This person shared with you',
       sharedWith: 'Can see this task',
-      recurrence: 'Recurring task',
     },
     recurrence: {
       label: 'Repeat',
@@ -660,23 +647,6 @@ export default {
       deleteFailed: 'Failed to delete task',
       saveFailed: 'Failed to save task',
       loadFailed: 'Failed to load tasks',
-    },
-  },
-
-  emails: {
-    verification: {
-      subject: 'Your verification code',
-      title: 'Welcome to dom.cash',
-      message: 'Your verification code:',
-      expiration: 'The code expires in 10 minutes.',
-      ignore: 'If you didn\'t request this, please ignore this email.',
-    },
-    resetPassword: {
-      subject: 'Reset your password',
-      title: 'Reset Password',
-      message: 'You requested to reset your password. Here is your verification code:',
-      expiration: 'The code expires in 1 hour.',
-      ignore: 'If you didn\'t request this, please ignore this email.',
     },
   },
 }

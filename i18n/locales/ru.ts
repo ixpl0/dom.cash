@@ -1,3 +1,4 @@
+import type en from './en'
 import { currenciesRu } from './currencies/ru'
 
 export default {
@@ -5,15 +6,8 @@ export default {
     or: 'или',
     actions: 'Действия',
     cancel: 'Отмена',
-    close: 'Закрыть',
     save: 'Сохранить',
-    delete: 'Удалить',
     loading: 'Загрузка...',
-    currency: 'Валюта',
-    amount: 'Сумма',
-    description: 'Описание',
-    date: 'Дата',
-    user: 'Пользователь',
   },
 
   header: {
@@ -35,13 +29,9 @@ export default {
     loginButton: 'Войти',
     registerButton: 'Зарегистрироваться',
     loggingIn: 'Входим...',
-    registering: 'Регистрируемся...',
     googleLogin: 'Войти через Google',
     googleLoggingIn: 'Входим через Google...',
     goHome: 'На главную',
-    autoRegister: 'Если у вас нет аккаунта, он будет создан автоматически',
-    hasAccount: 'Уже есть аккаунт?',
-    noAccount: 'Нет аккаунта?',
     usernameMinLength: 'Email должен содержать минимум 3 символа',
     usernameMaxLength: 'Email не должен превышать 64 символа',
     usernameInvalid: 'Неверный формат email',
@@ -59,9 +49,6 @@ export default {
     resendCode: 'Отправить код повторно',
     backToEmail: 'Вернуться к вводу email',
     checkSpamFolder: 'Если письмо не пришло, проверьте папку со спамом',
-    checkSpamAndDelay: 'Письмо может прийти с задержкой до нескольких минут',
-    lastAttemptSent: 'Это было последнее письмо. Если код не пришёл, попробуйте использовать email другого провайдера',
-    pleaseWait: 'Подождите {seconds} секунд перед повторной отправкой кода',
     forgotPassword: 'Забыли пароль?',
     resetPassword: 'Сброс пароля',
     sendResetCode: 'Отправить код сброса',
@@ -141,7 +128,6 @@ export default {
     yearWord: 'год',
     currencyUpdateError: 'Не удалось обновить валюту. Попробуйте ещё раз.',
     exportError: 'Не удалось экспортировать бюджет. Попробуйте ещё раз.',
-    exportOnlyOwnBudget: 'Экспорт доступен только для собственного бюджета',
 
     toast: {
       createNextMonthError: 'Не удалось создать следующий месяц. Попробуйте ещё раз.',
@@ -161,7 +147,6 @@ export default {
 
     month: {
       notFound: 'Месяц не найден: {monthId}',
-      currentMonth: 'Текущий месяц',
       clickForRates: 'Нажмите для просмотра курсов валют',
       balanceTooltip: 'Сумма всех сбережений на начало месяца. Этого хватило бы на',
       balanceTooltipMonths: 'мес',
@@ -273,9 +258,6 @@ export default {
 
   entry: {
     monthIdRequired: 'Требуется ID месяца и тип записи',
-    modalTitleBalance: 'Баланс',
-    modalTitleIncome: 'Доходы',
-    modalTitleExpenses: 'Расходы',
     description: 'Описание',
     amount: 'Сумма',
     currency: 'Валюта',
@@ -283,10 +265,6 @@ export default {
     optional: 'Необязательное',
     actions: 'Действия',
     addNew: '+ Добавить новую запись',
-    emptyBalance: 'Пока нет источников баланса',
-    emptyIncome: 'Пока нет доходов',
-    emptyExpenses: 'Пока нет расходов',
-    descriptionPlaceholder: 'Введите описание...',
     deleteTitle: 'Удаление записи',
     deleteBalance: 'баланса',
     deleteIncome: 'дохода',
@@ -330,7 +308,6 @@ export default {
 
   currencyPicker: {
     placeholder: 'Выберите валюту...',
-    searchNotFound: 'Валюты не найдены',
   },
 
   currencyRates: {
@@ -345,8 +322,6 @@ export default {
   share: {
     title: 'Общий доступ к вашему бюджету',
     username: 'Имя пользователя',
-    accessLevel: 'Уровень доступа',
-    actions: 'Действия',
     usernamePlaceholder: 'Имя пользователя',
     accessRead: 'Только чтение',
     accessWrite: 'Чтение и редактирование',
@@ -367,8 +342,6 @@ export default {
 
   sharedBudgets: {
     title: 'Бюджеты, которыми с вами поделились',
-    user: 'Пользователь',
-    actions: 'Действия',
     goToBudget: 'Перейти к бюджету',
     empty: 'Пока нет бюджетов, которыми с вами поделились',
     revokeTitle: 'Отказ от доступа',
@@ -421,7 +394,6 @@ export default {
   },
 
   confirmation: {
-    titleDefault: 'Подтверждение',
     titleDanger: 'Подтверждение действия',
     titleWarning: 'Внимание',
     titleInfo: 'Информация',
@@ -485,6 +457,23 @@ export default {
     balance: 'баланс',
     income: 'доход',
     expense: 'расход',
+  },
+
+  excel: {
+    budgetSheet: 'Бюджет',
+    summarySheet: 'Итоги',
+    type: 'Тип',
+    description: 'Описание',
+    amount: 'Сумма',
+    currency: 'Валюта',
+    date: 'Дата',
+    year: 'Год',
+    month: 'Месяц',
+    balanceTotal: 'Баланс ({currency})',
+    incomeTotal: 'Доходы ({currency})',
+    expensesTotal: 'Расходы ({currency})',
+    yearIncomeTotal: 'Доходы за {year} год ({currency})',
+    yearExpensesTotal: 'Расходы за {year} год ({currency})',
   },
 
   accessLevel: {
@@ -605,7 +594,6 @@ export default {
     card: {
       author: 'Этот пользователь с вами поделился',
       sharedWith: 'Видит эту задачу',
-      recurrence: 'Повторяющаяся задача',
     },
     recurrence: {
       label: 'Повторять',
@@ -662,21 +650,4 @@ export default {
       loadFailed: 'Не удалось загрузить задачи',
     },
   },
-
-  emails: {
-    verification: {
-      subject: 'Код подтверждения',
-      title: 'Добро пожаловать в dom.cash',
-      message: 'Ваш код подтверждения:',
-      expiration: 'Код действителен 10 минут.',
-      ignore: 'Если вы не запрашивали этот код, проигнорируйте это письмо.',
-    },
-    resetPassword: {
-      subject: 'Сброс пароля',
-      title: 'Сброс пароля',
-      message: 'Вы запросили сброс пароля. Ваш код подтверждения:',
-      expiration: 'Код действителен 1 час.',
-      ignore: 'Если вы не запрашивали сброс пароля, проигнорируйте это письмо.',
-    },
-  },
-}
+} satisfies typeof en

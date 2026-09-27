@@ -1,6 +1,4 @@
-import type { NotificationEvent } from '~~/shared/types/i18n'
-
-export type Translate = (key: string, params?: Record<string, string | number>) => string
+import type { NotificationEvent, Translate } from '~~/shared/types/i18n'
 
 export type ServerMessage = { type: 'connected' } | { type: 'ping' } | NotificationEvent
 

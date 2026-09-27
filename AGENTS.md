@@ -48,6 +48,8 @@
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
   * `useI18n()` works only at the top of a component `setup`. Code that stores or plugins may call uses `useT()` (`app/utils/i18n.ts`), which reads the global `$i18n`.
   * Russian messages with a count list three forms, `one | few | many` (`{count} минуту | {count} минуты | {count} минут`); `i18n/plural-rules.ts` picks the form.
+  * `ru.ts` is checked against `en.ts` (`satisfies typeof en`): add and remove every key in both files, and delete keys the code no longer uses.
+  * Email texts live in `server/utils/email.ts`; a code email goes out in the interface language (`LOCALE_COOKIE_NAME`). The Excel export gets `t` and the month names, so it follows the interface language too.
 * **Icons**: @nuxt/icon with @iconify-json/heroicons
 * **Excel import/export**: xlsx-js-style, loaded only when exporting (`useBudgetExport`)
 * **Charts**: ECharts via vue-echarts
