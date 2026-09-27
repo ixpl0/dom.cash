@@ -7,7 +7,5 @@
 <script setup lang="ts">
 const todoStore = useTodoStore()
 
-const isLoadedByAuthPlugin = import.meta.server && todoStore.data !== null
-
-await callOnce('todo-page', () => isLoadedByAuthPlugin ? undefined : todoStore.load(), { mode: 'navigation' })
+await callOnce('todo-page', () => todoStore.load(), { mode: 'navigation' })
 </script>

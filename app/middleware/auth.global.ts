@@ -1,9 +1,7 @@
 import constants from '~/utils/constants'
 
-export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, restoreSession } = useAuth()
-
-  await restoreSession()
+export default defineNuxtRouteMiddleware((to) => {
+  const { isAuthenticated } = useAuthState()
 
   const isPublicRoute = constants.publicRoutes.some((route) => {
     if (route.endsWith('*')) {

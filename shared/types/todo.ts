@@ -41,3 +41,7 @@ export interface ToggleResult {
   plannedDate?: string
   isRecurring: boolean
 }
+
+export interface OverdueTodoCount {
+  count: number
+}

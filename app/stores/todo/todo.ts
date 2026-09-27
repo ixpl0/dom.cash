@@ -1,5 +1,7 @@
 import type { DateReference } from '~~/shared/types/recurrence'
-import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult } from '~~/shared/types/todo'
+import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult, OverdueTodoCount } from '~~/shared/types/todo'
+import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
+import { isTodoOverdue } from '~~/shared/utils/todo'
 import { readServerErrorKey } from '~/utils/server-error'
 
 export const useTodoStore = defineStore('todo', () => {
@@ -7,6 +9,7 @@ export const useTodoStore = defineStore('todo', () => {
 
   const data = ref<TodoData | null>(null)
   const connections = ref<TodoConnection[]>([])
+  const serverOverdueCount = ref<number | null>(null)
   const loadError = ref<{ message: string } | null>(null)
   const isLoading = ref(false)
   const isStale = ref(false)
@@ -15,17 +18,6 @@ export const useTodoStore = defineStore('todo', () => {
   const leavingIds = ref<Set<string>>(new Set())
 
   const hideCompleted = computed(() => preferencesStore.todoHideCompleted)
-
-  const isOverdue = (item: TodoListItem): boolean => {
-    if (!item.plannedDate || item.isCompleted) {
-      return false
-    }
-    const plannedDate = new Date(item.plannedDate)
-    const today = new Date()
-    plannedDate.setHours(0, 0, 0, 0)
-    today.setHours(0, 0, 0, 0)
-    return plannedDate <= today
-  }
 
   const filteredItems = computed((): TodoListItem[] => {
     if (!data.value) {
@@ -37,11 +29,14 @@ export const useTodoStore = defineStore('todo', () => {
     return data.value.items
   })
 
+  const getToday = (): string => toLocalIsoDate(new Date())
+
   const sortedItems = computed((): TodoListItem[] => {
+    const today = getToday()
     const items = [...filteredItems.value]
     return items.sort((a, b) => {
-      const aOverdue = isOverdue(a)
-      const bOverdue = isOverdue(b)
+      const aOverdue = isTodoOverdue(a, today)
+      const bOverdue = isTodoOverdue(b, today)
       if (aOverdue && !bOverdue) {
         return -1
       }
@@ -63,9 +58,10 @@ export const useTodoStore = defineStore('todo', () => {
 
   const overdueCount = computed((): number => {
     if (!data.value) {
-      return 0
+      return serverOverdueCount.value ?? 0
     }
-    return data.value.items.filter(isOverdue).length
+    const today = getToday()
+    return data.value.items.filter(item => isTodoOverdue(item, today)).length
   })
 
   const getTodoById = (id: string): TodoListItem | undefined => {
@@ -98,8 +94,22 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
+  const loadOverdueCount = async (): Promise<void> => {
+    try {
+      const { count } = await $fetch<OverdueTodoCount>('/api/todo/overdue-count', { query: { today: getToday() } })
+      serverOverdueCount.value = count
+      isStale.value = false
+    }
+    catch (error) {
+      console.error('Failed to load the overdue task count', error)
+    }
+    finally {
+      lastLoadAt.value = Date.now()
+    }
+  }
+
   const markStale = (): void => {
-    if (data.value) {
+    if (data.value || serverOverdueCount.value !== null) {
       isStale.value = true
     }
   }
@@ -109,7 +119,7 @@ export const useTodoStore = defineStore('todo', () => {
       return
     }
     isStale.value = false
-    await load()
+    await (data.value ? load() : loadOverdueCount())
   }
 
   const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
@@ -240,17 +250,6 @@ export const useTodoStore = defineStore('todo', () => {
     preferencesStore.setTodoHideCompleted(!hideCompleted.value)
   }
 
-  const reset = () => {
-    data.value = null
-    connections.value = []
-    loadError.value = null
-    isLoading.value = false
-    togglingIds.value = new Set()
-    leavingIds.value = new Set()
-    isStale.value = false
-    lastLoadAt.value = null
-  }
-
   const isToggling = (id: string): boolean => {
     return togglingIds.value.has(id)
   }
@@ -272,6 +271,7 @@ export const useTodoStore = defineStore('todo', () => {
     isToggling,
     isLeaving,
     load,
+    loadOverdueCount,
     isStale,
     lastLoadAt,
     markStale,
@@ -281,6 +281,5 @@ export const useTodoStore = defineStore('todo', () => {
     deleteTodo,
     toggleTodo,
     toggleHideCompleted,
-    reset,
   }
 })

@@ -2,10 +2,11 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { useDatabase } from '../../server/db'
 import { budgetShare, todo, todoShare, user } from '../../server/db/schema'
-import { createTodo, deleteTodo, listTodos, toggleTodo, updateTodo } from '../../server/services/todo'
+import { countOverdueTodos, createTodo, deleteTodo, listTodos, toggleTodo, updateTodo } from '../../server/services/todo'
 import { chunkArray, getRowsPerInsertStatement } from '../../server/utils/d1-limits'
 import type { User } from '../../shared/types'
 import { ERROR_KEYS } from '../../shared/utils/shared/error-keys'
+import { isTodoOverdue } from '../../shared/utils/todo'
 import { createTestDatabase, type TestDatabase } from './helpers/test-database'
 
 const toUser = (id: string): User => ({ id, username: `${id}@example.com`, mainCurrency: 'USD', isAdmin: false })
@@ -168,4 +169,32 @@ test('listTodos shows own and shared tasks without the viewer among participants
   ])
   assert.equal((await listTodos(owner.id, database.event))[0]?.sharedWith[0]?.id, friend.id)
   assert.equal(await useDatabase(database.event).$count(todoShare), 1)
+})
+
+test('countOverdueTodos counts open visible tasks planned for the given day or earlier', async () => {
+  const database = await createDatabaseWithFriends()
+  const db = useDatabase(database.event)
+  const createdAt = new Date()
+  const toTaskRow = (id: string, userId: string, plannedDate: string | null, isCompleted: boolean | null) =>
+    ({ id, userId, content: id, plannedDate, isCompleted, createdAt, updatedAt: createdAt })
+  await db.insert(todo).values([
+    toTaskRow('yesterday', owner.id, '2026-09-27T00:00', false),
+    toTaskRow('this-morning', owner.id, '2026-09-28T00:00', false),
+    toTaskRow('this-evening', owner.id, '2026-09-28T23:59', false),
+    toTaskRow('tomorrow', owner.id, '2026-09-29T00:00', false),
+    toTaskRow('completed', owner.id, '2026-09-01T00:00', true),
+    toTaskRow('without-date', owner.id, null, false),
+    toTaskRow('without-status', owner.id, '2026-09-02T00:00', null),
+    toTaskRow('shared-by-friend', friend.id, '2026-09-03T00:00', false),
+    toTaskRow('private-to-friend', friend.id, '2026-09-04T00:00', false),
+    toTaskRow('strangers', stranger.id, '2026-09-05T00:00', false),
+  ])
+  await db.insert(todoShare).values({ id: 'share', todoId: 'shared-by-friend', sharedWithId: owner.id, createdAt })
+
+  assert.equal(await countOverdueTodos(owner.id, '2026-09-28', database.event), 5)
+  assert.equal(await countOverdueTodos(owner.id, '2026-09-26', database.event), 2)
+  assert.equal(await countOverdueTodos(friend.id, '2026-09-28', database.event), 2)
+
+  const ownerTodos = await listTodos(owner.id, database.event)
+  assert.equal(ownerTodos.filter(item => isTodoOverdue(item, '2026-09-28')).length, 5)
 })

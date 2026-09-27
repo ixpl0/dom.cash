@@ -12,10 +12,6 @@ export const useAuth = () => {
     })
 
     setUser(authenticatedUser)
-
-    if (import.meta.client) {
-      localStorage.setItem('hasSession', 'true')
-    }
   }
 
   const logout = async (): Promise<void> => {
@@ -26,7 +22,6 @@ export const useAuth = () => {
     lastSharedBudgetCookie.value = null
 
     if (import.meta.client) {
-      localStorage.removeItem('hasSession')
       await nextTick()
       $backHandlers.forgetGuardEntry()
       window.location.replace('/')
@@ -35,33 +30,6 @@ export const useAuth = () => {
 
     clearUser()
     await navigateTo('/', { replace: true })
-  }
-
-  const restoreSession = async (): Promise<void> => {
-    if (user.value) {
-      return
-    }
-
-    if (import.meta.client && !localStorage.getItem('hasSession')) {
-      return
-    }
-
-    try {
-      const requestFetch = useRequestFetch()
-      const authenticatedUser = await requestFetch<User>('/api/auth/me')
-      setUser(authenticatedUser)
-
-      if (import.meta.client) {
-        localStorage.setItem('hasSession', 'true')
-      }
-    }
-    catch {
-      clearUser()
-
-      if (import.meta.client) {
-        localStorage.removeItem('hasSession')
-      }
-    }
   }
 
   const loginWithGoogle = async (): Promise<void> => {
@@ -84,7 +52,6 @@ export const useAuth = () => {
     setUser,
     login,
     logout,
-    restoreSession,
     loginWithGoogle,
   }
 }

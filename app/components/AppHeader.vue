@@ -29,6 +29,7 @@
           <span
             v-if="todoStore.overdueCount > 0"
             class="indicator-item badge badge-error badge-xs"
+            data-testid="todo-overdue-count"
           >
             {{ todoStore.overdueCount }}
           </span>
@@ -178,6 +179,7 @@
                 <span
                   v-if="todoStore.overdueCount > 0"
                   class="badge badge-error badge-xs"
+                  data-testid="mobile-todo-overdue-count"
                 >
                   {{ todoStore.overdueCount }}
                 </span>

@@ -6,13 +6,6 @@ export default defineNuxtPlugin(async () => {
     return
   }
 
-  const user = await getSessionUser(event)
-
-  if (user) {
-    const { setUser } = useAuthState()
-    setUser(user)
-
-    const todoStore = useTodoStore()
-    await todoStore.load()
-  }
+  const { setUser } = useAuthState()
+  setUser(await getSessionUser(event))
 })

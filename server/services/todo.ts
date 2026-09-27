@@ -1,4 +1,4 @@
-import { desc, eq, inArray, or } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, todo, todoShare, user } from '~~/server/db/schema'
@@ -8,6 +8,7 @@ import type { User } from '~~/shared/types'
 import type { DateReference } from '~~/shared/types/recurrence'
 import type { CreateTodoPayload, TodoConnection, TodoListItem, ToggleResult, UpdateTodoPayload } from '~~/shared/types/todo'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
+import { PLAIN_DATE_LENGTH } from '~~/shared/utils/shared/dates'
 import { calculateNextDate, formatDateForDb } from '~~/shared/utils/recurrence'
 
 type TodoRow = typeof todo.$inferSelect
@@ -127,13 +128,14 @@ const getTodoAccess = async (todoId: string, viewerId: string, forbiddenKey: Err
   return { ...found, sharedWith, isOwner }
 }
 
+const isVisibleTo = (db: ReturnType<typeof useDatabase>, viewerId: string) => or(
+  eq(todo.userId, viewerId),
+  inArray(todo.id, db.select({ todoId: todoShare.todoId }).from(todoShare).where(eq(todoShare.sharedWithId, viewerId))),
+)
+
 export const listTodos = async (viewerId: string, event: H3Event): Promise<TodoListItem[]> => {
   const db = useDatabase(event)
-  const todosSharedWithViewer = db
-    .select({ todoId: todoShare.todoId })
-    .from(todoShare)
-    .where(eq(todoShare.sharedWithId, viewerId))
-  const isVisibleTodo = or(eq(todo.userId, viewerId), inArray(todo.id, todosSharedWithViewer))
+  const isVisibleTodo = isVisibleTo(db, viewerId)
 
   const [todoRows, shareRows] = await Promise.all([
     db
@@ -156,6 +158,20 @@ export const listTodos = async (viewerId: string, event: H3Event): Promise<TodoL
 
   return todoRows.map(({ todoRow, ownerUsername }) =>
     toTodoListItem(todoRow, ownerUsername, sharedWithByTodoId.get(todoRow.id) ?? [], viewerId))
+}
+
+export const countOverdueTodos = async (viewerId: string, today: string, event: H3Event): Promise<number> => {
+  const db = useDatabase(event)
+  const [result] = await db
+    .select({ overdueCount: count() })
+    .from(todo)
+    .where(and(
+      isVisibleTo(db, viewerId),
+      or(isNull(todo.isCompleted), eq(todo.isCompleted, false)),
+      lte(sql`substr(${todo.plannedDate}, 1, ${PLAIN_DATE_LENGTH})`, today),
+    ))
+
+  return result?.overdueCount ?? 0
 }
 
 export const createTodo = async (actor: User, payload: CreateTodoPayload, event: H3Event): Promise<TodoListItem> => {

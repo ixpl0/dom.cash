@@ -1,5 +1,7 @@
 import { test, expect } from '../fixtures'
+import { cleanupUserData } from '../helpers/auth'
 import { waitForHydration } from '../helpers/wait-for-hydration'
+import { toLocalIsoDate } from '../../../shared/utils/shared/dates'
 
 test.describe('Authenticated Header', () => {
   test.beforeEach(async ({ page }) => {
@@ -50,5 +52,38 @@ test.describe('Authenticated Header', () => {
     const dropdownMenu = page.getByTestId('user-dropdown-content')
     await expect(dropdownMenu.getByTestId('theme-picker-label')).toBeVisible()
     await expect(dropdownMenu.getByTestId('language-picker-label')).toBeVisible()
+  })
+})
+
+test.describe('Overdue task count', () => {
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should count open tasks planned for today or earlier', async ({ page, request }) => {
+    const createTask = async (content: string, plannedDate?: string): Promise<{ id: string }> => {
+      const response = await request.post('/api/todo', { data: { content, plannedDate } })
+      expect(response.ok()).toBe(true)
+      return response.json()
+    }
+
+    await createTask('Past task', '2020-01-01T00:00')
+    await createTask('Task for today', `${toLocalIsoDate(new Date())}T00:00`)
+    await createTask('Future task', '2099-01-01T00:00')
+    await createTask('Task without date')
+    const completedTask = await createTask('Completed task', '2020-01-02T00:00')
+    const toggleResponse = await request.put(`/api/todo/${completedTask.id}/toggle`)
+    expect(toggleResponse.ok()).toBe(true)
+
+    await page.goto('/budget')
+    await waitForHydration(page)
+    const overdueCount = page.getByTestId('todo-overdue-count')
+    await expect(overdueCount).toHaveText('2')
+
+    await page.getByTestId('todo-btn').click()
+    await page.waitForURL('/todo')
+    const pastTask = page.getByTestId('todo-card').filter({ hasText: 'Past task' })
+    await pastTask.getByTestId('todo-card-checkbox').click()
+    await expect(overdueCount).toHaveText('1')
   })
 })

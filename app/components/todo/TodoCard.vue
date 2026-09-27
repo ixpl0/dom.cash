@@ -19,6 +19,8 @@
 
 <script setup lang="ts">
 import type { TodoListItem } from '~~/shared/types/todo'
+import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
+import { isTodoOverdue } from '~~/shared/utils/todo'
 
 interface Props {
   todo: TodoListItem
@@ -74,16 +76,7 @@ const visualIsCompleted = computed(() => {
   return props.todo.isCompleted || todoStore.isToggling(props.todo.id)
 })
 
-const isOverdue = computed(() => {
-  if (!props.todo.plannedDate || props.todo.isCompleted) {
-    return false
-  }
-  const plannedDate = new Date(props.todo.plannedDate)
-  const today = new Date()
-  plannedDate.setHours(0, 0, 0, 0)
-  today.setHours(0, 0, 0, 0)
-  return plannedDate <= today
-})
+const isOverdue = computed(() => isTodoOverdue(props.todo, toLocalIsoDate(new Date())))
 
 const handleToggle = async () => {
   const reference = props.todo.recurrence ? 'planned' : undefined

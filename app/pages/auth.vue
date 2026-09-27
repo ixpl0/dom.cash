@@ -506,10 +506,6 @@ const handleRegister = async (): Promise<void> => {
       const auth = useAuth()
       auth.setUser(response)
 
-      if (import.meta.client) {
-        localStorage.setItem('hasSession', 'true')
-      }
-
       await navigateAfterLogin()
     }
     else {
@@ -558,10 +554,6 @@ const handleVerifyCode = async (): Promise<void> => {
 
     const auth = useAuth()
     auth.setUser(response)
-
-    if (import.meta.client) {
-      localStorage.setItem('hasSession', 'true')
-    }
 
     await navigateAfterLogin()
   }
@@ -773,10 +765,6 @@ onMounted(async () => {
 
       const auth = useAuth()
       auth.setUser(response.user)
-
-      if (import.meta.client) {
-        localStorage.setItem('hasSession', 'true')
-      }
 
       await router.push(response.redirectTo)
     }

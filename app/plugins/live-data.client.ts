@@ -155,6 +155,9 @@ export default defineNuxtPlugin({
         hasConnected = false
         if (userId) {
           connect()
+          if (!todoStore.data) {
+            todoStore.loadOverdueCount()
+          }
         }
         else {
           disconnect()

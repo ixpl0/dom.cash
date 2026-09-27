@@ -103,9 +103,11 @@
 * **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
 * **Budget Sharing**: Share budgets with other users (read/write access)
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
+  * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.
 * **Metrics**: Analytics dashboard with charts
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
+  * The session is restored only during server rendering (`app/plugins/auth.server.ts`). The browser keeps that user, sign-in updates it with `setUser`, logout reloads the app.
 
 ## Code Style (required)
 
