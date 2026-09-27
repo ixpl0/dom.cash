@@ -1,20 +1,13 @@
 import { desc, eq, inArray, or } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { todo, todoShare, user } from '~~/server/db/schema'
-import { getUserFromRequest } from '~~/server/utils/auth'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
+import { requireAuth } from '~~/server/utils/session'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import type { TodoListItem, TodoData } from '~~/shared/types/todo'
 
 export default defineEventHandler(async (event): Promise<TodoData> => {
   const db = useDatabase(event)
-  const currentUser = await getUserFromRequest(event)
-  if (!currentUser) {
-    throw createError({
-      statusCode: 401,
-      message: ERROR_KEYS.UNAUTHORIZED,
-    })
-  }
+  const currentUser = await requireAuth(event)
 
   const todosSharedWithMe = db
     .select({ todoId: todoShare.todoId })

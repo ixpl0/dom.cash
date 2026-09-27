@@ -1,12 +1,10 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { createError, setCookie, getCookie, type H3Event } from 'h3'
-import { eq, gt, and } from 'drizzle-orm'
+import { createError, setCookie, type H3Event } from 'h3'
+import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { timingSafeCompare } from '~~/server/utils/crypto'
-import { resolveImpersonation } from '~~/server/utils/impersonation'
-import type { User } from '~~/shared/types'
 
 export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90
 export const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000
@@ -190,38 +188,4 @@ export const setAuthCookie = (event: H3Event, token: string, maxAge: number = SE
     path: '/',
     maxAge,
   })
-}
-
-export const getUserFromRequest = async (event: H3Event): Promise<User | null> => {
-  const token = getCookie(event, 'auth-token')
-  if (!token) {
-    return null
-  }
-
-  const tokenHash = createHash('sha256').update(token).digest('hex')
-  const now = new Date()
-
-  const db = useDatabase(event)
-  const [userRecord] = await db
-    .select({
-      id: user.id,
-      username: user.username,
-      mainCurrency: user.mainCurrency,
-      isAdmin: user.isAdmin,
-    })
-    .from(session)
-    .innerJoin(user, eq(session.userId, user.id))
-    .where(and(
-      eq(session.tokenHash, tokenHash),
-      gt(session.expiresAt, now),
-    ))
-    .limit(1)
-
-  if (!userRecord) {
-    return null
-  }
-
-  const impersonatedUser = await resolveImpersonation(event, userRecord)
-
-  return impersonatedUser ?? userRecord
 }

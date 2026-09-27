@@ -1,13 +1,9 @@
-import { createError, setHeader } from 'h3'
-import { getUserFromRequest } from '~~/server/utils/auth'
+import { setHeader } from 'h3'
+import { requireAuth } from '~~/server/utils/session'
 import { addConnection, removeConnection } from '~~/server/services/notifications'
-import { ERROR_KEYS } from '~~/server/utils/error-keys'
 
 export default defineEventHandler(async (event) => {
-  const user = await getUserFromRequest(event)
-  if (!user) {
-    throw createError({ statusCode: 401, message: ERROR_KEYS.UNAUTHORIZED })
-  }
+  const user = await requireAuth(event)
 
   setHeader(event, 'content-type', 'text/event-stream; charset=utf-8')
   setHeader(event, 'cache-control', 'no-cache, no-transform')

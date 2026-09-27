@@ -1,4 +1,4 @@
-import { getOptionalAuth } from '~~/server/utils/session'
+import { getSessionUser } from '~~/server/utils/session'
 
 export default defineNuxtPlugin(async () => {
   const event = useRequestEvent()
@@ -6,7 +6,7 @@ export default defineNuxtPlugin(async () => {
     return
   }
 
-  const user = await getOptionalAuth(event)
+  const user = await getSessionUser(event)
 
   if (user) {
     const { setUser } = useAuthState()

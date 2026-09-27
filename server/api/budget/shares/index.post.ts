@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import type { NewBudgetShare } from '~~/server/db/schema'
-import { getUserFromRequest } from '~~/server/utils/auth'
+import { requireAuth } from '~~/server/utils/session'
 import { accessSchema } from '~~/shared/schemas/common'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { parseBody } from '~~/server/utils/validation'
@@ -15,13 +15,7 @@ const createShareSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
-  const currentUser = await getUserFromRequest(event)
-  if (!currentUser) {
-    throw createError({
-      statusCode: 401,
-      message: ERROR_KEYS.UNAUTHORIZED,
-    })
-  }
+  const currentUser = await requireAuth(event)
 
   const { username, access } = await parseBody(event, createShareSchema)
 

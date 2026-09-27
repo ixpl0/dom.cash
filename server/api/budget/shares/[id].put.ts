@@ -2,7 +2,7 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
-import { getUserFromRequest } from '~~/server/utils/auth'
+import { requireAuth } from '~~/server/utils/session'
 import { accessSchema } from '~~/shared/schemas/common'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
@@ -14,13 +14,7 @@ const updateShareSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
-  const currentUser = await getUserFromRequest(event)
-  if (!currentUser) {
-    throw createError({
-      statusCode: 401,
-      message: ERROR_KEYS.UNAUTHORIZED,
-    })
-  }
+  const currentUser = await requireAuth(event)
 
   const shareId = getRouterParam(event, 'id')
   if (!shareId) {

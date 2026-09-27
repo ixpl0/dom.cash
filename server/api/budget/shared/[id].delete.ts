@@ -1,19 +1,13 @@
 import { eq, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare } from '~~/server/db/schema'
-import { getUserFromRequest } from '~~/server/utils/auth'
+import { requireAuth } from '~~/server/utils/session'
 import { ERROR_KEYS } from '~~/server/utils/error-keys'
 import { unsubscribeFromBudget } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
-  const currentUser = await getUserFromRequest(event)
-  if (!currentUser) {
-    throw createError({
-      statusCode: 401,
-      message: ERROR_KEYS.UNAUTHORIZED,
-    })
-  }
+  const currentUser = await requireAuth(event)
 
   const shareId = getRouterParam(event, 'id')
   if (!shareId) {

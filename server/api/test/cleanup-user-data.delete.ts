@@ -1,7 +1,7 @@
 import { eq, inArray, or } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { budgetShare, entry, month, plan, todo, todoShare, user as userTable } from '~~/server/db/schema'
-import { getUserFromRequest } from '~~/server/utils/auth'
+import { requireAuth } from '~~/server/utils/session'
 import { secureLog } from '~~/server/utils/secure-logger'
 
 export default defineEventHandler(async (event) => {
@@ -12,14 +12,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = await getUserFromRequest(event)
-
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
-    })
-  }
+  const user = await requireAuth(event)
 
   const db = useDatabase(event)
   const userMonthIds = db.select({ id: month.id }).from(month).where(eq(month.userId, user.id))
