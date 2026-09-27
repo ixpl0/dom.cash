@@ -115,7 +115,7 @@
               <UiMonth
                 v-for="(month, index) in demoData.months"
                 :key="index"
-                :month-name="monthNames[month.monthIndex]"
+                :month-name="monthNames[month.monthIndex] ?? ''"
                 :month-badge-tooltip="month.tooltip"
                 :balance-tooltip="t('home.demo.balanceTooltip')"
                 :income-tooltip="t('home.demo.incomeTooltip')"

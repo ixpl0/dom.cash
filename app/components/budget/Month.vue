@@ -1,6 +1,6 @@
 <template>
   <UiMonth
-    :month-name="budgetStore.monthNames[monthData.month]"
+    :month-name="budgetStore.monthNames[monthData.month] ?? ''"
     :month-badge-tooltip="monthBadgeTooltip"
     :has-missing-rates="monthData.missingRateCurrencies.length > 0"
     :balance-tooltip="balanceTooltip"

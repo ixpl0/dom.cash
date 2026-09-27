@@ -43,7 +43,7 @@ export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> 
     }
   }
   catch (error) {
-    throw new Error(`Google token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(`Google token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error })
   }
 }
 

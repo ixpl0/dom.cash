@@ -80,7 +80,7 @@ export const useTheme = () => {
     const colors = parseFaviconColors(faviconColorsCookie.value)
     return [{
       key: 'theme-favicon',
-      rel: 'icon',
+      rel: 'icon' as const,
       type: 'image/svg+xml',
       href: generateFaviconDataUrl(colors),
     }]
@@ -89,7 +89,7 @@ export const useTheme = () => {
   useHead(computed(() => ({
     htmlAttrs: effectiveTheme.value ? { 'data-theme': effectiveTheme.value } : {},
     bodyAttrs: effectiveTheme.value ? { 'data-theme': effectiveTheme.value } : {},
-    link: faviconLink.value,
+    link: faviconLink.value ?? [],
   })))
 
   const setTheme = (theme: string) => {

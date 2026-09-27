@@ -110,8 +110,8 @@ test('a notification tells the recipient which budget it belongs to', async (con
     params: { month: 'march', year: 2026 },
   })
 
-  const [message] = viewerMessages()
-  assert.ok(message?.startsWith('data: '))
+  const [message = ''] = viewerMessages()
+  assert.ok(message.startsWith('data: '))
   const payload: unknown = JSON.parse(message.slice('data: '.length))
   assert.deepEqual(
     payload && typeof payload === 'object' && 'budgetOwnerId' in payload && 'type' in payload

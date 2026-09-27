@@ -32,7 +32,7 @@ const saveCurrencyRates = async (date: string, rates: Record<string, number>, ev
   }
   catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Failed to save currency rates for ${date}: ${error.message}`)
+      throw new Error(`Failed to save currency rates for ${date}: ${error.message}`, { cause: error })
     }
     throw error
   }

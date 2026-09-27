@@ -90,7 +90,7 @@ export interface ConfirmationModalMessageDivider {
   isDivider: true
 }
 
-export type ConfirmationModalMessage = Array<ConfirmationModalMessageItem | ConfirmationModalMessageDivider | string>
+export type ConfirmationModalMessage = ReadonlyArray<ConfirmationModalMessageItem | ConfirmationModalMessageDivider | string>
 
 export interface ConfirmationModalOptions {
   title?: string
