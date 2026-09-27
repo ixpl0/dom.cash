@@ -23,7 +23,10 @@
       </template>
     </h3>
 
-    <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
+    <div
+      ref="entriesContainer"
+      class="space-y-4 flex-1 overflow-y-auto min-h-0"
+    >
       <div v-if="entries.length || isAddingNewEntry">
         <div
           v-if="isMobileViewport"
@@ -274,7 +277,6 @@ const emit = defineEmits<{
   'saveNew': []
   'cancelNew': []
   'startEdit': [entry: BudgetEntry]
-  'startEditWithFocus': [entry: BudgetEntry, field: string]
   'saveEdit': []
   'cancelEdit': []
   'delete': [entryId: string]
@@ -293,10 +295,53 @@ const formatEntryDate = (entry: BudgetEntry): string => {
   return props.formatDate(getEntryDate(entry))
 }
 
+const FIELD_SELECTORS: Readonly<Record<string, string>> = {
+  description: '[data-testid="entry-description-input"]',
+  amount: '[data-testid="entry-amount-input"]',
+  currency: '[data-testid="currency-picker-input"]',
+  date: 'input[type="date"]',
+  optional: '[data-testid="entry-optional-checkbox"]',
+}
+
+const entriesContainer = ref<HTMLElement | null>(null)
+const pendingFocusField = ref<string | null>(null)
+
+const focusField = (field: string): void => {
+  const selector = FIELD_SELECTORS[field]
+  const element = selector ? entriesContainer.value?.querySelector<HTMLInputElement>(selector) : null
+
+  if (!element) {
+    return
+  }
+  if (field === 'currency') {
+    requestAnimationFrame(() => {
+      element.focus()
+    })
+  }
+  else if (field === 'date') {
+    element.showPicker?.()
+  }
+  else {
+    element.focus()
+    element.select()
+  }
+}
+
 const handleCellClick = (entry: BudgetEntry, field: string): void => {
   if (props.isReadOnly) {
     return
   }
-  emit('startEditWithFocus', entry, field)
+  pendingFocusField.value = field
+  emit('startEdit', entry)
 }
+
+watch(() => props.editingEntryId, async (editingEntryId) => {
+  const field = pendingFocusField.value
+  pendingFocusField.value = null
+
+  if (editingEntryId && field) {
+    await nextTick()
+    focusField(field)
+  }
+})
 </script>

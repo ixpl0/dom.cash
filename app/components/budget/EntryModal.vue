@@ -1,6 +1,5 @@
 <template>
   <UiEntryModal
-    ref="modalRef"
     :is-open="isOpen"
     :title="modalTitle"
     :entries="currentEntries"
@@ -22,7 +21,6 @@
     @save-new="addEntry"
     @cancel-new="cancelAdd"
     @start-edit="startEdit"
-    @start-edit-with-focus="startEditWithFocus"
     @save-edit="saveEntry"
     @cancel-edit="cancelEdit"
     @delete="deleteEntry"
@@ -161,18 +159,6 @@ const performDeleteEntry = async (entryId: string) => {
   await budgetStore.deleteEntry(entryId)
 }
 
-const focusField = ref<string | null>(null)
-const modalRef = ref<{ $el: HTMLElement } | null>(null)
-
-const startEditWithFocus = (entry: BudgetEntry, fieldToFocus: string): void => {
-  if (entryModal.value.isReadOnly) {
-    return
-  }
-
-  focusField.value = fieldToFocus
-  startEdit(entry)
-}
-
 const validateEntry = (entry: { description: string, amount: number | null | undefined }, entryKind: EntryKind | null): string | null => {
   const errorKey = entryKind ? getEntryErrorKey(entry, entryKind) : null
   return errorKey ? t(errorKey) : null
@@ -296,52 +282,6 @@ useBackHandler(() => isOpen.value && isEditingEntry.value, stopEditingOnBack)
 watch(() => entryModal.value.isOpen, (newIsOpen) => {
   if (newIsOpen) {
     resetForm()
-  }
-})
-
-watch(editingEntryId, async (newEditingId) => {
-  if (newEditingId && focusField.value) {
-    await nextTick()
-
-    let selector = ''
-    switch (focusField.value) {
-      case 'description':
-        selector = '[data-testid="entry-description-input"]'
-        break
-      case 'amount':
-        selector = '[data-testid="entry-amount-input"]'
-        break
-      case 'date':
-        selector = 'input[type="date"]'
-        break
-      case 'optional':
-        selector = '[data-testid="entry-optional-checkbox"]'
-        break
-      case 'currency':
-        selector = '[data-testid="currency-picker-input"]'
-        break
-    }
-
-    if (selector) {
-      const element = modalRef.value?.$el?.querySelector(selector) as HTMLInputElement
-
-      if (element) {
-        if (focusField.value === 'currency') {
-          requestAnimationFrame(() => {
-            element.focus()
-          })
-        }
-        else if (focusField.value === 'date') {
-          element.showPicker?.()
-        }
-        else {
-          element.focus()
-          element.select()
-        }
-      }
-    }
-
-    focusField.value = null
   }
 })
 
