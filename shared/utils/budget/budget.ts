@@ -1,5 +1,22 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
 
+const hasValidRate = (exchangeRates: Record<string, number>, currency: string): boolean => {
+  const rate = exchangeRates[currency]
+  return rate !== undefined && Number.isFinite(rate) && rate > 0
+}
+
+export const findCurrenciesWithoutRate = (
+  entries: BudgetEntry[],
+  baseCurrency: string,
+  exchangeRates: Record<string, number>,
+): string[] => {
+  const foreignCurrencies = [...new Set(entries.map(entry => entry.currency))]
+    .filter(currency => currency !== baseCurrency)
+  const requiredCurrencies = foreignCurrencies.length > 0 ? [...foreignCurrencies, baseCurrency] : []
+
+  return requiredCurrencies.filter(currency => !hasValidRate(exchangeRates, currency))
+}
+
 export const calculateTotalBalance = (
   entries: BudgetEntry[],
   baseCurrency: string,

@@ -35,6 +35,7 @@ export interface ComputedMonthData extends MonthData {
   nextMonthStartBalance: number | null
   isUsingOtherMonthRates: boolean
   sourceMonthTitle: string
+  missingRateCurrencies: string[]
   plannedBalanceChange: number | null
   plannedVsActualDiff: number | null
   expectedBalance: number | null

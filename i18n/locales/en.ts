@@ -342,6 +342,7 @@ export default {
     usingOtherRatesEnd: 'are being used',
     search: 'Search currency by code or name...',
     notFound: 'No currencies found',
+    missingRates: 'No exchange rate for {currencies}: amounts in these currencies are counted 1:1.',
   },
 
   share: {

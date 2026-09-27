@@ -342,6 +342,7 @@ export default {
     usingOtherRatesEnd: '',
     search: 'Поиск валюты по коду или названию...',
     notFound: 'Валюты не найдены',
+    missingRates: 'Нет курса для {currencies}: суммы в этих валютах посчитаны 1:1.',
   },
 
   share: {

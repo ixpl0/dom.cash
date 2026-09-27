@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { BudgetEntry } from '../../shared/types/budget'
-import { calculateTotalBalance } from '../../shared/utils/budget/budget'
+import { calculateTotalBalance, findCurrenciesWithoutRate } from '../../shared/utils/budget/budget'
 
 const RATES = { USD: 1, EUR: 0.5, GEL: 2.5 }
 const RATES_WITHOUT_LARI = { USD: 1, EUR: 0.5 }
-const MISSING_RATE = 'a currency missing from the rates is converted 1:1 (FOLLOWUPS Б10)'
 
 const entry = (amount: number, currency: string): BudgetEntry => ({
   id: `${amount}-${currency}`,
@@ -50,10 +49,21 @@ test('calculateTotalBalance leaves the entries untouched', () => {
   assert.deepEqual(entries, snapshot)
 })
 
-test('calculateTotalBalance does not count lari without a lari rate as dollars', { todo: MISSING_RATE }, () => {
-  assert.notEqual(calculateTotalBalance([entry(2700, 'GEL')], 'USD', RATES_WITHOUT_LARI), 2700)
+test('calculateTotalBalance counts an amount without a rate 1:1 so the total stays visible', () => {
+  assert.equal(calculateTotalBalance([entry(2700, 'GEL')], 'USD', RATES_WITHOUT_LARI), 2700)
 })
 
-test('calculateTotalBalance does not use rate 1 for a base currency without a rate', { todo: MISSING_RATE }, () => {
-  assert.notEqual(calculateTotalBalance([entry(100, 'EUR')], 'GEL', RATES_WITHOUT_LARI), 200)
+const missingRateCases = [
+  { name: 'reports lari without a lari rate', entries: [entry(2700, 'GEL')], baseCurrency: 'USD', rates: RATES_WITHOUT_LARI, expected: ['GEL'] },
+  { name: 'reports a base currency without a rate', entries: [entry(100, 'EUR')], baseCurrency: 'GEL', rates: RATES_WITHOUT_LARI, expected: ['GEL'] },
+  { name: 'needs no rates for amounts in the base currency', entries: [entry(100, 'GEL')], baseCurrency: 'GEL', rates: {}, expected: [] },
+  { name: 'reports nothing when every rate is known', entries: mixedEntries, baseCurrency: 'USD', rates: RATES, expected: [] },
+  { name: 'reports a currency once', entries: [entry(1, 'GEL'), entry(2, 'GEL')], baseCurrency: 'USD', rates: RATES_WITHOUT_LARI, expected: ['GEL'] },
+  { name: 'treats a zero rate as missing', entries: [entry(1, 'EUR')], baseCurrency: 'USD', rates: { USD: 1, EUR: 0 }, expected: ['EUR'] },
+]
+
+missingRateCases.forEach(({ name, entries, baseCurrency, rates, expected }) => {
+  test(`findCurrenciesWithoutRate ${name}`, () => {
+    assert.deepEqual(findCurrenciesWithoutRate(entries, baseCurrency, rates), expected)
+  })
 })

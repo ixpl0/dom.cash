@@ -11,6 +11,7 @@ interface CurrencyRatesModalState {
   rates: Record<string, number>
   isUsingOtherMonthRates: boolean
   sourceMonthTitle?: string
+  missingRateCurrencies: string[]
 }
 
 interface ChartModalState {
@@ -49,6 +50,7 @@ export const useModalsStore = defineStore('modals', () => {
     rates: {},
     isUsingOtherMonthRates: false,
     sourceMonthTitle: undefined,
+    missingRateCurrencies: [],
   })
 
   const chartModal = ref<ChartModalState>({
@@ -98,6 +100,7 @@ export const useModalsStore = defineStore('modals', () => {
     rates: Record<string, number>
     isUsingOtherMonthRates: boolean
     sourceMonthTitle?: string
+    missingRateCurrencies: string[]
   }) => {
     currencyRatesModal.value = {
       isOpen: true,
@@ -105,6 +108,7 @@ export const useModalsStore = defineStore('modals', () => {
       rates: params.rates,
       isUsingOtherMonthRates: params.isUsingOtherMonthRates,
       sourceMonthTitle: params.sourceMonthTitle,
+      missingRateCurrencies: params.missingRateCurrencies,
     }
   }
 

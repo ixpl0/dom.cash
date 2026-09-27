@@ -1,5 +1,5 @@
 import type { MonthData, ComputedMonthData, YearSummary } from '../../types/budget'
-import { calculateTotalBalance } from './budget'
+import { calculateTotalBalance, findCurrenciesWithoutRate } from './budget'
 import { isPastMonth } from './month-helpers'
 
 export const createMonthId = (year: number, month: number): string => {
@@ -89,6 +89,15 @@ export const computeMonthData = (
     ? totalExpenses + calculatedPocketExpenses
     : null
 
+  const nextMonthBalancesAtCurrentRates = nextMonth && !nextIsPlanOnly ? nextMonth.balanceSources : []
+  const missingRateCurrencies = isPlanOnly
+    ? []
+    : findCurrenciesWithoutRate(
+        [...monthData.balanceSources, ...monthData.incomeEntries, ...monthData.expenseEntries, ...nextMonthBalancesAtCurrentRates],
+        mainCurrency,
+        currentMonthRates,
+      ).sort()
+
   const currentMonthDate = `${monthData.year}-${String(monthData.month + 1).padStart(2, '0')}-01`
   const isUsingOtherMonthRates = monthData.exchangeRatesSource !== currentMonthDate
 
@@ -133,6 +142,7 @@ export const computeMonthData = (
     nextMonthStartBalance,
     isUsingOtherMonthRates,
     sourceMonthTitle,
+    missingRateCurrencies,
     plannedBalanceChange,
     plannedVsActualDiff,
     expectedBalance: null,

@@ -7,7 +7,8 @@
   >
     <div class="flex items-center justify-between px-3 pt-3">
       <button
-        class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+        class="badge badge-lg uppercase hover:badge-primary cursor-pointer"
+        :class="hasMissingRates ? 'badge-warning' : 'badge-ghost'"
         data-testid="month-badge"
         @click="$emit('currencyRatesClick')"
       >
@@ -55,7 +56,8 @@
         :data-tip="monthBadgeTooltip"
       >
         <button
-          class="badge badge-ghost badge-lg uppercase hover:badge-primary cursor-pointer"
+          class="badge badge-lg uppercase hover:badge-primary cursor-pointer"
+          :class="hasMissingRates ? 'badge-warning' : 'badge-ghost'"
           data-testid="month-badge"
           @click="$emit('currencyRatesClick')"
         >
@@ -405,6 +407,7 @@ interface MonthStatItem {
 interface Props {
   monthName: string
   monthBadgeTooltip: string
+  hasMissingRates?: boolean
   balanceTooltip: string
   incomeTooltip: string
   expensesTooltip: string
@@ -426,6 +429,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  hasMissingRates: false,
   plannedBalanceChangeTooltip: '',
   expectedBalanceTooltip: '',
   isCurrentMonth: false,

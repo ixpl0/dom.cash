@@ -144,6 +144,7 @@ const createComputedMonth = (
   nextMonthStartBalance: null,
   isUsingOtherMonthRates: false,
   sourceMonthTitle: '',
+  missingRateCurrencies: [],
   plannedBalanceChange: null,
   plannedVsActualDiff: null,
   expectedBalance: null,
@@ -380,6 +381,26 @@ ratesSourceCases.forEach(({ name, year, month, source, isUsingOtherMonthRates, t
       { isUsingOtherMonthRates, sourceMonthTitle: title },
     )
   })
+})
+
+test('computeMonthData lists currencies without a rate, including next month balances', () => {
+  const month = createMonth({
+    year: 2026,
+    month: 2,
+    balances: [balance(100, 'USD')],
+    expenses: [expense(50, 'GEL')],
+    rates: { USD: 1, EUR: 0.5 },
+  })
+  const nextMonth = createMonth({ year: 2026, month: 3, balances: [balance(80, 'AMD')], rates: { USD: 1, AMD: 400 } })
+
+  assert.deepEqual(computeMonthData(month, [month, nextMonth], 'USD', MONTH_NAMES).missingRateCurrencies, ['AMD', 'GEL'])
+  assert.deepEqual(computeMonthData(nextMonth, [month, nextMonth], 'USD', MONTH_NAMES).missingRateCurrencies, [])
+})
+
+test('computeMonthData needs no rates for a month in the main currency only', () => {
+  const month = createMonth({ year: 2026, month: 2, balances: [balance(100, 'GEL')], rates: {} })
+
+  assert.deepEqual(computeMonthData(month, [month], 'GEL', MONTH_NAMES).missingRateCurrencies, [])
 })
 
 test('computeMonthData marks default rates as rates of another month', () => {

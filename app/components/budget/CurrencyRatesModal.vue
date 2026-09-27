@@ -33,6 +33,19 @@
       <span>{{ usingOtherRatesMessage }}</span>
     </div>
 
+    <div
+      v-if="currencyRatesModal.missingRateCurrencies.length > 0"
+      class="alert alert-warning mb-4 flex-shrink-0"
+      data-testid="missing-rates-warning"
+    >
+      <Icon
+        name="heroicons:exclamation-triangle"
+        size="24"
+        class="stroke-current shrink-0"
+      />
+      <span>{{ t('currencyRates.missingRates', { currencies: currencyRatesModal.missingRateCurrencies.join(', ') }) }}</span>
+    </div>
+
     <div class="form-control mb-4 flex-shrink-0">
       <input
         v-model="searchQuery"

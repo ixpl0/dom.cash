@@ -2,6 +2,7 @@
   <UiMonth
     :month-name="budgetStore.monthNames[monthData.month]"
     :month-badge-tooltip="monthBadgeTooltip"
+    :has-missing-rates="monthData.missingRateCurrencies.length > 0"
     :balance-tooltip="balanceTooltip"
     :income-tooltip="incomeTooltip"
     :expenses-tooltip="expensesTooltip"
@@ -116,7 +117,11 @@ const labels = computed((): UiMonthLabels => ({
 
 const monthBadgeTooltip = computed(() => {
   const title = monthData.value.sourceMonthTitle || `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
-  return `${title} - ${t('budget.month.clickForRates')}`
+  const ratesHint = `${title} - ${t('budget.month.clickForRates')}`
+  const { missingRateCurrencies } = monthData.value
+  return missingRateCurrencies.length > 0
+    ? `${t('currencyRates.missingRates', { currencies: missingRateCurrencies.join(', ') })} ${ratesHint}`
+    : ratesHint
 })
 
 const balanceTooltip = computed(() => {
@@ -223,6 +228,7 @@ const openCurrencyRatesModal = (): void => {
     monthTitle: `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`,
     rates: monthData.value.exchangeRates,
     isUsingOtherMonthRates: monthData.value.isUsingOtherMonthRates,
+    missingRateCurrencies: monthData.value.missingRateCurrencies,
     sourceMonthTitle: monthData.value.sourceMonthTitle,
   })
 }
