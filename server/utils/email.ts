@@ -2,7 +2,7 @@ import { createError, type H3Event } from 'h3'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { isTestMode } from '~~/server/utils/test-mode'
 
-type EmailTemplate = 'verification' | 'reset-password'
+export type EmailTemplate = 'verification' | 'reset-password'
 type EmailLanguage = 'en' | 'ru'
 
 type EmailParams = {

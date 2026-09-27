@@ -11,11 +11,11 @@ export const emailSchema = z
     'Invalid email format',
   )
 
-const passwordSchema = z.string().min(8).max(100)
+export const passwordSchema = z.string().min(8).max(100)
+
+export const verificationCodeSchema = z.string().regex(/^\d{6}$/)
 
 export const authSchema = z.object({
   username: emailSchema,
   password: passwordSchema,
 })
-
-export type AuthRequest = z.infer<typeof authSchema>

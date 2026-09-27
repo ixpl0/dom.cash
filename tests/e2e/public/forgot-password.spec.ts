@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { INPUT_LIMITS, DEV_VERIFICATION_CODE } from '../constants'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 import { createTestEmail } from '../helpers/users'
-import { logout } from '../helpers/auth'
+import { logout, registerUser } from '../helpers/auth'
 
 test.describe('Forgot Password', () => {
   test.beforeEach(async ({ page }) => {
@@ -177,6 +177,36 @@ test.describe('Forgot Password', () => {
 
     await page.waitForURL('/')
     await expect(page.getByTestId('user-dropdown')).toBeVisible()
+  })
+
+  test('shows the reset form again when the code was already sent', async ({ page }) => {
+    const testUsername = createTestEmail('reset')
+    const newPassword = 'NewPassword456!'
+    await registerUser(page, testUsername, 'TestPassword123!')
+    await logout(page)
+
+    const requestResetCode = async (): Promise<void> => {
+      await page.goto('/auth')
+      await waitForHydration(page)
+      await page.getByTestId('forgot-password-link').click()
+      await page.getByTestId('forgot-password-email-input').fill(testUsername)
+      await page.getByTestId('send-reset-code-btn').click()
+      await expect(page.getByTestId('reset-code-input')).toBeVisible()
+    }
+
+    await requestResetCode()
+    await requestResetCode()
+    await expect(page.getByTestId('toast-info')).toBeVisible()
+
+    await page.getByTestId('reset-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('new-password-input').fill(newPassword)
+    await page.getByTestId('reset-password-btn').click()
+
+    await expect(page.getByTestId('email-input')).toBeVisible()
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(newPassword)
+    await page.getByTestId('login-btn').click()
+    await page.waitForURL('/')
   })
 
   test('cannot login with old password after reset', async ({ page }) => {

@@ -2,13 +2,13 @@ import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
 import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
-import { emailSchema } from '~~/shared/schemas/auth'
+import { emailSchema, passwordSchema } from '~~/shared/schemas/auth'
 import { isEmailVerificationDisabled } from '~~/server/utils/feature-flags'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const registerSchema = z.object({
   email: emailSchema,
-  password: z.string().min(8).max(100),
+  password: passwordSchema,
 })
 
 export default defineEventHandler(async (event) => {

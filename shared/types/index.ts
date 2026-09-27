@@ -16,6 +16,8 @@ export interface LoginCredentials {
   password: string
 }
 
+export type CodeRequestResult = { alreadySent: false } | { alreadySent: true, waitMinutes: number }
+
 export interface AdminUser {
   id: string
   username: string

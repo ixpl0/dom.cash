@@ -108,6 +108,7 @@
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
   * The session is restored only during server rendering (`app/plugins/auth.server.ts`). The browser keeps that user, sign-in updates it with `setUser`, logout reloads the app.
+  * Sign-in, registration and password reset requests live in `useAuth`; `app/pages/auth.vue` only switches steps and shows messages. Validate fields with `getAuthFieldErrors` (`app/utils/auth-validation.ts`), which uses the schemas from `shared/schemas/auth.ts` that the server checks too.
 
 ## Code Style (required)
 

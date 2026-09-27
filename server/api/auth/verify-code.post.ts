@@ -2,14 +2,14 @@ import { defineEventHandler, createError } from 'h3'
 import { z } from 'zod'
 import { parseBody } from '~~/server/utils/validation'
 import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
-import { emailSchema } from '~~/shared/schemas/auth'
+import { emailSchema, passwordSchema, verificationCodeSchema } from '~~/shared/schemas/auth'
 import { verifyCode, throwVerifyCodeError, deleteVerificationCode, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const verifyCodeSchema = z.object({
   email: emailSchema,
-  code: z.string().length(6),
-  password: z.string().min(8).max(100),
+  code: verificationCodeSchema,
+  password: passwordSchema,
 })
 
 export default defineEventHandler(async (event) => {

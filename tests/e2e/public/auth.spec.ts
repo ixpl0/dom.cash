@@ -206,6 +206,29 @@ test.describe('Authentication', () => {
     await expect(errorToast).toBeVisible()
   })
 
+  test('shows the code form again when the code was already sent', async ({ page }) => {
+    const testUsername = createTestEmail('auth')
+    const testPassword = 'TestPassword123!'
+
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(testPassword)
+    await page.getByTestId('register-btn').click()
+    await expect(page.getByTestId('verification-code-input')).toBeVisible()
+
+    await page.reload()
+    await waitForHydration(page)
+    await page.getByTestId('email-input').fill(testUsername)
+    await page.getByTestId('password-input').fill(testPassword)
+    await page.getByTestId('register-btn').click()
+
+    await expect(page.getByTestId('toast-info')).toBeVisible()
+    await page.getByTestId('verification-code-input').fill(DEV_VERIFICATION_CODE)
+    await page.getByTestId('verify-code-btn').click()
+
+    await page.waitForURL('/')
+    await expect(page.getByTestId('user-dropdown')).toBeVisible()
+  })
+
   test('correct code works after failed attempts within limit', async ({ page }) => {
     const testUsername = createTestEmail('auth')
     const testPassword = 'TestPassword123!'

@@ -36,7 +36,7 @@
               v-if="errors.username"
               class="label"
             >
-              <span class="label-text-alt text-error">{{ errors.username }}</span>
+              <span class="label-text-alt text-error">{{ t(errors.username) }}</span>
             </label>
           </div>
 
@@ -61,7 +61,7 @@
               v-if="errors.password"
               class="label"
             >
-              <span class="label-text-alt text-error">{{ errors.password }}</span>
+              <span class="label-text-alt text-error">{{ t(errors.password) }}</span>
             </label>
           </div>
 
@@ -140,7 +140,7 @@
               v-if="errors.code"
               class="label"
             >
-              <span class="label-text-alt text-error">{{ errors.code }}</span>
+              <span class="label-text-alt text-error">{{ t(errors.code) }}</span>
             </label>
           </div>
 
@@ -206,7 +206,7 @@
                 v-if="errors.username"
                 class="label"
               >
-                <span class="label-text-alt text-error">{{ errors.username }}</span>
+                <span class="label-text-alt text-error">{{ t(errors.username) }}</span>
               </label>
             </div>
 
@@ -270,7 +270,7 @@
                 v-if="errors.code"
                 class="label"
               >
-                <span class="label-text-alt text-error">{{ errors.code }}</span>
+                <span class="label-text-alt text-error">{{ t(errors.code) }}</span>
               </label>
             </div>
 
@@ -295,7 +295,7 @@
                 v-if="errors.password"
                 class="label"
               >
-                <span class="label-text-alt text-error">{{ errors.password }}</span>
+                <span class="label-text-alt text-error">{{ t(errors.password) }}</span>
               </label>
             </div>
 
@@ -372,24 +372,28 @@
 </template>
 
 <script setup lang="ts">
-interface FormData {
-  username: string
-  password: string
-}
+import type { CodeRequestResult } from '~~/shared/types'
+import { getAuthFieldErrors, type AuthFieldErrors, type AuthFieldValues } from '~/utils/auth-validation'
 
-interface FormErrors {
-  username?: string
-  password?: string
-  code?: string
-}
-
-const { login } = useAuth()
+const {
+  login,
+  registerWithoutCode,
+  sendRegistrationCode,
+  register,
+  sendPasswordResetCode,
+  resetPassword,
+  loginWithGoogle,
+  finishGoogleLogin,
+} = useAuth()
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const { formatError } = useServerError()
+const { toast } = useToast()
 
-const formData = ref<FormData>({
+const { data: authConfig } = await useFetch('/api/auth/config')
+
+const formData = ref({
   username: '',
   password: '',
 })
@@ -399,54 +403,44 @@ const showVerificationStep = ref(false)
 const showForgotPasswordStep = ref(false)
 const forgotPasswordStep = ref(1)
 const newPassword = ref('')
-const errors = ref<FormErrors>({})
+const errors = ref<AuthFieldErrors>({})
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
-const { toast } = useToast()
-const emailVerificationDisabled = ref(false)
 
 const redirectPath = computed<string | null>(() => {
   const { redirect } = route.query
   return typeof redirect === 'string' ? redirect : null
 })
 
-const validateForm = (skipPassword = false): boolean => {
-  const newErrors: FormErrors = {}
-
-  const emailRegex = /^[a-zA-Z0-9]([a-zA-Z0-9+._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/
-
-  if (formData.value.username.length < 3) {
-    newErrors.username = t('auth.usernameMinLength')
+const shownFieldValues = computed((): AuthFieldValues => {
+  if (showVerificationStep.value) {
+    return { code: verificationCode.value }
   }
-  else if (formData.value.username.length > 64) {
-    newErrors.username = t('auth.usernameMaxLength')
+  if (showForgotPasswordStep.value) {
+    return forgotPasswordStep.value === 1
+      ? { username: formData.value.username }
+      : { code: verificationCode.value, password: newPassword.value }
   }
-  else if (!emailRegex.test(formData.value.username)) {
-    newErrors.username = t('auth.usernameInvalid')
-  }
+  return { username: formData.value.username, password: formData.value.password }
+})
 
-  if (!skipPassword) {
-    if (formData.value.password.length < 8) {
-      newErrors.password = t('auth.passwordMinLength')
-    }
-    else if (formData.value.password.length > 100) {
-      newErrors.password = t('auth.passwordMaxLength')
-    }
-  }
-
-  errors.value = newErrors
-  return Object.keys(newErrors).length === 0
+const validate = (): boolean => {
+  errors.value = getAuthFieldErrors(shownFieldValues.value)
+  return Object.keys(errors.value).length === 0
 }
 
-const validateVerificationCode = (): boolean => {
-  const newErrors: FormErrors = {}
+const submit = async (action: () => Promise<void>): Promise<void> => {
+  isLoading.value = true
 
-  if (!/^\d{6}$/.test(verificationCode.value)) {
-    newErrors.code = t('auth.verificationCodeInvalid')
+  try {
+    await action()
   }
-
-  errors.value = newErrors
-  return Object.keys(newErrors).length === 0
+  catch (error) {
+    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
+  }
+  finally {
+    isLoading.value = false
+  }
 }
 
 const goHome = () => {
@@ -454,146 +448,62 @@ const goHome = () => {
 }
 
 const navigateAfterLogin = async (): Promise<void> => {
-  if (redirectPath.value) {
-    await router.push(redirectPath.value)
+  await router.push(redirectPath.value ?? '/')
+}
+
+const showCodeRequestResult = (result: CodeRequestResult, sentMessage: string): void => {
+  if (result.alreadySent) {
+    const time = t('auth.codeAlreadySentTime', { count: result.waitMinutes }, result.waitMinutes)
+    toast({ type: 'info', message: t('auth.codeAlreadySent', { time }) })
+    return
   }
-  else {
-    await goHome()
-  }
+
+  toast({ type: 'success', message: sentMessage })
 }
 
 const handleSubmit = async (): Promise<void> => {
-  if (!validateForm()) {
+  if (!validate()) {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    await login({
-      username: formData.value.username,
-      password: formData.value.password,
-    })
-
+  await submit(async () => {
+    await login(formData.value)
     await navigateAfterLogin()
-  }
-  catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
-  }
-  finally {
-    isLoading.value = false
-  }
+  })
 }
 
 const handleRegister = async (): Promise<void> => {
-  if (!validateForm()) {
+  if (!validate()) {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    if (emailVerificationDisabled.value) {
-      const response = await $fetch<{ id: string, username: string, mainCurrency: string, isAdmin: boolean }>('/api/auth/register-direct', {
-        method: 'POST',
-        body: {
-          email: formData.value.username,
-          password: formData.value.password,
-          mainCurrency: 'USD',
-        },
-      })
-
-      const auth = useAuth()
-      auth.setUser(response)
-
+  await submit(async () => {
+    if (authConfig.value?.emailVerificationDisabled) {
+      await registerWithoutCode(formData.value)
       await navigateAfterLogin()
+      return
     }
-    else {
-      const response = await $fetch<{ success: boolean, alreadySent?: boolean, waitMinutes?: number }>('/api/auth/send-code', {
-        method: 'POST',
-        body: {
-          email: formData.value.username,
-        },
-      })
 
-      if (response.alreadySent && response.waitMinutes) {
-        const timeText = t('auth.codeAlreadySentTime', { count: response.waitMinutes }, response.waitMinutes)
-        toast({ type: 'info', message: t('auth.codeAlreadySent', { time: timeText }) })
-      }
-      else {
-        showVerificationStep.value = true
-        toast({ type: 'success', message: t('auth.verificationCodeSent') })
-      }
-    }
-  }
-  catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
-  }
-  finally {
-    isLoading.value = false
-  }
+    showCodeRequestResult(await sendRegistrationCode(formData.value.username), t('auth.verificationCodeSent'))
+    showVerificationStep.value = true
+  })
 }
 
 const handleVerifyCode = async (): Promise<void> => {
-  if (!validateVerificationCode()) {
+  if (!validate()) {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    const response = await $fetch<{ id: string, username: string, mainCurrency: string, isAdmin: boolean }>('/api/auth/verify-code', {
-      method: 'POST',
-      body: {
-        email: formData.value.username,
-        code: verificationCode.value,
-        password: formData.value.password,
-        mainCurrency: 'USD',
-      },
-    })
-
-    const auth = useAuth()
-    auth.setUser(response)
-
+  await submit(async () => {
+    await register(formData.value, verificationCode.value)
     await navigateAfterLogin()
-  }
-  catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
-  }
-  finally {
-    isLoading.value = false
-  }
+  })
 }
 
 const handleResendCode = async (): Promise<void> => {
-  if (showForgotPasswordStep.value) {
-    return
-  }
-
-  isLoading.value = true
-
-  try {
-    const response = await $fetch<{ success: boolean, alreadySent?: boolean, waitMinutes?: number }>('/api/auth/send-code', {
-      method: 'POST',
-      body: {
-        email: formData.value.username,
-      },
-    })
-
-    if (response.alreadySent && response.waitMinutes) {
-      const timeText = t('auth.codeAlreadySentTime', { count: response.waitMinutes }, response.waitMinutes)
-      toast({ type: 'info', message: t('auth.codeAlreadySent', { time: timeText }) })
-    }
-    else {
-      toast({ type: 'success', message: t('auth.verificationCodeSent') })
-    }
-  }
-  catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
-  }
-  finally {
-    isLoading.value = false
-  }
+  await submit(async () => {
+    showCodeRequestResult(await sendRegistrationCode(formData.value.username), t('auth.verificationCodeSent'))
+  })
 }
 
 const startForgotPassword = (): void => {
@@ -611,72 +521,26 @@ const backToLoginFromForgot = (): void => {
 }
 
 const handleForgotPassword = async (): Promise<void> => {
-  if (!validateForm(true)) {
+  if (!validate()) {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    const response = await $fetch<{ success: boolean, alreadySent?: boolean, waitMinutes?: number }>('/api/auth/forgot-password', {
-      method: 'POST',
-      body: {
-        email: formData.value.username,
-      },
-    })
-
-    if (response.alreadySent && response.waitMinutes) {
-      const timeText = t('auth.codeAlreadySentTime', { count: response.waitMinutes }, response.waitMinutes)
-      toast({ type: 'info', message: t('auth.codeAlreadySent', { time: timeText }) })
-    }
-    else {
-      forgotPasswordStep.value = 2
-      toast({ type: 'success', message: t('auth.emailSent') })
-    }
-  }
-  catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
-  }
-  finally {
-    isLoading.value = false
-  }
+  await submit(async () => {
+    showCodeRequestResult(await sendPasswordResetCode(formData.value.username), t('auth.emailSent'))
+    forgotPasswordStep.value = 2
+  })
 }
 
 const handleResetPassword = async (): Promise<void> => {
-  const newErrors: FormErrors = {}
-  if (!/^\d{6}$/.test(verificationCode.value)) {
-    newErrors.code = t('auth.verificationCodeInvalid')
-  }
-  if (newPassword.value.length < 8) {
-    newErrors.password = t('auth.passwordMinLength')
-  }
-
-  if (Object.keys(newErrors).length > 0) {
-    errors.value = newErrors
+  if (!validate()) {
     return
   }
 
-  isLoading.value = true
-
-  try {
-    await $fetch('/api/auth/reset-password', {
-      method: 'POST',
-      body: {
-        email: formData.value.username,
-        code: verificationCode.value,
-        newPassword: newPassword.value,
-      },
-    })
-
+  await submit(async () => {
+    await resetPassword(formData.value.username, verificationCode.value, newPassword.value)
     toast({ type: 'success', message: t('auth.passwordResetSuccess') })
     backToLoginFromForgot()
-  }
-  catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.unexpectedError')) })
-  }
-  finally {
-    isLoading.value = false
-  }
+  })
 }
 
 const backToEmailStep = (): void => {
@@ -698,83 +562,41 @@ useBackHandler(showForgotPasswordStep, (source) => {
 })
 
 const handleGoogleLogin = async (): Promise<void> => {
-  try {
-    isGoogleLoading.value = true
+  isGoogleLoading.value = true
 
-    const { loginWithGoogle } = useAuth()
+  try {
     await loginWithGoogle()
-    await navigateAfterLogin()
   }
   catch (error) {
-    toast({ type: 'error', message: formatError(error, t('auth.googleError')) })
-  }
-  finally {
     isGoogleLoading.value = false
+    toast({ type: 'error', message: formatError(error, t('auth.googleError')) })
   }
 }
 
-watch(formData, () => {
+watch(shownFieldValues, () => {
   if (Object.keys(errors.value).length > 0) {
-    validateForm(showForgotPasswordStep.value)
-  }
-}, { deep: true })
-
-watch(newPassword, () => {
-  if (errors.value.password) {
-    if (newPassword.value.length < 8) {
-      errors.value.password = t('auth.passwordMinLength')
-    }
-    else if (newPassword.value.length > 100) {
-      errors.value.password = t('auth.passwordMaxLength')
-    }
-    else {
-      delete errors.value.password
-    }
-  }
-})
-
-watch(verificationCode, () => {
-  if (errors.value.code) {
-    validateVerificationCode()
+    validate()
   }
 })
 
 onMounted(async () => {
+  const { code, state } = route.query
+
+  if (typeof code !== 'string') {
+    return
+  }
+
+  isGoogleLoading.value = true
+
   try {
-    const config = await $fetch<{ emailVerificationDisabled: boolean }>('/api/auth/config')
-    emailVerificationDisabled.value = config.emailVerificationDisabled
+    await router.push(await finishGoogleLogin(code, typeof state === 'string' ? state : ''))
   }
   catch (error) {
-    console.error('Failed to load auth config:', error)
+    console.error('Google OAuth redirect failed:', error)
+    toast({ type: 'error', message: formatError(error, t('auth.googleOAuthError')) })
   }
-
-  const urlParams = new URLSearchParams(window.location.search)
-  const code = urlParams.get('code')
-  const state = urlParams.get('state')
-
-  if (code) {
-    try {
-      isGoogleLoading.value = true
-
-      const response = await $fetch<{
-        user: User
-        redirectTo: string
-      }>(`/api/auth/google-redirect?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '')}`, {
-        method: 'POST',
-      })
-
-      const auth = useAuth()
-      auth.setUser(response.user)
-
-      await router.push(response.redirectTo)
-    }
-    catch (error) {
-      console.error('Google OAuth redirect failed:', error)
-      toast({ type: 'error', message: formatError(error, t('auth.googleOAuthError')) })
-    }
-    finally {
-      isGoogleLoading.value = false
-    }
+  finally {
+    isGoogleLoading.value = false
   }
 })
 

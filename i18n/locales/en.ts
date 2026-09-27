@@ -57,7 +57,6 @@ export default {
     sendingCode: 'Sending code...',
     verifyingCode: 'Verifying code...',
     resendCode: 'Resend code',
-    resendCodeIn: 'Resend code in {seconds}s',
     backToEmail: 'Back to email',
     checkSpamFolder: 'If you don\'t see the email, please check your spam folder',
     checkSpamAndDelay: 'The email may arrive with a delay of a few minutes',

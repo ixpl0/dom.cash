@@ -1,17 +1,54 @@
-import type { User, LoginCredentials } from '~~/shared/types'
+import type { CodeRequestResult, LoginCredentials, User } from '~~/shared/types'
+
+interface GoogleLoginResult {
+  user: User
+  redirectTo: string
+}
 
 export const useAuth = () => {
   const { user, setUser, clearUser, isAuthenticated } = useAuthState()
   const { $backHandlers } = useNuxtApp()
   const lastSharedBudgetCookie = useCookie<string | null>(COOKIE_NAMES.lastSharedBudget)
 
-  const login = async (credentials: LoginCredentials): Promise<void> => {
-    const authenticatedUser = await $fetch<User>('/api/auth', {
+  const signIn = async (request: Promise<User>): Promise<void> => {
+    setUser(await request)
+  }
+
+  const login = (credentials: LoginCredentials): Promise<void> =>
+    signIn($fetch<User>('/api/auth', {
       method: 'POST',
       body: credentials,
+    }))
+
+  const registerWithoutCode = ({ username, password }: LoginCredentials): Promise<void> =>
+    signIn($fetch<User>('/api/auth/register-direct', {
+      method: 'POST',
+      body: { email: username, password },
+    }))
+
+  const sendRegistrationCode = (email: string): Promise<CodeRequestResult> =>
+    $fetch<CodeRequestResult>('/api/auth/send-code', {
+      method: 'POST',
+      body: { email },
     })
 
-    setUser(authenticatedUser)
+  const register = ({ username, password }: LoginCredentials, code: string): Promise<void> =>
+    signIn($fetch<User>('/api/auth/verify-code', {
+      method: 'POST',
+      body: { email: username, code, password },
+    }))
+
+  const sendPasswordResetCode = (email: string): Promise<CodeRequestResult> =>
+    $fetch<CodeRequestResult>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+    })
+
+  const resetPassword = async (email: string, code: string, newPassword: string): Promise<void> => {
+    await $fetch('/api/auth/reset-password', {
+      method: 'POST',
+      body: { email, code, newPassword },
+    })
   }
 
   const logout = async (): Promise<void> => {
@@ -46,12 +83,27 @@ export const useAuth = () => {
     window.location.href = response.authUrl
   }
 
+  const finishGoogleLogin = async (code: string, state: string): Promise<string> => {
+    const response = await $fetch<GoogleLoginResult>('/api/auth/google-redirect', {
+      method: 'POST',
+      query: { code, state },
+    })
+
+    setUser(response.user)
+    return response.redirectTo
+  }
+
   return {
     user,
     isAuthenticated,
-    setUser,
     login,
+    registerWithoutCode,
+    sendRegistrationCode,
+    register,
+    sendPasswordResetCode,
+    resetPassword,
     logout,
     loginWithGoogle,
+    finishGoogleLogin,
   }
 }

@@ -57,7 +57,6 @@ export default {
     sendingCode: 'Отправляем код...',
     verifyingCode: 'Проверяем код...',
     resendCode: 'Отправить код повторно',
-    resendCodeIn: 'Отправить код повторно через {seconds}с',
     backToEmail: 'Вернуться к вводу email',
     checkSpamFolder: 'Если письмо не пришло, проверьте папку со спамом',
     checkSpamAndDelay: 'Письмо может прийти с задержкой до нескольких минут',

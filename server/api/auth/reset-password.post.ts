@@ -5,14 +5,14 @@ import { emailVerificationCode, session, user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { findUser, hashPassword } from '~~/server/utils/auth'
 import { useDatabase } from '~~/server/db'
-import { emailSchema } from '~~/shared/schemas/auth'
+import { emailSchema, passwordSchema, verificationCodeSchema } from '~~/shared/schemas/auth'
 import { verifyCode, throwVerifyCodeError, VERIFICATION_CONFIG } from '~~/server/utils/verification'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const resetPasswordSchema = z.object({
   email: emailSchema,
-  code: z.string().length(6),
-  newPassword: z.string().min(8).max(100),
+  code: verificationCodeSchema,
+  newPassword: passwordSchema,
 })
 
 export default defineEventHandler(async (event) => {

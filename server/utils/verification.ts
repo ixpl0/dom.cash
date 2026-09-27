@@ -5,10 +5,12 @@ import { useDatabase } from '~~/server/db'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { timingSafeCompareStrings } from '~~/server/utils/crypto'
 import { isTestMode } from '~~/server/utils/test-mode'
+import { sendVerificationEmail, type EmailTemplate } from '~~/server/utils/email'
+import type { CodeRequestResult } from '~~/shared/types'
 
-export const DEV_VERIFICATION_CODE = '111111'
+const DEV_VERIFICATION_CODE = '111111'
 
-export const generateVerificationCode = (): string => {
+const generateVerificationCode = (): string => {
   const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0
   return String(100000 + (randomValue % 900000))
 }
@@ -32,7 +34,7 @@ export const VERIFICATION_CONFIG = {
   },
 } as const satisfies Record<string, VerificationConfig>
 
-export const cleanupExpiredCodes = async (event: H3Event): Promise<void> => {
+const cleanupExpiredCodes = async (event: H3Event): Promise<void> => {
   const db = useDatabase(event)
   const now = new Date()
 
@@ -41,7 +43,7 @@ export const cleanupExpiredCodes = async (event: H3Event): Promise<void> => {
     .where(lt(emailVerificationCode.expiresAt, now))
 }
 
-export const getExistingCode = async (event: H3Event, email: string) => {
+const getExistingCode = async (event: H3Event, email: string) => {
   const db = useDatabase(event)
 
   return db.query.emailVerificationCode.findFirst({
@@ -58,7 +60,7 @@ type SaveCodeParams = {
   readonly existingCode?: { id: string, createdAt: Date } | null
 }
 
-export const saveVerificationCode = async (params: SaveCodeParams): Promise<void> => {
+const saveVerificationCode = async (params: SaveCodeParams): Promise<void> => {
   const { event, email, code, expiresAt, attemptCount, existingCode } = params
   const db = useDatabase(event)
   const now = new Date()
@@ -92,16 +94,11 @@ type PrepareCodeResult = {
   readonly attemptCount: number
 }
 
-type AlreadySentCheckResult = {
-  readonly alreadySent: boolean
-  readonly waitMinutes?: number
-}
-
-export const checkAlreadySent = (
+const checkAlreadySent = (
   existingCode: { lastSentAt: Date | null } | undefined,
   now: Date,
   cooldownMinutes: number,
-): AlreadySentCheckResult => {
+): CodeRequestResult => {
   if (!existingCode || !existingCode.lastSentAt) {
     return { alreadySent: false }
   }
@@ -109,14 +106,13 @@ export const checkAlreadySent = (
   const elapsedMinutes = (now.getTime() - existingCode.lastSentAt.getTime()) / 60000
 
   if (elapsedMinutes < cooldownMinutes) {
-    const waitMinutes = Math.ceil(cooldownMinutes - elapsedMinutes)
-    return { alreadySent: true, waitMinutes }
+    return { alreadySent: true, waitMinutes: Math.ceil(cooldownMinutes - elapsedMinutes) }
   }
 
   return { alreadySent: false }
 }
 
-export const prepareVerificationCode = (
+const prepareVerificationCode = (
   existingCode: { code: string, expiresAt: Date, attemptCount: number } | undefined,
   config: VerificationConfig,
   now: Date,
@@ -132,6 +128,34 @@ export const prepareVerificationCode = (
       : new Date(now.getTime() + config.expirationMinutes * 60 * 1000),
     attemptCount: isExistingCodeValid ? existingCode.attemptCount + 1 : 1,
   }
+}
+
+type CodePurpose = keyof typeof VERIFICATION_CONFIG
+
+const EMAIL_TEMPLATES = {
+  registration: 'verification',
+  passwordReset: 'reset-password',
+} as const satisfies Record<CodePurpose, EmailTemplate>
+
+export const requestVerificationCode = async (event: H3Event, email: string, purpose: CodePurpose): Promise<CodeRequestResult> => {
+  const now = new Date()
+  const config = VERIFICATION_CONFIG[purpose]
+
+  await cleanupExpiredCodes(event)
+
+  const existingCode = await getExistingCode(event, email)
+  const alreadySent = checkAlreadySent(existingCode, now, config.cooldownMinutes)
+
+  if (alreadySent.alreadySent) {
+    return alreadySent
+  }
+
+  const { code, expiresAt, attemptCount } = prepareVerificationCode(existingCode, config, now)
+
+  await saveVerificationCode({ event, email, code, expiresAt, attemptCount, existingCode })
+  await sendVerificationEmail({ event, to: email, code, template: EMAIL_TEMPLATES[purpose] })
+
+  return { alreadySent: false }
 }
 
 type VerifyCodeErrorReason = 'not_found' | 'expired' | 'invalid_code' | 'max_attempts_exceeded'
