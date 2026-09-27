@@ -58,12 +58,5 @@ useBackHandler(() => props.isOpen, (source) => {
   emit('close')
 })
 
-watch(() => props.isOpen, (open) => {
-  if (open) {
-    document.body.style.overflow = 'hidden'
-  }
-  else {
-    document.body.style.overflow = ''
-  }
-})
+useBodyScrollLock(() => props.isOpen)
 </script>
