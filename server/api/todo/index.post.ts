@@ -1,13 +1,7 @@
-import { inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { useDatabase } from '~~/server/db'
-import { todo, todoShare, user } from '~~/server/db/schema'
-import type { NewTodo, NewTodoShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
-import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
-import { secureLog } from '~~/server/utils/secure-logger'
-import { getTodoRecipientIds } from '~~/server/utils/todo-permissions'
 import { parseBody } from '~~/server/utils/validation'
+import { createTodo } from '~~/server/services/todo'
 import { recurrencePatternSchema } from '~~/shared/schemas/recurrence'
 import type { TodoListItem } from '~~/shared/types/todo'
 
@@ -18,88 +12,8 @@ const createTodoSchema = z.object({
   sharedWithUserIds: z.array(z.string()).optional(),
 })
 
-export default defineEventHandler(async (event) => {
-  const db = useDatabase(event)
+export default defineEventHandler(async (event): Promise<TodoListItem> => {
   const currentUser = await requireAuth(event)
-
-  const { content, plannedDate, recurrence, sharedWithUserIds } = await parseBody(event, createTodoSchema)
-
-  if (sharedWithUserIds && sharedWithUserIds.length > 0) {
-    const recipientIds = await getTodoRecipientIds(db, currentUser.id)
-    const invalidUserIds = sharedWithUserIds.filter(id => !recipientIds.has(id))
-    if (invalidUserIds.length > 0) {
-      throw createError({
-        statusCode: 400,
-        message: ERROR_KEYS.INVALID_SHARED_USER,
-      })
-    }
-  }
-
-  const now = new Date()
-  const newTodo: NewTodo = {
-    id: crypto.randomUUID(),
-    userId: currentUser.id,
-    content,
-    isCompleted: false,
-    plannedDate: plannedDate ?? null,
-    recurrence: recurrence ?? null,
-    createdAt: now,
-    updatedAt: now,
-  }
-
-  await db.insert(todo).values(newTodo)
-
-  if (sharedWithUserIds && sharedWithUserIds.length > 0) {
-    const shares: NewTodoShare[] = sharedWithUserIds.map(userId => ({
-      id: crypto.randomUUID(),
-      todoId: newTodo.id,
-      sharedWithId: userId,
-      createdAt: now,
-    }))
-    await db.insert(todoShare).values(shares)
-
-    try {
-      const { createNotification } = await import('~~/server/services/notifications')
-      const truncatedContent = content.length > 50 ? `${content.slice(0, 50)}...` : content
-      for (const targetUserId of sharedWithUserIds) {
-        await createNotification(event, {
-          sourceUserId: currentUser.id,
-          budgetOwnerId: currentUser.id,
-          targetUserId,
-          type: 'todo_created',
-          params: {
-            username: currentUser.username,
-            todoContent: truncatedContent,
-          },
-        })
-      }
-    }
-    catch (error) {
-      secureLog.error('Error creating todo notification:', error)
-    }
-  }
-
-  let sharedWithUsers: Array<{ id: string, username: string }> = []
-  if (sharedWithUserIds && sharedWithUserIds.length > 0) {
-    const users = await db
-      .select({ id: user.id, username: user.username })
-      .from(user)
-      .where(inArray(user.id, sharedWithUserIds))
-    sharedWithUsers = users
-  }
-
-  const response: TodoListItem = {
-    id: newTodo.id,
-    content,
-    isCompleted: false,
-    plannedDate: plannedDate ?? null,
-    recurrence: recurrence ?? null,
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString(),
-    isOwner: true,
-    ownerUsername: currentUser.username,
-    sharedWith: sharedWithUsers,
-  }
-
-  return response
+  const payload = await parseBody(event, createTodoSchema)
+  return createTodo(currentUser, payload, event)
 })

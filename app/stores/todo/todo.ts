@@ -145,46 +145,14 @@ export const useTodoStore = defineStore('todo', () => {
 
   const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<boolean> => {
     try {
-      await $fetch(`/api/todo/${id}`, {
+      const updatedItem = await $fetch<TodoListItem>(`/api/todo/${id}`, {
         method: 'PUT',
         body: payload,
       })
 
       if (data.value) {
         data.value = {
-          items: data.value.items.map((item) => {
-            if (item.id !== id) {
-              return item
-            }
-
-            const updatedItem: TodoListItem = {
-              ...item,
-              updatedAt: new Date().toISOString(),
-            }
-
-            if (payload.content !== undefined) {
-              updatedItem.content = payload.content
-            }
-
-            if (payload.plannedDate !== undefined) {
-              updatedItem.plannedDate = payload.plannedDate
-            }
-
-            if (payload.sharedWithUserIds !== undefined && item.isOwner) {
-              updatedItem.sharedWith = payload.sharedWithUserIds
-                .map((userId) => {
-                  const connection = connections.value.find(c => c.id === userId)
-                  return connection ? { id: connection.id, username: connection.username } : null
-                })
-                .filter((c): c is { id: string, username: string } => c !== null)
-            }
-
-            if (payload.recurrence !== undefined) {
-              updatedItem.recurrence = payload.recurrence
-            }
-
-            return updatedItem
-          }),
+          items: data.value.items.map(item => item.id === id ? updatedItem : item),
         }
       }
 

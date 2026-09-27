@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync, type SQLInputValue, type SQLOutputValue } from 'node:sqlite'
 import type { H3Event } from 'h3'
+import { D1_MAX_VARIABLES_PER_STATEMENT } from '../../../server/utils/d1-limits'
 
 declare module 'node:sqlite' {
   interface StatementSync {
@@ -66,7 +67,12 @@ export const createTestDatabase = (): TestDatabase => {
     }
 
     return {
-      bind: (...nextValues) => createStatement(query, nextValues.map(toSqlValue)),
+      bind: (...nextValues) => {
+        if (nextValues.length > D1_MAX_VARIABLES_PER_STATEMENT) {
+          throw new Error(`D1 binds at most ${D1_MAX_VARIABLES_PER_STATEMENT} parameters, got ${nextValues.length}`)
+        }
+        return createStatement(query, nextValues.map(toSqlValue))
+      },
       all: async () => execute(),
       run: async () => execute(),
       raw: async () => {

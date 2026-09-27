@@ -71,7 +71,7 @@
 * `server/` — Nitro server
   * `api/` — API routes (auth/, budget/, todo/, notifications/, user/, admin/, test/ — the test routes exist only in development)
   * `db/` — Database schema (`schema.ts`) and index
-  * `services/` — Business logic services (auth/, budget/, notifications)
+  * `services/` — Business logic services (auth/, budget/, notifications, todo)
   * `middleware/` — Server middleware (content-validation, impersonation-guard)
   * `types/` — Server-specific type definitions (Cloudflare D1)
   * `utils/` — Server-side utilities
