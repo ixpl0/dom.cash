@@ -1,10 +1,9 @@
 import { eq, and } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, user } from '~~/server/db/schema'
+import { budgetShare } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
-import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
-import { unsubscribeFromBudget } from '~~/server/services/notifications'
+import { sendNotification, unsubscribeFromBudget } from '~~/server/services/notifications'
 
 export default defineEventHandler(async (event) => {
   const db = useDatabase(event)
@@ -18,29 +17,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const existingShare = await db
-    .select({
-      id: budgetShare.id,
-      username: user.username,
-      userId: user.id,
-      access: budgetShare.access,
-    })
+  const [shareData] = await db
+    .select({ userId: budgetShare.sharedWithId })
     .from(budgetShare)
-    .innerJoin(user, eq(budgetShare.sharedWithId, user.id))
     .where(and(
       eq(budgetShare.id, shareId),
       eq(budgetShare.ownerId, currentUser.id),
     ))
     .limit(1)
 
-  if (existingShare.length === 0) {
+  if (!shareData) {
     throw createError({
       statusCode: 404,
       message: ERROR_KEYS.SHARE_NOT_FOUND,
     })
   }
-
-  const shareData = existingShare[0]!
 
   await db
     .delete(budgetShare)
@@ -51,21 +42,15 @@ export default defineEventHandler(async (event) => {
 
   unsubscribeFromBudget(shareData.userId, currentUser.id)
 
-  try {
-    const { createNotification } = await import('~~/server/services/notifications')
-    await createNotification(event, {
-      sourceUserId: currentUser.id,
-      budgetOwnerId: currentUser.id,
-      type: 'budget_share_revoked',
-      params: {
-        username: currentUser.username,
-      },
-      targetUserId: shareData.userId,
-    })
-  }
-  catch (error) {
-    secureLog.error('Error creating notification:', error)
-  }
+  await sendNotification(event, {
+    sourceUserId: currentUser.id,
+    budgetOwnerId: currentUser.id,
+    type: 'budget_share_revoked',
+    params: {
+      username: currentUser.username,
+    },
+    targetUserId: shareData.userId,
+  })
 
   return { success: true }
 })

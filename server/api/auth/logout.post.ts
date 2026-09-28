@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
+import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
@@ -15,7 +16,6 @@ export default defineEventHandler(async (event) => {
       await db.delete(session).where(eq(session.tokenHash, tokenHash))
     }
     catch (error) {
-      const { secureLog } = await import('~~/server/utils/secure-logger')
       secureLog.error('Database error during logout:', error)
       throw createError({
         statusCode: 500,

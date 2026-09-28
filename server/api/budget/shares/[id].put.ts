@@ -4,9 +4,9 @@ import { useDatabase } from '~~/server/db'
 import { budgetShare, user } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/session'
 import { accessSchema } from '~~/shared/schemas/common'
-import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { parseBody } from '~~/server/utils/validation'
+import { sendNotification } from '~~/server/services/notifications'
 
 const updateShareSchema = z.object({
   access: accessSchema,
@@ -26,12 +26,10 @@ export default defineEventHandler(async (event) => {
 
   const { access } = await parseBody(event, updateShareSchema)
 
-  const existingShare = await db
+  const [shareData] = await db
     .select({
-      id: budgetShare.id,
       username: user.username,
       userId: user.id,
-      access: budgetShare.access,
     })
     .from(budgetShare)
     .innerJoin(user, eq(budgetShare.sharedWithId, user.id))
@@ -41,7 +39,7 @@ export default defineEventHandler(async (event) => {
     ))
     .limit(1)
 
-  if (existingShare.length === 0) {
+  if (!shareData) {
     throw createError({
       statusCode: 404,
       message: ERROR_KEYS.SHARE_NOT_FOUND,
@@ -56,30 +54,16 @@ export default defineEventHandler(async (event) => {
       eq(budgetShare.ownerId, currentUser.id),
     ))
 
-  const shareData = existingShare[0]
-  if (!shareData) {
-    throw createError({
-      statusCode: 404,
-      message: ERROR_KEYS.SHARE_NOT_FOUND,
-    })
-  }
-
-  try {
-    const { createNotification } = await import('~~/server/services/notifications')
-    await createNotification(event, {
-      sourceUserId: currentUser.id,
-      budgetOwnerId: currentUser.id,
-      type: 'budget_share_updated',
-      params: {
-        username: currentUser.username,
-        access,
-      },
-      targetUserId: shareData.userId,
-    })
-  }
-  catch (error) {
-    secureLog.error('Error creating notification:', error)
-  }
+  await sendNotification(event, {
+    sourceUserId: currentUser.id,
+    budgetOwnerId: currentUser.id,
+    type: 'budget_share_updated',
+    params: {
+      username: currentUser.username,
+      access,
+    },
+    targetUserId: shareData.userId,
+  })
 
   return {
     id: shareId,
