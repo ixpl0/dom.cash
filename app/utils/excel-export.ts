@@ -1,6 +1,7 @@
 import type { EntryKind } from '~~/shared/types'
 import XLSX from 'xlsx-js-style'
 import type { BudgetExportData, BudgetExportEntry, BudgetExportMonth } from '~~/shared/types/export-import'
+import { calculateTotalBalance } from '~~/shared/utils/budget/budget'
 import { sortMonthsNewestFirst } from '~~/shared/utils/budget/month-helpers'
 import type { Translate } from '~~/shared/types/i18n'
 
@@ -19,6 +20,10 @@ const COLORS = {
   total: { bg: 'CBD5E0', text: '1A202C' },
   header: { bg: 'E2E8F0', text: '1A202C' },
 }
+
+const EXPORTED_KINDS: readonly EntryKind[] = ['balance', 'income', 'expense']
+
+const AMOUNT_FORMAT = '#,##0.00'
 
 type CellStyle = XLSX.CellStyle
 
@@ -46,30 +51,38 @@ const createDataStyle = (bgColor: string, textColor: string, isAmount = false): 
   font: { color: { rgb: textColor } },
   border: createBorder(),
   alignment: isAmount ? { horizontal: 'right' } : undefined,
-  numFmt: isAmount ? '#,##0.00' : undefined,
+  numFmt: isAmount ? AMOUNT_FORMAT : undefined,
 })
 
-const convertEntriesToMainCurrency = (
-  entries: BudgetExportEntry[],
-  mainCurrency: string,
-  exchangeRates: Record<string, number> = {},
-): number => {
-  return entries.reduce((total, entryData) => {
-    if (entryData.currency === mainCurrency) {
-      return total + entryData.amount
-    }
-
-    const fromRate = exchangeRates[entryData.currency] || 1
-    const toRate = exchangeRates[mainCurrency] || 1
-
-    return total + (entryData.amount / fromRate) * toRate
-  }, 0)
-}
+const createTotalStyle = (bgColor: string, textColor: string, borderStyle: 'thin' | 'medium'): CellStyle => ({
+  fill: createFill(bgColor),
+  font: { bold: true, color: { rgb: textColor } },
+  border: createBorder(borderStyle),
+  alignment: { horizontal: 'right' },
+})
 
 type CellValue = {
   v: string | number
   t: 's' | 'n'
   s: CellStyle
+}
+
+type Cells = (CellValue | null)[]
+
+interface SheetRow {
+  cells: Cells
+  mergedUntilColumn?: number
+}
+
+interface MonthTotals {
+  balance: number
+  income: number
+  expense: number
+}
+
+interface MonthWithTotals {
+  monthData: BudgetExportMonth
+  totals: MonthTotals
 }
 
 const createCell = (value: string | number, style: CellStyle): CellValue => ({
@@ -78,147 +91,144 @@ const createCell = (value: string | number, style: CellStyle): CellValue => ({
   s: style,
 })
 
-export const generateExcelFromBudgetData = (exportData: BudgetExportData, { t, monthNames }: ExcelTexts): Blob => {
-  const workbook = XLSX.utils.book_new()
+const createEmptyRow = (): SheetRow => ({ cells: [null, null, null, null, null] })
 
-  const sortedMonths = sortMonthsNewestFirst(exportData.months)
+const createTitleRow = (title: string, style: CellStyle): SheetRow => ({
+  cells: [createCell(title, style), null, null, null, null],
+  mergedUntilColumn: 4,
+})
 
-  const monthsByYear = sortedMonths.reduce((acc, monthData) => {
-    const existing = acc[monthData.year] || []
-    return {
-      ...acc,
-      [monthData.year]: [...existing, monthData],
-    }
-  }, {} as Record<number, BudgetExportMonth[]>)
+const createTotalRow = (label: string, amount: number, style: CellStyle): SheetRow => ({
+  cells: [createCell(label, style), null, createCell(amount, { ...style, numFmt: AMOUNT_FORMAT }), null, null],
+  mergedUntilColumn: 1,
+})
 
-  const years = Object.keys(monthsByYear).map(Number).sort((a, b) => b - a)
-  const mainCurrency = exportData.user.mainCurrency
+const getEntriesOfKind = (monthData: BudgetExportMonth, kind: EntryKind): BudgetExportEntry[] =>
+  monthData.entries.filter(entryData => entryData.kind === kind)
 
-  const budgetData: (CellValue | null)[][] = []
-  const merges: XLSX.Range[] = []
+const getMonthTotals = (monthData: BudgetExportMonth, mainCurrency: string): MonthTotals => {
+  const getTotal = (kind: EntryKind): number =>
+    calculateTotalBalance(getEntriesOfKind(monthData, kind), mainCurrency, monthData.exchangeRates ?? {})
 
-  for (const year of years) {
-    const yearHeaderStyle = createHeaderStyle(COLORS.yearHeader.bg, COLORS.yearHeader.text)
-    const yearRow: (CellValue | null)[] = [
-      createCell(`📅 ${year}`, { ...yearHeaderStyle, font: { ...yearHeaderStyle.font, sz: 14 } }),
-      null, null, null, null,
-    ]
-    const yearRowIndex = budgetData.length
-    budgetData.push(yearRow)
-    merges.push({ s: { r: yearRowIndex, c: 0 }, e: { r: yearRowIndex, c: 4 } })
+  return {
+    balance: getTotal('balance'),
+    income: getTotal('income'),
+    expense: getTotal('expense'),
+  }
+}
 
-    const yearMonths = monthsByYear[year] || []
-    let yearIncomeTotal = 0
-    let yearExpenseTotal = 0
+const sumOf = (values: readonly number[]): number => values.reduce((sum, value) => sum + value, 0)
 
-    for (const monthData of yearMonths) {
-      const monthName = `${monthNames[monthData.month] ?? ''} ${monthData.year}`
-      const monthHeaderStyle = createHeaderStyle(COLORS.monthHeader.bg, COLORS.monthHeader.text)
-      const monthRow: (CellValue | null)[] = [
-        createCell(monthName, { ...monthHeaderStyle, font: { ...monthHeaderStyle.font, sz: 12 }, alignment: { horizontal: 'left', vertical: 'center' } }),
-        null, null, null, null,
-      ]
-      const monthRowIndex = budgetData.length
-      budgetData.push(monthRow)
-      merges.push({ s: { r: monthRowIndex, c: 0 }, e: { r: monthRowIndex, c: 4 } })
+const createEntryRow = (entryData: BudgetExportEntry, t: Translate): SheetRow => {
+  const colors = COLORS[entryData.kind]
+  const kindLabel = t(`entryKind.${entryData.kind}`)
+  const typeLabel = kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)
+  const style = createDataStyle(colors.bg, colors.text)
+  const amountStyle = createDataStyle(colors.bg, colors.text, true)
 
-      const tableHeaderStyle = createHeaderStyle(COLORS.header.bg, COLORS.header.text)
-      budgetData.push([
+  return {
+    cells: [
+      createCell(typeLabel, style),
+      createCell(entryData.description, style),
+      createCell(entryData.amount, amountStyle),
+      createCell(entryData.currency, style),
+      createCell(entryData.date || '', style),
+    ],
+  }
+}
+
+const createMonthRows = ({ monthData, totals }: MonthWithTotals, mainCurrency: string, { t, monthNames }: ExcelTexts): SheetRow[] => {
+  const monthHeaderStyle = createHeaderStyle(COLORS.monthHeader.bg, COLORS.monthHeader.text)
+  const tableHeaderStyle = createHeaderStyle(COLORS.header.bg, COLORS.header.text)
+  const subtotalStyle = createTotalStyle(COLORS.subtotal.bg, COLORS.subtotal.text, 'thin')
+
+  return [
+    createTitleRow(
+      `${monthNames[monthData.month] ?? ''} ${monthData.year}`,
+      { ...monthHeaderStyle, font: { ...monthHeaderStyle.font, sz: 12 }, alignment: { horizontal: 'left', vertical: 'center' } },
+    ),
+    {
+      cells: [
         createCell(t('excel.type'), tableHeaderStyle),
         createCell(t('excel.description'), tableHeaderStyle),
         createCell(t('excel.amount'), tableHeaderStyle),
         createCell(t('excel.currency'), tableHeaderStyle),
         createCell(t('excel.date'), tableHeaderStyle),
-      ])
+      ],
+    },
+    ...EXPORTED_KINDS.flatMap(kind => getEntriesOfKind(monthData, kind).map(entryData => createEntryRow(entryData, t))),
+    createTotalRow(`${t('excel.balanceTotal', { currency: mainCurrency })}:`, totals.balance, subtotalStyle),
+    createTotalRow(`${t('excel.incomeTotal', { currency: mainCurrency })}:`, totals.income, subtotalStyle),
+    createTotalRow(`${t('excel.expensesTotal', { currency: mainCurrency })}:`, totals.expense, subtotalStyle),
+    createEmptyRow(),
+  ]
+}
 
-      const balanceEntries = monthData.entries.filter(e => e.kind === 'balance')
-      const incomeEntries = monthData.entries.filter(e => e.kind === 'income')
-      const expenseEntries = monthData.entries.filter(e => e.kind === 'expense')
+const createYearRows = (year: number, months: MonthWithTotals[], mainCurrency: string, texts: ExcelTexts): SheetRow[] => {
+  const { t } = texts
+  const yearHeaderStyle = createHeaderStyle(COLORS.yearHeader.bg, COLORS.yearHeader.text)
+  const totalStyle = createTotalStyle(COLORS.total.bg, COLORS.total.text, 'medium')
 
-      const addEntryRows = (entries: BudgetExportEntry[], colorKey: EntryKind) => {
-        const colors = COLORS[colorKey]
-        for (const entryData of entries) {
-          const kindLabel = t(`entryKind.${entryData.kind}`)
-          const typeLabel = kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)
-          const style = createDataStyle(colors.bg, colors.text)
-          const amountStyle = createDataStyle(colors.bg, colors.text, true)
-          budgetData.push([
-            createCell(typeLabel, style),
-            createCell(entryData.description, style),
-            createCell(entryData.amount, amountStyle),
-            createCell(entryData.currency, style),
-            createCell(entryData.date || '', style),
-          ])
-        }
-      }
+  return [
+    createTitleRow(`📅 ${year}`, { ...yearHeaderStyle, font: { ...yearHeaderStyle.font, sz: 14 } }),
+    ...months.flatMap(monthWithTotals => createMonthRows(monthWithTotals, mainCurrency, texts)),
+    createTotalRow(
+      `${t('excel.yearIncomeTotal', { year, currency: mainCurrency })}:`,
+      sumOf(months.map(({ totals }) => totals.income)),
+      totalStyle,
+    ),
+    createTotalRow(
+      `${t('excel.yearExpensesTotal', { year, currency: mainCurrency })}:`,
+      sumOf(months.map(({ totals }) => totals.expense)),
+      totalStyle,
+    ),
+    createEmptyRow(),
+    createEmptyRow(),
+  ]
+}
 
-      addEntryRows(balanceEntries, 'balance')
-      addEntryRows(incomeEntries, 'income')
-      addEntryRows(expenseEntries, 'expense')
+const getMerges = (rows: readonly SheetRow[]): XLSX.Range[] =>
+  rows.flatMap(({ mergedUntilColumn }, rowIndex) => mergedUntilColumn === undefined
+    ? []
+    : [{ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: mergedUntilColumn } }])
 
-      const balanceTotal = convertEntriesToMainCurrency(balanceEntries, mainCurrency, monthData.exchangeRates)
-      const incomeTotal = convertEntriesToMainCurrency(incomeEntries, mainCurrency, monthData.exchangeRates)
-      const expenseTotal = convertEntriesToMainCurrency(expenseEntries, mainCurrency, monthData.exchangeRates)
+const createSummaryRows = (months: readonly MonthWithTotals[], mainCurrency: string, { t, monthNames }: ExcelTexts): Cells[] => {
+  const headerStyle = createHeaderStyle(COLORS.header.bg, COLORS.header.text)
+  const dataStyle: CellStyle = { border: createBorder() }
+  const amountStyle: CellStyle = { border: createBorder(), numFmt: AMOUNT_FORMAT, alignment: { horizontal: 'right' } }
 
-      yearIncomeTotal += incomeTotal
-      yearExpenseTotal += expenseTotal
+  return [
+    [
+      createCell(t('excel.year'), headerStyle),
+      createCell(t('excel.month'), headerStyle),
+      createCell(t('excel.balanceTotal', { currency: mainCurrency }), headerStyle),
+      createCell(t('excel.incomeTotal', { currency: mainCurrency }), headerStyle),
+      createCell(t('excel.expensesTotal', { currency: mainCurrency }), headerStyle),
+    ],
+    ...months.map(({ monthData, totals }) => [
+      createCell(monthData.year, dataStyle),
+      createCell(monthNames[monthData.month] ?? '', dataStyle),
+      createCell(totals.balance, amountStyle),
+      createCell(totals.income, amountStyle),
+      createCell(totals.expense, amountStyle),
+    ]),
+  ]
+}
 
-      const subtotalStyle: CellStyle = {
-        fill: createFill(COLORS.subtotal.bg),
-        font: { bold: true, color: { rgb: COLORS.subtotal.text } },
-        border: createBorder(),
-        alignment: { horizontal: 'right' },
-      }
-      const subtotalAmountStyle: CellStyle = { ...subtotalStyle, numFmt: '#,##0.00' }
+export const generateExcelFromBudgetData = (exportData: BudgetExportData, texts: ExcelTexts): Blob => {
+  const { t } = texts
+  const mainCurrency = exportData.user.mainCurrency
+  const months = sortMonthsNewestFirst(exportData.months)
+    .map(monthData => ({ monthData, totals: getMonthTotals(monthData, mainCurrency) }))
+  const years = [...new Set(months.map(({ monthData }) => monthData.year))]
+  const budgetRows = years.flatMap(year =>
+    createYearRows(year, months.filter(({ monthData }) => monthData.year === year), mainCurrency, texts),
+  )
 
-      const addSubtotalRow = (label: string, amount: number) => {
-        const rowIndex = budgetData.length
-        budgetData.push([
-          createCell(label, subtotalStyle),
-          null,
-          createCell(amount, subtotalAmountStyle),
-          null,
-          null,
-        ])
-        merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } })
-      }
+  const workbook = XLSX.utils.book_new()
 
-      addSubtotalRow(`${t('excel.balanceTotal', { currency: mainCurrency })}:`, balanceTotal)
-      addSubtotalRow(`${t('excel.incomeTotal', { currency: mainCurrency })}:`, incomeTotal)
-      addSubtotalRow(`${t('excel.expensesTotal', { currency: mainCurrency })}:`, expenseTotal)
-
-      budgetData.push([null, null, null, null, null])
-    }
-
-    const totalStyle: CellStyle = {
-      fill: createFill(COLORS.total.bg),
-      font: { bold: true, color: { rgb: COLORS.total.text } },
-      border: createBorder('medium'),
-      alignment: { horizontal: 'right' },
-    }
-    const totalAmountStyle: CellStyle = { ...totalStyle, numFmt: '#,##0.00' }
-
-    const addTotalRow = (label: string, amount: number) => {
-      const rowIndex = budgetData.length
-      budgetData.push([
-        createCell(label, totalStyle),
-        null,
-        createCell(amount, totalAmountStyle),
-        null,
-        null,
-      ])
-      merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } })
-    }
-
-    addTotalRow(`${t('excel.yearIncomeTotal', { year, currency: mainCurrency })}:`, yearIncomeTotal)
-    addTotalRow(`${t('excel.yearExpensesTotal', { year, currency: mainCurrency })}:`, yearExpenseTotal)
-
-    budgetData.push([null, null, null, null, null])
-    budgetData.push([null, null, null, null, null])
-  }
-
-  const worksheet = XLSX.utils.aoa_to_sheet(budgetData)
-  worksheet['!merges'] = merges
+  const worksheet = XLSX.utils.aoa_to_sheet(budgetRows.map(({ cells }) => cells))
+  worksheet['!merges'] = getMerges(budgetRows)
   worksheet['!cols'] = [
     { wch: 12 },
     { wch: 45 },
@@ -229,42 +239,7 @@ export const generateExcelFromBudgetData = (exportData: BudgetExportData, { t, m
 
   XLSX.utils.book_append_sheet(workbook, worksheet, t('excel.budgetSheet'))
 
-  const summaryData: (CellValue | null)[][] = []
-  const summaryHeaderStyle = createHeaderStyle(COLORS.header.bg, COLORS.header.text)
-
-  summaryData.push([
-    createCell(t('excel.year'), summaryHeaderStyle),
-    createCell(t('excel.month'), summaryHeaderStyle),
-    createCell(t('excel.balanceTotal', { currency: mainCurrency }), summaryHeaderStyle),
-    createCell(t('excel.incomeTotal', { currency: mainCurrency }), summaryHeaderStyle),
-    createCell(t('excel.expensesTotal', { currency: mainCurrency }), summaryHeaderStyle),
-  ])
-
-  const dataStyle: CellStyle = { border: createBorder() }
-  const amountStyle: CellStyle = { border: createBorder(), numFmt: '#,##0.00', alignment: { horizontal: 'right' } }
-
-  for (const year of years) {
-    const yearMonths = monthsByYear[year] || []
-    for (const monthData of yearMonths) {
-      const balanceEntries = monthData.entries.filter(e => e.kind === 'balance')
-      const incomeEntries = monthData.entries.filter(e => e.kind === 'income')
-      const expenseEntries = monthData.entries.filter(e => e.kind === 'expense')
-
-      const balanceTotal = convertEntriesToMainCurrency(balanceEntries, mainCurrency, monthData.exchangeRates)
-      const incomeTotal = convertEntriesToMainCurrency(incomeEntries, mainCurrency, monthData.exchangeRates)
-      const expenseTotal = convertEntriesToMainCurrency(expenseEntries, mainCurrency, monthData.exchangeRates)
-
-      summaryData.push([
-        createCell(monthData.year, dataStyle),
-        createCell(monthNames[monthData.month] ?? '', dataStyle),
-        createCell(balanceTotal, amountStyle),
-        createCell(incomeTotal, amountStyle),
-        createCell(expenseTotal, amountStyle),
-      ])
-    }
-  }
-
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData)
+  const summarySheet = XLSX.utils.aoa_to_sheet(createSummaryRows(months, mainCurrency, texts))
   summarySheet['!cols'] = [
     { wch: 10 },
     { wch: 15 },

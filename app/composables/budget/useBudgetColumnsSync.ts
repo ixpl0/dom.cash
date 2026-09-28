@@ -10,7 +10,7 @@ export const useBudgetColumnsSync = () => {
   let isRunningSync = false
 
   const registerRow = (elements: HTMLElement[]) => {
-    registeredRows.value.push(elements)
+    registeredRows.value = [...registeredRows.value, elements]
 
     if (mounted.value) {
       startObserving()
@@ -23,7 +23,7 @@ export const useBudgetColumnsSync = () => {
       && row.every((el, i) => el === elements[i]),
     )
     if (index !== -1) {
-      registeredRows.value.splice(index, 1)
+      registeredRows.value = registeredRows.value.filter((_, rowIndex) => rowIndex !== index)
       if (mounted.value) {
         startObserving()
       }

@@ -19,21 +19,10 @@ export const useCurrencies = () => {
       return allOptions
     }
 
-    const recentOptions: CurrencyOption[] = []
-    const remainingOptions: CurrencyOption[] = []
-
-    for (const option of allOptions) {
-      if (recentCurrencies.includes(option.code)) {
-        recentOptions.push(option)
-      }
-      else {
-        remainingOptions.push(option)
-      }
-    }
-
-    recentOptions.sort((a, b) =>
-      recentCurrencies.indexOf(a.code) - recentCurrencies.indexOf(b.code),
-    )
+    const recentOptions = allOptions
+      .filter(option => recentCurrencies.includes(option.code))
+      .sort((first, second) => recentCurrencies.indexOf(first.code) - recentCurrencies.indexOf(second.code))
+    const remainingOptions = allOptions.filter(option => !recentCurrencies.includes(option.code))
 
     return [...recentOptions, ...remainingOptions]
   }

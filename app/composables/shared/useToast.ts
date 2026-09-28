@@ -19,7 +19,7 @@ export const useToast = () => {
       timeout: options.timeout ?? 7000,
     }
 
-    toasts.value.push(newToast)
+    toasts.value = [...toasts.value, newToast]
 
     const timeout = newToast.timeout
     if (timeout && timeout > 0) {
@@ -32,10 +32,7 @@ export const useToast = () => {
   }
 
   const removeToast = (id: string) => {
-    const index = toasts.value.findIndex((t: ToastMessage) => t.id === id)
-    if (index > -1) {
-      toasts.value.splice(index, 1)
-    }
+    toasts.value = toasts.value.filter(toastMessage => toastMessage.id !== id)
   }
 
   const toast = (options: Omit<ToastMessage, 'id'>) => {

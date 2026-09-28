@@ -321,6 +321,7 @@ const { monthNames } = useMonthNames()
 const { isAuthenticated } = useAuthState()
 
 const DEMO_CURRENCY = 'USD'
+const DEMO_CHART_MONTHS = 6
 
 const formatDemoAmount = (amount: number): string => {
   return formatMoneyRounded(amount, DEMO_CURRENCY)
@@ -434,14 +435,12 @@ const demoData = computed((): DemoData => {
 
 const demoChartLabels = computed(() => {
   const currentDate = new Date()
-  const result: string[] = []
 
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
-    result.push(`${monthNames.value[date.getMonth()]} ${date.getFullYear()}`)
-  }
-
-  return result
+  return Array.from({ length: DEMO_CHART_MONTHS }, (_, index) => {
+    const monthsAgo = DEMO_CHART_MONTHS - 1 - index
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - monthsAgo, 1)
+    return `${monthNames.value[date.getMonth()]} ${date.getFullYear()}`
+  })
 })
 
 const demoChartData = {

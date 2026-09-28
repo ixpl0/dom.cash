@@ -18,7 +18,7 @@ export const findCurrenciesWithoutRate = (
 }
 
 export const calculateTotalBalance = (
-  entries: BudgetEntry[],
+  entries: ReadonlyArray<Pick<BudgetEntry, 'amount' | 'currency'>>,
   baseCurrency: string,
   exchangeRates: Record<string, number>,
 ): number => {

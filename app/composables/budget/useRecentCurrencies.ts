@@ -39,15 +39,8 @@ const saveRecentCurrencies = () => {
 
 export const useRecentCurrencies = () => {
   const addRecentCurrency = (currencyCode: string) => {
-    const currentList = [...recentCurrencies.value]
-    const existingIndex = currentList.indexOf(currencyCode)
-
-    if (existingIndex !== -1) {
-      currentList.splice(existingIndex, 1)
-    }
-
-    currentList.unshift(currencyCode)
-    recentCurrencies.value = currentList.slice(0, MAX_RECENT_CURRENCIES)
+    recentCurrencies.value = [currencyCode, ...recentCurrencies.value.filter(code => code !== currencyCode)]
+      .slice(0, MAX_RECENT_CURRENCIES)
     saveRecentCurrencies()
   }
 

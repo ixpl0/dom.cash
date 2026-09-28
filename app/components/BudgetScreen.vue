@@ -238,13 +238,10 @@ const groupedData = computed(() => {
     return {}
   }
 
-  return months.reduce((acc: Record<number, typeof months>, month) => {
-    if (!acc[month.year]) {
-      acc[month.year] = []
-    }
-    acc[month.year] = [...(acc[month.year] || []), month]
-    return acc
-  }, {} as Record<number, typeof months>)
+  return months.reduce<Record<number, typeof months>>(
+    (monthsByYear, month) => ({ ...monthsByYear, [month.year]: [...(monthsByYear[month.year] ?? []), month] }),
+    {},
+  )
 })
 
 const years = computed(() => {
