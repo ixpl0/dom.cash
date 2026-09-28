@@ -62,7 +62,7 @@ test.describe('Import/Export functionality', () => {
       const content = await readFile(downloadPath, 'utf-8')
       const exportData = JSON.parse(content)
 
-      expect(exportData.version).toBe('1.0')
+      expect(exportData.version).toBe('1.1')
       expect(exportData.exportDate).toBeDefined()
       expect(exportData.user).toBeDefined()
       expect(exportData.user.username).toBeDefined()

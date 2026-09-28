@@ -6,6 +6,7 @@ import { loadMonths } from './months'
 import { getUserPlans, upsertPlan } from './plans'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
+import { CURRENT_BUDGET_EXPORT_VERSION } from '~~/shared/schemas/export-import'
 import type {
   BudgetExportData,
   BudgetExportMonth,
@@ -76,7 +77,7 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
   }))
 
   return {
-    version: '1.0',
+    version: CURRENT_BUDGET_EXPORT_VERSION,
     exportDate: new Date().toISOString(),
     user: {
       username: userInfo.username,

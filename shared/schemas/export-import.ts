@@ -2,6 +2,10 @@ import { z } from 'zod'
 import { amountSchema, currencySchema, descriptionSchema, entryKindSchema, usernameSchema } from '~~/shared/schemas/common'
 import { amountForKindRule, hasAmountAllowedForKind, monthIndexSchema, planCommentSchema, plannedBalanceChangeSchema, yearSchema } from '~~/shared/schemas/budget'
 
+export const BUDGET_EXPORT_VERSIONS = ['1.0', '1.1'] as const
+
+export const CURRENT_BUDGET_EXPORT_VERSION = '1.1'
+
 export const budgetExportEntrySchema = z.object({
   kind: entryKindSchema,
   description: descriptionSchema,
@@ -26,7 +30,7 @@ export const budgetExportPlanSchema = z.object({
 })
 
 export const budgetExportSchema = z.object({
-  version: z.literal('1.0'),
+  version: z.enum(BUDGET_EXPORT_VERSIONS),
   exportDate: z.string(),
   user: z.object({
     username: usernameSchema,

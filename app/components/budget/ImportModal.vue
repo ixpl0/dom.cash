@@ -184,6 +184,7 @@
 <script setup lang="ts">
 import type { BudgetExportData, BudgetImportError, BudgetImportOptions, BudgetImportResult } from '~~/shared/types/export-import'
 import { readServerErrorData } from '~/utils/server-error'
+import { BUDGET_EXPORT_VERSIONS, budgetExportSchema } from '~~/shared/schemas/export-import'
 
 interface Props {
   isOpen: boolean
@@ -231,15 +232,18 @@ const handleFileSelect = async (event: Event) => {
   }
 
   try {
-    const text = await file.text()
-    const data = JSON.parse(text) as BudgetExportData
+    const content: unknown = JSON.parse(await file.text())
+    const parsedExport = budgetExportSchema.safeParse(content)
 
-    if (data.version !== '1.0') {
-      throw new Error(t('import.unsupportedVersion'))
+    if (!parsedExport.success) {
+      error.value = isSupportedVersion(content) ? t('import.fileReadError') : t('import.unsupportedVersion')
+      selectedFile.value = null
+      previewData.value = null
+      return
     }
 
     selectedFile.value = file
-    previewData.value = data
+    previewData.value = parsedExport.data
     error.value = ''
     importResult.value = null
   }
@@ -330,6 +334,10 @@ const isBudgetImportResult = (value: unknown): value is BudgetImportResult => {
     && Array.isArray(candidate.errors)
     && candidate.errors.every(isBudgetImportError)
 }
+
+const isSupportedVersion = (content: unknown): boolean =>
+  typeof content === 'object' && content !== null && 'version' in content
+  && BUDGET_EXPORT_VERSIONS.some(version => version === content.version)
 
 const extractImportResult = (fetchError: unknown): BudgetImportResult | null => {
   const payload = readServerErrorData(fetchError)
