@@ -5,7 +5,6 @@ import { budgetShare, todo, todoShare, user } from '~~/server/db/schema'
 import { sendNotification, type NotificationType } from '~~/server/services/notifications'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import type { User } from '~~/shared/types'
-import type { DateReference } from '~~/shared/types/recurrence'
 import type { CreateTodoPayload, TodoConnection, TodoListItem, ToggleResult, UpdateTodoPayload } from '~~/shared/types/todo'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 import { PLAIN_DATE_LENGTH } from '~~/shared/utils/shared/dates'
@@ -238,7 +237,7 @@ export const updateTodo = async (actor: User, todoId: string, payload: UpdateTod
   return toTodoListItem(updatedRow, access.ownerUsername, newSharedWith ?? access.sharedWith, actor.id)
 }
 
-export const toggleTodo = async (actor: User, todoId: string, reference: DateReference | undefined, event: H3Event): Promise<ToggleResult> => {
+export const toggleTodo = async (actor: User, todoId: string, event: H3Event): Promise<ToggleResult> => {
   const access = await getTodoAccess(todoId, actor.id, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE, event)
   const { todoRow } = access
   const now = new Date()
@@ -246,7 +245,7 @@ export const toggleTodo = async (actor: User, todoId: string, reference: DateRef
 
   if (todoRow.recurrence) {
     const baseDate = todoRow.plannedDate ? new Date(todoRow.plannedDate) : now
-    const plannedDate = formatDateForDb(calculateNextDate(todoRow.recurrence, baseDate, reference ?? 'planned'))
+    const plannedDate = formatDateForDb(calculateNextDate(todoRow.recurrence, baseDate))
 
     await db.update(todo).set({ plannedDate, isCompleted: false, updatedAt: now }).where(eq(todo.id, todoId))
     await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', false)

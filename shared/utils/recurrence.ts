@@ -1,5 +1,4 @@
 import type {
-  DateReference,
   DayOfMonthRecurrence,
   IntervalRecurrence,
   RecurrencePattern,
@@ -86,9 +85,8 @@ const calculateDayOfMonthNextDate = (
 export const calculateNextDate = (
   pattern: RecurrencePattern,
   fromDate: Date,
-  reference: DateReference,
 ): Date => {
-  const baseDate = reference === 'now' ? new Date() : new Date(fromDate)
+  const baseDate = new Date(fromDate)
 
   switch (pattern.type) {
     case 'interval': {

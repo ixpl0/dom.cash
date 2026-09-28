@@ -1,4 +1,3 @@
-import type { DateReference } from '~~/shared/types/recurrence'
 import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult, OverdueTodoCount } from '~~/shared/types/todo'
 import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
 import { isTodoOverdue } from '~~/shared/utils/todo'
@@ -179,7 +178,7 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
-  const toggleTodo = async (id: string, reference?: DateReference): Promise<boolean> => {
+  const toggleTodo = async (id: string): Promise<boolean> => {
     const item = data.value?.items.find(i => i.id === id)
     if (!item) {
       return false
@@ -201,10 +200,7 @@ export const useTodoStore = defineStore('todo', () => {
     togglingIds.value = new Set([...togglingIds.value, id])
 
     try {
-      const result = await $fetch<ToggleResult>(`/api/todo/${id}/toggle`, {
-        method: 'PUT',
-        body: reference ? { reference } : undefined,
-      })
+      const result = await $fetch<ToggleResult>(`/api/todo/${id}/toggle`, { method: 'PUT' })
 
       const elapsed = Date.now() - startTime
       const remainingDelay = Math.max(0, animationDuration - elapsed)

@@ -105,30 +105,20 @@ const nextDateCases: DateCase[] = [
 
 nextDateCases.forEach(({ pattern, from, expected }) => {
   test(`calculateNextDate ${describePattern(pattern)} after ${describeDay(from)} is ${describeDay(expected)}`, () => {
-    assert.equal(toDay(calculateNextDate(pattern, localDate(from), 'planned')), expected)
+    assert.equal(toDay(calculateNextDate(pattern, localDate(from))), expected)
   })
 })
 
-test('calculateNextDate counts from today when the reference is now', (context) => {
-  pinClock(context, '2026-03-10T09:30')
-  const plannedDate = localDate('2025-06-01')
-
-  assert.deepEqual(
-    [interval('day', 1), weekdays(1), dayOfMonth(10)].map(pattern => toDay(calculateNextDate(pattern, plannedDate, 'now'))),
-    ['2026-03-11', '2026-03-16', '2026-04-10'],
-  )
-})
-
-test('calculateNextDate counts from the planned date when the reference is planned', (context) => {
+test('calculateNextDate counts from the planned date, not from today', (context) => {
   pinClock(context, '2026-03-10T09:30')
 
-  assert.equal(toDay(calculateNextDate(interval('day', 1), localDate('2025-06-01'), 'planned')), '2025-06-02')
+  assert.equal(toDay(calculateNextDate(interval('day', 1), localDate('2025-06-01'))), '2025-06-02')
 })
 
 test('calculateNextDate of a stored planned date round-trips through the database format', () => {
   const storedPlannedDate = '2026-01-20T00:00'
 
-  assert.equal(formatDateForDb(calculateNextDate(dayOfMonth(15), new Date(storedPlannedDate), 'planned')), '2026-02-15T00:00')
+  assert.equal(formatDateForDb(calculateNextDate(dayOfMonth(15), new Date(storedPlannedDate))), '2026-02-15T00:00')
 })
 
 test('calculateNextDate and calculateInitialDate leave the given date untouched', () => {
@@ -136,7 +126,7 @@ test('calculateNextDate and calculateInitialDate leave the given date untouched'
   const patterns = [interval('month', 1), weekdays(1), dayOfMonth(15)]
 
   patterns.forEach((pattern) => {
-    calculateNextDate(pattern, plannedDate, 'planned')
+    calculateNextDate(pattern, plannedDate)
     calculateInitialDate(pattern, plannedDate)
   })
 

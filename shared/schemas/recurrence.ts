@@ -21,5 +21,3 @@ export const recurrencePatternSchema = z.discriminatedUnion('type', [
   weekdaysRecurrenceSchema,
   dayOfMonthRecurrenceSchema,
 ])
-
-export const dateReferenceSchema = z.enum(['planned', 'now'])

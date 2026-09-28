@@ -79,8 +79,7 @@ const visualIsCompleted = computed(() => {
 const isOverdue = computed(() => isTodoOverdue(props.todo, toLocalIsoDate(new Date())))
 
 const handleToggle = async () => {
-  const reference = props.todo.recurrence ? 'planned' : undefined
-  const success = await todoStore.toggleTodo(props.todo.id, reference)
+  const success = await todoStore.toggleTodo(props.todo.id)
   if (!success) {
     toast({ type: 'error', message: t('todo.errors.toggleFailed') })
   }

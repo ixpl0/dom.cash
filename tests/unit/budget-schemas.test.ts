@@ -6,7 +6,6 @@ import { accessSchema, currencySchema, MAX_AMOUNT } from '../../shared/schemas/c
 import { createEntrySchema, entryAmountForKindSchema } from '../../shared/schemas/budget'
 import { todoFormSchema } from '../../shared/schemas/todo'
 import {
-  dateReferenceSchema,
   dayOfMonthRecurrenceSchema,
   intervalRecurrenceSchema,
   recurrencePatternSchema,
@@ -244,15 +243,6 @@ const validationGroups: ValidationGroup[] = [
       { name: 'an unknown pattern type', input: { type: 'yearly', day: 1 }, isValid: false },
       { name: 'a pattern without a type', input: { unit: 'day', value: 1 }, isValid: false },
       { name: 'fields of another pattern type', input: { type: 'dayOfMonth', days: [1] }, isValid: false },
-    ],
-  },
-  {
-    schemaName: 'dateReferenceSchema',
-    schema: dateReferenceSchema,
-    cases: [
-      { name: 'the planned date', input: 'planned', isValid: true },
-      { name: 'the current date', input: 'now', isValid: true },
-      { name: 'an unknown reference', input: 'today', isValid: false },
     ],
   },
   {

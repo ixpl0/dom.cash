@@ -1,6 +1,5 @@
 import type { z } from 'zod'
 import type {
-  dateReferenceSchema,
   dayOfMonthRecurrenceSchema,
   intervalRecurrenceSchema,
   recurrencePatternSchema,
@@ -18,5 +17,3 @@ export type DayOfMonthRecurrence = z.infer<typeof dayOfMonthRecurrenceSchema>
 export type RecurrencePattern = z.infer<typeof recurrencePatternSchema>
 
 export type RecurrenceType = RecurrencePattern['type']
-
-export type DateReference = z.infer<typeof dateReferenceSchema>
