@@ -182,8 +182,8 @@
 </template>
 
 <script setup lang="ts">
-import type { FetchError } from 'ofetch'
 import type { BudgetExportData, BudgetImportError, BudgetImportOptions, BudgetImportResult } from '~~/shared/types/export-import'
+import { readServerErrorData } from '~/utils/server-error'
 
 interface Props {
   isOpen: boolean
@@ -332,7 +332,7 @@ const isBudgetImportResult = (value: unknown): value is BudgetImportResult => {
 }
 
 const extractImportResult = (fetchError: unknown): BudgetImportResult | null => {
-  const payload = (fetchError as FetchError<{ data?: unknown }> | null)?.data?.data
+  const payload = readServerErrorData(fetchError)
   return isBudgetImportResult(payload) ? payload : null
 }
 

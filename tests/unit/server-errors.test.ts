@@ -4,7 +4,7 @@ import { isError } from 'h3'
 import { z } from 'zod'
 import en from '../../i18n/locales/en'
 import ru from '../../i18n/locales/ru'
-import { readServerErrorKey } from '../../app/utils/server-error'
+import { readServerErrorData, readServerErrorKey } from '../../app/utils/server-error'
 import { validateInput } from '../../server/utils/validation'
 import { ERROR_KEYS } from '../../shared/utils/shared/error-keys'
 
@@ -98,4 +98,10 @@ test('validateInput rejects invalid input with the error key and the failed fiel
       return true
     },
   )
+})
+
+test('readServerErrorData reads the data a route attached to its error', () => {
+  const importResult = { success: false, importedMonths: 1 }
+  assert.deepEqual(readServerErrorData({ data: { message: 'serverErrors.importFailed', data: importResult } }), importResult)
+  assert.equal(readServerErrorData(new Error('Network failure')), undefined)
 })

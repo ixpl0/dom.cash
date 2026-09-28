@@ -12,3 +12,5 @@ const readData = (value: unknown): unknown =>
 
 export const readServerErrorKey = (error: unknown): ErrorKey | null =>
   [readMessage(readData(error)), readMessage(error)].find(isErrorKey) ?? null
+
+export const readServerErrorData = (error: unknown): unknown => readData(readData(error))
