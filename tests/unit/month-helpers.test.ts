@@ -189,6 +189,21 @@ pastMonthCases.forEach(({ now, year, month, expected }) => {
   })
 })
 
+test('isCurrentMonth and isPastMonth compare with the given current month instead of the clock', (context) => {
+  pinClock(context, '2026-01-15T12:00')
+  const september = { year: 2026, month: 8 }
+
+  assert.deepEqual(
+    {
+      isSeptemberCurrent: isCurrentMonth(createMonth(2026, 8), september),
+      isJanuaryCurrent: isCurrentMonth(createMonth(2026, 0), september),
+      isAugustPast: isPastMonth(2026, 7, september),
+      isSeptemberPast: isPastMonth(2026, 8, september),
+    },
+    { isSeptemberCurrent: true, isJanuaryCurrent: false, isAugustPast: true, isSeptemberPast: false },
+  )
+})
+
 test('sortMonthsNewestFirst orders months across years and keeps the input', () => {
   const months = [createMonth(2025, 11), createMonth(2026, 0), createMonth(2025, 2)]
 

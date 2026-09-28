@@ -1,6 +1,6 @@
 import type { MonthData } from '~~/shared/types/budget'
 
-interface MonthPosition {
+export interface MonthPosition {
   year: number
   month: number
 }
@@ -10,7 +10,7 @@ const toMonthNumber = ({ year, month }: MonthPosition): number => year * 12 + mo
 export const sortMonthsNewestFirst = <T extends MonthPosition>(months: readonly T[]): T[] =>
   [...months].sort((a, b) => toMonthNumber(b) - toMonthNumber(a))
 
-const getCurrentMonth = (): MonthPosition => {
+export const getCurrentMonth = (): MonthPosition => {
   const now = new Date()
   return { year: now.getFullYear(), month: now.getMonth() }
 }
@@ -51,10 +51,8 @@ export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): bool
 export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean =>
   sortMonthsNewestFirst(allMonths)[0]?.id === monthData.id
 
-export const isCurrentMonth = (monthData: MonthData): boolean => {
-  const { year, month } = getCurrentMonth()
-  return monthData.year === year && monthData.month === month
-}
+export const isCurrentMonth = (monthData: MonthPosition, currentMonth: MonthPosition = getCurrentMonth()): boolean =>
+  monthData.year === currentMonth.year && monthData.month === currentMonth.month
 
-export const isPastMonth = (year: number, month: number): boolean =>
-  toMonthNumber({ year, month }) < toMonthNumber(getCurrentMonth())
+export const isPastMonth = (year: number, month: number, currentMonth: MonthPosition = getCurrentMonth()): boolean =>
+  toMonthNumber({ year, month }) < toMonthNumber(currentMonth)

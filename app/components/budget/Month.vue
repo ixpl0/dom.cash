@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { isFirstMonth, isLastMonth, isCurrentMonth } from '~~/shared/utils/budget/month-helpers'
+import { isFirstMonth, isLastMonth, isCurrentMonth, isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
@@ -60,27 +60,14 @@ const monthData = computed(() => {
 
 const isReadOnly = computed(() => !budgetStore.canEdit)
 
-const isCurrentMonthValue = ref(false)
-const isPastMonthValue = ref(false)
+const currentMonth = useCurrentMonth()
 
-const checkIsPastMonth = (year: number, monthValue: number): boolean => {
-  const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth()
-
-  if (year < currentYear) {
-    return true
-  }
-  if (year === currentYear && monthValue < currentMonth) {
-    return true
-  }
-  return false
-}
-
-onMounted(() => {
-  isCurrentMonthValue.value = isCurrentMonth(monthData.value)
-  isPastMonthValue.value = checkIsPastMonth(monthData.value.year, monthData.value.month)
-})
+const isCurrentMonthValue = computed(() =>
+  currentMonth.value !== null && isCurrentMonth(monthData.value, currentMonth.value),
+)
+const isPastMonthValue = computed(() =>
+  currentMonth.value !== null && isPastMonth(monthData.value.year, monthData.value.month, currentMonth.value),
+)
 
 const rollingAverageExpenses = computed(() => budgetStore.getRollingAverageExpenses())
 
