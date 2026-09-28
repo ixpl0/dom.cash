@@ -1,4 +1,4 @@
-import { ref, readonly } from 'vue'
+import { readonly } from 'vue'
 
 export interface ToastMessage {
   id: string
@@ -7,9 +7,9 @@ export interface ToastMessage {
   timeout?: number
 }
 
-const toasts = ref<ToastMessage[]>([])
-
 export const useToast = () => {
+  const toasts = useState<ToastMessage[]>('toast.messages', () => [])
+
   const addToast = (options: Omit<ToastMessage, 'id'>) => {
     const id = crypto.randomUUID()
     const newToast: ToastMessage = {
