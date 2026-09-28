@@ -9,7 +9,7 @@
   >
     <form @submit.prevent="handleSubmit">
       <div class="form-control mb-6">
-        <label class="label pb-1">
+        <label class="label pb-1 w-full justify-between">
           <span class="label-text">{{ t('todo.modal.contentLabel') }}</span>
           <span
             class="label-text-alt"
