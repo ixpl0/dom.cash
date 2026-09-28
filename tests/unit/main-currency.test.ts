@@ -4,8 +4,10 @@ import type { TestContext } from 'node:test'
 import { useDatabase } from '../../server/db'
 import { currency, plan, user } from '../../server/db/schema'
 import { changeMainCurrency } from '../../server/services/budget/currency'
+import { importBudget } from '../../server/services/budget/import-export'
 import { chunkArray, getRowsPerInsertStatement } from '../../server/utils/d1-limits'
 import { MAX_AMOUNT } from '../../shared/schemas/common'
+import type { BudgetExportData, BudgetExportPlan } from '../../shared/types/export-import'
 import { createTestDatabase, type TestDatabase } from './helpers/test-database'
 
 interface PlanRow {
@@ -34,9 +36,17 @@ const createBudget = async (plans: PlanRow[], rates: { date: string, rates: Reco
 
 const readPlans = (database: TestDatabase): Record<string, number | null> =>
   Object.fromEntries(database.sqlite
-    .prepare('SELECT id, planned_balance_change AS amount FROM plan ORDER BY year, month')
+    .prepare('SELECT year, month, planned_balance_change AS amount FROM plan ORDER BY year, month')
     .all()
-    .map(row => [String(row.id), row.amount === null ? null : Number(row.amount)]))
+    .map(row => [`${row.year}-${row.month}`, row.amount === null ? null : Number(row.amount)]))
+
+const createImportFile = (mainCurrency: string, plans: BudgetExportPlan[]): BudgetExportData => ({
+  version: '1.1',
+  exportDate: '2026-08-15T12:00:00.000Z',
+  user: { username: 'owner@example.com', mainCurrency },
+  months: [],
+  plans,
+})
 
 const readMainCurrency = (database: TestDatabase): string =>
   String(database.sqlite.prepare('SELECT main_currency AS currency FROM user WHERE id = ?').get(OWNER_ID)?.currency)
@@ -104,5 +114,34 @@ test('changeMainCurrency changes nothing when the plans cannot be converted', as
   await assert.rejects(changeMainCurrency(OWNER_ID, 'EUR', database.event), { statusCode: 503 })
 
   assert.equal(readMainCurrency(database), 'USD')
+  assert.deepEqual(readPlans(database), { '2026-6': 1000 })
+})
+
+test('importBudget converts the plans of a file kept in another main currency', async (context) => {
+  pinClock(context)
+  const database = await createBudget([], [
+    { date: '2026-07-01', rates: { USD: 1, EUR: 0.8 } },
+    { date: '2026-08-01', rates: { USD: 1, EUR: 0.9 } },
+  ])
+
+  const result = await importBudget(OWNER_ID, createImportFile('EUR', [
+    { year: 2026, month: 6, plannedBalanceChange: 800, comment: null },
+    { year: 2026, month: 7, plannedBalanceChange: -90, comment: null },
+    { year: 2026, month: 8, plannedBalanceChange: null, comment: 'Only a note' },
+  ]), { strategy: 'skip' }, database.event)
+
+  assert.equal(result.success, true)
+  assert.deepEqual(readPlans(database), { '2026-6': 1000, '2026-7': -100, '2026-8': null })
+})
+
+test('importBudget keeps the plans of a file in the same main currency without rates', async (context) => {
+  pinClock(context)
+  const database = await createBudget([], [])
+
+  const result = await importBudget(OWNER_ID, createImportFile('USD', [
+    { year: 2026, month: 6, plannedBalanceChange: 1000, comment: null },
+  ]), { strategy: 'skip' }, database.event)
+
+  assert.equal(result.success, true)
   assert.deepEqual(readPlans(database), { '2026-6': 1000 })
 })

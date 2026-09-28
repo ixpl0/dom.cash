@@ -4,6 +4,7 @@ import { useDatabase } from '~~/server/db'
 import { user, month, entry, plan } from '~~/server/db/schema'
 import { loadMonths } from './months'
 import { getUserPlans, upsertPlan } from './plans'
+import { convertPlansToCurrency } from './currency'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import { CURRENT_BUDGET_EXPORT_VERSION } from '~~/shared/schemas/export-import'
@@ -213,6 +214,24 @@ export const importBudget = async (
   event: H3Event,
 ): Promise<BudgetImportResult> => {
   const db = useDatabase(event)
+
+  type ImportPlan = BudgetExportPlan
+  const deduplicatedPlans = new Map<ExistingMonthKey, ImportPlan>()
+  for (const candidate of importData.plans ?? []) {
+    const key = makeMonthKey(candidate.year, candidate.month)
+    if (!deduplicatedPlans.has(key)) {
+      deduplicatedPlans.set(key, candidate)
+    }
+  }
+  const [account] = await db.select({ mainCurrency: user.mainCurrency }).from(user).where(eq(user.id, userId)).limit(1)
+  const fileCurrency = importData.user.mainCurrency
+  const uniqueImportPlans = await convertPlansToCurrency(
+    Array.from(deduplicatedPlans.values()),
+    fileCurrency,
+    account?.mainCurrency ?? fileCurrency,
+    event,
+  )
+
   const knownMonthIds = await loadExistingMonthIds(db, userId)
 
   const deduplicatedMonths = new Map<ExistingMonthKey, BudgetExportMonth>()
@@ -266,16 +285,6 @@ export const importBudget = async (
   )
 
   const existingPlanKeys = await loadExistingPlanKeys(db, userId)
-
-  type ImportPlan = BudgetExportPlan
-  const deduplicatedPlans = new Map<ExistingMonthKey, ImportPlan>()
-  for (const candidate of importData.plans ?? []) {
-    const key = makeMonthKey(candidate.year, candidate.month)
-    if (!deduplicatedPlans.has(key)) {
-      deduplicatedPlans.set(key, candidate)
-    }
-  }
-  const uniqueImportPlans = Array.from(deduplicatedPlans.values())
 
   return uniqueImportPlans.reduce<Promise<BudgetImportResult>>(
     async (previousResultPromise, importPlan) => {

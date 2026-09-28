@@ -8,37 +8,51 @@ import { MAX_AMOUNT } from '~~/shared/schemas/common'
 import { convertAmount } from '~~/shared/utils/budget/budget'
 
 interface PlanAmount {
+  year: number
+  month: number
+  plannedBalanceChange: number | null
+}
+
+interface StoredPlanAmount {
   id: string
   plannedBalanceChange: number
 }
 
 const PLANS_PER_UPDATE = Math.floor((D1_MAX_VARIABLES_PER_STATEMENT - 1) / 2)
 
-const hasAmount = <T extends { plannedBalanceChange: number | null }>(row: T): row is T & PlanAmount =>
+const hasAmount = <T extends { plannedBalanceChange: number | null }>(row: T): row is T & { plannedBalanceChange: number } =>
   row.plannedBalanceChange !== null
 
 const toPlanAmount = (amount: number): number => Math.min(MAX_AMOUNT, Math.max(-MAX_AMOUNT, Math.round(amount)))
 
-const convertPlanAmounts = async (userId: string, fromCurrency: string, toCurrency: string, event: H3Event): Promise<PlanAmount[]> => {
-  const plans = (await useDatabase(event)
-    .select({ id: plan.id, year: plan.year, month: plan.month, plannedBalanceChange: plan.plannedBalanceChange })
-    .from(plan)
-    .where(eq(plan.userId, userId)))
-    .filter(hasAmount)
+export const convertPlansToCurrency = async <T extends PlanAmount>(
+  plans: readonly T[],
+  fromCurrency: string,
+  toCurrency: string,
+  event: H3Event,
+): Promise<T[]> => {
+  const plansWithAmounts = plans.filter(hasAmount)
 
-  if (plans.length === 0) {
-    return []
+  if (fromCurrency === toCurrency || plansWithAmounts.length === 0) {
+    return [...plans]
   }
 
-  const getExchangeRates = await loadExchangeRates(plans, event)
+  const getExchangeRates = await loadExchangeRates(plansWithAmounts, event)
 
-  return plans.map(({ id, year, month, plannedBalanceChange }) => ({
-    id,
-    plannedBalanceChange: toPlanAmount(convertAmount(plannedBalanceChange, fromCurrency, toCurrency, getExchangeRates(year, month).rates)),
-  }))
+  return plans.map(planRow => hasAmount(planRow)
+    ? {
+        ...planRow,
+        plannedBalanceChange: toPlanAmount(convertAmount(
+          planRow.plannedBalanceChange,
+          fromCurrency,
+          toCurrency,
+          getExchangeRates(planRow.year, planRow.month).rates,
+        )),
+      }
+    : planRow)
 }
 
-const createPlanAmountUpdates = (userId: string, planAmounts: readonly PlanAmount[], event: H3Event) => {
+const createPlanAmountUpdates = (userId: string, planAmounts: readonly StoredPlanAmount[], event: H3Event) => {
   const db = useDatabase(event)
 
   return chunkArray(planAmounts, PLANS_PER_UPDATE).map(chunk => db
@@ -57,12 +71,16 @@ export const changeMainCurrency = async (userId: string, currency: string, event
     .where(eq(user.id, userId))
     .limit(1)
 
-  const planAmounts = owner && owner.mainCurrency !== currency
-    ? await convertPlanAmounts(userId, owner.mainCurrency, currency, event)
+  const plans = owner && owner.mainCurrency !== currency
+    ? await db
+        .select({ id: plan.id, year: plan.year, month: plan.month, plannedBalanceChange: plan.plannedBalanceChange })
+        .from(plan)
+        .where(eq(plan.userId, userId))
     : []
+  const convertedPlans = await convertPlansToCurrency(plans, owner?.mainCurrency ?? currency, currency, event)
 
   await db.batch([
     db.update(user).set({ mainCurrency: currency }).where(eq(user.id, userId)),
-    ...createPlanAmountUpdates(userId, planAmounts, event),
+    ...createPlanAmountUpdates(userId, convertedPlans.filter(hasAmount), event),
   ])
 }
