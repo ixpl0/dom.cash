@@ -38,7 +38,7 @@ import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal
 import type { UiMonthData } from '~/components/ui/Month.vue'
 
 interface Props {
-  monthId: string
+  monthKey: string
 }
 
 const props = defineProps<Props>()
@@ -51,9 +51,9 @@ const { formatError } = useServerError()
 const { toast } = useToast()
 
 const monthData = computed(() => {
-  const computed = budgetStore.getComputedMonthById(props.monthId)
+  const computed = budgetStore.getComputedMonthByKey(props.monthKey)
   if (!computed) {
-    throw new Error(t('budget.month.notFound', { monthId: props.monthId }))
+    throw new Error(t('budget.month.notFound', { monthKey: props.monthKey }))
   }
   return computed
 })

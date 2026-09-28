@@ -9,14 +9,14 @@
     <BudgetMonth
       v-for="monthData in months"
       :key="`${monthData.year}-${monthData.month}-${budgetStore.isPlanningMode}`"
-      :month-id="createMonthId(monthData.year, monthData.month)"
+      :month-key="createMonthKey(monthData.year, monthData.month)"
     />
   </UiYear>
 </template>
 
 <script setup lang="ts">
 import type { MonthData } from '~~/shared/types/budget'
-import { createMonthId } from '~~/shared/utils/budget/budget-calculations'
+import { createMonthKey } from '~~/shared/utils/budget/budget-calculations'
 import { useBudgetStore } from '~/stores/budget/budget'
 import type { UiYearStats } from '~/components/ui/Year.vue'
 

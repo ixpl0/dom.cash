@@ -2,7 +2,7 @@ import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo, Bud
 import type { EntryKind } from '~~/shared/types'
 import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth, sortMonthsNewestFirst } from '~~/shared/utils/budget/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId, monthHasEntry } from '~~/shared/utils/budget/entry-strategies'
-import { computeMonthData, computeYearSummary, createMonthId, computeExpectedBalances } from '~~/shared/utils/budget/budget-calculations'
+import { computeMonthData, computeYearSummary, createMonthKey, computeExpectedBalances } from '~~/shared/utils/budget/budget-calculations'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { readServerErrorKey } from '~/utils/server-error'
 
@@ -28,7 +28,7 @@ const parsePlanOnlyId = (id: string): { year: number, month: number } | null => 
 }
 
 const buildPlanOnlyId = (year: number, month: number): string =>
-  `${PLAN_ONLY_ID_PREFIX}${createMonthId(year, month)}`
+  `${PLAN_ONLY_ID_PREFIX}${createMonthKey(year, month)}`
 
 const createSyntheticPlanMonth = (planRow: PlanData): MonthData => ({
   id: buildPlanOnlyId(planRow.year, planRow.month),
@@ -113,9 +113,9 @@ export const useBudgetStore = defineStore('budget', () => {
     if (!isPlanningMode.value) {
       return realMonths
     }
-    const realKeys = new Set(realMonths.map(monthItem => createMonthId(monthItem.year, monthItem.month)))
+    const realKeys = new Set(realMonths.map(monthItem => createMonthKey(monthItem.year, monthItem.month)))
     const syntheticMonths = plans.value
-      .filter(planRow => !realKeys.has(createMonthId(planRow.year, planRow.month)))
+      .filter(planRow => !realKeys.has(createMonthKey(planRow.year, planRow.month)))
       .map(createSyntheticPlanMonth)
     return sortMonthsNewestFirst([...realMonths, ...syntheticMonths])
   })
@@ -126,10 +126,10 @@ export const useBudgetStore = defineStore('budget', () => {
       return []
     }
 
-    const planByKey = new Map(plans.value.map(planRow => [createMonthId(planRow.year, planRow.month), planRow]))
+    const planByKey = new Map(plans.value.map(planRow => [createMonthKey(planRow.year, planRow.month), planRow]))
 
     const baseComputed = sourceMonths.map((monthItem) => {
-      const planForMonth = planByKey.get(createMonthId(monthItem.year, monthItem.month)) ?? null
+      const planForMonth = planByKey.get(createMonthKey(monthItem.year, monthItem.month)) ?? null
       return computeMonthData(
         monthItem,
         sourceMonths,
@@ -142,8 +142,8 @@ export const useBudgetStore = defineStore('budget', () => {
     return computeExpectedBalances(baseComputed)
   })
 
-  const getComputedMonthById = (monthId: string): ComputedMonthData | undefined => {
-    return computedMonths.value.find(month => month.monthId === monthId)
+  const getComputedMonthByKey = (monthKey: string): ComputedMonthData | undefined => {
+    return computedMonths.value.find(month => month.monthKey === monthKey)
   }
 
   const yearsSummary = computed((): YearSummary[] => {
@@ -575,7 +575,7 @@ export const useBudgetStore = defineStore('budget', () => {
     monthNames,
     effectiveMainCurrency,
     getEntriesByMonthAndKind,
-    getComputedMonthById,
+    getComputedMonthByKey,
     getYearSummary,
     getRollingAverageExpenses,
     load,

@@ -147,7 +147,7 @@ export default {
     },
 
     month: {
-      notFound: 'Месяц не найден: {monthId}',
+      notFound: 'Месяц не найден: {monthKey}',
       clickForRates: 'Нажмите для просмотра курсов валют',
       balanceTooltip: 'Сумма всех сбережений на начало месяца. Этого хватило бы на',
       balanceTooltipMonths: 'мес',

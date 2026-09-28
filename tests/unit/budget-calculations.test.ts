@@ -15,7 +15,7 @@ import {
   computeExpectedBalances,
   computeMonthData,
   computeYearSummary,
-  createMonthId,
+  createMonthKey,
 } from '../../shared/utils/budget/budget-calculations'
 
 const MONTH_NAMES = [
@@ -129,7 +129,7 @@ const createComputedMonth = (
   values: Partial<ComputedMonthData> = {},
 ): ComputedMonthData => ({
   ...createMonth({ year, month }),
-  monthId: toMonthKey(year, month),
+  monthKey: toMonthKey(year, month),
   startBalance: null,
   totalIncome: 0,
   totalExpenses: 0,
@@ -167,7 +167,7 @@ const pinClock = (context: TestContext, localDateTime: string): void => {
 }
 
 const toExpectedBalances = (months: ComputedMonthData[]): Record<string, number | null> =>
-  Object.fromEntries(months.map(month => [month.monthId, month.expectedBalance]))
+  Object.fromEntries(months.map(month => [month.monthKey, month.expectedBalance]))
 
 const readBudgetFixture = (fileName: string): BudgetExportData => budgetExportSchema.parse(
   JSON.parse(readFileSync(new URL(`../e2e/fixtures/budgets/${fileName}`, import.meta.url), 'utf8')),
@@ -181,9 +181,9 @@ const toMonthData = ({ year, month, entries }: BudgetExportMonth): MonthData => 
   expenses: entries.filter(entry => entry.kind === 'expense').map(entry => expense(entry.amount, entry.currency)),
 })
 
-test('createMonthId pads the zero-based month index to two digits', () => {
+test('createMonthKey pads the zero-based month index to two digits', () => {
   assert.deepEqual(
-    [createMonthId(2026, 0), createMonthId(2026, 8), createMonthId(2026, 11)],
+    [createMonthKey(2026, 0), createMonthKey(2026, 8), createMonthKey(2026, 11)],
     ['2026-00', '2026-08', '2026-11'],
   )
 })
@@ -246,7 +246,7 @@ test('computeMonthData keeps the month fields and passes the plan through', () =
   assert.deepEqual(
     {
       id: withPlan.id,
-      monthId: withPlan.monthId,
+      monthKey: withPlan.monthKey,
       balanceSources: withPlan.balanceSources,
       plannedBalanceChange: withPlan.plannedBalanceChange,
       planComment: withPlan.planComment,
@@ -254,7 +254,7 @@ test('computeMonthData keeps the month fields and passes the plan through', () =
     },
     {
       id: month.id,
-      monthId: '2026-02',
+      monthKey: '2026-02',
       balanceSources: month.balanceSources,
       plannedBalanceChange: 120,
       planComment: 'Save for a trip',
@@ -551,7 +551,7 @@ test('computeExpectedBalances keeps the input order and leaves the input months 
   const snapshot = structuredClone(months)
   const result = computeExpectedBalances(months)
 
-  assert.deepEqual(result.map(month => [month.monthId, month.expectedBalance]), [
+  assert.deepEqual(result.map(month => [month.monthKey, month.expectedBalance]), [
     ['2026-06', 1150],
     ['2026-04', 1000],
     ['2026-05', 1100],

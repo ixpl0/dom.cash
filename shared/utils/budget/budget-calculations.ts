@@ -2,7 +2,7 @@ import type { MonthData, ComputedMonthData, YearSummary } from '../../types/budg
 import { calculateTotalBalance, findCurrenciesWithoutRate } from './budget'
 import { isPastMonth } from './month-helpers'
 
-export const createMonthId = (year: number, month: number): string => {
+export const createMonthKey = (year: number, month: number): string => {
   return `${year}-${String(month).padStart(2, '0')}`
 }
 
@@ -21,7 +21,7 @@ export const computeMonthData = (
   plannedBalanceChange: number | null = null,
   planComment: string | null = null,
 ): ComputedMonthData => {
-  const monthId = createMonthId(monthData.year, monthData.month)
+  const monthKey = createMonthKey(monthData.year, monthData.month)
   const currentMonthRates = monthData.exchangeRates
   const isPlanOnly = monthData.isPlanOnly === true
 
@@ -130,7 +130,7 @@ export const computeMonthData = (
 
   return {
     ...monthData,
-    monthId,
+    monthKey,
     startBalance,
     totalIncome,
     totalExpenses,
@@ -189,11 +189,11 @@ export const computeExpectedBalances = (
     { running: null, previousMonthOrdinal: null, list: [] },
   )
 
-  const expectedById = new Map(withExpected.list.map(item => [item.monthId, item.expectedBalance]))
+  const expectedByKey = new Map(withExpected.list.map(item => [item.monthKey, item.expectedBalance]))
 
   return computedMonths.map(monthItem => ({
     ...monthItem,
-    expectedBalance: expectedById.get(monthItem.monthId) ?? null,
+    expectedBalance: expectedByKey.get(monthItem.monthKey) ?? null,
   }))
 }
 

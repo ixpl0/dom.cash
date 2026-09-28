@@ -112,6 +112,7 @@
 
 * **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
   * The store keeps months newest first: sort them with `sortMonthsNewestFirst` (`shared/utils/budget/month-helpers.ts`) and replace changed months instead of copying the whole budget.
+  * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
 * **Budget Sharing**: Share budgets with other users (read/write access)
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
   * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.

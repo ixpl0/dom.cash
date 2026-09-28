@@ -146,7 +146,7 @@ export default {
     },
 
     month: {
-      notFound: 'Month not found: {monthId}',
+      notFound: 'Month not found: {monthKey}',
       clickForRates: 'Click to view exchange rates',
       balanceTooltip: 'Total savings at the beginning of the month. This would be enough for',
       balanceTooltipMonths: 'months',
