@@ -5,6 +5,7 @@ import {
   findClosestMonthForCopy,
   getNextMonth,
   getPreviousMonth,
+  hasMonthEndedEverywhere,
   isCurrentMonth,
   isFirstMonth,
   isLastMonth,
@@ -202,6 +203,23 @@ test('isCurrentMonth and isPastMonth compare with the given current month instea
     },
     { isSeptemberCurrent: true, isJanuaryCurrent: false, isAugustPast: true, isSeptemberPast: false },
   )
+})
+
+const monthEndCases = [
+  { name: 'Tbilisi has reached October', now: '2026-09-30T20:00:00Z', year: 2026, month: 8, expected: false },
+  { name: 'New York still has the evening of September 30', now: '2026-10-01T01:00:00Z', year: 2026, month: 8, expected: false },
+  { name: 'UTC−12 is one second before October', now: '2026-10-01T11:59:59Z', year: 2026, month: 8, expected: false },
+  { name: 'UTC−12 has reached October', now: '2026-10-01T12:00:00Z', year: 2026, month: 8, expected: true },
+  { name: 'UTC−12 is still in December', now: '2027-01-01T11:00:00Z', year: 2026, month: 11, expected: false },
+  { name: 'UTC−12 has reached the new year', now: '2027-01-01T12:00:00Z', year: 2026, month: 11, expected: true },
+  { name: 'the month is still ahead', now: '2026-10-01T12:00:00Z', year: 2026, month: 9, expected: false },
+  { name: 'the month ended a year ago', now: '2026-10-01T12:00:00Z', year: 2025, month: 8, expected: true },
+]
+
+monthEndCases.forEach(({ name, now, year, month, expected }) => {
+  test(`hasMonthEndedEverywhere says ${toMonthLabel(year, month)} ${expected ? 'has ended' : 'has not ended'} when ${name}`, () => {
+    assert.equal(hasMonthEndedEverywhere(year, month, new Date(now)), expected)
+  })
 })
 
 test('sortMonthsNewestFirst orders months across years and keeps the input', () => {

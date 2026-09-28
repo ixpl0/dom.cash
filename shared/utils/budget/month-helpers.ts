@@ -56,3 +56,8 @@ export const isCurrentMonth = (monthData: MonthPosition, currentMonth: MonthPosi
 
 export const isPastMonth = (year: number, month: number, currentMonth: MonthPosition = getCurrentMonth()): boolean =>
   toMonthNumber({ year, month }) < toMonthNumber(currentMonth)
+
+const LATEST_TIME_ZONE_UTC_OFFSET_HOURS = 12
+
+export const hasMonthEndedEverywhere = (year: number, month: number, now: Date = new Date()): boolean =>
+  now.getTime() >= Date.UTC(year, month + 1, 1, LATEST_TIME_ZONE_UTC_OFFSET_HOURS)

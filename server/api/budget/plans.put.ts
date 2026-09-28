@@ -7,7 +7,7 @@ import { resolveBudget } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
-import { isPastMonth } from '~~/shared/utils/budget/month-helpers'
+import { hasMonthEndedEverywhere } from '~~/shared/utils/budget/month-helpers'
 import { MONTH_KEYS } from '~~/shared/types/i18n'
 import { monthIndexSchema, planCommentSchema, plannedBalanceChangeSchema, yearSchema } from '~~/shared/schemas/budget'
 
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.NO_PERMISSION_UPDATE_PLAN)
 
-  if (isPastMonth(year, month)) {
+  if (hasMonthEndedEverywhere(year, month)) {
     throw createError({
       statusCode: 400,
       message: ERROR_KEYS.CANNOT_PLAN_PAST_MONTH,
