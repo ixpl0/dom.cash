@@ -60,7 +60,7 @@ export default {
     codeAlreadySent: 'Code was already sent. You can request a new one in {time}.',
     codeAlreadySentTime: '{count} minute | {count} minutes',
     registrationClosedTitle: 'Sign-ups are closed for now',
-    registrationClosedText: 'More people want to join than free hosting allows. Know the author? Ask them to open sign-ups. Already have an account? Sign in as usual.',
+    registrationClosedText: 'More people want to join than free hosting allows. If you know the author, ask them to open sign-ups. If you already have an account, sign in as usual.',
   },
 
   home: {
