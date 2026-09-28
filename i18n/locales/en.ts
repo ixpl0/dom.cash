@@ -229,7 +229,7 @@ export default {
 
     plan: {
       title: 'Planned Balance Change',
-      description: 'Enter the expected balance change in your main currency ({currency}). Positive — growth, negative — decline.',
+      description: 'Enter the expected balance change in whole units of your main currency ({currency}). Positive — growth, negative — decline.',
       amountLabel: 'Balance change',
       amountPlaceholder: 'e.g. 50000 or -10000',
       commentLabel: 'Comment',

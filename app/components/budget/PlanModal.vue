@@ -33,8 +33,9 @@
           ref="amountInputRef"
           v-model.number="amountInput"
           type="number"
-          step="any"
+          step="1"
           class="input input-bordered w-full"
+          :class="{ 'input-error': isAmountFilled && !isValid }"
           :placeholder="t('budget.plan.amountPlaceholder')"
           data-testid="plan-amount-input"
         >
@@ -140,7 +141,7 @@ const isAmountFilled = computed(() => {
 })
 
 const plannedBalanceChange = computed((): number | null =>
-  isAmountFilled.value ? Math.round(Number(amountInput.value)) : null,
+  isAmountFilled.value ? Number(amountInput.value) : null,
 )
 
 const isValid = computed((): boolean =>
