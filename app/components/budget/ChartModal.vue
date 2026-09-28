@@ -115,61 +115,68 @@ const formatChartValue = (value: number): string =>
 
 const { colors: themeColors } = useChartTheme()
 
-const LEGEND_STORAGE_KEY = 'budget-chart-legend-selected'
+const SERIES = [
+  { key: 'balance', dataset: 'startBalance', colorKey: 'primary', type: 'line', isShownByDefault: true },
+  { key: 'income', dataset: 'totalIncome', colorKey: 'success', type: 'bar', isShownByDefault: true },
+  { key: 'expenses', dataset: 'allExpenses', colorKey: 'error', type: 'bar', isShownByDefault: true },
+  { key: 'pocketExpenses', dataset: 'calculatedPocketExpenses', colorKey: 'warning', type: 'line', isShownByDefault: false },
+  { key: 'majorExpenses', dataset: 'totalExpenses', colorKey: 'secondary', type: 'line', isShownByDefault: false },
+  { key: 'currencyFluctuations', dataset: 'currencyProfitLoss', colorKey: 'accent', type: 'line', isShownByDefault: false },
+  { key: 'optionalExpenses', dataset: 'totalOptionalExpenses', colorKey: 'info', type: 'line', isShownByDefault: false },
+] as const
 
-const getDefaultSelected = () => ({
-  [t('chart.balance')]: true,
-  [t('chart.income')]: true,
-  [t('chart.expenses')]: true,
-  [t('chart.pocketExpenses')]: false,
-  [t('chart.majorExpenses')]: false,
-  [t('chart.currencyFluctuations')]: false,
-  [t('chart.optionalExpenses')]: false,
-})
+type SeriesKey = typeof SERIES[number]['key']
+type ShownSeries = Record<SeriesKey, boolean>
 
-const loadLegendSelected = () => {
+const SHOWN_SERIES_STORAGE_KEY = 'budget-chart-shown-series'
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
+
+const toShownSeries = (readShown: (key: SeriesKey, isShownByDefault: boolean) => boolean): ShownSeries =>
+  Object.fromEntries(SERIES.map(({ key, isShownByDefault }) => [key, readShown(key, isShownByDefault)])) as ShownSeries
+
+const loadShownSeries = (): ShownSeries => {
   if (!import.meta.client) {
-    return getDefaultSelected()
+    return toShownSeries((_, isShownByDefault) => isShownByDefault)
   }
 
   try {
-    const saved = localStorage.getItem(LEGEND_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return { ...getDefaultSelected(), ...parsed }
-    }
+    const saved: unknown = JSON.parse(localStorage.getItem(SHOWN_SERIES_STORAGE_KEY) ?? '{}')
+    return toShownSeries((key, isShownByDefault) => {
+      const savedValue = isRecord(saved) ? saved[key] : undefined
+      return typeof savedValue === 'boolean' ? savedValue : isShownByDefault
+    })
   }
   catch {
-    // ignore errors
+    return toShownSeries((_, isShownByDefault) => isShownByDefault)
   }
-
-  return getDefaultSelected()
 }
 
-const saveLegendSelected = (selected: Record<string, boolean>) => {
-  if (!import.meta.client) {
-    return
-  }
-
+const saveShownSeries = (shownSeries: ShownSeries): void => {
   try {
-    localStorage.setItem(LEGEND_STORAGE_KEY, JSON.stringify(selected))
+    localStorage.setItem(SHOWN_SERIES_STORAGE_KEY, JSON.stringify(shownSeries))
   }
-  catch {
-    // ignore errors
+  catch (error) {
+    console.warn('Failed to save the chart series', error)
   }
 }
 
-const legendSelected = ref(loadLegendSelected())
+const shownSeries = ref<ShownSeries>(loadShownSeries())
 
-const seriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> => [
-  { name: t('chart.balance'), data: chartData.value.datasets.startBalance, colorKey: 'primary', type: 'line' },
-  { name: t('chart.income'), data: chartData.value.datasets.totalIncome, colorKey: 'success', type: 'bar' },
-  { name: t('chart.expenses'), data: chartData.value.datasets.allExpenses, colorKey: 'error', type: 'bar' },
-  { name: t('chart.pocketExpenses'), data: chartData.value.datasets.calculatedPocketExpenses, colorKey: 'warning', type: 'line' },
-  { name: t('chart.majorExpenses'), data: chartData.value.datasets.totalExpenses, colorKey: 'secondary', type: 'line' },
-  { name: t('chart.currencyFluctuations'), data: chartData.value.datasets.currencyProfitLoss, colorKey: 'accent', type: 'line' },
-  { name: t('chart.optionalExpenses'), data: chartData.value.datasets.totalOptionalExpenses, colorKey: 'info', type: 'line' },
-])
+const getSeriesName = (key: SeriesKey): string => t(`chart.${key}`)
+
+const seriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> =>
+  SERIES.map(({ key, dataset, colorKey, type }) => ({
+    name: getSeriesName(key),
+    data: chartData.value.datasets[dataset],
+    colorKey,
+    type,
+  })),
+)
+
+const legendSelected = computed((): Record<string, boolean> =>
+  Object.fromEntries(SERIES.map(({ key }) => [getSeriesName(key), shownSeries.value[key]])),
+)
 
 const tooltipFormatter = (p: TooltipParams): string => {
   const list = toList(p)
@@ -209,9 +216,9 @@ const chartOption = computed((): ChartOption => {
   }
 })
 
-const handleLegendSelectChanged = (selected: Record<string, boolean>) => {
-  legendSelected.value = selected
-  saveLegendSelected(selected)
+const handleLegendSelectChanged = (selected: Record<string, boolean>): void => {
+  shownSeries.value = toShownSeries(key => selected[getSeriesName(key)] ?? shownSeries.value[key])
+  saveShownSeries(shownSeries.value)
 }
 
 const hide = () => {
