@@ -146,6 +146,7 @@
   * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
   * Desktop Chrome runs `public/` and `authenticated/`; the `mobile` project (Pixel 7) runs `tests/e2e/mobile/`, which covers the mobile menu and cards. Tests retry only on CI.
   * Do not edit files or run Nuxt commands (typecheck, prepare, build) while `pnpm test:e2e` runs: `wrangler dev` rebuilds the worker and requests in flight fail with 503.
+  * The e2e worker has no rates API key, so its only exchange rates are the ones the migrations seed: monthly up to 2025-08-01 (`0002_seed_currency_rates.sql`, with the August set replaced by `0003_fix_august_2025_rates.sql`). Months after that, including the 2099 fixtures, use the 2025-08-01 set: compute expected conversions from it (USD 1, EUR 0.875509).
 * **Test structure**: `tests/e2e/` with `public/` for public pages, `authenticated/` for pages requiring auth and `mobile/` for the phone layout
 * **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
   * Use `page.getByTestId('element-id')` instead of text-based selectors
