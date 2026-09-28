@@ -145,4 +145,4 @@
 * **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
   * Use `page.getByTestId('element-id')` instead of text-based selectors
   * Never use `getByRole`, `getByText`, or other text-dependent selectors
-* **Test helpers**: Use helpers from `tests/e2e/helpers/` for common operations (auth, confirmations, budget setup). Create test emails with `createTestEmail` so cleanup finds them.
+* **Test helpers**: Use helpers from `tests/e2e/helpers/` for common operations (auth, confirmations, budget setup). Prepare data through the API, not through a screen the test does not check: `initBudget` imports a fixture with `/api/budget/import`. Create test emails with `createTestEmail` so cleanup finds them.

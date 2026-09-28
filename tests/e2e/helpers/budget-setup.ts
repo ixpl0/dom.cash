@@ -1,34 +1,23 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { join } from 'path'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { waitForHydration } from './wait-for-hydration'
 
-export const initBudget = async (page: Page, budgetFixtureName: string) => {
+const readBudgetFixture = async (budgetFixtureName: string): Promise<unknown> => {
   const budgetPath = join(process.cwd(), 'tests', 'e2e', 'fixtures', 'budgets', `${budgetFixtureName}.json`)
+  return JSON.parse(await readFile(budgetPath, 'utf8'))
+}
 
-  const importBudgetButton = page.getByTestId('import-budget-btn')
-  const importHeaderButton = page.getByTestId('import-button')
-  const importButton = await importBudgetButton.isVisible() ? importBudgetButton : importHeaderButton
-  await expect(importButton).toBeVisible()
-  await importButton.click()
+export const initBudget = async (page: Page, budgetFixtureName: string): Promise<void> => {
+  const response = await page.request.post('/api/budget/import', {
+    data: {
+      data: await readBudgetFixture(budgetFixtureName),
+      options: { strategy: 'overwrite' },
+    },
+  })
+  expect(response.ok()).toBe(true)
 
-  const importModal = page.getByTestId('import-modal')
-  await expect(importModal).toBeVisible()
-
-  const fileInput = importModal.getByTestId('import-file-input')
-  await fileInput.setInputFiles(budgetPath)
-
-  const overwriteRadio = importModal.getByTestId('import-strategy-overwrite')
-  await expect(overwriteRadio).toBeVisible()
-  await overwriteRadio.check()
-
-  const submitButton = importModal.getByTestId('import-submit-button')
-  await expect(submitButton).toBeEnabled()
-  await submitButton.click()
-
-  await expect(importModal.getByTestId('import-loading')).toBeVisible()
-
-  const closeButton = importModal.getByTestId('import-close-button')
-  await expect(closeButton).toBeVisible()
-  await closeButton.click()
-  await expect(importModal).not.toBeVisible()
+  await page.reload()
+  await waitForHydration(page)
 }
