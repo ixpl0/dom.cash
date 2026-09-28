@@ -52,7 +52,7 @@
   >
     <div class="flex items-center gap-4 px-4 py-2">
       <div
-        class="tooltip capitalize w-28 flex-shrink-0"
+        class="tooltip w-28 flex-shrink-0"
         :data-tip="monthBadgeTooltip"
       >
         <button

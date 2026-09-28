@@ -3,6 +3,7 @@ import XLSX from 'xlsx-js-style'
 import type { BudgetExportData, BudgetExportEntry, BudgetExportMonth } from '~~/shared/types/export-import'
 import { calculateTotalBalance } from '~~/shared/utils/budget/budget'
 import { sortMonthsNewestFirst } from '~~/shared/utils/budget/month-helpers'
+import { capitalizeFirstLetter } from '~~/shared/utils/shared/text'
 import type { Translate } from '~~/shared/types/i18n'
 
 export interface ExcelTexts {
@@ -121,8 +122,7 @@ const sumOf = (values: readonly number[]): number => values.reduce((sum, value) 
 
 const createEntryRow = (entryData: BudgetExportEntry, t: Translate): SheetRow => {
   const colors = COLORS[entryData.kind]
-  const kindLabel = t(`entryKind.${entryData.kind}`)
-  const typeLabel = kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)
+  const typeLabel = capitalizeFirstLetter(t(`entryKind.${entryData.kind}`))
   const style = createDataStyle(colors.bg, colors.text)
   const amountStyle = createDataStyle(colors.bg, colors.text, true)
 

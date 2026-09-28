@@ -32,6 +32,7 @@
 
 <script setup lang="ts">
 import { isFirstMonth, isLastMonth, isCurrentMonth, isPastMonth } from '~~/shared/utils/budget/month-helpers'
+import { capitalizeFirstLetter } from '~~/shared/utils/shared/text'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
@@ -88,7 +89,7 @@ const uiMonthData = computed((): UiMonthData => ({
 
 const monthBadgeTooltip = computed(() => {
   const title = monthData.value.sourceMonthTitle || `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`
-  const ratesHint = `${title} - ${t('budget.month.clickForRates')}`
+  const ratesHint = `${capitalizeFirstLetter(title)} - ${t('budget.month.clickForRates')}`
   const { missingRateCurrencies } = monthData.value
   return missingRateCurrencies.length > 0
     ? `${t('currencyRates.missingRates', { currencies: missingRateCurrencies.join(', ') })} ${ratesHint}`
