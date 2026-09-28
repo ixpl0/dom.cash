@@ -248,9 +248,9 @@ pnpm run db:migrate:prod
 | `pnpm run db:migrate` | Apply migrations | Local |
 | `pnpm run db:migrate:test` | Apply migrations | Test (remote) |
 | `pnpm run db:migrate:prod` | Apply migrations | Production (remote) |
-| `pnpm run db:backup` | Create backup | Local |
-| `pnpm run db:backup:test` | Create backup | Test (remote) |
-| `pnpm run db:backup:prod` | Create backup | Production (remote) |
+| `pnpm run db:backup` | Create backup `backups/backup-local-<UTC time>.sql` | Local |
+| `pnpm run db:backup:test` | Create backup `backups/backup-test-<UTC time>.sql` | Test (remote) |
+| `pnpm run db:backup:prod` | Create backup `backups/backup-prod-<UTC time>.sql` | Production (remote) |
 | `pnpm run db:reset` | Reset database | Local only |
 
 ### Important Notes
@@ -290,6 +290,13 @@ pnpm run deploy:prod
 
 # Deploy to both
 pnpm run deploy:all
+```
+
+A release checks and builds the app first, then backs up the database, applies the migrations and deploys:
+
+```bash
+pnpm run release:test
+pnpm run release:prod
 ```
 
 Production runs at `https://domcash.ixplo.ai`.

@@ -11,9 +11,10 @@
   * `pnpm i`
   * `pnpm run db:migrate` (local) / `pnpm run db:migrate:test` (remote) / `pnpm run db:migrate:prod` (production)
   * `pnpm run dev` (local) / `pnpm run deploy:test` (test) / `pnpm run deploy:prod` (production)
-  * `pnpm run db:backup` / `pnpm run db:backup:test` / `pnpm run db:backup:prod` — backup database
+  * `pnpm run db:backup` / `pnpm run db:backup:test` / `pnpm run db:backup:prod` — backup database into `backups/backup-<target>-<UTC time>.sql` (never overwrites an older backup)
   * `pnpm run db:reset` — reset local database (deletes local D1 state and re-migrates)
   * `pnpm run deploy:all` — deploy to test and production
+  * `pnpm run release:test` / `pnpm run release:prod` — check and build, then back up the database, apply migrations and deploy
   * Every `deploy:*` script runs `pnpm run check` first.
 * **Data layer**:
   * Cloudflare D1 (SQLite) for production
