@@ -112,6 +112,7 @@
 
 * **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
   * The store keeps months newest first: sort them with `sortMonthsNewestFirst` (`shared/utils/budget/month-helpers.ts`) and replace changed months instead of copying the whole budget.
+  * Plans are whole numbers in the owner's main currency: `changeMainCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes.
   * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
 * **Budget Sharing**: Share budgets with other users (read/write access)
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users

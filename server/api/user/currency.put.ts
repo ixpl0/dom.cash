@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { createError, isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
-import { updateUserCurrency } from '~~/server/services/auth/users'
+import { changeMainCurrency } from '~~/server/services/budget/currency'
 import { resolveBudget } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
 import { currencySchema } from '~~/shared/schemas/common'
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.NO_PERMISSION_UPDATE_CURRENCY)
 
   try {
-    await updateUserCurrency(owner.id, currency, event)
+    await changeMainCurrency(owner.id, currency, event)
 
     await sendNotification(event, {
       sourceUserId: currentUser.id,

@@ -544,6 +544,11 @@ export const useBudgetStore = defineStore('budget', () => {
         mainCurrency: currency,
       },
     }
+    plans.value = []
+    plansLoaded.value = false
+    if (isPlanningMode.value) {
+      await ensurePlansLoaded()
+    }
   }
 
   const getNextMonthData = (): { year: number, month: number } => {

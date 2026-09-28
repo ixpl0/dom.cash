@@ -17,23 +17,25 @@ export const findCurrenciesWithoutRate = (
   return requiredCurrencies.filter(currency => !hasValidRate(exchangeRates, currency))
 }
 
+export const convertAmount = (
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  exchangeRates: Record<string, number>,
+): number => {
+  if (fromCurrency === toCurrency) {
+    return amount
+  }
+
+  const fromRate = exchangeRates[fromCurrency] || 1
+  const toRate = exchangeRates[toCurrency] || 1
+
+  return (amount / fromRate) * toRate
+}
+
 export const calculateTotalBalance = (
   entries: ReadonlyArray<Pick<BudgetEntry, 'amount' | 'currency'>>,
   baseCurrency: string,
   exchangeRates: Record<string, number>,
-): number => {
-  if (!entries?.length) {
-    return 0
-  }
-
-  return entries.reduce((total, entry) => {
-    if (entry.currency === baseCurrency) {
-      return total + entry.amount
-    }
-
-    const fromRate = exchangeRates[entry.currency] || 1
-    const toRate = exchangeRates[baseCurrency] || 1
-
-    return total + (entry.amount / fromRate) * toRate
-  }, 0)
-}
+): number =>
+  entries.reduce((total, entry) => total + convertAmount(entry.amount, entry.currency, baseCurrency, exchangeRates), 0)
