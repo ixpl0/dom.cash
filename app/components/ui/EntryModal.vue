@@ -3,26 +3,10 @@
     :is-open="isOpen"
     data-testid="entry-modal"
     content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl flex flex-col overflow-visible"
+    :title="dialogTitle"
+    close-button-test-id="modal-close-button"
     @close="$emit('close')"
   >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="modal-close-button"
-      @click="$emit('close')"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-8">
-      {{ title }}<template v-if="totalAmount">
-        : {{ totalAmount }}
-      </template>
-    </h3>
-
     <div
       ref="entriesContainer"
       class="space-y-4 flex-1 overflow-y-auto min-h-0"
@@ -286,6 +270,8 @@ const emit = defineEmits<{
 
 const { isMobileViewport } = useIsMobileViewport()
 const { formatMoney } = useMoneyFormat()
+
+const dialogTitle = computed((): string => props.totalAmount ? `${props.title}: ${props.totalAmount}` : props.title)
 
 const getEntryDate = (entry: BudgetEntry): string | null => {
   return 'date' in entry ? entry.date : null

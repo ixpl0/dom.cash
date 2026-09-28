@@ -3,24 +3,10 @@
     :is-open="isOpen"
     content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-xl flex flex-col"
     data-testid="shared-budgets-modal"
+    :title="t('sharedBudgets.title')"
+    close-button-test-id="shared-budgets-modal-close"
     @close="hide"
   >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="shared-budgets-modal-close"
-      @click="hide()"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      {{ t('sharedBudgets.title') }}
-    </h3>
-
     <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
       <div
         v-if="sharedBudgets.length"

@@ -7,6 +7,7 @@ export default {
     cancel: 'Cancel',
     save: 'Save',
     loading: 'Loading...',
+    close: 'Close',
   },
 
   header: {
@@ -310,7 +311,7 @@ export default {
   },
 
   currencyRates: {
-    title: 'Exchange rates for',
+    title: 'Exchange rates for {month}',
     usingOtherRates: 'This month has no exchange rates, so rates from',
     usingOtherRatesEnd: 'are being used',
     search: 'Search currency by code or name...',

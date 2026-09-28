@@ -3,24 +3,10 @@
     :is-open="isOpen"
     data-testid="currency-rates-modal"
     content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-3xl flex flex-col"
+    :title="t('currencyRates.title', { month: currencyRatesModal.monthTitle })"
+    close-button-test-id="modal-close-button"
     @close="hide"
   >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="modal-close-button"
-      @click="hide()"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0 pr-6">
-      {{ t('currencyRates.title') }} {{ currencyRatesModal.monthTitle }}
-    </h3>
-
     <div
       v-if="currencyRatesModal.isUsingOtherMonthRates"
       class="alert alert-warning alert-outline mb-4 flex-shrink-0"

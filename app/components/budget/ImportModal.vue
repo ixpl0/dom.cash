@@ -3,12 +3,9 @@
     :is-open="isOpen"
     data-testid="import-modal"
     content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-5xl flex flex-col"
+    :title="t('import.title')"
     @close="hide"
   >
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      {{ t('import.title') }}
-    </h3>
-
     <div class="flex-1 overflow-y-auto min-h-0">
       <div
         v-if="!importResult"

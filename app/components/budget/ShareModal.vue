@@ -3,24 +3,10 @@
     :is-open="isOpen"
     content-class="modal-box sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-3xl flex flex-col"
     data-testid="share-modal"
+    :title="t('share.title')"
+    close-button-test-id="share-modal-close"
     @close="hide"
   >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="share-modal-close"
-      @click="hide()"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      {{ t('share.title') }}
-    </h3>
-
     <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
       <div v-if="shares.length || isAddingNew">
         <div

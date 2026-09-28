@@ -45,6 +45,7 @@
   * DaisyUI (https://daisyui.com/). All UI components should be based on DaisyUI.
   * Tailwind CSS (https://tailwindcss.com/). Try to avoid custom styles, use Tailwind classes instead.
   * **UI components** (`app/components/ui/`): no business logic, only presentation. They translate their own fixed texts with `useI18n()`; pass data, texts that depend on the context (such as tooltips that differ between the budget and the landing page) and callbacks for any logic as props.
+  * **Modals** are built on `UiDialog`: pass `title` (or the `title` slot) and `close-button-test-id` instead of drawing the heading and the close button.
   * **Back button & Escape**: every overlay or edit mode must close on browser/mobile "back" before any page navigation. Register it with `useBackHandler(isEnabled, onBack)` (`app/composables/shared/useBackHandler.ts`): the latest enabled handler wins, `onBack` receives `'history'` or `'escape'`. `UiDialog` registers itself (so the confirmation modal treats back as cancel), DaisyUI focus dropdowns use `useDropdownBackHandler`. Ask via `useUnsavedChanges().confirmDiscardChanges` before discarding user input. History syncing lives in `app/utils/back-handlers.ts`.
 * **State Management**: Pinia stores in `app/stores/`
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.

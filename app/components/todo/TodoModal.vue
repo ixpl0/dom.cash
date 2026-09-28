@@ -3,24 +3,10 @@
     :is-open="isOpen"
     content-class="modal-box overflow-y-auto sm:max-w-lg"
     data-testid="todo-modal"
+    :title="isEditing ? t('todo.modal.editTitle') : t('todo.modal.createTitle')"
+    close-button-test-id="todo-modal-close"
     @close="requestClose"
   >
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="card-title">
-        {{ isEditing ? t('todo.modal.editTitle') : t('todo.modal.createTitle') }}
-      </h2>
-      <button
-        class="btn btn-ghost btn-sm btn-square"
-        data-testid="todo-modal-close"
-        @click="requestClose"
-      >
-        <Icon
-          name="heroicons:x-mark"
-          size="20"
-        />
-      </button>
-    </div>
-
     <form @submit.prevent="handleSubmit">
       <div class="form-control mb-6">
         <label class="label pb-1">

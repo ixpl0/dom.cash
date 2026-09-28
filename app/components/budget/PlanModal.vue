@@ -3,26 +3,15 @@
     :is-open="isOpen"
     content-class="modal-box sm:max-w-md flex flex-col"
     data-testid="plan-modal"
+    close-button-test-id="plan-modal-close"
     @close="requestClose"
   >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="plan-modal-close"
-      @click="requestClose"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
+    <template #title>
       {{ t('budget.plan.title') }}
       <span class="opacity-70 font-normal text-base">
         — {{ planModal.monthTitle }}
       </span>
-    </h3>
+    </template>
 
     <p class="text-sm opacity-70 mb-4">
       {{ t('budget.plan.description', { currency: budgetStore.effectiveMainCurrency }) }}

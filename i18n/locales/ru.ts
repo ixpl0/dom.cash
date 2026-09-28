@@ -8,6 +8,7 @@ export default {
     cancel: 'Отмена',
     save: 'Сохранить',
     loading: 'Загрузка...',
+    close: 'Закрыть',
   },
 
   header: {
@@ -311,7 +312,7 @@ export default {
   },
 
   currencyRates: {
-    title: 'Курсы валют за',
+    title: 'Курсы валют за {month}',
     usingOtherRates: 'У этого месяца нет собственных курсов валют, поэтому используются курсы из',
     usingOtherRatesEnd: '',
     search: 'Поиск валюты по коду или названию...',

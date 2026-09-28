@@ -3,24 +3,10 @@
     :is-open="isOpen"
     data-testid="chart-modal"
     content-class="modal-box sm:h-[90vh] sm:w-[calc(100vw-2rem)] sm:max-w-6xl flex flex-col overflow-hidden"
+    :title="t('chart.title')"
+    close-button-test-id="chart-modal-close-button"
     @close="hide"
   >
-    <button
-      type="button"
-      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-      data-testid="chart-modal-close-button"
-      @click="hide"
-    >
-      <Icon
-        name="heroicons:x-mark"
-        size="20"
-      />
-    </button>
-
-    <h3 class="font-bold text-lg mb-4 flex-shrink-0">
-      {{ t('chart.title') }}
-    </h3>
-
     <div class="flex-1 overflow-y-auto min-h-0">
       <div class="h-full">
         <ClientOnly>
