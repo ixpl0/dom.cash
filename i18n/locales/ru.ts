@@ -313,8 +313,7 @@ export default {
 
   currencyRates: {
     title: 'Курсы валют за {month}',
-    usingOtherRates: 'У этого месяца нет собственных курсов валют, поэтому используются курсы из',
-    usingOtherRatesEnd: '',
+    usingOtherRates: 'У этого месяца нет собственных курсов валют, поэтому используются курсы за {month}',
     search: 'Поиск валюты по коду или названию...',
     notFound: 'Валюты не найдены',
     missingRates: 'Нет курса для {currencies}: суммы в этих валютах посчитаны 1:1.',

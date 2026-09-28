@@ -16,7 +16,7 @@
         size="24"
         class="stroke-current shrink-0"
       />
-      <span>{{ usingOtherRatesMessage }}</span>
+      <span>{{ t('currencyRates.usingOtherRates', { month: currencyRatesModal.sourceMonthTitle }) }}</span>
     </div>
 
     <div
@@ -126,16 +126,6 @@ const filteredRates = computed((): CurrencyRate[] => {
     rate.code.toLowerCase().includes(query)
     || rate.name.toLowerCase().includes(query),
   )
-})
-
-const usingOtherRatesMessage = computed((): string => {
-  return [
-    t('currencyRates.usingOtherRates'),
-    currencyRatesModal.value.sourceMonthTitle,
-    t('currencyRates.usingOtherRatesEnd'),
-  ]
-    .filter(Boolean)
-    .join(' ')
 })
 
 const formatRate = (rate: number): string => {

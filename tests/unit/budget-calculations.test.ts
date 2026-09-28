@@ -366,6 +366,7 @@ const ratesSourceCases = [
   { name: 'its own month in December', year: 2026, month: 11, source: '2026-12-01', isUsingOtherMonthRates: false, title: '' },
   { name: 'an empty source', year: 2026, month: 2, source: '', isUsingOtherMonthRates: true, title: '' },
   { name: 'a source with an impossible month', year: 2026, month: 2, source: '2026-13-01', isUsingOtherMonthRates: true, title: '' },
+  { name: 'a source that is not a date', year: 2026, month: 2, source: 'default', isUsingOtherMonthRates: true, title: '' },
 ]
 
 ratesSourceCases.forEach(({ name, year, month, source, isUsingOtherMonthRates, title }) => {
@@ -398,14 +399,6 @@ test('computeMonthData needs no rates for a month in the main currency only', ()
   const month = createMonth({ year: 2026, month: 2, balances: [balance(100, 'GEL')], rates: {} })
 
   assert.deepEqual(computeMonthData(month, [month], 'GEL', MONTH_NAMES).missingRateCurrencies, [])
-})
-
-test('computeMonthData marks default rates as rates of another month', () => {
-  const monthData = createMonth({ year: 2026, month: 2, ratesSource: 'default' })
-  const result = computeMonthData(monthData, [monthData], 'USD', MONTH_NAMES)
-
-  assert.equal(result.isUsingOtherMonthRates, true)
-  assert.notEqual(result.sourceMonthTitle, '')
 })
 
 test('computeMonthData shows zero pocket expenses for a month that balances exactly', () => {

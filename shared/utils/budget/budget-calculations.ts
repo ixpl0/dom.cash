@@ -13,6 +13,12 @@ const findNextMonth = (monthData: MonthData, allMonths: MonthData[]): MonthData 
   return allMonths.find(m => m.year === nextYear && m.month === nextMonth) || null
 }
 
+const getRatesSourceTitle = (exchangeRatesSource: string, monthNames: readonly string[]): string => {
+  const [year, month] = exchangeRatesSource.split('-')
+  const monthName = monthNames[Number(month) - 1]
+  return year && monthName ? `${monthName} ${year}` : ''
+}
+
 export const computeMonthData = (
   monthData: MonthData,
   allMonths: MonthData[],
@@ -101,24 +107,7 @@ export const computeMonthData = (
   const currentMonthDate = `${monthData.year}-${String(monthData.month + 1).padStart(2, '0')}-01`
   const isUsingOtherMonthRates = monthData.exchangeRatesSource !== currentMonthDate
 
-  let sourceMonthTitle = ''
-  if (isUsingOtherMonthRates) {
-    if (monthData.exchangeRatesSource === 'default') {
-      sourceMonthTitle = 'Базовые курсы (USD = 1)'
-    }
-    else {
-      const parts = monthData.exchangeRatesSource.split('-')
-      if (parts.length >= 2 && parts[0] && parts[1]) {
-        const year = parts[0]
-        const month = parts[1]
-        const monthIndex = parseInt(month, 10) - 1
-
-        if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
-          sourceMonthTitle = `${monthNames[monthIndex]} ${year}`
-        }
-      }
-    }
-  }
+  const sourceMonthTitle = isUsingOtherMonthRates ? getRatesSourceTitle(monthData.exchangeRatesSource, monthNames) : ''
 
   const plannedVsActualDiff = (
     plannedBalanceChange !== null
