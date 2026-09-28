@@ -1,7 +1,8 @@
 import { and, count, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, todo, todoShare, user } from '~~/server/db/schema'
+import { todo, todoShare, user } from '~~/server/db/schema'
+import { resolveConnections } from '~~/server/services/connections'
 import { sendNotification, type NotificationType } from '~~/server/services/notifications'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import type { User } from '~~/shared/types'
@@ -59,32 +60,6 @@ const notifyParticipants = async (
       ? { username: actor.username, todoContent }
       : { username: actor.username, todoContent, isCompleted },
   })))
-}
-
-export const listTodoConnections = async (userId: string, event: H3Event): Promise<TodoConnection[]> =>
-  useDatabase(event)
-    .select({ id: user.id, username: user.username })
-    .from(budgetShare)
-    .innerJoin(user, eq(budgetShare.ownerId, user.id))
-    .where(eq(budgetShare.sharedWithId, userId))
-
-const resolveSharedUsers = async (ownerId: string, userIds: readonly string[], event: H3Event): Promise<TodoConnection[]> => {
-  const uniqueUserIds = new Set(userIds)
-
-  if (uniqueUserIds.size === 0) {
-    return []
-  }
-
-  const sharedUsers = (await listTodoConnections(ownerId, event)).filter(connection => uniqueUserIds.has(connection.id))
-
-  if (sharedUsers.length !== uniqueUserIds.size) {
-    throw createError({
-      statusCode: 400,
-      message: ERROR_KEYS.INVALID_SHARED_USER,
-    })
-  }
-
-  return sharedUsers
 }
 
 const buildShareInserts = (db: ReturnType<typeof useDatabase>, todoId: string, sharedUsers: readonly TodoConnection[], createdAt: Date) =>
@@ -174,7 +149,7 @@ export const countOverdueTodos = async (viewerId: string, today: string, event: 
 }
 
 export const createTodo = async (actor: User, payload: CreateTodoPayload, event: H3Event): Promise<TodoListItem> => {
-  const sharedWith = await resolveSharedUsers(actor.id, payload.sharedWithUserIds ?? [], event)
+  const sharedWith = await resolveConnections(actor.id, payload.sharedWithUserIds ?? [], event)
   const now = new Date()
   const todoRow: TodoRow = {
     id: crypto.randomUUID(),
@@ -210,7 +185,7 @@ export const updateTodo = async (actor: User, todoId: string, payload: UpdateTod
 
   const newSharedWith = payload.sharedWithUserIds === undefined
     ? null
-    : await resolveSharedUsers(actor.id, payload.sharedWithUserIds, event)
+    : await resolveConnections(actor.id, payload.sharedWithUserIds, event)
   const recurrence = payload.recurrence === undefined ? access.todoRow.recurrence : payload.recurrence
   const updatedRow: TodoRow = {
     ...access.todoRow,

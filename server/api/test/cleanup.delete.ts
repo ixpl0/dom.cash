@@ -1,6 +1,7 @@
 import { inArray, or, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { appSettings, budgetShare, emailVerificationCode, entry, month, plan, session, todo, todoShare, user } from '~~/server/db/schema'
+import { appSettings, budgetShare, docFolder, docFolderShare, emailVerificationCode, entry, month, plan, session, todo, todoShare, user } from '~~/server/db/schema'
+import { deleteFolderFiles } from '~~/server/services/docs/folders'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { isTestMode } from '~~/server/utils/test-mode'
 
@@ -19,9 +20,15 @@ export default defineEventHandler(async (event) => {
   const testUserIds = db.select({ id: user.id }).from(user).where(isTestUser)
   const testMonthIds = db.select({ id: month.id }).from(month).where(inArray(month.userId, testUserIds))
   const testTodoIds = db.select({ id: todo.id }).from(todo).where(inArray(todo.userId, testUserIds))
+  const testFolderIds = db.select({ id: docFolder.id }).from(docFolder).where(inArray(docFolder.userId, testUserIds))
 
   try {
+    const folderIds = (await db.select({ id: docFolder.id }).from(docFolder).where(inArray(docFolder.userId, testUserIds)))
+      .map(({ id }) => id)
+
     await db.batch([
+      db.delete(docFolderShare).where(or(inArray(docFolderShare.folderId, testFolderIds), inArray(docFolderShare.sharedWithId, testUserIds))),
+      db.delete(docFolder).where(inArray(docFolder.userId, testUserIds)),
       db.delete(entry).where(inArray(entry.monthId, testMonthIds)),
       db.delete(month).where(inArray(month.userId, testUserIds)),
       db.delete(plan).where(inArray(plan.userId, testUserIds)),
@@ -33,6 +40,7 @@ export default defineEventHandler(async (event) => {
       db.delete(user).where(isTestUser),
       db.delete(appSettings),
     ])
+    await deleteFolderFiles(folderIds, event)
 
     return { message: 'Test data cleaned up successfully' }
   }

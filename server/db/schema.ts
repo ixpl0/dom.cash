@@ -1,5 +1,6 @@
 import { sqliteTable, integer, text, unique, index, check } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm'
+import type { DocField } from '~~/shared/types/docs'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import { ACCESS_LEVELS, ENTRY_KINDS } from '~~/shared/schemas/common'
 
@@ -203,6 +204,77 @@ export const todoShare = sqliteTable(
 
 export type TodoShare = typeof todoShare.$inferSelect
 export type NewTodoShare = typeof todoShare.$inferInsert
+
+export const docFolder = sqliteTable(
+  'doc_folder',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    index('idx_doc_folder_user').on(t.userId),
+  ],
+)
+
+export type DocFolder = typeof docFolder.$inferSelect
+
+export const docFolderShare = sqliteTable(
+  'doc_folder_share',
+  {
+    id: text('id').primaryKey(),
+    folderId: text('folder_id').notNull().references(() => docFolder.id, { onDelete: 'cascade' }),
+    sharedWithId: text('shared_with_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    unique('uq_doc_folder_shared_with').on(t.folderId, t.sharedWithId),
+    index('idx_doc_folder_share_folder').on(t.folderId),
+    index('idx_doc_folder_share_user').on(t.sharedWithId),
+  ],
+)
+
+export const docDocument = sqliteTable(
+  'doc_document',
+  {
+    id: text('id').primaryKey(),
+    folderId: text('folder_id').notNull().references(() => docFolder.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    fields: text('fields', { mode: 'json' }).$type<DocField[]>().notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    index('idx_doc_document_folder').on(t.folderId),
+    check('ck_doc_document_fields_is_array', sql`${t.fields} GLOB '[[]*]'`),
+  ],
+)
+
+export type DocDocumentRow = typeof docDocument.$inferSelect
+
+export const docImage = sqliteTable(
+  'doc_image',
+  {
+    id: text('id').primaryKey(),
+    documentId: text('document_id').notNull().references(() => docDocument.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    fileName: text('file_name').notNull(),
+    contentType: text('content_type').notNull(),
+    size: integer('size').notNull(),
+    storedSize: integer('stored_size').notNull(),
+    width: integer('width'),
+    height: integer('height'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    index('idx_doc_image_document').on(t.documentId),
+    check('ck_doc_image_sizes', sql`${t.size} > 0 AND ${t.storedSize} >= ${t.size}`),
+  ],
+)
+
+export type DocImageRow = typeof docImage.$inferSelect
 
 export const appSettings = sqliteTable(
   'app_settings',

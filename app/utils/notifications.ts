@@ -1,13 +1,16 @@
-import type { NotificationEvent, Translate } from '~~/shared/types/i18n'
+import type { NotificationEvent, NotificationType, Translate } from '~~/shared/types/i18n'
 
 export type ServerMessage = { type: 'connected' } | { type: 'ping' } | NotificationEvent
 
 export interface StaleStores {
   budget: boolean
   todo: boolean
+  docs: boolean
 }
 
 const RECONNECT_DELAYS_MS = [1000, 5000, 15000, 30000, 60000]
+
+const SILENT_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set(['docs_images_changed'])
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -23,7 +26,10 @@ export const getReconnectDelay = (failedAttempts: number): number =>
 export const getStaleStores = (notification: NotificationEvent, shownBudgetOwnerId: string | null): StaleStores => ({
   budget: notification.type.startsWith('budget_') && notification.budgetOwnerId === shownBudgetOwnerId,
   todo: notification.type.startsWith('todo_') || notification.type.startsWith('budget_share_'),
+  docs: notification.type.startsWith('docs_') || notification.type.startsWith('budget_share_'),
 })
+
+export const isSilentNotification = ({ type }: NotificationEvent): boolean => SILENT_NOTIFICATION_TYPES.has(type)
 
 export const formatNotificationMessage = ({ type, params }: NotificationEvent, t: Translate): string => {
   const translatedParams: Record<string, string | number> = {
@@ -42,6 +48,8 @@ export const formatNotificationMessage = ({ type, params }: NotificationEvent, t
     ...(params.isCompleted !== undefined
       ? { isCompleted: t(`todoStatus.${params.isCompleted ? 'completed' : 'incomplete'}`) }
       : {}),
+    ...(params.folderName !== undefined ? { folderName: params.folderName } : {}),
+    ...(params.documentTitle !== undefined ? { documentTitle: params.documentTitle.trim() || t('docs.document.untitled') } : {}),
   }
 
   return t(`notifications.${type}`, translatedParams)

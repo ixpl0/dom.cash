@@ -15,6 +15,10 @@ binding = "DB"
 database_name = "dom-test"
 database_id = "49fe35ce-d40a-4d38-8f8d-32bd57bb5588"
 
+[[r2_buckets]]
+binding = "DOCS_BUCKET"
+bucket_name = "dom-docs-test"
+
 
 # production
 [env.production]
@@ -30,3 +34,7 @@ NUXT_PUBLIC_ENVIRONMENT = "production"
 binding = "DB"
 database_name = "dom-prod"
 database_id = "5c1aab4d-72d5-4919-a800-274f6e11ed26"
+
+[[env.production.r2_buckets]]
+binding = "DOCS_BUCKET"
+bucket_name = "dom-docs-prod"

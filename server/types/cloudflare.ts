@@ -27,8 +27,44 @@ declare global {
   }
 }
 
+export interface DocsBucketHttpMetadata {
+  contentType?: string
+}
+
+export interface DocsBucketObject {
+  key: string
+  size: number
+  httpEtag: string
+  httpMetadata?: DocsBucketHttpMetadata
+}
+
+export interface DocsBucketObjectBody extends DocsBucketObject {
+  body: ReadableStream<Uint8Array>
+  blob: () => Promise<Blob>
+}
+
+export interface DocsBucketListResult {
+  objects: Array<Pick<DocsBucketObject, 'key'>>
+  truncated: boolean
+  cursor?: string
+}
+
+export interface DocsBucketListOptions {
+  prefix?: string
+  cursor?: string
+  limit?: number
+}
+
+export interface DocsBucket {
+  get: (key: string) => Promise<DocsBucketObjectBody | null>
+  put: (key: string, value: ArrayBuffer | ArrayBufferView | Blob, options?: { httpMetadata?: DocsBucketHttpMetadata }) => Promise<DocsBucketObject | null>
+  delete: (keys: string | string[]) => Promise<void>
+  list: (options?: DocsBucketListOptions) => Promise<DocsBucketListResult>
+}
+
 export interface CloudflareEnv {
   DB: D1Database
+  DOCS_BUCKET?: DocsBucket
 }
 
 export interface CloudflareContext {

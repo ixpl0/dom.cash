@@ -36,6 +36,7 @@ export interface RegistrationState {
   closesInSeconds: number | null
 }
 
+export * from './docs'
 export * from './export-import'
 export * from './recurrence'
 export * from './todo'

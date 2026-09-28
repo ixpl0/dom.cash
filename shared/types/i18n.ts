@@ -18,6 +18,14 @@ export type NotificationType
     | 'todo_updated'
     | 'todo_deleted'
     | 'todo_toggled'
+    | 'docs_folder_shared'
+    | 'docs_folder_unshared'
+    | 'docs_folder_updated'
+    | 'docs_folder_deleted'
+    | 'docs_document_created'
+    | 'docs_document_updated'
+    | 'docs_document_deleted'
+    | 'docs_images_changed'
 
 export type MonthKey
   = | 'january'
@@ -62,6 +70,8 @@ export interface NotificationParams {
   entriesCount?: number
   todoContent?: string
   isCompleted?: boolean
+  folderName?: string
+  documentTitle?: string
 }
 
 export interface NotificationPayload {

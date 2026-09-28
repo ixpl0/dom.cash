@@ -37,6 +37,7 @@
     "test:e2e:headed": "playwright test --config playwright.dev.config.ts --headed"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
     "@nuxt/icon": "^2.5.1",
     "@nuxtjs/i18n": "^10.6.0",
     "daisyui": "^5.7.46",

@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync, type SQLInputValue, type SQLOutputValue } from 'node:sqlite'
 import type { H3Event } from 'h3'
 import { D1_MAX_VARIABLES_PER_STATEMENT } from '../../../server/utils/d1-limits'
+import { createTestBucket, type TestBucket } from './test-bucket'
 
 declare module 'node:sqlite' {
   interface StatementSync {
@@ -28,6 +29,7 @@ interface TestStatement {
 export interface TestDatabase {
   event: H3Event
   sqlite: DatabaseSync
+  docsBucket: TestBucket
   getQueries: () => string[]
 }
 
@@ -103,11 +105,13 @@ export const createTestDatabase = (): TestDatabase => {
     batch,
   }
 
-  const event = { context: { cloudflare: { env: { DB: database } } } } as unknown as H3Event
+  const docsBucket = createTestBucket()
+  const event = { context: { cloudflare: { env: { DB: database, DOCS_BUCKET: docsBucket.bucket } } } } as unknown as H3Event
 
   return {
     event,
     sqlite,
+    docsBucket,
     getQueries: () => queries,
   }
 }

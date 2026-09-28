@@ -45,6 +45,17 @@
             {{ t('header.todo') }}
           </NuxtLink>
         </div>
+        <NuxtLink
+          to="/docs"
+          class="btn btn-outline btn-sm"
+          data-testid="docs-btn"
+        >
+          <Icon
+            name="heroicons:identification"
+            size="16"
+          />
+          {{ t('header.docs') }}
+        </NuxtLink>
       </template>
 
       <UiLanguagePicker class="hidden xl:flex" />
@@ -183,6 +194,18 @@
                 >
                   {{ todoStore.overdueCount }}
                 </span>
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                to="/docs"
+                data-testid="mobile-docs-btn"
+              >
+                <Icon
+                  name="heroicons:identification"
+                  size="16"
+                />
+                {{ t('header.docs') }}
               </NuxtLink>
             </li>
             <li v-if="user?.isAdmin">

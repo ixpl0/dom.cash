@@ -1,5 +1,5 @@
 import type { NotificationEvent } from '~~/shared/types/i18n'
-import { formatNotificationMessage, getReconnectDelay, getStaleStores, parseServerMessage } from '~/utils/notifications'
+import { formatNotificationMessage, getReconnectDelay, getStaleStores, isSilentNotification, parseServerMessage } from '~/utils/notifications'
 
 const STALE_AFTER_MS = 15 * 60 * 1000
 const REFRESH_CHECK_MS = 3000
@@ -13,6 +13,7 @@ export default defineNuxtPlugin({
     const { toast } = useToast()
     const budgetStore = useBudgetStore()
     const todoStore = useTodoStore()
+    const docsStore = useDocsStore()
 
     let eventSource: EventSource | null = null
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined
@@ -37,6 +38,7 @@ export default defineNuxtPlugin({
         budgetStore.markStale()
       }
       todoStore.markStale()
+      docsStore.markStale()
     }
 
     const handleConnected = (): void => {
@@ -51,7 +53,9 @@ export default defineNuxtPlugin({
     }
 
     const handleNotification = (notification: NotificationEvent): void => {
-      toast({ message: formatNotificationMessage(notification, $i18n.t) })
+      if (!isSilentNotification(notification)) {
+        toast({ message: formatNotificationMessage(notification, $i18n.t) })
+      }
 
       const shownBudgetOwnerId = watchedBudget ? budgetStore.data?.user.id ?? null : null
       const staleStores = getStaleStores(notification, shownBudgetOwnerId)
@@ -60,6 +64,9 @@ export default defineNuxtPlugin({
       }
       if (staleStores.todo) {
         todoStore.markStale()
+      }
+      if (staleStores.docs) {
+        docsStore.markStale()
       }
     }
 
@@ -110,6 +117,9 @@ export default defineNuxtPlugin({
       if (todoStore.lastLoadAt !== null && todoStore.lastLoadAt < staleBefore) {
         todoStore.markStale()
       }
+      if (docsStore.lastLoadAt !== null && docsStore.lastLoadAt < staleBefore) {
+        docsStore.markStale()
+      }
     }
 
     const refreshStaleData = async (): Promise<void> => {
@@ -124,6 +134,7 @@ export default defineNuxtPlugin({
           await budgetStore.refreshIfStale()
         }
         await todoStore.refreshIfStale()
+        await docsStore.refreshIfStale()
       }
       finally {
         isRefreshing = false

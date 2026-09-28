@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { requireAuth } from '~~/server/utils/session'
 import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
+import { deleteFolderFiles, listOwnedFolderIds } from '~~/server/services/docs/folders'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {
@@ -38,7 +39,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: ERROR_KEYS.CANNOT_DELETE_ADMIN })
   }
 
+  const folderIds = await listOwnedFolderIds(userId, event)
+
   await db.delete(user).where(eq(user.id, userId))
+  await deleteFolderFiles(folderIds, event)
 
   return { success: true }
 })

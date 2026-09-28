@@ -51,6 +51,17 @@
                 />
                 {{ t('home.goToTodo') }}
               </NuxtLink>
+              <NuxtLink
+                to="/docs"
+                class="btn btn-outline btn-lg gap-2"
+                data-testid="go-to-docs-btn"
+              >
+                <Icon
+                  name="heroicons:identification"
+                  size="24"
+                />
+                {{ t('home.goToDocs') }}
+              </NuxtLink>
             </template>
 
             <template v-else>
