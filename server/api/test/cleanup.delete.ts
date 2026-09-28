@@ -1,6 +1,6 @@
 import { inArray, or, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, emailVerificationCode, entry, month, plan, session, todo, todoShare, user } from '~~/server/db/schema'
+import { appSettings, budgetShare, emailVerificationCode, entry, month, plan, session, todo, todoShare, user } from '~~/server/db/schema'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { isTestMode } from '~~/server/utils/test-mode'
 
@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
       db.delete(session).where(inArray(session.userId, testUserIds)),
       db.delete(emailVerificationCode).where(sql`${emailVerificationCode.email} GLOB ${TEST_EMAIL_PATTERN}`),
       db.delete(user).where(isTestUser),
+      db.delete(appSettings),
     ])
 
     return { message: 'Test data cleaned up successfully' }

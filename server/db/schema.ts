@@ -203,3 +203,15 @@ export const todoShare = sqliteTable(
 
 export type TodoShare = typeof todoShare.$inferSelect
 export type NewTodoShare = typeof todoShare.$inferInsert
+
+export const appSettings = sqliteTable(
+  'app_settings',
+  {
+    id: integer('id').primaryKey(),
+    registrationOpen: integer('registration_open', { mode: 'boolean' }).notNull().default(true),
+    registrationOpenUntil: integer('registration_open_until', { mode: 'timestamp' }),
+  },
+  t => [
+    check('ck_app_settings_single_row', sql`${t.id} = 1`),
+  ],
+)

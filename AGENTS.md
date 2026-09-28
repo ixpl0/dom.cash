@@ -99,11 +99,12 @@
   * `public/` — Tests for public pages
   * `authenticated/` — Tests for authenticated pages (budget/, todo/)
   * `mobile/` — Phone layout tests (Pixel 7 project)
+  * `admin/` — Admin tests that change settings every test shares (`admin` project, runs after the others)
   * `helpers/` — Test helpers (auth, confirmation, budget-setup, wait-for-hydration, text, users)
   * `fixtures.ts` — Test fixtures (one registered user per worker)
   * `fixtures/budgets/` — JSON budget fixtures for import tests
   * `constants.ts` — Test constants
-  * `global-setup.ts` / `global-teardown.ts` — Clean `.auth/` before a run and delete test users after it
+  * `global-setup.ts` / `global-teardown.ts` — Clean `.auth/` before a run, delete test users and reset `app_settings` after it
   * `server.ts` — Starts the e2e build: recreates the local D1 in `.wrangler/e2e`, applies migrations, runs `wrangler dev`
 * `FOLLOWUPS.md` — Architecture review and maintenance backlog
 * `PROJECT_REVIEW.md` — Bug review (P1/P2 items)
@@ -122,6 +123,7 @@
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
   * The session is restored only during server rendering (`app/plugins/auth.server.ts`). The browser keeps that user, sign-in updates it with `setUser`, logout reloads the app.
   * Sign-in, registration and password reset requests live in `useAuth`; `app/pages/auth.vue` only switches steps and shows messages. Validate fields with `getAuthFieldErrors` (`app/utils/auth-validation.ts`), which uses the schemas from `shared/schemas/auth.ts` that the server checks too.
+  * Admins close and open registration on the metrics page, or open it for `TEMPORARY_REGISTRATION_MINUTES`; the state lives in the single-row `app_settings` table (`server/services/auth/registration.ts`), and without that row registration is open. Every route that creates a user (email code, direct registration, first Google sign-in) calls `assertRegistrationOpen`; the sign-in page shows a notice instead of the register button, and existing users sign in as usual.
 
 ## Code Style (required)
 
@@ -145,9 +147,10 @@
   * `pnpm test:e2e` runs against a production-like build (`nuxt build --envName e2e` into `.output-e2e`) served by `wrangler dev` on port 8787, with a fresh local D1 in `.wrangler/e2e` on every run. `playwright.dev.config.ts` targets the dev server instead.
   * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
   * Desktop Chrome runs `public/` and `authenticated/`; the `mobile` project (Pixel 7) runs `tests/e2e/mobile/`, which covers the mobile menu and cards. Tests retry only on CI.
+  * The `admin` project runs `tests/e2e/admin/` only after all other projects pass, because its tests close registration that every worker needs to sign up. `grantAdmin` (`/api/test/grant-admin`) makes the worker user an admin; the tests open registration again after themselves.
   * Do not edit files or run Nuxt commands (typecheck, prepare, build) while `pnpm test:e2e` runs: `wrangler dev` rebuilds the worker and requests in flight fail with 503.
   * The e2e worker has no rates API key, so its only exchange rates are the ones the migrations seed: monthly up to 2025-08-01 (`0002_seed_currency_rates.sql`, with the August set replaced by `0003_fix_august_2025_rates.sql`). Months after that, including the 2099 fixtures, use the 2025-08-01 set: compute expected conversions from it (USD 1, EUR 0.875509).
-* **Test structure**: `tests/e2e/` with `public/` for public pages, `authenticated/` for pages requiring auth and `mobile/` for the phone layout
+* **Test structure**: `tests/e2e/` with `public/` for public pages, `authenticated/` for pages requiring auth, `mobile/` for the phone layout and `admin/` for admin settings
 * **Element Selection**: Always use `data-testid` attributes for element selection in tests (for future internationalization support)
   * Use `page.getByTestId('element-id')` instead of text-based selectors
   * Never use `getByRole`, `getByText`, or other text-dependent selectors

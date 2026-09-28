@@ -170,7 +170,9 @@ const deleteUser = async (targetUser: AdminUser): Promise<void> => {
       {{ t('metrics.dashboardTitle') }}
     </h1>
 
-    <div class="bg-base-100 p-4 sm:p-6 rounded-lg shadow-md border border-base-300 animate-fade-in-up-delayed">
+    <MetricsRegistrationSwitch />
+
+    <div class="bg-base-100 p-4 sm:p-6 rounded-lg shadow-md border border-base-300 animate-fade-in-up-delayed-2">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <h2 class="text-xl font-semibold">
           {{ t('metrics.usersTitle') }}

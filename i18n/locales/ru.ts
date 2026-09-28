@@ -60,6 +60,8 @@ export default {
     passwordResetSuccess: 'Пароль успешно сброшен',
     codeAlreadySent: 'Код уже был отправлен. Повторный запрос возможен через {time}.',
     codeAlreadySentTime: '{count} минуту | {count} минуты | {count} минут',
+    registrationClosedTitle: 'Регистрация пока закрыта',
+    registrationClosedText: 'Желающих стало больше, чем позволяет бесплатный хостинг. Знакомы с автором — попросите открыть регистрацию. Уже есть аккаунт — входите как обычно.',
   },
 
   home: {
@@ -449,6 +451,13 @@ export default {
     deleteError: 'Не удалось удалить пользователя',
     impersonateButton: 'Посмотреть сайт от имени пользователя',
     impersonateError: 'Не удалось включить режим просмотра',
+    registrationTitle: 'Регистрация новых пользователей',
+    registrationOpen: 'Открыта для всех',
+    registrationClosed: 'Закрыта: новые посетители видят объявление',
+    registrationClosesIn: 'Открыта ещё {time}, потом закроется сама',
+    registrationToggle: 'Регистрация открыта',
+    registrationOpenFor: 'Открыть на {count} минуту | Открыть на {count} минуты | Открыть на {count} минут',
+    registrationUpdateError: 'Не удалось изменить регистрацию',
   },
 
   currencies: currenciesRu,
@@ -552,6 +561,7 @@ export default {
     cannot_share_with_yourself: 'Нельзя поделиться с самим собой',
     already_shared: 'Бюджет уже доступен этому пользователю',
     direct_registration_disabled: 'Прямая регистрация отключена. Используйте подтверждение по email.',
+    registration_closed: 'Регистрация пока закрыта',
     google_oauth_not_configured: 'Google OAuth не настроен',
     google_auth_failed: 'Ошибка аутентификации Google',
     failed_to_authenticate: 'Не удалось аутентифицировать пользователя',

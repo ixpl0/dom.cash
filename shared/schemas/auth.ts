@@ -19,3 +19,15 @@ export const authSchema = z.object({
   username: emailSchema,
   password: passwordSchema,
 })
+
+export const TEMPORARY_REGISTRATION_MINUTES = 15
+
+export const REGISTRATION_MODES = ['open', 'closed', 'temporary'] as const
+
+export const registrationModeSchema = z.enum(REGISTRATION_MODES)
+
+export const registrationUpdateSchema = z.object({
+  mode: registrationModeSchema,
+})
+
+export type RegistrationMode = z.infer<typeof registrationModeSchema>

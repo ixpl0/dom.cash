@@ -42,5 +42,11 @@ export default defineConfig({
       testMatch: '**/mobile/**',
       use: { ...devices['Pixel 7'] },
     },
+    {
+      name: 'admin',
+      testMatch: '**/admin/**',
+      dependencies: ['chromium-public', 'chromium', 'mobile'],
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 })

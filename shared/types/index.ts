@@ -31,6 +31,11 @@ export interface AdminUsersResponse {
   limit: number
 }
 
+export interface RegistrationState {
+  isOpen: boolean
+  closesInSeconds: number | null
+}
+
 export * from './export-import'
 export * from './recurrence'
 export * from './todo'

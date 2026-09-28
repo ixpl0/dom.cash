@@ -59,6 +59,8 @@ export default {
     passwordResetSuccess: 'Password reset successfully',
     codeAlreadySent: 'Code was already sent. You can request a new one in {time}.',
     codeAlreadySentTime: '{count} minute | {count} minutes',
+    registrationClosedTitle: 'Sign-ups are closed for now',
+    registrationClosedText: 'More people want to join than free hosting allows. Know the author? Ask them to open sign-ups. Already have an account? Sign in as usual.',
   },
 
   home: {
@@ -448,6 +450,13 @@ export default {
     deleteError: 'Failed to delete user',
     impersonateButton: 'View the site as this user',
     impersonateError: 'Failed to start view-as mode',
+    registrationTitle: 'New sign-ups',
+    registrationOpen: 'Open to everyone',
+    registrationClosed: 'Closed: new visitors see a notice',
+    registrationClosesIn: 'Open for another {time}, then closes by itself',
+    registrationToggle: 'Sign-ups are open',
+    registrationOpenFor: 'Open for {count} minute | Open for {count} minutes',
+    registrationUpdateError: 'Failed to change sign-ups',
   },
 
   currencies: currenciesEn,
@@ -551,6 +560,7 @@ export default {
     cannot_share_with_yourself: 'Cannot share with yourself',
     already_shared: 'Budget is already shared with this user',
     direct_registration_disabled: 'Direct registration is disabled. Use email verification instead.',
+    registration_closed: 'Sign-ups are closed for now',
     google_oauth_not_configured: 'Google OAuth not configured',
     google_auth_failed: 'Google authentication failed',
     failed_to_authenticate: 'Failed to authenticate user',

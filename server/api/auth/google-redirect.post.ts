@@ -7,6 +7,7 @@ import { useDatabase } from '~~/server/db'
 import { user } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { secureLog } from '~~/server/utils/secure-logger'
+import { assertRegistrationOpen } from '~~/server/services/auth/registration'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import {
   clearGoogleOAuthState,
@@ -116,6 +117,8 @@ export default defineEventHandler(async (event) => {
         }
       }
       else {
+        await assertRegistrationOpen(event)
+
         authenticatedUser = await createGoogleUser(
           googleUserInfo.email,
           googleUserInfo.id,

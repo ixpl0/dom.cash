@@ -46,6 +46,7 @@ export const ERROR_KEYS = {
   CANNOT_SHARE_WITH_YOURSELF: 'serverErrors.cannot_share_with_yourself',
   ALREADY_SHARED: 'serverErrors.already_shared',
   DIRECT_REGISTRATION_DISABLED: 'serverErrors.direct_registration_disabled',
+  REGISTRATION_CLOSED: 'serverErrors.registration_closed',
   GOOGLE_OAUTH_NOT_CONFIGURED: 'serverErrors.google_oauth_not_configured',
   GOOGLE_AUTH_FAILED: 'serverErrors.google_auth_failed',
   FAILED_TO_AUTHENTICATE: 'serverErrors.failed_to_authenticate',

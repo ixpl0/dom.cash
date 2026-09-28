@@ -28,6 +28,14 @@ export const cleanupUserData = async (request: APIRequestContext) => {
   return response
 }
 
+export const grantAdmin = async (request: APIRequestContext): Promise<void> => {
+  const response = await request.post(`${BASE_URL}/api/test/grant-admin`)
+
+  if (!response.ok()) {
+    throw new Error(`Granting admin failed with status ${response.status()}: ${await response.text()}`)
+  }
+}
+
 export const logout = async (page: Page): Promise<void> => {
   await page.getByTestId('user-dropdown').click()
   const reloaded = page.waitForEvent('load')

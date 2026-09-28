@@ -10,6 +10,27 @@
           {{ showForgotPasswordStep ? t('auth.resetPassword') : t('auth.welcome') }}
         </h2>
 
+        <div
+          v-if="isRegistrationClosed && !showVerificationStep && !showForgotPasswordStep"
+          role="status"
+          class="alert alert-info alert-soft items-start mb-4"
+          data-testid="registration-closed-notice"
+        >
+          <Icon
+            name="heroicons:information-circle"
+            size="24"
+            class="shrink-0"
+          />
+          <div class="space-y-1">
+            <p class="font-semibold">
+              {{ t('auth.registrationClosedTitle') }}
+            </p>
+            <p class="text-sm">
+              {{ t('auth.registrationClosedText') }}
+            </p>
+          </div>
+        </div>
+
         <form
           v-if="!showVerificationStep && !showForgotPasswordStep"
           class="space-y-4"
@@ -91,6 +112,7 @@
             </button>
 
             <button
+              v-if="!isRegistrationClosed"
               type="button"
               class="btn btn-outline w-full"
               :disabled="isLoading"
@@ -392,6 +414,8 @@ const { formatError } = useServerError()
 const { toast } = useToast()
 
 const { data: authConfig } = await useFetch('/api/auth/config')
+
+const isRegistrationClosed = computed(() => authConfig.value?.registrationOpen === false)
 
 const formData = ref({
   username: '',

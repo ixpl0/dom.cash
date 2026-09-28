@@ -4,6 +4,7 @@ import { parseBody } from '~~/server/utils/validation'
 import { createSession, setAuthCookie, hashPassword, createUserInDb, findUser } from '~~/server/utils/auth'
 import { emailSchema, passwordSchema, verificationCodeSchema } from '~~/shared/schemas/auth'
 import { verifyCode, throwVerifyCodeError, VERIFICATION_CONFIG } from '~~/server/utils/verification'
+import { assertRegistrationOpen } from '~~/server/services/auth/registration'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 const verifyCodeSchema = z.object({
@@ -14,6 +15,8 @@ const verifyCodeSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const { email, code, password } = await parseBody(event, verifyCodeSchema)
+
+  await assertRegistrationOpen(event)
 
   const existingUser = await findUser(email, event)
 
