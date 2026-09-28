@@ -29,8 +29,6 @@ declare global {
 
 export interface CloudflareEnv {
   DB: D1Database
-  RESEND_API_KEY?: string
-  NUXT_PUBLIC_ENVIRONMENT?: string
 }
 
 export interface CloudflareContext {

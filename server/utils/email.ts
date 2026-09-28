@@ -89,7 +89,7 @@ export const sendVerificationEmail = async (params: EmailParams): Promise<void> 
     return
   }
 
-  const resendApiKey = event.context.cloudflare?.env?.RESEND_API_KEY
+  const resendApiKey = process.env.RESEND_API_KEY
 
   if (!resendApiKey) {
     throw createError({ statusCode: 500, message: ERROR_KEYS.EMAIL_NOT_CONFIGURED })

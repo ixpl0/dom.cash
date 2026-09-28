@@ -163,12 +163,9 @@ Visit `http://localhost:3000`
 
 ### Environment Variables
 
-Local development reads variables from two files:
+The server reads every setting from `process.env`. Locally `nuxt dev` fills it from `.env` (see `.env.example`): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `OPENEXCHANGERATES_APP_ID`, `RESEND_API_KEY`, `DISABLE_EMAIL_VERIFICATION`. In development codes are logged instead of emailed, so `RESEND_API_KEY` is only needed on deployed Workers.
 
-- `.env` — read by `nuxt dev` into `process.env`: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `OPENEXCHANGERATES_APP_ID`, `DISABLE_EMAIL_VERIFICATION`.
-- `.dev.vars` — the Cloudflare environment of the Worker: `RESEND_API_KEY`.
-
-On deployed Workers all of them are secrets (`wrangler secret put NAME`). Workers expose secrets through `process.env` because `nodejs_compat` is enabled in `wrangler.toml`.
+On deployed Workers the settings are secrets (`wrangler secret put NAME`). Workers expose secrets through `process.env` because `nodejs_compat` is enabled in `wrangler.toml`.
 
 #### DISABLE_EMAIL_VERIFICATION
 

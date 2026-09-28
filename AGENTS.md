@@ -7,6 +7,7 @@
 * **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
 * **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
 * **Deployment**: Cloudflare Workers with D1 database.
+* **Settings**: the server reads secrets and flags from `process.env` (`.env` locally, see `.env.example`; Worker secrets when deployed, exposed through `nodejs_compat`). Only bindings such as `DB` come from `event.context.cloudflare.env`.
 * Commands:
   * `pnpm i`
   * `pnpm run db:migrate` (local) / `pnpm run db:migrate:test` (remote) / `pnpm run db:migrate:prod` (production)
