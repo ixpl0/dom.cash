@@ -145,3 +145,30 @@ test('importBudget keeps the plans of a file in the same main currency without r
   assert.equal(result.success, true)
   assert.deepEqual(readPlans(database), { '2026-6': 1000 })
 })
+
+test('changeMainCurrency refuses and changes nothing when a planned month has no rate for the new currency', async (context) => {
+  pinClock(context)
+  const database = await createBudget(
+    [{ year: 2026, month: 6, plannedBalanceChange: 1000 }],
+    [{ date: '2026-08-01', rates: { USD: 1, EUR: 0.9 } }],
+  )
+
+  await assert.rejects(changeMainCurrency(OWNER_ID, 'GEL', database.event), { statusCode: 409 })
+
+  assert.equal(readMainCurrency(database), 'USD')
+  assert.deepEqual(readPlans(database), { '2026-6': 1000 })
+})
+
+test('importBudget refuses a file whose plans cannot be converted and imports nothing', async (context) => {
+  pinClock(context)
+  const database = await createBudget([], [{ date: '2026-08-01', rates: { USD: 1, EUR: 0.9 } }])
+  const file = {
+    ...createImportFile('GEL', [{ year: 2026, month: 6, plannedBalanceChange: 270, comment: null }]),
+    months: [{ year: 2026, month: 6, entries: [{ kind: 'balance' as const, description: 'Cash', amount: 100, currency: 'GEL' }] }],
+  }
+
+  await assert.rejects(importBudget(OWNER_ID, file, { strategy: 'skip' }, database.event), { statusCode: 409 })
+
+  assert.deepEqual(readPlans(database), {})
+  assert.equal(Number(database.sqlite.prepare('SELECT count(*) AS total FROM month').get()?.total), 0)
+})

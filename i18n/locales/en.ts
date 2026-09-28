@@ -568,6 +568,7 @@ export default {
     no_permission_update_plan: 'No permission to update plan for this month',
     failed_to_update_plan: 'Failed to update plan',
     cannot_plan_past_month: 'Cannot edit plan for a past month',
+    no_rate_to_convert_plans: 'There is no exchange rate to convert the plans into the other currency, so nothing was changed',
     cannot_impersonate_yourself: 'You cannot view the site as yourself',
     impersonation_read_only: 'View-as mode is read-only: changes are not allowed',
   },

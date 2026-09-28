@@ -569,6 +569,7 @@ export default {
     no_permission_update_plan: 'Нет прав на изменение плана для этого месяца',
     failed_to_update_plan: 'Не удалось обновить план',
     cannot_plan_past_month: 'Нельзя редактировать план для прошедшего месяца',
+    no_rate_to_convert_plans: 'Нет курса, чтобы пересчитать планы в другую валюту, поэтому ничего не изменено',
     cannot_impersonate_yourself: 'Нельзя смотреть сайт от имени самого себя',
     impersonation_read_only: 'Режим просмотра от имени пользователя: изменения запрещены',
   },

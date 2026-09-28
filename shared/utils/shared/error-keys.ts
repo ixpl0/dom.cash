@@ -63,6 +63,7 @@ export const ERROR_KEYS = {
   NO_PERMISSION_UPDATE_PLAN: 'serverErrors.no_permission_update_plan',
   FAILED_TO_UPDATE_PLAN: 'serverErrors.failed_to_update_plan',
   CANNOT_PLAN_PAST_MONTH: 'serverErrors.cannot_plan_past_month',
+  NO_RATE_TO_CONVERT_PLANS: 'serverErrors.no_rate_to_convert_plans',
   CANNOT_IMPERSONATE_YOURSELF: 'serverErrors.cannot_impersonate_yourself',
   IMPERSONATION_READ_ONLY: 'serverErrors.impersonation_read_only',
 } as const

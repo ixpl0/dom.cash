@@ -1,6 +1,6 @@
 import type { BudgetEntry } from '~~/shared/types/budget'
 
-const hasValidRate = (exchangeRates: Record<string, number>, currency: string): boolean => {
+export const hasValidRate = (exchangeRates: Record<string, number>, currency: string): boolean => {
   const rate = exchangeRates[currency]
   return rate !== undefined && Number.isFinite(rate) && rate > 0
 }

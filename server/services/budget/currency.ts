@@ -1,11 +1,13 @@
 import { eq, sql } from 'drizzle-orm'
+import { createError } from 'h3'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { plan, user } from '~~/server/db/schema'
 import { loadExchangeRates } from '~~/server/services/budget/rates'
 import { chunkArray, D1_MAX_VARIABLES_PER_STATEMENT } from '~~/server/utils/d1-limits'
 import { MAX_AMOUNT } from '~~/shared/schemas/common'
-import { convertAmount } from '~~/shared/utils/budget/budget'
+import { convertAmount, hasValidRate } from '~~/shared/utils/budget/budget'
+import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 interface PlanAmount {
   year: number
@@ -38,6 +40,17 @@ export const convertPlansToCurrency = async <T extends PlanAmount>(
   }
 
   const getExchangeRates = await loadExchangeRates(plansWithAmounts, event)
+  const hasRatesForEveryPlan = plansWithAmounts.every(({ year, month }) => {
+    const { rates } = getExchangeRates(year, month)
+    return hasValidRate(rates, fromCurrency) && hasValidRate(rates, toCurrency)
+  })
+
+  if (!hasRatesForEveryPlan) {
+    throw createError({
+      statusCode: 409,
+      message: ERROR_KEYS.NO_RATE_TO_CONVERT_PLANS,
+    })
+  }
 
   return plans.map(planRow => hasAmount(planRow)
     ? {

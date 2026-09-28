@@ -47,7 +47,7 @@
   * **UI components** (`app/components/ui/`): no business logic, only presentation. They translate their own fixed texts with `useI18n()`; pass data, texts that depend on the context (such as tooltips that differ between the budget and the landing page) and callbacks for any logic as props.
   * **Modals** are built on `UiDialog`: pass `title` (or the `title` slot) and `close-button-test-id` instead of drawing the heading and the close button.
   * **Back button & Escape**: every overlay or edit mode must close on browser/mobile "back" before any page navigation. Register it with `useBackHandler(isEnabled, onBack)` (`app/composables/shared/useBackHandler.ts`): the latest enabled handler wins, `onBack` receives `'history'` or `'escape'`. `UiDialog` registers itself (so the confirmation modal treats back as cancel), DaisyUI focus dropdowns use `useDropdownBackHandler`. Ask via `useUnsavedChanges().confirmDiscardChanges` before discarding user input. History syncing lives in `app/utils/back-handlers.ts`.
-* **State Management**: Pinia stores in `app/stores/`
+* **State Management**: Pinia stores in `app/stores/`. Keep other shared state in `useState` (as `useToast` does): a module-level `ref` is shared by every request the server renders, so it may only hold state that is written in the browser.
 * **i18n**: @nuxtjs/i18n with `strategy: 'no_prefix'`. Locales: `en`, `ru`. Files in `i18n/locales/` directory.
   * `useI18n()` works only at the top of a component `setup`. Code that stores or plugins may call uses `useT()` (`app/utils/i18n.ts`), which reads the global `$i18n`.
   * Russian messages with a count list three forms, `one | few | many` (`{count} минуту | {count} минуты | {count} минут`); `i18n/plural-rules.ts` picks the form.
@@ -112,7 +112,7 @@
 
 * **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
   * The store keeps months newest first: sort them with `sortMonthsNewestFirst` (`shared/utils/budget/month-helpers.ts`) and replace changed months instead of copying the whole budget.
-  * Plans are whole numbers in the owner's main currency: `convertPlansToCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes and when a file kept in another main currency is imported.
+  * Plans are whole numbers in the owner's main currency: `convertPlansToCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes and when a file kept in another main currency is imported, and refuses with `NO_RATE_TO_CONVERT_PLANS` (nothing is changed) when a planned month has no rate for either currency.
   * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
 * **Budget Sharing**: Share budgets with other users (read/write access)
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
