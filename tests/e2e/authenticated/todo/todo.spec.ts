@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
-import { cleanupUserData } from '../../helpers/auth'
+import { cleanupUserData, registerUser } from '../../helpers/auth'
+import { createTestEmail } from '../../helpers/users'
 
 test.describe('Todo page', () => {
   test.beforeEach(async ({ page }) => {
@@ -111,6 +112,8 @@ test.describe('Todo page', () => {
   })
 
   test('should toggle todo completion', async ({ page }) => {
+    await page.getByTestId('todo-hide-completed-toggle').uncheck()
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 
@@ -403,5 +406,41 @@ test.describe('Todo page', () => {
 
     const stateAfterReload = await hideToggleAfterReload.isChecked()
     expect(stateAfterReload).toBe(stateAfterClick)
+  })
+
+  test('lets the owner remove a participant who stopped sharing their budget', async ({ page, request, browser, workerCredentials }) => {
+    const friendContext = await browser.newContext()
+    const friendPage = await friendContext.newPage()
+    const friendEmail = createTestEmail('friend')
+    await registerUser(friendPage, friendEmail, 'TestPassword123!')
+
+    const shareResponse = await friendContext.request.post('/api/budget/shares', { data: { username: workerCredentials.email, access: 'read' } })
+    expect(shareResponse.ok()).toBe(true)
+    const share: { id: string } = await shareResponse.json()
+
+    const connections: Array<{ id: string, username: string }> = await (await request.get('/api/todo/connections')).json()
+    const friendId = connections.find(({ username }) => username === friendEmail)?.id ?? ''
+    const todoResponse = await request.post('/api/todo', { data: { content: 'Plan the trip', sharedWithUserIds: [friendId] } })
+    expect(todoResponse.ok()).toBe(true)
+
+    const revokeResponse = await friendContext.request.delete(`/api/budget/shares/${share.id}`)
+    expect(revokeResponse.ok()).toBe(true)
+    await friendContext.close()
+
+    await page.reload()
+    await waitForHydration(page)
+    const card = page.getByTestId('todo-card').filter({ hasText: 'Plan the trip' })
+    await expect(card.getByTestId('todo-card-shared-badge')).toHaveCount(1)
+    await card.getByTestId('todo-card-edit-button').click()
+
+    const modal = page.getByTestId('todo-modal')
+    const shareOption = modal.getByTestId('todo-modal-share-option')
+    await expect(shareOption).toHaveCount(1)
+    await expect(shareOption).toBeChecked()
+    await shareOption.uncheck()
+    await modal.getByTestId('todo-modal-save-button').click()
+
+    await expect(modal).not.toBeVisible()
+    await expect(card.getByTestId('todo-card-shared-badge')).toHaveCount(0)
   })
 })

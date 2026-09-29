@@ -2,11 +2,11 @@ import { and, count, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm
 import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { todo, todoShare, user } from '~~/server/db/schema'
-import { resolveConnections } from '~~/server/services/connections'
+import { resolveConnections, resolveSharedUsers } from '~~/server/services/connections'
 import { sendNotification, type NotificationType } from '~~/server/services/notifications'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import type { User } from '~~/shared/types'
-import type { CreateTodoPayload, TodoConnection, TodoListItem, ToggleResult, UpdateTodoPayload } from '~~/shared/types/todo'
+import type { CreateTodoPayload, TodoCompletionResult, TodoConnection, TodoListItem, UpdateTodoPayload } from '~~/shared/types/todo'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 import { PLAIN_DATE_LENGTH } from '~~/shared/utils/shared/dates'
 import { calculateNextDate, formatDateForDb } from '~~/shared/utils/recurrence'
@@ -185,7 +185,7 @@ export const updateTodo = async (actor: User, todoId: string, payload: UpdateTod
 
   const newSharedWith = payload.sharedWithUserIds === undefined
     ? null
-    : await resolveConnections(actor.id, payload.sharedWithUserIds, event)
+    : await resolveSharedUsers(actor.id, payload.sharedWithUserIds, access.sharedWith, event)
   const recurrence = payload.recurrence === undefined ? access.todoRow.recurrence : payload.recurrence
   const updatedRow: TodoRow = {
     ...access.todoRow,
@@ -212,28 +212,31 @@ export const updateTodo = async (actor: User, todoId: string, payload: UpdateTod
   return toTodoListItem(updatedRow, access.ownerUsername, newSharedWith ?? access.sharedWith, actor.id)
 }
 
-export const toggleTodo = async (actor: User, todoId: string, event: H3Event): Promise<ToggleResult> => {
+export const setTodoCompletion = async (actor: User, todoId: string, isCompleted: boolean, event: H3Event): Promise<TodoCompletionResult> => {
   const access = await getTodoAccess(todoId, actor.id, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE, event)
   const { todoRow } = access
+  const isRecurring = todoRow.recurrence !== null
   const now = new Date()
   const db = useDatabase(event)
 
-  if (todoRow.recurrence) {
+  if (todoRow.recurrence && isCompleted) {
     const baseDate = todoRow.plannedDate ? new Date(todoRow.plannedDate) : now
     const plannedDate = formatDateForDb(calculateNextDate(todoRow.recurrence, baseDate))
 
     await db.update(todo).set({ plannedDate, isCompleted: false, updatedAt: now }).where(eq(todo.id, todoId))
     await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', false)
 
-    return { isCompleted: false, plannedDate, isRecurring: true }
+    return { isCompleted: false, plannedDate, isRecurring }
   }
 
-  const isCompleted = !todoRow.isCompleted
+  if ((todoRow.isCompleted ?? false) === isCompleted) {
+    return { isCompleted, isRecurring }
+  }
 
   await db.update(todo).set({ isCompleted, updatedAt: now }).where(eq(todo.id, todoId))
   await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', isCompleted)
 
-  return { isCompleted, isRecurring: false }
+  return { isCompleted, isRecurring }
 }
 
 export const deleteTodo = async (actor: User, todoId: string, event: H3Event): Promise<void> => {

@@ -2,6 +2,7 @@
   <UiTodoCard
     :content="todo.content"
     :is-completed="visualIsCompleted"
+    :is-toggling="todoStore.isToggling(todo.id)"
     :is-overdue="isOverdue"
     :planned-date="todo.plannedDate"
     :recurrence="todo.recurrence"

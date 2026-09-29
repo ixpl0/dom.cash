@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { useDatabase } from '../../server/db'
 import { budgetShare, todo, todoShare, user } from '../../server/db/schema'
-import { countOverdueTodos, createTodo, deleteTodo, listTodos, toggleTodo, updateTodo } from '../../server/services/todo'
+import { countOverdueTodos, createTodo, deleteTodo, listTodos, setTodoCompletion, updateTodo } from '../../server/services/todo'
 import { chunkArray, getRowsPerInsertStatement } from '../../server/utils/d1-limits'
 import type { User } from '../../shared/types'
 import { ERROR_KEYS } from '../../shared/utils/shared/error-keys'
@@ -76,7 +76,7 @@ test('createTodo shares a task with more users than one insert can bind', async 
 test('updateTodo reopens a completed task that becomes recurring', async () => {
   const database = await createDatabaseWithFriends()
   const created = await createTodo(owner, { content: 'Water plants' }, database.event)
-  await toggleTodo(owner, created.id, database.event)
+  await setTodoCompletion(owner, created.id, true, database.event)
 
   const updated = await updateTodo(owner, created.id, { recurrence: { type: 'interval', unit: 'week', value: 1 } }, database.event)
 
@@ -85,7 +85,26 @@ test('updateTodo reopens a completed task that becomes recurring', async () => {
   assert.equal(readTodo(database, created.id)?.isCompleted, 0)
 })
 
-test('toggleTodo moves a recurring task and stores it as not completed', async () => {
+test('setTodoCompletion sets the requested state and leaves a task that already has it untouched', async (context) => {
+  context.mock.timers.enable({ apis: ['Date'], now: new Date('2026-09-29T12:00:00Z') })
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, { content: 'Buy milk' }, database.event)
+  const readUpdatedAt = () => database.sqlite.prepare('SELECT updated_at AS updatedAt FROM todo WHERE id = ?').get(created.id)?.updatedAt
+
+  context.mock.timers.tick(1000)
+  assert.deepEqual(await setTodoCompletion(owner, created.id, true, database.event), { isCompleted: true, isRecurring: false })
+  assert.equal(readUpdatedAt(), Date.parse('2026-09-29T12:00:01Z') / 1000)
+
+  context.mock.timers.tick(1000)
+  assert.deepEqual(await setTodoCompletion(owner, created.id, true, database.event), { isCompleted: true, isRecurring: false })
+  assert.equal(readUpdatedAt(), Date.parse('2026-09-29T12:00:01Z') / 1000)
+  assert.equal(readTodo(database, created.id)?.isCompleted, 1)
+
+  assert.deepEqual(await setTodoCompletion(owner, created.id, false, database.event), { isCompleted: false, isRecurring: false })
+  assert.equal(readTodo(database, created.id)?.isCompleted, 0)
+})
+
+test('setTodoCompletion moves a completed recurring task and stores it as not completed', async () => {
   const database = await createDatabaseWithFriends()
   const created = await createTodo(owner, {
     content: 'Pay rent',
@@ -94,10 +113,25 @@ test('toggleTodo moves a recurring task and stores it as not completed', async (
   }, database.event)
   database.sqlite.prepare('UPDATE todo SET is_completed = 1 WHERE id = ?').run(created.id)
 
-  const result = await toggleTodo(owner, created.id, database.event)
+  const result = await setTodoCompletion(owner, created.id, true, database.event)
 
   assert.deepEqual(result, { isCompleted: false, plannedDate: '2026-09-17T00:00', isRecurring: true })
   assert.deepEqual({ ...readTodo(database, created.id) }, { isCompleted: 0, plannedDate: '2026-09-17T00:00' })
+})
+
+test('setTodoCompletion reopens a recurring task without moving it', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, {
+    content: 'Pay rent',
+    plannedDate: '2026-09-10T00:00',
+    recurrence: { type: 'interval', unit: 'week', value: 1 },
+  }, database.event)
+  database.sqlite.prepare('UPDATE todo SET is_completed = 1 WHERE id = ?').run(created.id)
+
+  const result = await setTodoCompletion(owner, created.id, false, database.event)
+
+  assert.deepEqual(result, { isCompleted: false, isRecurring: true })
+  assert.deepEqual({ ...readTodo(database, created.id) }, { isCompleted: 0, plannedDate: '2026-09-10T00:00' })
 })
 
 test('updateTodo lets a participant edit the task but not its participants', async () => {
@@ -137,6 +171,29 @@ test('updateTodo replaces the participants', async () => {
   assert.deepEqual(readSharedWithIds(database, created.id), ['neighbour'])
 })
 
+test('updateTodo keeps a participant who is no longer a connection until the owner removes them', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, { content: 'Plan trip', sharedWithUserIds: [friend.id] }, database.event)
+  await useDatabase(database.event).delete(budgetShare)
+
+  const updated = await updateTodo(owner, created.id, { content: 'Plan the trip', sharedWithUserIds: [friend.id] }, database.event)
+  assert.equal(updated.content, 'Plan the trip')
+  assert.deepEqual(updated.sharedWith, [{ id: friend.id, username: friend.username }])
+
+  await assert.rejects(updateTodo(owner, created.id, { sharedWithUserIds: [friend.id, stranger.id] }, database.event), {
+    statusCode: 400,
+    message: ERROR_KEYS.INVALID_SHARED_USER,
+  })
+
+  const unshared = await updateTodo(owner, created.id, { sharedWithUserIds: [] }, database.event)
+  assert.deepEqual(unshared.sharedWith, [])
+
+  await assert.rejects(updateTodo(owner, created.id, { sharedWithUserIds: [friend.id] }, database.event), {
+    statusCode: 400,
+    message: ERROR_KEYS.INVALID_SHARED_USER,
+  })
+})
+
 test('deleteTodo is allowed to participants only', async () => {
   const database = await createDatabaseWithFriends()
   const created = await createTodo(owner, { content: 'Plan trip', sharedWithUserIds: [friend.id] }, database.event)
@@ -148,7 +205,7 @@ test('deleteTodo is allowed to participants only', async () => {
 
   await deleteTodo(friend, created.id, database.event)
   assert.equal(database.sqlite.prepare('SELECT count(*) AS total FROM todo_share').get()?.total, 0)
-  await assert.rejects(toggleTodo(owner, created.id, database.event), { statusCode: 404 })
+  await assert.rejects(setTodoCompletion(owner, created.id, true, database.event), { statusCode: 404 })
 })
 
 test('listTodos shows own and shared tasks without the viewer among participants', async () => {

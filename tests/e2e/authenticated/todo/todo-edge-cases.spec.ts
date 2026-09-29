@@ -175,6 +175,8 @@ test.describe('Todo edge cases', () => {
   })
 
   test('should handle todo completion and uncomplete cycle', async ({ page }) => {
+    await page.getByTestId('todo-hide-completed-toggle').uncheck()
+
     const addButton = page.getByTestId('todo-add-button')
     await addButton.click()
 

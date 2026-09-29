@@ -1,4 +1,4 @@
-import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, ToggleResult, OverdueTodoCount } from '~~/shared/types/todo'
+import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, TodoCompletionPayload, TodoCompletionResult, OverdueTodoCount } from '~~/shared/types/todo'
 import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
 import { isTodoOverdue } from '~~/shared/utils/todo'
 import { readServerErrorKey } from '~/utils/server-error'
@@ -184,6 +184,10 @@ export const useTodoStore = defineStore('todo', () => {
       return false
     }
 
+    if (togglingIds.value.has(id)) {
+      return true
+    }
+
     const isRecurring = item.recurrence !== null
     const willBeCompleted = !item.isCompleted
     const shouldAnimateLeave = !isRecurring && willBeCompleted && hideCompleted.value
@@ -200,7 +204,8 @@ export const useTodoStore = defineStore('todo', () => {
     togglingIds.value = new Set([...togglingIds.value, id])
 
     try {
-      const result = await $fetch<ToggleResult>(`/api/todo/${id}/toggle`, { method: 'PUT' })
+      const body: TodoCompletionPayload = { isCompleted: willBeCompleted }
+      const result = await $fetch<TodoCompletionResult>(`/api/todo/${id}/completion`, { method: 'PUT', body })
 
       const elapsed = Date.now() - startTime
       const remainingDelay = Math.max(0, animationDuration - elapsed)

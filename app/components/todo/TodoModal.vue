@@ -55,32 +55,33 @@
         class="form-control mb-6"
       >
         <label
-          v-if="connections.length > 0"
+          v-if="shareOptions.length > 0"
           class="label pb-1"
         >
           <span class="label-text">{{ t('todo.modal.shareLabel') }}</span>
         </label>
         <div
-          v-if="connections.length > 0"
+          v-if="shareOptions.length > 0"
           class="flex flex-col gap-2"
           data-testid="todo-modal-share-select"
         >
           <label
-            v-for="connection in connections"
-            :key="connection.id"
+            v-for="option in shareOptions"
+            :key="option.id"
             class="flex items-center gap-2 cursor-pointer"
           >
             <input
               type="checkbox"
               class="checkbox checkbox-sm"
-              :checked="form.sharedWithUserIds.includes(connection.id)"
-              @change="toggleConnection(connection.id)"
+              :checked="form.sharedWithUserIds.includes(option.id)"
+              data-testid="todo-modal-share-option"
+              @change="toggleSharedUser(option.id)"
             >
-            <span>{{ connection.username }}</span>
+            <span>{{ option.username }}</span>
           </label>
         </div>
         <label
-          v-if="connections.length > 0 && form.sharedWithUserIds.length === 0"
+          v-if="shareOptions.length > 0 && form.sharedWithUserIds.length === 0"
           class="label pt-1"
         >
           <span class="label-text-alt text-base-content/60">
@@ -88,7 +89,7 @@
           </span>
         </label>
         <p class="text-xs text-base-content/50 pt-1">
-          {{ connections.length > 0 ? t('todo.modal.shareHint') : t('todo.modal.noConnections') }}
+          {{ shareOptions.length > 0 ? t('todo.modal.shareHint') : t('todo.modal.noConnections') }}
         </p>
       </div>
 
@@ -120,6 +121,7 @@
 
 <script setup lang="ts">
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
+import type { TodoConnection } from '~~/shared/types/todo'
 import { TODO_CONTENT_MAX_LENGTH, todoFormSchema } from '~~/shared/schemas/todo'
 import { calculateInitialDate, formatDateForDb, isSameRecurrence } from '~~/shared/utils/recurrence'
 
@@ -140,7 +142,6 @@ const isSaving = ref(false)
 const contentInput = ref<HTMLTextAreaElement | null>(null)
 
 const isOpen = computed(() => todoModalsStore.todoModal.isOpen)
-const connections = computed(() => todoStore.connections)
 
 const editingTodo = computed(() => {
   const todoId = todoModalsStore.todoModal.editingTodoId
@@ -149,6 +150,12 @@ const editingTodo = computed(() => {
 
 const isEditing = computed(() => editingTodo.value !== null)
 const isOwner = computed(() => editingTodo.value?.isOwner ?? true)
+
+const shareOptions = computed<TodoConnection[]>(() => {
+  const connectionIds = new Set(todoStore.connections.map(({ id }) => id))
+  const formerConnections = (editingTodo.value?.sharedWith ?? []).filter(participant => !connectionIds.has(participant.id))
+  return [...todoStore.connections, ...formerConnections]
+})
 
 const extractDateOnly = (dateTimeString: string | null | undefined): string =>
   dateTimeString ? dateTimeString.split('T')[0] ?? '' : ''
@@ -187,11 +194,11 @@ const requestClose = async (): Promise<void> => {
   }
 }
 
-const toggleConnection = (connectionId: string): void => {
+const toggleSharedUser = (userId: string): void => {
   const { sharedWithUserIds } = form.value
-  form.value.sharedWithUserIds = sharedWithUserIds.includes(connectionId)
-    ? sharedWithUserIds.filter(userId => userId !== connectionId)
-    : [...sharedWithUserIds, connectionId]
+  form.value.sharedWithUserIds = sharedWithUserIds.includes(userId)
+    ? sharedWithUserIds.filter(sharedUserId => sharedUserId !== userId)
+    : [...sharedWithUserIds, userId]
 }
 
 const computePlannedDate = (): string | null => {

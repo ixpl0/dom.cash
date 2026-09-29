@@ -19,6 +19,10 @@ export const createTodoSchema = z.object({
   sharedWithUserIds: z.array(z.string()).optional(),
 })
 
+export const todoCompletionSchema = z.object({
+  isCompleted: z.boolean(),
+})
+
 export const updateTodoSchema = z.object({
   content: todoContentSchema.optional(),
   plannedDate: plannedDateSchema.nullable().optional(),

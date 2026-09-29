@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import type { createTodoSchema, updateTodoSchema } from '~~/shared/schemas/todo'
+import type { createTodoSchema, todoCompletionSchema, updateTodoSchema } from '~~/shared/schemas/todo'
 import type { RecurrencePattern } from './recurrence'
 
 export interface TodoListItem {
@@ -19,6 +19,8 @@ export type CreateTodoPayload = z.infer<typeof createTodoSchema>
 
 export type UpdateTodoPayload = z.infer<typeof updateTodoSchema>
 
+export type TodoCompletionPayload = z.infer<typeof todoCompletionSchema>
+
 export interface TodoConnection {
   id: string
   username: string
@@ -28,7 +30,7 @@ export interface TodoData {
   items: TodoListItem[]
 }
 
-export interface ToggleResult {
+export interface TodoCompletionResult {
   isCompleted: boolean
   plannedDate?: string
   isRecurring: boolean

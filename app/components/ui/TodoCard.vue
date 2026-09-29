@@ -9,6 +9,7 @@
         <button
           class="todo-check flex-shrink-0 mt-0.5"
           :class="{ 'is-completed': isCompleted, 'is-overdue': isOverdue && !isCompleted }"
+          :aria-disabled="isToggling"
           data-testid="todo-card-checkbox"
           @click="$emit('toggle')"
         >
@@ -125,6 +126,7 @@ import { formatPlainDate, getPlainDateYear } from '~~/shared/utils/shared/dates'
 interface Props {
   content: string
   isCompleted: boolean
+  isToggling: boolean
   isOverdue: boolean
   plannedDate: string | null
   recurrence: RecurrencePattern | null
