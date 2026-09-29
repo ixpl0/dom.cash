@@ -28,7 +28,7 @@
     "release:test": "pnpm run check && pnpm run build && pnpm run db:backup:test && pnpm run db:migrate:test && wrangler deploy --assets .output/public --env=\"\"",
     "release:prod": "pnpm run check && pnpm run build && pnpm run db:backup:prod && pnpm run db:migrate:prod && wrangler deploy --assets .output/public --env=\"production\"",
     "prepare": "husky",
-    "preview:e2e": "nuxt dev --port 8787",
+    "preview:e2e": "nuxt dev --port 8787 --dotenv .env.e2e",
     "build:e2e": "nuxt build --envName e2e",
     "test:e2e": "pnpm run build:e2e && playwright test",
     "test:e2e:dev": "playwright test --config playwright.dev.config.ts",

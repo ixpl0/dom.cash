@@ -68,7 +68,7 @@
   * `pnpm lint` / `pnpm lint:fix` — run ESLint
   * `pnpm test:unit` — run unit tests (Node test runner via tsx, no server needed)
   * `pnpm test:e2e` — build the app in e2e mode and run all Playwright tests against it
-  * `pnpm test:e2e:dev` — run Playwright tests against the dev server (`pnpm preview:e2e`), handy while writing a test
+  * `pnpm test:e2e:dev` — run Playwright tests against the dev server (`pnpm preview:e2e`), handy while writing a test. That server loads `.env.e2e` instead of `.env` (usually there is none), so real keys such as `ANTHROPIC_API_KEY` never reach the tests
   * `pnpm test:e2e:ui` / `pnpm test:e2e:headed` — the same against the dev server, with UI mode / a visible browser
 
 ## Project Structure
