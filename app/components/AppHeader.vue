@@ -278,7 +278,7 @@
       {{ t('header.impersonationBanner', { username: user?.username }) }}
     </span>
     <button
-      class="btn btn-xs btn-circle btn-ghost flex-shrink-0"
+      class="btn btn-xs btn-circle btn-ghost flex-shrink-0 text-warning-content hover:border-transparent hover:bg-warning-content/15"
       :title="t('header.impersonationExit')"
       data-testid="impersonation-exit-btn"
       @click="exitImpersonation"
