@@ -9,7 +9,7 @@
     >
       <button
         type="button"
-        class="group -mx-2 flex w-[calc(100%+1rem)] items-start gap-3 rounded-btn px-2 py-2 text-left transition-colors duration-200 hover:bg-base-300/50"
+        class="group -mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-start gap-3 rounded-btn px-2 py-2 text-left transition-colors duration-200 hover:bg-base-300/50"
         :aria-label="t('docs.document.copyField', { name: field.name })"
         data-testid="docs-field"
         @click="copyField(index)"

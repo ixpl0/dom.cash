@@ -11,7 +11,7 @@
     >
       <button
         type="button"
-        class="block aspect-[4/3] w-full overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-85"
+        class="block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-85"
         :aria-label="image.fileName"
         data-testid="docs-photo-open"
         @click="docsModalsStore.openPhotoViewer(document.id, image.id)"
@@ -83,7 +83,7 @@
     <button
       v-if="canAddPhotos"
       type="button"
-      class="flex aspect-[4/3] w-44 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-base-300 text-base-content/60 transition-colors duration-200 hover:border-primary hover:text-primary sm:w-full"
+      class="flex aspect-[4/3] w-44 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-base-300 text-base-content/60 transition-colors duration-200 hover:border-primary hover:text-primary sm:w-full"
       data-testid="docs-add-photos-button"
       @click="emit('add')"
     >

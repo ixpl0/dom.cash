@@ -19,7 +19,7 @@ export const DOC_IMAGE_MAX_DIMENSION = 100_000
 export const DOC_PREVIEW_MAX_DIMENSION = 2576
 export const DOC_PREVIEW_MAX_VISUAL_TOKENS = 4784
 export const DOC_VISUAL_TOKEN_SIZE = 28
-export const DOC_THUMBNAIL_MAX_DIMENSION = 640
+export const DOC_THUMBNAIL_MAX_DIMENSION = 480
 
 export const DOC_IMAGE_VARIANTS = ['original', 'preview', 'thumbnail'] as const
 

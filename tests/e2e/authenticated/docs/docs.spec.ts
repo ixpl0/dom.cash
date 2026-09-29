@@ -291,13 +291,14 @@ test.describe('Docs', () => {
     await expect(photos.last()).toHaveAttribute('src', `/api/docs/images/${firstImageId}/thumbnail`)
   })
 
-  test('copies the hidden fields from a document card and opens the document from anywhere on it', async ({ page, context, request }) => {
+  test('copies the hidden fields from a document card, shows its photo and opens the document from anywhere else on it', async ({ page, context, request }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     const folder = await createFolderThroughApi(request, 'Andrew')
     const document = await createDocumentThroughApi(request, folder.id, 'Passport', [
       { name: 'Surname', value: 'Ivanov' },
       { name: 'Number', value: '45 12 345678' },
     ])
+    const { imageId } = await uploadImageThroughApi(request, document.id, 'page-1.png')
     await page.goto(`/docs/${folder.id}`)
     await waitForHydration(page)
 
@@ -310,7 +311,19 @@ test.describe('Docs', () => {
     expect(await readClipboardText(page)).toBe('Passport\nSurname: Ivanov\nNumber: 45 12 345678')
     await expect(page).toHaveURL(`/docs/${folder.id}`)
 
-    await card.click({ position: { x: 8, y: 8 } })
+    await card.getByTestId('docs-document-card-photo').click()
+    const viewer = page.getByTestId('docs-photo-viewer')
+    await expect(viewer.getByTestId('docs-photo-viewer-image')).toHaveAttribute('src', `/api/docs/images/${imageId}/original`)
+    await viewer.getByTestId('docs-photo-viewer-close').click()
+    await expect(viewer).not.toBeVisible()
+    await expect(page).toHaveURL(`/docs/${folder.id}`)
+
+    const cardBox = await card.boundingBox()
+    const photosBox = await card.getByTestId('docs-document-card-photos').boundingBox()
+    if (!cardBox || !photosBox) {
+      throw new Error('The document card is not on the screen')
+    }
+    await card.click({ position: { x: cardBox.width - 40, y: photosBox.y - cardBox.y + photosBox.height / 2 } })
     await page.waitForURL(`/docs/${folder.id}/${document.id}`)
     await expect(page.getByTestId('docs-field-value')).toHaveText(['Ivanov', '45 12 345678'])
   })

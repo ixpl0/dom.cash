@@ -1,20 +1,15 @@
 <template>
   <article
-    class="relative rounded-box bg-base-200/50 p-4 transition-colors duration-200 hover:bg-base-200"
+    class="relative rounded-box border-2 border-transparent bg-base-200/50 p-4 transition-colors duration-200 hover:border-base-300 hover:bg-base-200"
     data-testid="docs-document-card"
   >
     <div class="flex items-start justify-between gap-2">
       <NuxtLink
         :to="`/docs/${document.folderId}/${document.id}`"
-        class="group/title inline-flex min-w-0 items-center gap-1 text-lg font-semibold after:absolute after:inset-0 after:content-['']"
+        class="min-w-0 text-lg font-semibold break-words after:absolute after:inset-0 after:content-['']"
         data-testid="docs-document-card-title"
       >
-        <span class="break-words group-hover/title:underline">{{ getDocumentTitle(document.title) }}</span>
-        <Icon
-          name="heroicons:chevron-right"
-          size="16"
-          class="flex-shrink-0 opacity-50 transition-transform duration-200 group-hover/title:translate-x-0.5"
-        />
+        {{ getDocumentTitle(document.title) }}
       </NuxtLink>
       <button
         v-if="document.fields.length > 0"
@@ -34,14 +29,14 @@
 
     <div
       v-if="document.images.length > 0"
-      class="relative z-10 mt-3 flex gap-2 overflow-x-auto pb-1"
+      class="relative z-10 mt-3 flex w-fit max-w-full gap-2 overflow-x-auto pb-1"
       data-testid="docs-document-card-photos"
     >
       <button
         v-for="image in document.images"
         :key="image.id"
         type="button"
-        class="h-20 flex-shrink-0 overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-80"
+        class="h-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-80"
         :aria-label="image.fileName"
         data-testid="docs-document-card-photo"
         @click="docsModalsStore.openPhotoViewer(document.id, image.id)"
