@@ -20,6 +20,12 @@ const fromMonthNumber = (monthNumber: number): MonthPosition => ({
   month: monthNumber % 12,
 })
 
+export const getFollowingMonth = (monthData: MonthPosition): MonthPosition =>
+  fromMonthNumber(toMonthNumber(monthData) + 1)
+
+export const getMonthStartDate = ({ year, month }: MonthPosition): string =>
+  `${year}-${String(month + 1).padStart(2, '0')}-01`
+
 export const getNextMonth = (currentMonths: MonthData[]): MonthPosition => {
   const [latest] = sortMonthsNewestFirst(currentMonths)
   return latest ? fromMonthNumber(toMonthNumber(latest) + 1) : getCurrentMonth()
@@ -56,6 +62,12 @@ export const isCurrentMonth = (monthData: MonthPosition, currentMonth: MonthPosi
 
 export const isPastMonth = (year: number, month: number, currentMonth: MonthPosition = getCurrentMonth()): boolean =>
   toMonthNumber({ year, month }) < toMonthNumber(currentMonth)
+
+const START_BALANCE_GRACE_DAYS = 3
+
+export const isLateToEditStartBalance = (monthData: MonthPosition, now: Date = new Date()): boolean =>
+  isCurrentMonth(monthData, { year: now.getFullYear(), month: now.getMonth() })
+  && now.getDate() > START_BALANCE_GRACE_DAYS
 
 const LATEST_TIME_ZONE_UTC_OFFSET_HOURS = 12
 

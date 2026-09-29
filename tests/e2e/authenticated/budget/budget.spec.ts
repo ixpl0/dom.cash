@@ -65,6 +65,32 @@ test.describe('Budget page isolated tests', () => {
     await expect(months).toHaveCount(1)
   })
 
+  test('should warn in the balance modal of the current month after its first days', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2099-10-03T12:00:00'))
+    await initBudget(page, 'one-month-empty')
+
+    const balanceButton = page.getByTestId('balance-button').first()
+    const modal = page.getByTestId('entry-modal')
+    const notice = modal.getByTestId('entry-modal-notice')
+
+    await balanceButton.click()
+    await expect(modal).toBeVisible()
+    await expect(notice).toHaveCount(0)
+    await modal.getByTestId('modal-close-button').click()
+    await expect(modal).not.toBeVisible()
+
+    await page.clock.setFixedTime(new Date('2099-10-04T09:00:00'))
+    await balanceButton.click()
+    await expect(notice).toBeVisible()
+    await modal.getByTestId('modal-close-button').click()
+    await expect(modal).not.toBeVisible()
+
+    await page.clock.setFixedTime(new Date('2099-11-04T09:00:00'))
+    await balanceButton.click()
+    await expect(modal).toBeVisible()
+    await expect(notice).toHaveCount(0)
+  })
+
   test('should add balance entries to budget through modal', async ({ page }) => {
     await initBudget(page, 'one-month-empty')
 

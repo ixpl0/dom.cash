@@ -279,7 +279,9 @@ export default {
 
     balance: {
       title: 'Balance Sources',
+      titleOnDate: 'Balance on {date}',
       emptyMessage: 'No balance sources yet',
+      lateEditNotice: 'This is the balance on {startDate}. Put new account balances into the balance on {nextStartDate}, and income and expenses into {month}.',
     },
 
     income: {

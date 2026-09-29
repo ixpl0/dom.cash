@@ -8,6 +8,19 @@
     @close="$emit('close')"
   >
     <div
+      v-if="notice"
+      class="alert alert-warning alert-outline mb-4 flex-shrink-0"
+      data-testid="entry-modal-notice"
+    >
+      <Icon
+        name="heroicons:exclamation-triangle"
+        size="24"
+        class="stroke-current shrink-0"
+      />
+      <span>{{ notice }}</span>
+    </div>
+
+    <div
       ref="entriesContainer"
       class="space-y-4 flex-1 overflow-y-auto min-h-0"
     >
@@ -245,12 +258,14 @@ export interface UiEntryModalProps {
   formatDate: (date: string | null | undefined) => string
   getAmountTooltip?: (entry: BudgetEntry) => string | undefined
   totalAmount?: string
+  notice?: string
 }
 
 const props = withDefaults(defineProps<UiEntryModalProps>(), {
   isReadOnly: false,
   getAmountTooltip: undefined,
   totalAmount: undefined,
+  notice: undefined,
 })
 
 const { t } = useI18n()

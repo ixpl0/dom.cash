@@ -1,7 +1,7 @@
 <template>
   <UiEntryModal
     :is-open="isOpen"
-    :title="modalTitle"
+    :title="entryModalTitle"
     :entries="currentEntries"
     :entry-kind="entryModal.entryKind || 'balance'"
     :is-read-only="entryModal.isReadOnly"
@@ -16,6 +16,7 @@
     :format-date="formatDate"
     :get-amount-tooltip="getAmountTooltip"
     :total-amount="totalAmount"
+    :notice="lateEditNotice"
     @close="hide"
     @start-new="startAdd"
     @save-new="addEntry"
@@ -38,10 +39,12 @@ import type { EntryFormData } from '~/composables/budget/useEntryForm'
 import { getEntryErrorKey } from '~/utils/entry-validation'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 import type { BackSource } from '~/utils/back-handlers'
+import { getFollowingMonth, getMonthStartDate, isLateToEditStartBalance, type MonthPosition } from '~~/shared/utils/budget/month-helpers'
+import { formatPlainDate } from '~~/shared/utils/shared/dates'
 
 const modalsStore = useModalsStore()
 const budgetStore = useBudgetStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { formatMoney, formatMoneyRounded } = useMoneyFormat()
 const { formatError } = useServerError()
 const { toast } = useToast()
@@ -125,6 +128,31 @@ const {
   cancelEdit,
   resetForm,
 } = useEntryForm(computed(() => entryModal.value.entryKind), mainCurrency)
+
+const formatMonthStart = (monthPosition: MonthPosition): string =>
+  formatPlainDate(getMonthStartDate(monthPosition), locale.value, { day: 'numeric', month: 'long' })
+
+const entryModalTitle = computed((): string => {
+  const month = currentMonth.value
+  return entryModal.value.entryKind === 'balance' && month
+    ? t('entry.balance.titleOnDate', { date: formatMonthStart(month) })
+    : modalTitle.value
+})
+
+const lateEditNotice = computed((): string | undefined => {
+  const month = currentMonth.value
+  const { entryKind, isReadOnly } = entryModal.value
+
+  if (!isOpen.value || entryKind !== 'balance' || isReadOnly || !month || !isLateToEditStartBalance(month)) {
+    return undefined
+  }
+
+  return t('entry.balance.lateEditNotice', {
+    startDate: formatMonthStart(month),
+    nextStartDate: formatMonthStart(getFollowingMonth(month)),
+    month: budgetStore.monthNames[month.month] ?? '',
+  })
+})
 
 const performAddEntry = async (entryData: EntryFormData) => {
   if (!entryModal.value.monthId || !entryModal.value.entryKind) {

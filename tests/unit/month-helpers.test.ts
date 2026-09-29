@@ -3,12 +3,15 @@ import { test, type TestContext } from 'node:test'
 import type { MonthData } from '../../shared/types/budget'
 import {
   findClosestMonthForCopy,
+  getFollowingMonth,
+  getMonthStartDate,
   getNextMonth,
   getPreviousMonth,
   hasMonthEndedEverywhere,
   isCurrentMonth,
   isFirstMonth,
   isLastMonth,
+  isLateToEditStartBalance,
   isPastMonth,
   sortMonthsNewestFirst,
 } from '../../shared/utils/budget/month-helpers'
@@ -219,6 +222,32 @@ const monthEndCases = [
 monthEndCases.forEach(({ name, now, year, month, expected }) => {
   test(`hasMonthEndedEverywhere says ${toMonthLabel(year, month)} ${expected ? 'has ended' : 'has not ended'} when ${name}`, () => {
     assert.equal(hasMonthEndedEverywhere(year, month, new Date(now)), expected)
+  })
+})
+
+test('getFollowingMonth moves to the next month and across the new year', () => {
+  assert.deepEqual(getFollowingMonth({ year: 2026, month: 8 }), { year: 2026, month: 9 })
+  assert.deepEqual(getFollowingMonth({ year: 2026, month: 11 }), { year: 2027, month: 0 })
+})
+
+test('getMonthStartDate gives the first day of the month as a plain date', () => {
+  assert.equal(getMonthStartDate({ year: 2026, month: 8 }), '2026-09-01')
+  assert.equal(getMonthStartDate({ year: 2027, month: 0 }), '2027-01-01')
+})
+
+const lateStartBalanceCases = [
+  { now: '2026-09-01T09:00', year: 2026, month: 8, expected: false },
+  { now: '2026-09-03T23:59', year: 2026, month: 8, expected: false },
+  { now: '2026-09-04T00:00', year: 2026, month: 8, expected: true },
+  { now: '2026-09-30T12:00', year: 2026, month: 8, expected: true },
+  { now: '2026-09-30T12:00', year: 2026, month: 7, expected: false },
+  { now: '2026-09-30T12:00', year: 2026, month: 9, expected: false },
+  { now: '2026-09-30T12:00', year: 2025, month: 8, expected: false },
+]
+
+lateStartBalanceCases.forEach(({ now, year, month, expected }) => {
+  test(`isLateToEditStartBalance on ${now} says ${toMonthLabel(year, month)} is ${expected ? 'late' : 'not late'} to edit`, () => {
+    assert.equal(isLateToEditStartBalance({ year, month }, new Date(now)), expected)
   })
 })
 

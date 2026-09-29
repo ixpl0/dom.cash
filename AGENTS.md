@@ -114,6 +114,7 @@
 * **Budget**: Main budget management with months, entries (income/expense/balance), multi-currency support, import/export
   * The store keeps months newest first: sort them with `sortMonthsNewestFirst` (`shared/utils/budget/month-helpers.ts`) and replace changed months instead of copying the whole budget.
   * Plans are whole numbers in the owner's main currency: `convertPlansToCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes and when a file kept in another main currency is imported, and refuses with `NO_RATE_TO_CONVERT_PLANS` (nothing is changed) when a planned month has no rate for either currency.
+  * The balance of a month is the savings on its first day, and its change to the next month's balance is what went out during the month. The balance modal says the date in its title, and from the 4th day of the current month it warns that new account balances belong to the next month (`isLateToEditStartBalance`, `shared/utils/budget/month-helpers.ts`).
   * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
 * **Budget Sharing**: Share budgets with other users (read/write access)
 * **Connections**: people who shared their budget with a user (`server/services/connections.ts`). Tasks and doc folders can be shared only with connections. A participant who stops being a connection stays until the owner removes them (`resolveSharedUsers`).

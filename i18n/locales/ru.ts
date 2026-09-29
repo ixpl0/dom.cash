@@ -280,7 +280,9 @@ export default {
 
     balance: {
       title: 'Источники баланса',
+      titleOnDate: 'Баланс на {date}',
       emptyMessage: 'Пока нет источников баланса',
+      lateEditNotice: 'Это баланс на {startDate}. Новые остатки вносите в баланс на {nextStartDate}, а доходы и расходы — в {month}.',
     },
 
     income: {
