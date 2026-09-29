@@ -11,7 +11,7 @@ Deployed on Cloudflare Workers with D1 database.
 - **Services** (`server/services/`) hold the business logic and database access. They receive the H3 event to reach D1.
 - **Shared code** (`shared/`) holds Zod schemas, types and pure calculations used by both the server and the client.
 
-The known gaps of this layering and the maintenance plan are described in `FOLLOWUPS.md`.
+Deferred work and the decisions not to change things are listed in `FOLLOWUPS.md`.
 
 ### Testing Strategy
 

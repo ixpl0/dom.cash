@@ -107,8 +107,7 @@
   * `constants.ts` — Test constants
   * `global-setup.ts` / `global-teardown.ts` — Clean `.auth/` before a run, delete test users and reset `app_settings` after it
   * `server.ts` — Starts the e2e build: recreates the local D1 in `.wrangler/e2e`, applies migrations, runs `wrangler dev`
-* `FOLLOWUPS.md` — Architecture review and maintenance backlog
-* `PROJECT_REVIEW.md` — Bug review (P1/P2 items)
+* `FOLLOWUPS.md` — Deferred work and the decisions not to change things
 
 ## Features
 
@@ -117,11 +116,12 @@
   * Plans are whole numbers in the owner's main currency: `convertPlansToCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes and when a file kept in another main currency is imported, and refuses with `NO_RATE_TO_CONVERT_PLANS` (nothing is changed) when a planned month has no rate for either currency.
   * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
 * **Budget Sharing**: Share budgets with other users (read/write access)
-* **Connections**: people who shared their budget with a user (`server/services/connections.ts`). Tasks and doc folders can be shared only with connections.
+* **Connections**: people who shared their budget with a user (`server/services/connections.ts`). Tasks and doc folders can be shared only with connections. A participant who stops being a connection stays until the owner removes them (`resolveSharedUsers`).
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
   * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.
+  * The checkbox sends the wanted state (`PUT /api/todo/:id/completion`), never a toggle, so a repeated request changes nothing; completing a recurring task moves it to its next date. A click while the request runs is ignored.
 * **Docs**: folders (a person, a car, a home) hold documents; a document has photos and an ordered list of fields (`name`/`value`, JSON in `doc_document.fields`).
-  * Access works like tasks: the owner shares a folder with connections, every participant can change and delete everything in it, only the owner changes the participants. A participant who stops being a connection stays until the owner removes them (`resolveSharedUsers`).
+  * Access works like tasks: the owner shares a folder with connections, every participant can change and delete everything in it, only the owner changes the participants.
   * Photos live in R2 under `docs/<folderId>/<documentId>/<imageId>/<variant>`: the `original` as uploaded, a JPEG `preview` sized to the model's image limits (`getDocPreviewSize`: 2576 px on the long edge, 4784 visual tokens) for recognition and a JPEG `thumbnail` up to 640 px. The browser makes the preview and the thumbnail (`app/utils/doc-images.ts`) and sends the three files in one `application/octet-stream` body with their sizes in the query (`uploadDocImageQuerySchema`); the server checks magic bytes and never trusts a declared type. Photos are served only by `/api/docs/images/:id/:variant` after an access check, with `Cache-Control: private, no-cache` and an ETag, so the browser revalidates every time and gets a 304 instead of the file. Rows are deleted first, then files; a failed file deletion is only logged.
   * Workers Free gives a request 10 ms of CPU: never base64-encode or JSON-serialize photos on the server, pass them to R2 and to the Files API as they are.
   * Recognition (`server/services/docs/recognizer.ts`): the previews go to the Anthropic Files API one at a time, to keep the memory of the request small (they expire in an hour and are deleted after the answer), `claude-sonnet-5-5` with effort `medium` returns the fields sorted by importance as structured output. `mergeRecognizedFields` (`shared/utils/docs.ts`) keeps every field the user already has and adds only new ones; mode `replace` replaces them. Without `ANTHROPIC_API_KEY` recognition is off, except in test mode, where a fake recognizer answers.
