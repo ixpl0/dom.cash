@@ -688,6 +688,14 @@ export default {
       added: 'Распознано {count} поле | Распознано {count} поля | Распознано {count} полей',
       noNewFields: 'Новых полей на фото не нашлось',
       failed: 'Не удалось распознать поля',
+      effort: 'Тщательность',
+      efforts: {
+        low: 'низкая',
+        medium: 'средняя',
+        high: 'высокая',
+        xhigh: 'очень высокая',
+        max: 'максимальная',
+      },
     },
     upload: {
       progress: 'Загружаем фото {current} из {total}',

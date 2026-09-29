@@ -198,6 +198,33 @@ test.describe('Docs', () => {
     await expect(page.getByTestId('docs-field-name')).toHaveText(['Test mode', 'Photos read'])
   })
 
+  test('remembers the chosen recognition effort and sends it with the request', async ({ page, request }) => {
+    const folder = await createFolderThroughApi(request, 'Andrew')
+    const document = await createDocumentThroughApi(request, folder.id, 'Passport')
+    await uploadImageThroughApi(request, document.id, 'page-1.png')
+    await page.goto(`/docs/${folder.id}/${document.id}`)
+    await waitForHydration(page)
+
+    const effortSelect = page.getByTestId('docs-recognize-effort-select')
+    await expect(effortSelect).toHaveValue('low')
+    await effortSelect.selectOption('high')
+
+    await page.reload()
+    await waitForHydration(page)
+    await expect(effortSelect).toHaveValue('high')
+
+    const recognizeRequest = page.waitForRequest(sentRequest =>
+      sentRequest.method() === 'POST' && sentRequest.url().endsWith(`/api/docs/documents/${document.id}/recognize`))
+    await page.getByTestId('docs-recognize-button').click()
+    expect((await recognizeRequest).postDataJSON()).toEqual({ mode: 'merge', effort: 'high' })
+    await expect(page.getByTestId('docs-field-name')).toHaveText(['Test mode', 'Photos read'])
+
+    await page.getByTestId('docs-add-photos-button').click()
+    const modal = page.getByTestId('docs-photos-modal')
+    await modal.getByTestId('docs-photos-modal-input').setInputFiles([createPngFile('back.png')])
+    await expect(modal.getByTestId('docs-recognition-option-effort-select')).toHaveValue('high')
+  })
+
   test('shows photos in the viewer, switches between them and deletes one', async ({ page, request }) => {
     const folder = await createFolderThroughApi(request, 'Andrew')
     const document = await createDocumentThroughApi(request, folder.id, 'Passport')

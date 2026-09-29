@@ -185,7 +185,7 @@ All users have an `emailVerified` field, so verification can be required later f
 The key of the Claude API that reads fields from photos in the docs section. Create it in the Claude Console (platform.claude.com, Settings → API keys). API usage is billed there, separately from a claude.ai subscription; one document costs a few cents.
 
 - **Unset**: recognition is off, the interface hides it and says it is not set up. Photos and fields still work.
-- **Set**: `server/services/docs/recognizer.ts` uploads the previews of the photos to the Files API (they expire after an hour and are deleted right after the answer) and asks `claude-sonnet-5-5` with effort `medium` for the fields.
+- **Set**: `server/services/docs/recognizer.ts` uploads the previews of the photos to the Files API (they expire after an hour and are deleted right after the answer) and asks `claude-sonnet-5-5` for the fields with the effort chosen in the interface (`low` by default).
 - **Test mode without a key** (`nuxt dev` and the e2e build): a fake recognizer returns the fields "Test mode" and "Photos read", so the whole flow can be checked without the API.
 
 #### Google OAuth

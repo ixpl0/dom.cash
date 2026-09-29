@@ -74,6 +74,8 @@ const getFolderPath = (folderId: string): string => `/api/docs/folders/${encodeU
 const getDocumentPath = (documentId: string): string => `/api/docs/documents/${encodeURIComponent(documentId)}`
 
 export const useDocsStore = defineStore('docs', () => {
+  const preferencesStore = usePreferencesStore()
+
   const folders = ref<DocFolderSummary[] | null>(null)
   const foldersError = ref<LoadError | null>(null)
   const isLoadingFolders = ref(false)
@@ -294,13 +296,14 @@ export const useDocsStore = defineStore('docs', () => {
     return document
   }
 
-  const recognizeDocument = async (documentId: string, payload: RecognizeDocDocumentPayload): Promise<DocRecognitionResult | null> => {
+  const recognizeDocument = async (documentId: string, payload: Omit<RecognizeDocDocumentPayload, 'effort'>): Promise<DocRecognitionResult | null> => {
     const t = useT()
     const { toast } = useToast()
+    const body: RecognizeDocDocumentPayload = { ...payload, effort: preferencesStore.docsRecognitionEffort }
     setActivity(documentId, { ...(getActivity(documentId) ?? IDLE_ACTIVITY), isRecognizing: true })
 
     try {
-      const result = await $fetch<DocRecognitionResult>(`${getDocumentPath(documentId)}/recognize`, { method: 'POST', body: payload })
+      const result = await $fetch<DocRecognitionResult>(`${getDocumentPath(documentId)}/recognize`, { method: 'POST', body })
       putDocument(result.document)
       toast(result.addedFieldCount > 0
         ? { type: 'success', message: t('docs.recognition.added', { count: result.addedFieldCount }, result.addedFieldCount) }

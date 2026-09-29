@@ -4,6 +4,7 @@ import type {
   createDocFolderSchema,
   docFieldSchema,
   docImageVariantSchema,
+  docRecognitionEffortSchema,
   recognizeDocDocumentSchema,
   reorderDocImagesSchema,
   updateDocDocumentSchema,
@@ -16,6 +17,8 @@ export type DocField = z.infer<typeof docFieldSchema>
 export type DocImageVariant = z.infer<typeof docImageVariantSchema>
 
 export type DocRecognitionMode = z.infer<typeof recognizeDocDocumentSchema>['mode']
+
+export type DocRecognitionEffort = z.infer<typeof docRecognitionEffortSchema>
 
 export interface DocParticipant {
   id: string

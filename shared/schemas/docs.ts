@@ -25,6 +25,10 @@ export const DOC_IMAGE_VARIANTS = ['original', 'preview', 'thumbnail'] as const
 
 export const DOC_RECOGNITION_MODES = ['merge', 'replace'] as const
 
+export const DOC_RECOGNITION_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
+
+export const DOC_DEFAULT_RECOGNITION_EFFORT = 'low'
+
 export const docFolderNameSchema = z.string().trim().min(1).max(DOC_FOLDER_NAME_MAX_LENGTH)
 
 export const docTitleSchema = z.string().trim().max(DOC_TITLE_MAX_LENGTH)
@@ -67,9 +71,12 @@ export const reorderDocImagesSchema = z.object({
   imageIds: z.array(z.string()).min(1).max(DOC_MAX_IMAGES),
 })
 
+export const docRecognitionEffortSchema = z.enum(DOC_RECOGNITION_EFFORTS)
+
 export const recognizeDocDocumentSchema = z.object({
   mode: z.enum(DOC_RECOGNITION_MODES),
   imageIds: z.array(z.string()).min(1).max(DOC_MAX_RECOGNITION_IMAGES).optional(),
+  effort: docRecognitionEffortSchema.default(DOC_DEFAULT_RECOGNITION_EFFORT),
 })
 
 const imageDimensionSchema = z.coerce.number().int().positive().max(DOC_IMAGE_MAX_DIMENSION)

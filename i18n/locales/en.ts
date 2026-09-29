@@ -687,6 +687,14 @@ export default {
       added: '{count} field recognized | {count} fields recognized',
       noNewFields: 'No new fields were found on the photos',
       failed: 'Failed to recognize the fields',
+      effort: 'Effort',
+      efforts: {
+        low: 'Low',
+        medium: 'Medium',
+        high: 'High',
+        xhigh: 'Extra high',
+        max: 'Max',
+      },
     },
     upload: {
       progress: 'Uploading photo {current} of {total}',

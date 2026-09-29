@@ -4,7 +4,7 @@ import { createError, isError } from 'h3'
 import { z } from 'zod'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { isTestMode } from '~~/server/utils/test-mode'
-import type { DocField } from '~~/shared/types/docs'
+import type { DocField, DocRecognitionEffort } from '~~/shared/types/docs'
 import type { RecognizedDocField } from '~~/shared/utils/docs'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
@@ -16,6 +16,7 @@ export interface RecognitionRequest {
   imageReaders: readonly RecognitionImageReader[]
   existingFields: readonly DocField[]
   language: RecognitionLanguage
+  effort: DocRecognitionEffort
 }
 
 export interface RecognitionResult {
@@ -30,7 +31,6 @@ interface LanguageExamples {
 }
 
 const RECOGNITION_MODEL = 'claude-sonnet-5-5'
-const RECOGNITION_EFFORT = 'medium'
 const RECOGNITION_MAX_TOKENS = 16000
 const RECOGNITION_TIMEOUT_MS = 3 * 60 * 1000
 const RECOGNITION_MAX_RETRIES = 1
@@ -168,7 +168,7 @@ const readRecognition = async (client: Anthropic, fileIds: readonly string[], re
     betas: [SERVER_SIDE_FALLBACK_BETA],
     fallbacks: 'default',
     output_config: {
-      effort: RECOGNITION_EFFORT,
+      effort: request.effort,
       format: outputFormat,
     },
     system: buildSystemPrompt(request.language),
@@ -180,6 +180,7 @@ const readRecognition = async (client: Anthropic, fileIds: readonly string[], re
 
   secureLog.info('Document recognition finished', {
     model: response.model,
+    effort: request.effort,
     stopReason: response.stop_reason,
     images: fileIds.length,
     usage: describeUsage(response.usage),

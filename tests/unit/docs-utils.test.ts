@@ -187,6 +187,12 @@ test('recognizeDocDocumentSchema accepts the two modes only', () => {
   assert.equal(recognizeDocDocumentSchema.safeParse({ mode: 'merge', imageIds: [] }).success, false)
 })
 
+test('recognizeDocDocumentSchema takes the lowest effort unless another known effort is chosen', () => {
+  assert.equal(recognizeDocDocumentSchema.parse({ mode: 'merge' }).effort, 'low')
+  assert.equal(recognizeDocDocumentSchema.parse({ mode: 'merge', effort: 'max' }).effort, 'max')
+  assert.equal(recognizeDocDocumentSchema.safeParse({ mode: 'merge', effort: 'extreme' }).success, false)
+})
+
 const fileSizeCases = [
   { bytes: 512, locale: 'en', expected: '0.5 kB' },
   { bytes: 2048, locale: 'en', expected: '2 kB' },

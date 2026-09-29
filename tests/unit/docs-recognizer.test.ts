@@ -112,7 +112,7 @@ const readMessageRequest = (api: FakeApi): RecordedRequest => {
   return messageRequest
 }
 
-test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the fields and deletes the photos', async (context) => {
+test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the fields with the chosen effort and deletes the photos', async (context) => {
   const output = {
     title: 'Паспорт РФ',
     fields: [
@@ -130,6 +130,7 @@ test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the
     }),
     existingFields: [{ name: 'Фамилия', value: 'Иванов' }],
     language: 'ru',
+    effort: 'xhigh',
   })
 
   assert.deepEqual(result, output)
@@ -166,7 +167,7 @@ test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the
   assert.equal(body.stream, undefined)
 
   const outputConfig = body.output_config as { effort: string, format: { type: string, schema: { properties: Record<string, unknown>, required: string[] } } }
-  assert.equal(outputConfig.effort, 'medium')
+  assert.equal(outputConfig.effort, 'xhigh')
   assert.equal(outputConfig.format.type, 'json_schema')
   assert.deepEqual(Object.keys(outputConfig.format.schema.properties), ['title', 'fields'])
   assert.deepEqual(outputConfig.format.schema.required, ['title', 'fields'])
@@ -185,7 +186,7 @@ test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the
 test('recognizeDocumentImages says there are no fields yet when the document is empty', async (context) => {
   const api = useFakeApi(context, recognizedReply({ title: '', fields: [] }))
 
-  await recognizeDocumentImages({ imageReaders: createImageReaders().slice(0, 1), existingFields: [], language: 'en' })
+  await recognizeDocumentImages({ imageReaders: createImageReaders().slice(0, 1), existingFields: [], language: 'en', effort: 'low' })
 
   const messages = readMessageRequest(api).json?.messages as Array<{ content: Array<Record<string, unknown>> }>
   assert.match(String(messages[0]?.content[1]?.text), /no fields for this document yet/)
@@ -195,7 +196,7 @@ test('recognizeDocumentImages says there are no fields yet when the document is 
 test('recognizeDocumentImages reports a refusal and still deletes the photos', async (context) => {
   const api = useFakeApi(context, () => messageResponse([], 'refusal'))
 
-  await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en' }), {
+  await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en', effort: 'low' }), {
     statusCode: 422,
     message: ERROR_KEYS.DOCS_RECOGNITION_REFUSED,
   })
@@ -205,7 +206,7 @@ test('recognizeDocumentImages reports a refusal and still deletes the photos', a
 test('recognizeDocumentImages reports an answer that does not match the schema as a failure', async (context) => {
   useFakeApi(context, recognizedReply({ title: 'Passport', fields: 'none' }))
 
-  await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en' }), {
+  await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en', effort: 'low' }), {
     statusCode: 502,
     message: ERROR_KEYS.DOCS_RECOGNITION_FAILED,
   })
@@ -214,7 +215,7 @@ test('recognizeDocumentImages reports an answer that does not match the schema a
 test('recognizeDocumentImages reports a cut off answer as a failure', async (context) => {
   useFakeApi(context, () => messageResponse([{ type: 'text', text: '{"title":"Pass' }], 'max_tokens'))
 
-  await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en' }), {
+  await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en', effort: 'low' }), {
     statusCode: 502,
     message: ERROR_KEYS.DOCS_RECOGNITION_FAILED,
   })
@@ -228,7 +229,7 @@ test('recognizeDocumentImages deletes the photos it uploaded when it cannot read
     throw createError({ statusCode: 404, message: ERROR_KEYS.DOCS_IMAGE_NOT_FOUND })
   }
 
-  await assert.rejects(recognizeDocumentImages({ imageReaders: [firstReader, missingImageReader], existingFields: [], language: 'en' }), {
+  await assert.rejects(recognizeDocumentImages({ imageReaders: [firstReader, missingImageReader], existingFields: [], language: 'en', effort: 'low' }), {
     statusCode: 404,
     message: ERROR_KEYS.DOCS_IMAGE_NOT_FOUND,
   })
@@ -253,7 +254,7 @@ apiErrorCases.forEach(({ name, status, type, expected }) => {
       { 'x-should-retry': 'false' },
     ))
 
-    await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en' }), expected)
+    await assert.rejects(recognizeDocumentImages({ imageReaders: createImageReaders(), existingFields: [], language: 'en', effort: 'low' }), expected)
     assert.equal(api.getRequests().filter(request => request.method === 'DELETE').length, 2)
   })
 })

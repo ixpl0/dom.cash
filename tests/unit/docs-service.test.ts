@@ -379,7 +379,7 @@ test('recognizeDocument keeps the user fields, adds recognized ones and names an
   const upload = createUpload()
   await addImage(owner, document.id, upload.query, upload.body, database.event)
 
-  const result = await recognizeDocument(friend, document.id, { mode: 'merge' }, 'en', database.event)
+  const result = await recognizeDocument(friend, document.id, { mode: 'merge', effort: 'low' }, 'en', database.event)
 
   assert.equal(result.addedFieldCount, 2)
   assert.equal(result.document.title, 'Test document')
@@ -389,7 +389,7 @@ test('recognizeDocument keeps the user fields, adds recognized ones and names an
     { name: 'Surname', value: 'Ivanov' },
   ])
 
-  const repeated = await recognizeDocument(owner, document.id, { mode: 'merge' }, 'en', database.event)
+  const repeated = await recognizeDocument(owner, document.id, { mode: 'merge', effort: 'low' }, 'en', database.event)
   assert.equal(repeated.addedFieldCount, 0)
   assert.equal(repeated.document.fields.length, 3)
 })
@@ -402,7 +402,7 @@ test('recognizeDocument keeps a title the user gave and replaces fields on reque
   const upload = createUpload()
   await addImage(owner, document.id, upload.query, upload.body, database.event)
 
-  const result = await recognizeDocument(owner, document.id, { mode: 'replace' }, 'en', database.event)
+  const result = await recognizeDocument(owner, document.id, { mode: 'replace', effort: 'low' }, 'en', database.event)
 
   assert.equal(result.document.title, 'Passport')
   assert.equal(result.addedFieldCount, 2)
@@ -419,10 +419,10 @@ test('recognizeDocument reads only the chosen images of the document', async (co
   const { document: { images: [, secondImage] } } = await addImage(owner, document.id, secondUpload.query, secondUpload.body, database.event)
   assert.ok(secondImage)
 
-  const result = await recognizeDocument(owner, document.id, { mode: 'merge', imageIds: [secondImage.id] }, 'en', database.event)
+  const result = await recognizeDocument(owner, document.id, { mode: 'merge', imageIds: [secondImage.id], effort: 'low' }, 'en', database.event)
 
   assert.deepEqual(result.document.fields.find(({ name }) => name === 'Photos read'), { name: 'Photos read', value: '1' })
-  await assert.rejects(recognizeDocument(owner, document.id, { mode: 'merge', imageIds: ['other-image'] }, 'en', database.event), {
+  await assert.rejects(recognizeDocument(owner, document.id, { mode: 'merge', imageIds: ['other-image'], effort: 'low' }, 'en', database.event), {
     statusCode: 404,
     message: ERROR_KEYS.DOCS_IMAGE_NOT_FOUND,
   })
@@ -433,7 +433,7 @@ test('recognizeDocument needs at least one image', async (context) => {
   const database = await createDatabaseWithFriend()
   const { document } = await createSharedDocument(database)
 
-  await assert.rejects(recognizeDocument(owner, document.id, { mode: 'merge' }, 'en', database.event), {
+  await assert.rejects(recognizeDocument(owner, document.id, { mode: 'merge', effort: 'low' }, 'en', database.event), {
     statusCode: 400,
     message: ERROR_KEYS.DOCS_NO_IMAGES_TO_RECOGNIZE,
   })
@@ -445,7 +445,7 @@ test('recognizeDocument reports that recognition is not configured without a key
   const upload = createUpload()
   await addImage(owner, document.id, upload.query, upload.body, database.event)
 
-  await assert.rejects(recognizeDocument(owner, document.id, { mode: 'merge' }, 'en', database.event), {
+  await assert.rejects(recognizeDocument(owner, document.id, { mode: 'merge', effort: 'low' }, 'en', database.event), {
     statusCode: 503,
     message: ERROR_KEYS.DOCS_RECOGNITION_NOT_CONFIGURED,
   })

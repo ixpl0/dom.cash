@@ -1,3 +1,5 @@
+import { DOC_DEFAULT_RECOGNITION_EFFORT, docRecognitionEffortSchema } from '~~/shared/schemas/docs'
+import type { DocRecognitionEffort } from '~~/shared/types/docs'
 import { COOKIE_NAMES, UI_COOKIE_OPTIONS } from '~/utils/cookies'
 
 type SortOrder = 'asc' | 'desc'
@@ -10,6 +12,7 @@ interface MetricsSort {
 interface UserPreferences {
   metricsSort: MetricsSort
   todoHideCompleted: boolean
+  docsRecognitionEffort: DocRecognitionEffort
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -18,6 +21,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     sortOrder: 'desc',
   },
   todoHideCompleted: true,
+  docsRecognitionEffort: DOC_DEFAULT_RECOGNITION_EFFORT,
 }
 
 export const usePreferencesStore = defineStore('preferences', () => {
@@ -28,6 +32,8 @@ export const usePreferencesStore = defineStore('preferences', () => {
 
   const metricsSort = computed(() => cookie.value.metricsSort)
   const todoHideCompleted = computed(() => cookie.value.todoHideCompleted ?? true)
+  const docsRecognitionEffort = computed((): DocRecognitionEffort =>
+    docRecognitionEffortSchema.safeParse(cookie.value.docsRecognitionEffort).data ?? DOC_DEFAULT_RECOGNITION_EFFORT)
 
   const setMetricsSort = (sortBy: string, sortOrder: SortOrder) => {
     cookie.value = {
@@ -43,10 +49,19 @@ export const usePreferencesStore = defineStore('preferences', () => {
     }
   }
 
+  const setDocsRecognitionEffort = (value: DocRecognitionEffort) => {
+    cookie.value = {
+      ...cookie.value,
+      docsRecognitionEffort: value,
+    }
+  }
+
   return {
     metricsSort,
     todoHideCompleted,
+    docsRecognitionEffort,
     setMetricsSort,
     setTodoHideCompleted,
+    setDocsRecognitionEffort,
   }
 })

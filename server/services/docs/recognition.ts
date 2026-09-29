@@ -85,7 +85,7 @@ export const recognizeDocument = async (
 
   const sentFields = payload.mode === 'merge' ? access.documentRow.fields : []
   const imageReaders = createRecognitionImageReaders(event, access, imageIds)
-  const recognition = await recognizeDocumentImages({ imageReaders, existingFields: sentFields, language })
+  const recognition = await recognizeDocumentImages({ imageReaders, existingFields: sentFields, language, effort: payload.effort })
 
   const db = useDatabase(event)
   const [currentRow] = await db.select().from(docDocument).where(eq(docDocument.id, documentId)).limit(1)
