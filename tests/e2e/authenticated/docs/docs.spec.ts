@@ -4,6 +4,7 @@ import { cleanupUserData } from '../../helpers/auth'
 import { pressBrowserBack } from '../../helpers/back-navigation'
 import { acceptConfirmModal, cancelConfirmModal } from '../../helpers/confirmation'
 import { createDocumentThroughApi, createFolderThroughApi, createPngFile, uploadImageThroughApi } from '../../helpers/docs'
+import { readClipboardText } from '../../helpers/text'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 
 const DOCUMENT_PAGE_URL = /\/docs\/[^/]+\/[^/]+$/
@@ -89,11 +90,11 @@ test.describe('Docs', () => {
 
     await page.getByTestId('docs-field').nth(1).click()
     await expect(page.getByTestId('docs-field-copied')).toBeVisible()
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('45 12 345678')
+    expect(await readClipboardText(page)).toBe('45 12 345678')
 
     await page.getByTestId('docs-document-copy-all').click()
     await expect(page.getByTestId('toast-success')).toBeVisible()
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('Passport\nSurname: Ivanov\nNumber: 45 12 345678')
+    expect(await readClipboardText(page)).toBe('Passport\nSurname: Ivanov\nNumber: 45 12 345678')
   })
 
   test('does not save a field value without a field name', async ({ page, request }) => {

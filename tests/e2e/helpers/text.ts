@@ -1,8 +1,13 @@
-import type { Locator } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 const readText = async (locator: Locator): Promise<string> => {
   const text = await locator.textContent()
   return text ?? ''
+}
+
+export const readClipboardText = async (page: Page): Promise<string> => {
+  const text = await page.evaluate(() => navigator.clipboard.readText())
+  return text.replace(/\r\n/g, '\n')
 }
 
 export const readDigits = async (locator: Locator): Promise<number> => {

@@ -112,10 +112,12 @@ test('createFolder rejects a user who is not a connection and writes nothing', a
   assert.equal(countRows(database, 'doc_folder'), 0)
 })
 
-test('listFolders shows the titles of the documents in the order they were added', async () => {
+test('listFolders shows the titles of the documents in the order they were added', async (context) => {
+  context.mock.timers.enable({ apis: ['Date'], now: new Date('2026-09-28T12:00:00Z') })
   const database = await createDatabaseWithFriend()
   const folder = await createFolder(owner, { name: 'Andrew' }, database.event)
   await createDocument(owner, folder.id, { title: 'Passport' }, database.event)
+  context.mock.timers.tick(1)
   await createDocument(owner, folder.id, { title: 'Insurance' }, database.event)
 
   const [listedFolder] = await listFolders(owner.id, database.event)
