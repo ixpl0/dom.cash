@@ -1,6 +1,6 @@
 # dom.cash - Budget Tracker
 
-Приложение для учёта личных финансов с поддержкой множественных валют.
+Приложение для учёта личных финансов с поддержкой множественных валют, задачами и разделом «Доки»: фото документов с полями, которые распознаёт ИИ.
 Deployed on Cloudflare Workers with D1 database.
 
 ## Architecture Overview
@@ -23,7 +23,7 @@ Unit tests run on the Node.js test runner through `tsx`, without a dev server or
 pnpm test:unit
 ```
 
-Tests live in `tests/unit/`. They cover budget calculations, month helpers, recurrence, Zod schemas, currency formatting, exchange rates, notifications and back navigation.
+Tests live in `tests/unit/`. They cover budget calculations, month helpers, recurrence, Zod schemas, currency formatting, exchange rates, notifications, back navigation and the docs section (services against a fake R2 bucket, the Claude request against a fake API).
 
 ```bash
 # Type-check unit and e2e tests
@@ -51,7 +51,8 @@ The application uses **Playwright** for end-to-end testing:
 - `tests/e2e/authenticated/` - тесты для аутентифицированных пользователей
   - `budget/` - тесты бюджета и модальных окон
   - `todo/` - тесты задач
-- `tests/e2e/helpers/` - вспомогательные функции (auth, confirmation, budget-setup, wait-for-hydration, text, users)
+  - `docs/` - тесты раздела «Доки» (папки, документы, фото, распознавание через тестовый распознаватель)
+- `tests/e2e/helpers/` - вспомогательные функции (auth, confirmation, budget-setup, docs, wait-for-hydration, text, users)
 - `tests/e2e/fixtures.ts` - фикстуры Playwright
 - `tests/e2e/global-setup.ts`, `tests/e2e/global-teardown.ts` - подготовка и очистка тестовых данных
 
@@ -78,6 +79,7 @@ pnpm run test:e2e:headed
 - **Публичные страницы** - главная, авторизация, восстановление пароля, переключение темы и языка
 - **Страница бюджета** - CRUD операции, модальные окна (entry, share, shared budgets, confirmation), импорт/экспорт
 - **Страница задач (Todo)** - создание, редактирование, удаление задач
+- **Раздел «Доки»** - папки, документы, поля, загрузка фото, просмотр, распознавание, копирование
 - **Общие компоненты** - header, выход из системы
 
 ### Frontend Architecture Principles
@@ -120,6 +122,8 @@ Styles are split into logical CSS files in `app/assets/`:
 - **Framework**: Nuxt 4, Vue 3
 - **Backend**: Nitro, Cloudflare Workers
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
+- **File storage**: Cloudflare R2 (photos of documents in the docs section)
+- **AI**: Claude Sonnet 5.5 through the official `@anthropic-ai/sdk` (reading fields from photos of documents)
 - **Authentication**: random session tokens stored as SHA-256 hashes in D1, HTTP-only cookies, sliding 90-day sessions, Google OAuth
 - **Styling**: Tailwind CSS 4 + DaisyUI 5
 - **Type Safety**: TypeScript 5 with strict mode
@@ -163,7 +167,7 @@ Visit `http://localhost:3000`
 
 ### Environment Variables
 
-The server reads every setting from `process.env`. Locally `nuxt dev` fills it from `.env` (see `.env.example`): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `OPENEXCHANGERATES_APP_ID`, `RESEND_API_KEY`, `DISABLE_EMAIL_VERIFICATION`. In development codes are logged instead of emailed, so `RESEND_API_KEY` is only needed on deployed Workers.
+The server reads every setting from `process.env`. Locally `nuxt dev` fills it from `.env` (see `.env.example`): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `OPENEXCHANGERATES_APP_ID`, `RESEND_API_KEY`, `DISABLE_EMAIL_VERIFICATION`, `ANTHROPIC_API_KEY`. In development codes are logged instead of emailed, so `RESEND_API_KEY` is only needed on deployed Workers.
 
 On deployed Workers the settings are secrets (`wrangler secret put NAME`). Workers expose secrets through `process.env` because `nodejs_compat` is enabled in `wrangler.toml`.
 
@@ -176,6 +180,14 @@ Disables mandatory email verification during registration. Useful for developmen
 
 All users have an `emailVerified` field, so verification can be required later from users who skipped it.
 
+#### ANTHROPIC_API_KEY
+
+The key of the Claude API that reads fields from photos in the docs section. Create it in the Claude Console (platform.claude.com, Settings → API keys). API usage is billed there, separately from a claude.ai subscription; one document costs a few cents.
+
+- **Unset**: recognition is off, the interface hides it and says it is not set up. Photos and fields still work.
+- **Set**: `server/services/docs/recognizer.ts` uploads the previews of the photos to the Files API (they expire after an hour and are deleted right after the answer) and asks `claude-sonnet-5-5` with effort `medium` for the fields.
+- **Test mode without a key** (`nuxt dev` and the e2e build): a fake recognizer returns the fields "Test mode" and "Photos read", so the whole flow can be checked without the API.
+
 #### Google OAuth
 
 **Setup in Google Cloud Console**:
@@ -183,6 +195,29 @@ All users have an `emailVerified` field, so verification can be required later f
 2. Configure OAuth consent screen
 3. Create OAuth 2.0 credentials (Web application)
 4. Add authorized redirect URI: `https://your-domain.com/api/auth/google-redirect`
+
+## Docs Section Setup
+
+The docs section keeps the photos of documents in Cloudflare R2 (binding `DOCS_BUCKET` in `wrangler.toml`) and the folders, documents and fields in D1. Before the first release:
+
+1. Enable R2 in the Cloudflare dashboard (R2 Object Storage; the free tier covers 10 GB).
+2. Create the buckets (their names are in `wrangler.toml`):
+
+   ```bash
+   pnpm exec wrangler r2 bucket create dom-docs-test
+   pnpm exec wrangler r2 bucket create dom-docs-prod
+   ```
+
+3. Add the Claude API key as a secret of both Workers:
+
+   ```bash
+   pnpm exec wrangler secret put ANTHROPIC_API_KEY --env=""
+   pnpm exec wrangler secret put ANTHROPIC_API_KEY --env="production"
+   ```
+
+4. Release as usual: `pnpm run release:test`, then `pnpm run release:prod` (they apply migration `0021_create_docs_tables.sql`).
+
+Locally nothing is needed except `ANTHROPIC_API_KEY` in `.env`: `nuxt dev` and `wrangler dev` keep R2 in `.wrangler/`. The buckets stay private; photos are served only by `/api/docs/images/:id/:variant` after an access check.
 
 ## Database Migrations
 
@@ -237,6 +272,8 @@ pnpm run db:migrate:prod
 - `0017_create_plan_table.sql` - Move plans into a separate table
 - `0018_allow_null_plan_amount.sql` - Allow plans without an amount
 - `0019_add_comment_to_plan.sql` - Add a comment to plans
+- `0020_create_app_settings.sql` - Store whether registration is open
+- `0021_create_docs_tables.sql` - Folders, shares, documents and photos of the docs section
 
 ### Database Commands
 
@@ -305,7 +342,7 @@ Production runs at `https://domcash.ixplo.ai`.
 │   ├── assets/         # CSS files (base, themes, components, animations, transitions)
 │   ├── components/     # Vue components organized by feature
 │   ├── composables/    # Vue composables organized by feature
-│   ├── pages/          # Nuxt pages (index, auth, budget, metrics, todo)
+│   ├── pages/          # Nuxt pages (index, auth, budget, metrics, todo, docs)
 │   ├── stores/         # Pinia state management organized by feature
 │   ├── layouts/        # Page layouts
 │   ├── middleware/     # Nuxt middleware

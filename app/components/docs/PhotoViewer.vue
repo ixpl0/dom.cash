@@ -11,7 +11,7 @@
       v-if="image"
       class="flex flex-col gap-4"
     >
-      <div class="relative flex min-h-[40vh] items-center justify-center overflow-hidden rounded-box bg-base-300">
+      <div class="relative flex min-h-[40vh] items-center justify-center overflow-hidden rounded-lg bg-base-300">
         <img
           :key="imageSource"
           :src="imageSource"

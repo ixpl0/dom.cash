@@ -14,7 +14,7 @@
     </NuxtLink>
 
     <div
-      v-if="isLoading"
+      v-if="isLoading || isLeaving"
       class="flex justify-center py-8"
     >
       <span class="loading loading-spinner loading-lg" />
@@ -70,7 +70,7 @@
             <button
               type="button"
               class="btn btn-primary"
-              :disabled="isSaving"
+              :disabled="isSaving || isBusy"
               data-testid="docs-document-save-button"
               @click="saveChanges"
             >
@@ -132,8 +132,8 @@
         :document-id="documentId"
       />
 
-      <div class="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <section class="animate-fade-in-up-delayed">
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <section class="min-w-0 animate-fade-in-up-delayed">
           <h2 class="mb-3 flex items-center gap-2 text-lg font-semibold">
             {{ t('docs.document.photos') }}
             <span
@@ -147,12 +147,12 @@
           <DocsPhotoGallery
             :document="document"
             :is-editing="isEditing"
-            :can-add-photos="!isBusy && document.images.length < DOC_MAX_IMAGES"
+            :can-add-photos="!isEditing && !isBusy && document.images.length < DOC_MAX_IMAGES"
             @add="docsModalsStore.openPhotosModal(document.id)"
           />
         </section>
 
-        <section class="animate-fade-in-up-delayed-2">
+        <section class="min-w-0 animate-fade-in-up-delayed-2">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-lg font-semibold">
               {{ t('docs.document.fields') }}
@@ -222,13 +222,14 @@ const props = defineProps<Props>()
 
 const docsStore = useDocsStore()
 const docsModalsStore = useDocsModalsStore()
-const { copyAllFields, deleteDocument, getDocumentTitle, runAction } = useDocsActions()
+const { confirmDocumentDeletion, copyAllFields, deleteDocument, getDocumentTitle, runAction } = useDocsActions()
 const { confirmDiscardChanges } = useUnsavedChanges()
 const { formatError } = useServerError()
 const { t } = useI18n()
 
 const isEditing = ref(false)
 const isSaving = ref(false)
+const isLeaving = ref(false)
 const hasTriedToSave = ref(false)
 const draft = ref<DocumentDraft>({ title: '', fields: [] })
 const initialDraft = ref<DocumentDraft>({ title: '', fields: [] })
@@ -265,10 +266,22 @@ const startEditing = (): void => {
   isEditing.value = true
 }
 
-const stopEditing = async (): Promise<void> => {
-  if (await confirmDiscardChanges(hasUnsavedChanges.value, 'stopEditing')) {
+const confirmStopEditing = async (): Promise<boolean> => {
+  if (!isEditing.value) {
+    return true
+  }
+
+  const canStop = await confirmDiscardChanges(hasUnsavedChanges.value, 'stopEditing')
+
+  if (canStop) {
     isEditing.value = false
   }
+
+  return canStop
+}
+
+const stopEditing = async (): Promise<void> => {
+  await confirmStopEditing()
 }
 
 const saveChanges = async (): Promise<void> => {
@@ -297,14 +310,25 @@ const saveChanges = async (): Promise<void> => {
 }
 
 const handleDelete = async (): Promise<void> => {
-  if (document.value && await deleteDocument(document.value)) {
+  if (!document.value || !await confirmDocumentDeletion(document.value)) {
+    return
+  }
+
+  isLeaving.value = true
+
+  if (await deleteDocument(props.documentId)) {
     await navigateTo(`/docs/${props.folderId}`)
+  }
+  else {
+    isLeaving.value = false
   }
 }
 
 useBackHandler(isEditing, () => {
   stopEditing()
 })
+
+onBeforeRouteLeave(confirmStopEditing)
 
 watch(document, (currentDocument) => {
   if (!currentDocument) {

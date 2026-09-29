@@ -4,7 +4,8 @@ import { useDatabase } from '../../server/db'
 import { budgetShare, user } from '../../server/db/schema'
 import { createDocument, deleteDocument, updateDocument } from '../../server/services/docs/documents'
 import { createFolder, deleteFolder, getFolderDetails, listFolders, updateFolder } from '../../server/services/docs/folders'
-import { addImage, deleteImage, readImage, reorderImages } from '../../server/services/docs/images'
+import { findReadableImage } from '../../server/services/docs/access'
+import { addImage, deleteImage, readStoredImage, reorderImages } from '../../server/services/docs/images'
 import { recognizeDocument } from '../../server/services/docs/recognition'
 import { DOC_MAX_DOCUMENTS, DOC_MAX_IMAGES } from '../../shared/schemas/docs'
 import type { User } from '../../shared/types'
@@ -165,6 +166,29 @@ test('updateFolder lets the owner stop sharing a folder', async () => {
   await assert.rejects(getFolderDetails(friend, folder.id, database.event), { statusCode: 403 })
 })
 
+test('updateFolder keeps a participant who is no longer a connection until the owner removes them', async () => {
+  const database = await createDatabaseWithFriend()
+  const { folder } = await createSharedDocument(database)
+  await useDatabase(database.event).delete(budgetShare)
+
+  const renamed = await updateFolder(owner, folder.id, { name: 'Andrew Ivanov', sharedWithUserIds: [friend.id] }, database.event)
+  assert.equal(renamed.name, 'Andrew Ivanov')
+  assert.deepEqual(renamed.sharedWith, [{ id: friend.id, username: friend.username }])
+
+  await assert.rejects(updateFolder(owner, folder.id, { sharedWithUserIds: [friend.id, stranger.id] }, database.event), {
+    statusCode: 400,
+    message: ERROR_KEYS.INVALID_SHARED_USER,
+  })
+
+  const unshared = await updateFolder(owner, folder.id, { sharedWithUserIds: [] }, database.event)
+  assert.deepEqual(unshared.sharedWith, [])
+
+  await assert.rejects(updateFolder(owner, folder.id, { sharedWithUserIds: [friend.id] }, database.event), {
+    statusCode: 400,
+    message: ERROR_KEYS.INVALID_SHARED_USER,
+  })
+})
+
 test('createDocument refuses a document above the limit', async () => {
   const database = await createDatabaseWithFriend()
   const folder = await createFolder(owner, { name: 'Andrew' }, database.event)
@@ -257,18 +281,21 @@ test('addImage refuses an image above the limit', async () => {
   })
 })
 
-test('readImage gives participants the stored variant and hides it from other users', async () => {
+test('participants read the stored variants of an image and other users do not find it', async () => {
   const database = await createDatabaseWithFriend()
   const { document } = await createSharedDocument(database)
   const upload = createUpload()
   const { document: { images: [image] } } = await addImage(owner, document.id, upload.query, upload.body, database.event)
   assert.ok(image)
 
-  const stored = await readImage(friend.id, image.id, 'original', database.event)
+  const readableImage = await findReadableImage(image.id, friend.id, database.event)
+  const original = await readStoredImage(database.event, readableImage, 'original')
+  const preview = await readStoredImage(database.event, readableImage, 'preview')
 
-  assert.equal(stored.imageRow.fileName, 'passport.png')
-  assert.deepEqual(new Uint8Array(await new Response(stored.object.body).arrayBuffer()), PNG_BYTES)
-  await assert.rejects(readImage(stranger.id, image.id, 'original', database.event), {
+  assert.equal(readableImage.imageRow.fileName, 'passport.png')
+  assert.deepEqual(new Uint8Array(await new Response(original.body).arrayBuffer()), PNG_BYTES)
+  assert.deepEqual(new Uint8Array(await new Response(preview.body).arrayBuffer()), JPEG_BYTES)
+  await assert.rejects(findReadableImage(image.id, stranger.id, database.event), {
     statusCode: 404,
     message: ERROR_KEYS.DOCS_IMAGE_NOT_FOUND,
   })

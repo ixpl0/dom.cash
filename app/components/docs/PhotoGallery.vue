@@ -1,17 +1,17 @@
 <template>
   <div
-    class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3"
+    class="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-2 xl:grid-cols-3"
     data-testid="docs-photo-gallery"
   >
     <div
       v-for="(image, index) in document.images"
       :key="image.id"
-      class="relative"
+      class="relative w-44 flex-shrink-0 sm:w-auto"
       data-testid="docs-photo"
     >
       <button
         type="button"
-        class="block aspect-[4/3] w-full overflow-hidden rounded-box bg-base-300 transition-opacity duration-200 hover:opacity-85"
+        class="block aspect-[4/3] w-full overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-85"
         :aria-label="image.fileName"
         data-testid="docs-photo-open"
         @click="docsModalsStore.openPhotoViewer(document.id, image.id)"
@@ -71,10 +71,19 @@
       </div>
     </div>
 
+    <div
+      v-for="placeholder in pendingUploadCount"
+      :key="`pending-${placeholder}`"
+      class="skeleton flex aspect-[4/3] w-44 flex-shrink-0 items-center justify-center rounded-lg sm:w-full"
+      data-testid="docs-photo-placeholder"
+    >
+      <span class="loading loading-spinner loading-sm opacity-60" />
+    </div>
+
     <button
       v-if="canAddPhotos"
       type="button"
-      class="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-box border-2 border-dashed border-base-300 text-base-content/60 transition-colors duration-200 hover:border-primary hover:text-primary"
+      class="flex aspect-[4/3] w-44 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-base-300 text-base-content/60 transition-colors duration-200 hover:border-primary hover:text-primary sm:w-full"
       data-testid="docs-add-photos-button"
       @click="emit('add')"
     >
@@ -109,6 +118,11 @@ const { deleteImage, runAction } = useDocsActions()
 const { t } = useI18n()
 
 const isReordering = ref(false)
+
+const pendingUploadCount = computed(() => {
+  const activity = docsStore.getActivity(props.document.id)
+  return activity ? Math.max(0, activity.uploadTotal - activity.uploadDone) : 0
+})
 
 const movePhoto = async (index: number, offset: number): Promise<void> => {
   const imageIds = props.document.images.map(({ id }) => id)

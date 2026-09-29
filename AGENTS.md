@@ -7,7 +7,7 @@
 * **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
 * **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
 * **Deployment**: Cloudflare Workers with D1 database.
-* **Settings**: the server reads secrets and flags from `process.env` (`.env` locally, see `.env.example`; Worker secrets when deployed, exposed through `nodejs_compat`). Only bindings such as `DB` come from `event.context.cloudflare.env`.
+* **Settings**: the server reads secrets and flags from `process.env` (`.env` locally, see `.env.example`; Worker secrets when deployed, exposed through `nodejs_compat`). Only bindings such as `DB` and the R2 bucket `DOCS_BUCKET` come from `event.context.cloudflare.env`.
 * Commands:
   * `pnpm i`
   * `pnpm run db:migrate` (local) / `pnpm run db:migrate:test` (remote) / `pnpm run db:migrate:prod` (production)
@@ -24,6 +24,7 @@
   * Zod for validation
   * D1 allows at most 100 bound parameters per query: never bind id lists whose size depends on user data, use subqueries or joins instead (`server/utils/d1-limits.ts` chunks inserts).
   * Write multi-statement changes with `db.batch` so they are atomic.
+  * Cloudflare R2 (`DOCS_BUCKET`, `server/services/docs/storage.ts`) keeps the photos of the docs section; `wrangler dev` and `nuxt dev` emulate it in `.wrangler/`.
 * **Migrations**: Use Wrangler D1 migrations (`wrangler d1 migrations create`), NOT Drizzle-kit
   * Never drop or rebuild a table that other tables reference with `ON DELETE CASCADE`: SQLite deletes the child rows.
 * **API Calls**:
@@ -59,7 +60,7 @@
 * **Linting**: Husky + lint-staged for pre-commit hooks
 * **Real-time Notifications**: Server-Sent Events (SSE) handled by the `live-data` client plugin (`app/plugins/live-data.client.ts`).
   * One connection per tab while signed in. After every (re)connect the plugin subscribes again to the budget the page watches (`useLiveBudget`), because the server drops subscriptions with the last connection.
-  * An event shows a toast and marks the affected store stale (`app/utils/notifications.ts` decides which); a reconnect marks everything stale because events may have been missed.
+  * An event shows a toast and marks the affected store stale (`app/utils/notifications.ts` decides which); a reconnect marks everything stale because events may have been missed. Silent events (`docs_images_changed`) only mark the store stale.
   * **Known limitation (accepted)**: SSE state (`activeConnections`, `budgetSubscriptions`) lives in a module-level `Map` in `server/services/notifications.ts`. In Cloudflare Workers there is no guarantee of a single isolate, so parallel viewers landing in different isolates may not receive each other's events. This is intentional and not considered critical — best-effort delivery is acceptable; do not "fix" by introducing Durable Objects without explicit ask.
 * Commands:
   * `pnpm check` — lint, type-check the app and the tests, run unit tests (run before committing)
@@ -73,25 +74,25 @@
 ## Project Structure
 
 * `app/` — Nuxt application
-  * `pages/` — Pages: index (landing), auth, budget, metrics, todo
-  * `components/` — Vue components organized by feature (budget/, todo/, ui/, etc.)
-  * `composables/` — Composables organized by feature (auth/, budget/, shared/)
+  * `pages/` — Pages: index (landing), auth, budget, metrics, todo, docs
+  * `components/` — Vue components organized by feature (budget/, todo/, docs/, ui/, etc.)
+  * `composables/` — Composables organized by feature (auth/, budget/, docs/, shared/)
   * `layouts/` — Nuxt layouts (default.vue)
   * `middleware/` — Client middleware (auth.global.ts)
   * `plugins/` — Nuxt plugins (auth, favicon, animate-on-scroll, back-handlers, live-data)
-  * `stores/` — Pinia stores organized by feature (budget/, todo/, preferences)
+  * `stores/` — Pinia stores organized by feature (budget/, todo/, docs/, preferences)
   * `types/` — App-specific type definitions
   * `utils/` — Client-side utilities
 * `server/` — Nitro server
-  * `api/` — API routes (auth/, budget/, todo/, notifications/, user/, admin/, test/ — the test routes exist only in development)
+  * `api/` — API routes (auth/, budget/, todo/, docs/, notifications/, user/, admin/, test/ — the test routes exist only in development)
   * `db/` — Database schema (`schema.ts`) and index
-  * `services/` — Business logic services (auth/, budget/, notifications, todo)
+  * `services/` — Business logic services (auth/, budget/, docs/, connections, notifications, todo)
   * `middleware/` — Server middleware (content-validation, impersonation-guard)
   * `types/` — Server-specific type definitions (Cloudflare D1)
   * `utils/` — Server-side utilities
 * `migrations/` — Wrangler D1 SQL migration files
 * `shared/` — Shared between client and server (isomorphic code)
-  * `schemas/` — Zod validation schemas (auth, budget, common, export-import, recurrence, todo)
+  * `schemas/` — Zod validation schemas (auth, budget, common, docs, export-import, recurrence, todo)
   * `types/` — TypeScript types (budget, todo, i18n, recurrence, export-import)
   * `utils/` — Shared utilities (budget calculations, recurrence, currencies, dates, error keys)
 * `tests/unit/` — Unit tests (`*.test.ts`, Node test runner)
@@ -100,7 +101,7 @@
   * `authenticated/` — Tests for authenticated pages (budget/, todo/)
   * `mobile/` — Phone layout tests (Pixel 7 project)
   * `admin/` — Admin tests that change settings every test shares (`admin` project, runs after the others)
-  * `helpers/` — Test helpers (auth, confirmation, budget-setup, wait-for-hydration, text, users)
+  * `helpers/` — Test helpers (auth, confirmation, budget-setup, docs, wait-for-hydration, text, users)
   * `fixtures.ts` — Test fixtures (one registered user per worker)
   * `fixtures/budgets/` — JSON budget fixtures for import tests
   * `constants.ts` — Test constants
@@ -116,8 +117,16 @@
   * Plans are whole numbers in the owner's main currency: `convertPlansToCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes and when a file kept in another main currency is imported, and refuses with `NO_RATE_TO_CONVERT_PLANS` (nothing is changed) when a planned month has no rate for either currency.
   * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
 * **Budget Sharing**: Share budgets with other users (read/write access)
+* **Connections**: people who shared their budget with a user (`server/services/connections.ts`). Tasks and doc folders can be shared only with connections.
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
   * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.
+* **Docs**: folders (a person, a car, a home) hold documents; a document has photos and an ordered list of fields (`name`/`value`, JSON in `doc_document.fields`).
+  * Access works like tasks: the owner shares a folder with connections, every participant can change and delete everything in it, only the owner changes the participants. A participant who stops being a connection stays until the owner removes them (`resolveSharedUsers`).
+  * Photos live in R2 under `docs/<folderId>/<documentId>/<imageId>/<variant>`: the `original` as uploaded, a JPEG `preview` sized to the model's image limits (`getDocPreviewSize`: 2576 px on the long edge, 4784 visual tokens) for recognition and a JPEG `thumbnail` up to 640 px. The browser makes the preview and the thumbnail (`app/utils/doc-images.ts`) and sends the three files in one `application/octet-stream` body with their sizes in the query (`uploadDocImageQuerySchema`); the server checks magic bytes and never trusts a declared type. Photos are served only by `/api/docs/images/:id/:variant` after an access check, with `Cache-Control: private, no-cache` and an ETag, so the browser revalidates every time and gets a 304 instead of the file. Rows are deleted first, then files; a failed file deletion is only logged.
+  * Workers Free gives a request 10 ms of CPU: never base64-encode or JSON-serialize photos on the server, pass them to R2 and to the Files API as they are.
+  * Recognition (`server/services/docs/recognizer.ts`): the previews go to the Anthropic Files API one at a time, to keep the memory of the request small (they expire in an hour and are deleted after the answer), `claude-sonnet-5-5` with effort `medium` returns the fields sorted by importance as structured output. `mergeRecognizedFields` (`shared/utils/docs.ts`) keeps every field the user already has and adds only new ones; mode `replace` replaces them. Without `ANTHROPIC_API_KEY` recognition is off, except in test mode, where a fake recognizer answers.
+  * Uploads and recognition run in the docs store (`uploadImages`, `recognizeDocument`), so they go on after the modal closes; the page shows their progress. A folder reload that started before a local change is dropped and marks the store stale. Photos cannot be added in edit mode, because recognition would change the fields under the draft.
+  * Limits are in `shared/schemas/docs.ts`. Recognition has no rate limit yet (decision of 28 September 2026, see `FOLLOWUPS.md`).
 * **Metrics**: Analytics dashboard with charts
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
@@ -142,8 +151,9 @@
 
 ## Testing
 
-* **Unit Tests**: `tests/unit/*.test.ts`, run with `pnpm test:unit`. Cover pure logic in `shared/`; test server services against `createTestDatabase()` (`tests/unit/helpers/test-database.ts`): an in-memory SQLite with all migrations that D1 code can use through `event`, and that counts the queries. Compute expected values by hand, never copy them from the output; record known bugs as `{ todo: 'reason' }` tests with the correct expectation.
+* **Unit Tests**: `tests/unit/*.test.ts`, run with `pnpm test:unit`. Cover pure logic in `shared/`; test server services against `createTestDatabase()` (`tests/unit/helpers/test-database.ts`): an in-memory SQLite with all migrations that D1 code can use through `event`, and that counts the queries; its `docsBucket` is an in-memory R2 bucket. The Claude request is tested against a fake API that replaces `globalThis.fetch` (`tests/unit/docs-recognizer.test.ts`). Compute expected values by hand, never copy them from the output; record known bugs as `{ todo: 'reason' }` tests with the correct expectation.
 * **E2E Tests**: Use Playwright with TypeScript
+  * Docs tests prepare folders, documents and photos with `tests/e2e/helpers/docs.ts`; recognition in the e2e build uses the fake recognizer, so the tests need no API key.
   * `pnpm test:e2e` runs against a production-like build (`nuxt build --envName e2e` into `.output-e2e`) served by `wrangler dev` on port 8787, with a fresh local D1 in `.wrangler/e2e` on every run. `playwright.dev.config.ts` targets the dev server instead.
   * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
   * Desktop Chrome runs `public/` and `authenticated/`; the `mobile` project (Pixel 7) runs `tests/e2e/mobile/`, which covers the mobile menu and cards. Tests retry only on CI.

@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { requireRouterParam } from '~~/server/utils/route-params'
 import { parseQuery, validateInput } from '~~/server/utils/validation'
-import { readImage } from '~~/server/services/docs/images'
+import { findReadableImage } from '~~/server/services/docs/access'
+import { readStoredImage } from '~~/server/services/docs/images'
 import { docImageVariantSchema } from '~~/shared/schemas/docs'
 import type { DocImageVariant } from '~~/shared/types/docs'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
@@ -11,7 +12,7 @@ const querySchema = z.object({
   download: z.literal('1').optional(),
 })
 
-const IMMUTABLE_CACHE_CONTROL = 'private, max-age=31536000, immutable'
+const REVALIDATE_CACHE_CONTROL = 'private, no-cache'
 const GENERATED_IMAGE_TYPE = 'image/jpeg'
 
 const toAsciiFileName = (fileName: string): string => fileName.replace(/[^\x20-\x7E]|["\\]/g, '_')
@@ -25,20 +26,33 @@ const getVariantFileName = (fileName: string, variant: DocImageVariant): string 
 const buildContentDisposition = (fileName: string, isDownload: boolean): string =>
   `${isDownload ? 'attachment' : 'inline'}; filename="${toAsciiFileName(fileName)}"; filename*=UTF-8''${encodeFileName(fileName)}`
 
+const hasMatchingEtag = (ifNoneMatch: string | undefined, etag: string): boolean =>
+  ifNoneMatch !== undefined && ifNoneMatch.split(',').some(tag => tag.trim().replace(/^W\//, '') === etag)
+
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAuth(event)
   const imageId = requireRouterParam(event, 'id', ERROR_KEYS.DOCS_ID_REQUIRED)
   const variant = validateInput(getRouterParam(event, 'variant'), docImageVariantSchema, ERROR_KEYS.DOCS_IMAGE_NOT_FOUND)
   const { download } = parseQuery(event, querySchema)
-  const { object, imageRow } = await readImage(currentUser.id, imageId, variant, event)
+  const readableImage = await findReadableImage(imageId, currentUser.id, event)
+  const cacheHeaders = {
+    'Cache-Control': REVALIDATE_CACHE_CONTROL,
+    'ETag': `"${readableImage.imageRow.id}-${variant}"`,
+    'X-Content-Type-Options': 'nosniff',
+  }
+
+  if (hasMatchingEtag(getRequestHeader(event, 'if-none-match'), cacheHeaders.ETag)) {
+    return new Response(null, { status: 304, headers: cacheHeaders })
+  }
+
+  const object = await readStoredImage(event, readableImage, variant)
 
   return new Response(object.body, {
     headers: {
-      'Content-Type': variant === 'original' ? imageRow.contentType : GENERATED_IMAGE_TYPE,
+      ...cacheHeaders,
+      'Content-Type': variant === 'original' ? readableImage.imageRow.contentType : GENERATED_IMAGE_TYPE,
       'Content-Length': String(object.size),
-      'Cache-Control': IMMUTABLE_CACHE_CONTROL,
-      'ETag': object.httpEtag,
-      'Content-Disposition': buildContentDisposition(getVariantFileName(imageRow.fileName, variant), download === '1'),
+      'Content-Disposition': buildContentDisposition(getVariantFileName(readableImage.imageRow.fileName, variant), download === '1'),
     },
   })
 })

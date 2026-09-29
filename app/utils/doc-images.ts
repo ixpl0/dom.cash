@@ -1,4 +1,5 @@
-import { DOC_PREVIEW_MAX_DIMENSION, DOC_THUMBNAIL_MAX_DIMENSION } from '~~/shared/schemas/docs'
+import { DOC_PREVIEW_MAX_SIZE, DOC_THUMBNAIL_MAX_DIMENSION } from '~~/shared/schemas/docs'
+import { getDocPreviewSize, type ImageSize } from '~~/shared/utils/docs'
 
 export interface DocImageVariants {
   preview: Blob
@@ -17,7 +18,8 @@ interface DecodedImage {
 export const IMAGE_UNREADABLE_ERROR = 'image-unreadable'
 
 const GENERATED_IMAGE_TYPE = 'image/jpeg'
-const PREVIEW_QUALITY = 0.86
+const PREVIEW_QUALITY = 0.9
+const REDUCED_PREVIEW_QUALITY = 0.75
 const THUMBNAIL_QUALITY = 0.8
 const BACKGROUND_COLOR = '#ffffff'
 const COPY_MAX_DIMENSION = 4096
@@ -69,11 +71,15 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality?: number)
     }, type, quality)
   })
 
-const drawImage = (image: DecodedImage, maxDimension: number): HTMLCanvasElement => {
-  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height))
+const fitWithin = ({ width, height }: ImageSize, maxDimension: number): ImageSize => {
+  const scale = Math.min(1, maxDimension / Math.max(width, height))
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) }
+}
+
+const drawImage = (image: DecodedImage, { width, height }: ImageSize): HTMLCanvasElement => {
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(image.width * scale))
-  canvas.height = Math.max(1, Math.round(image.height * scale))
+  canvas.width = width
+  canvas.height = height
 
   const context = canvas.getContext('2d')
 
@@ -89,13 +95,20 @@ const drawImage = (image: DecodedImage, maxDimension: number): HTMLCanvasElement
   return canvas
 }
 
+const createPreview = async (image: DecodedImage): Promise<Blob> => {
+  const canvas = drawImage(image, getDocPreviewSize(image))
+  const preview = await canvasToBlob(canvas, GENERATED_IMAGE_TYPE, PREVIEW_QUALITY)
+
+  return preview.size > DOC_PREVIEW_MAX_SIZE ? canvasToBlob(canvas, GENERATED_IMAGE_TYPE, REDUCED_PREVIEW_QUALITY) : preview
+}
+
 export const createDocImageVariants = async (file: Blob): Promise<DocImageVariants> => {
   const image = await decodeImage(file)
 
   try {
     const [preview, thumbnail] = await Promise.all([
-      canvasToBlob(drawImage(image, DOC_PREVIEW_MAX_DIMENSION), GENERATED_IMAGE_TYPE, PREVIEW_QUALITY),
-      canvasToBlob(drawImage(image, DOC_THUMBNAIL_MAX_DIMENSION), GENERATED_IMAGE_TYPE, THUMBNAIL_QUALITY),
+      createPreview(image),
+      canvasToBlob(drawImage(image, fitWithin(image, DOC_THUMBNAIL_MAX_DIMENSION)), GENERATED_IMAGE_TYPE, THUMBNAIL_QUALITY),
     ])
 
     return { preview, thumbnail, width: image.width, height: image.height }
@@ -113,7 +126,7 @@ export const convertToPng = async (file: Blob): Promise<Blob> => {
   const image = await decodeImage(file)
 
   try {
-    return await canvasToBlob(drawImage(image, Math.min(COPY_MAX_DIMENSION, Math.max(image.width, image.height))), 'image/png')
+    return await canvasToBlob(drawImage(image, fitWithin(image, COPY_MAX_DIMENSION)), 'image/png')
   }
   finally {
     image.release()

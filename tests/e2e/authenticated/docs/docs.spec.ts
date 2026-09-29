@@ -2,7 +2,7 @@ import { test, expect } from '../../fixtures'
 import { BASE_URL } from '../../constants'
 import { cleanupUserData } from '../../helpers/auth'
 import { pressBrowserBack } from '../../helpers/back-navigation'
-import { acceptConfirmModal } from '../../helpers/confirmation'
+import { acceptConfirmModal, cancelConfirmModal } from '../../helpers/confirmation'
 import { createDocumentThroughApi, createFolderThroughApi, createPngFile, uploadImageThroughApi } from '../../helpers/docs'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 
@@ -233,6 +233,13 @@ test.describe('Docs', () => {
     expect(response.headers()['content-type']).toBe('image/png')
     expect(response.headers()['content-disposition']).toContain('attachment')
     expect((await response.body()).subarray(1, 4).toString('ascii')).toBe('PNG')
+    expect(response.headers()['cache-control']).toBe('private, no-cache')
+    expect(response.headers()['x-content-type-options']).toBe('nosniff')
+
+    const etag = response.headers()['etag']
+    expect(etag).toBeTruthy()
+    const revalidated = await request.get(`${BASE_URL}/api/docs/images/${imageId}/original`, { headers: { 'if-none-match': etag ?? '' } })
+    expect(revalidated.status()).toBe(304)
 
     const anonymousContext = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const anonymousResponse = await anonymousContext.request.get(`${BASE_URL}/api/docs/images/${imageId}/original`)
@@ -302,6 +309,30 @@ test.describe('Docs', () => {
     await expect(page.getByTestId('docs-field-editor')).not.toBeVisible()
     await expect(page).toHaveURL(`/docs/${folder.id}/${document.id}`)
     await expect(page.getByTestId('docs-field-value')).toHaveText(['Ivanov'])
+  })
+
+  test('asks before a link drops the changes made in edit mode', async ({ page, request }) => {
+    const folder = await createFolderThroughApi(request, 'Andrew')
+    const document = await createDocumentThroughApi(request, folder.id, 'Passport', [{ name: 'Surname', value: 'Ivanov' }])
+    await page.goto(`/docs/${folder.id}/${document.id}`)
+    await waitForHydration(page)
+
+    await expect(page.getByTestId('docs-add-photos-button')).toBeVisible()
+    await page.getByTestId('docs-document-edit-button').click()
+    await expect(page.getByTestId('docs-add-photos-button')).not.toBeVisible()
+    await page.getByTestId('docs-field-value-input').fill('Petrov')
+
+    await page.getByTestId('docs-back-to-folder').click()
+    await cancelConfirmModal(page)
+
+    await expect(page).toHaveURL(`/docs/${folder.id}/${document.id}`)
+    await expect(page.getByTestId('docs-field-value-input')).toHaveValue('Petrov')
+
+    await page.getByTestId('docs-back-to-folder').click()
+    await acceptConfirmModal(page)
+
+    await page.waitForURL(`/docs/${folder.id}`)
+    await expect(page.getByTestId('docs-document-card').getByTestId('docs-field-value')).toHaveText(['Ivanov'])
   })
 
   test('shows a message for a folder that does not exist', async ({ page }) => {

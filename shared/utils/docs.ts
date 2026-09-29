@@ -3,9 +3,17 @@ import {
   DOC_FIELD_VALUE_MAX_LENGTH,
   DOC_FILE_NAME_MAX_LENGTH,
   DOC_MAX_FIELDS,
+  DOC_PREVIEW_MAX_DIMENSION,
+  DOC_PREVIEW_MAX_VISUAL_TOKENS,
   DOC_TITLE_MAX_LENGTH,
+  DOC_VISUAL_TOKEN_SIZE,
 } from '~~/shared/schemas/docs'
 import type { DocField, DocImageVariant } from '~~/shared/types/docs'
+
+export interface ImageSize {
+  width: number
+  height: number
+}
 
 export interface RecognizedDocField {
   existingNumber: number | null
@@ -109,4 +117,38 @@ export const sanitizeFileName = (fileName: string): string => {
   const baseName = fileName.split(/[\\/]/).at(-1) ?? ''
   const printableName = Array.from(baseName).filter(isPrintableCharacter).join('')
   return truncate(printableName, DOC_FILE_NAME_MAX_LENGTH) || DEFAULT_FILE_NAME
+}
+
+const countVisualTokens = ({ width, height }: ImageSize): number =>
+  Math.ceil(width / DOC_VISUAL_TOKEN_SIZE) * Math.ceil(height / DOC_VISUAL_TOKEN_SIZE)
+
+const fitsPreviewLimits = (size: ImageSize): boolean =>
+  Math.ceil(Math.max(size.width, size.height) / DOC_VISUAL_TOKEN_SIZE) * DOC_VISUAL_TOKEN_SIZE <= DOC_PREVIEW_MAX_DIMENSION
+  && countVisualTokens(size) <= DOC_PREVIEW_MAX_VISUAL_TOKENS
+
+const findLongestFittingEdge = (fittingEdge: number, tooLongEdge: number, fits: (edge: number) => boolean): number => {
+  if (fittingEdge + 1 >= tooLongEdge) {
+    return fittingEdge
+  }
+
+  const middleEdge = Math.floor((fittingEdge + tooLongEdge) / 2)
+  return fits(middleEdge)
+    ? findLongestFittingEdge(middleEdge, tooLongEdge, fits)
+    : findLongestFittingEdge(fittingEdge, middleEdge, fits)
+}
+
+export const getDocPreviewSize = (size: ImageSize): ImageSize => {
+  if (fitsPreviewLimits(size)) {
+    return size
+  }
+
+  const isLandscape = size.width >= size.height
+  const longEdge = isLandscape ? size.width : size.height
+  const shortEdge = isLandscape ? size.height : size.width
+  const toSize = (edge: number): ImageSize => {
+    const scaledShortEdge = Math.max(1, Math.round(edge * shortEdge / longEdge))
+    return isLandscape ? { width: edge, height: scaledShortEdge } : { width: scaledShortEdge, height: edge }
+  }
+
+  return toSize(findLongestFittingEdge(1, longEdge, edge => fitsPreviewLimits(toSize(edge))))
 }

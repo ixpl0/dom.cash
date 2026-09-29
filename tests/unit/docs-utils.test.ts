@@ -14,6 +14,7 @@ import {
   appendRecognizedFields,
   formatDocFieldsForCopy,
   getDocImagePath,
+  getDocPreviewSize,
   mergeRecognizedFields,
   normalizeRecognizedTitle,
   sanitizeFileName,
@@ -197,5 +198,21 @@ const fileSizeCases = [
 fileSizeCases.forEach(({ bytes, locale, expected }) => {
   test(`formatFileSize shows ${bytes} bytes as ${expected} in ${locale}`, () => {
     assert.equal(formatFileSize(bytes, locale), expected)
+  })
+})
+
+const previewSizeCases = [
+  { name: 'keeps a photo that fits the model limits', size: { width: 1200, height: 1600 }, expected: { width: 1200, height: 1600 } },
+  { name: 'shrinks a 4K frame to the size from the vision guide', size: { width: 3840, height: 2160 }, expected: { width: 2576, height: 1449 } },
+  { name: 'shrinks a 12 MP photo to the visual token budget', size: { width: 4032, height: 3024 }, expected: { width: 2212, height: 1659 } },
+  { name: 'shrinks a portrait photo the same way', size: { width: 3024, height: 4032 }, expected: { width: 1659, height: 2212 } },
+  { name: 'limits the long edge of a panorama', size: { width: 10000, height: 1000 }, expected: { width: 2576, height: 258 } },
+]
+
+previewSizeCases.forEach(({ name, size, expected }) => {
+  test(`getDocPreviewSize ${name}`, () => {
+    const previewSize = getDocPreviewSize(size)
+
+    assert.deepEqual({ width: previewSize.width, height: previewSize.height }, expected)
   })
 })

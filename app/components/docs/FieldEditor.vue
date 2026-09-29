@@ -7,7 +7,7 @@
     <div
       v-for="(field, index) in modelValue"
       :key="field.key"
-      class="flex items-start gap-2"
+      class="flex items-start gap-2 border-b border-base-300 pb-3 last:border-b-0 sm:border-b-0 sm:pb-0"
       data-testid="docs-field-editor-row"
     >
       <div class="grid flex-1 gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
@@ -23,7 +23,7 @@
           @input="updateField(index, 'name', $event)"
         >
         <textarea
-          class="textarea textarea-bordered textarea-sm min-h-8 w-full leading-snug"
+          class="textarea textarea-bordered textarea-sm min-h-8 w-full leading-snug [field-sizing:content]"
           :value="field.value"
           :rows="countRows(field.value)"
           :maxlength="DOC_FIELD_VALUE_MAX_LENGTH"
@@ -109,6 +109,7 @@ const emit = defineEmits<{
 }>()
 
 const MAX_TEXTAREA_ROWS = 6
+const CHARACTERS_PER_ROW = 40
 
 const { t } = useI18n()
 
@@ -117,7 +118,8 @@ const editorRoot = ref<HTMLElement | null>(null)
 const isMissingName = (field: EditableDocField): boolean =>
   props.showErrors && field.name.trim() === '' && field.value.trim() !== ''
 
-const countRows = (value: string): number => Math.min(MAX_TEXTAREA_ROWS, value.split('\n').length)
+const countRows = (value: string): number =>
+  Math.min(MAX_TEXTAREA_ROWS, value.split('\n').reduce((rows, line) => rows + Math.max(1, Math.ceil(line.length / CHARACTERS_PER_ROW)), 0))
 
 const readInputValue = (event: Event): string =>
   event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement ? event.target.value : ''

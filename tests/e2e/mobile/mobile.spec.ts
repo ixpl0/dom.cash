@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures'
 import { cleanupUserData } from '../helpers/auth'
+import { createDocumentThroughApi, createFolderThroughApi, uploadImageThroughApi } from '../helpers/docs'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Mobile layout', () => {
@@ -19,6 +20,31 @@ test.describe('Mobile layout', () => {
     await page.getByTestId('mobile-menu-btn').click()
     await page.getByTestId('mobile-budget-btn').click()
     await page.waitForURL('/budget')
+
+    await page.getByTestId('mobile-menu-btn').click()
+    await page.getByTestId('mobile-docs-btn').click()
+    await page.waitForURL('/docs')
+    await expect(page.getByTestId('docs-page')).toBeVisible()
+  })
+
+  test('shows a document with its photos and opens a photo full screen', async ({ page, request }) => {
+    const folder = await createFolderThroughApi(request, 'Andrew')
+    const document = await createDocumentThroughApi(request, folder.id, 'Passport', [{ name: 'Number', value: '45 12 345678' }])
+    await uploadImageThroughApi(request, document.id, 'page-1.png')
+    await uploadImageThroughApi(request, document.id, 'page-2.png')
+
+    await page.goto(`/docs/${folder.id}/${document.id}`)
+    await waitForHydration(page)
+
+    await expect(page.getByTestId('docs-photo')).toHaveCount(2)
+    await expect(page.getByTestId('docs-field-value')).toHaveText(['45 12 345678'])
+    expect(await page.evaluate(() => window.document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+
+    await page.getByTestId('docs-photo-open').first().click()
+    const viewer = page.getByTestId('docs-photo-viewer')
+    await expect(viewer.getByTestId('docs-photo-viewer-image')).toBeVisible()
+    await viewer.getByTestId('docs-photo-viewer-close').click()
+    await expect(viewer).not.toBeVisible()
   })
 
   test('adds an income through the mobile entry card', async ({ page, request }) => {

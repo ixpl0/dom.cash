@@ -6,10 +6,15 @@
     <div class="flex items-start justify-between gap-2">
       <NuxtLink
         :to="documentPath"
-        class="text-lg font-semibold break-words link-hover"
+        class="group/title inline-flex min-w-0 items-center gap-1 text-lg font-semibold"
         data-testid="docs-document-card-title"
       >
-        {{ getDocumentTitle(document.title) }}
+        <span class="break-words group-hover/title:underline">{{ getDocumentTitle(document.title) }}</span>
+        <Icon
+          name="heroicons:chevron-right"
+          size="16"
+          class="flex-shrink-0 opacity-50 transition-transform duration-200 group-hover/title:translate-x-0.5"
+        />
       </NuxtLink>
       <button
         v-if="document.fields.length > 0"
@@ -36,7 +41,7 @@
         v-for="image in document.images"
         :key="image.id"
         type="button"
-        class="h-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300 transition-opacity duration-200 hover:opacity-80"
+        class="h-20 flex-shrink-0 overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-80"
         :aria-label="image.fileName"
         data-testid="docs-document-card-photo"
         @click="docsModalsStore.openPhotoViewer(document.id, image.id)"

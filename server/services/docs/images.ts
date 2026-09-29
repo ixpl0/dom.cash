@@ -2,9 +2,10 @@ import { and, count, eq, sql } from 'drizzle-orm'
 import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { docDocument, docImage } from '~~/server/db/schema'
-import { findReadableImage, getDocumentAccess, getImageAccess, getParticipantIds, type DocDocumentAccess, type ReadableDocImage } from '~~/server/services/docs/access'
+import { getDocumentAccess, getImageAccess, getParticipantIds, type DocDocumentAccess, type ReadableDocImage } from '~~/server/services/docs/access'
 import { loadDocument } from '~~/server/services/docs/documents'
 import { notifyDocsParticipants } from '~~/server/services/docs/notifications'
+import type { RecognitionImageReader } from '~~/server/services/docs/recognizer'
 import { deleteStoredImages, getImageStorageKey, useDocsBucket, type StoredImageLocation } from '~~/server/services/docs/storage'
 import type { DocsBucketObjectBody } from '~~/server/types/cloudflare'
 import { detectImageContentType } from '~~/server/utils/image-type'
@@ -14,10 +15,6 @@ import type { User } from '~~/shared/types'
 import type { DocDocument, DocImageUploadResult, DocImageVariant, UploadDocImageQuery } from '~~/shared/types/docs'
 import { sanitizeFileName } from '~~/shared/utils/docs'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
-
-export interface StoredDocImage extends ReadableDocImage {
-  object: DocsBucketObjectBody
-}
 
 interface UploadParts {
   original: Uint8Array
@@ -175,13 +172,7 @@ export const reorderImages = async (actor: User, documentId: string, imageIds: r
   return loadDocument(event, documentId)
 }
 
-export const readImage = async (viewerId: string, imageId: string, variant: DocImageVariant, event: H3Event): Promise<StoredDocImage> => {
-  const readableImage = await findReadableImage(imageId, viewerId, event)
-  const location: StoredImageLocation = {
-    folderId: readableImage.folderId,
-    documentId: readableImage.imageRow.documentId,
-    imageId,
-  }
+const readStoredObject = async (event: H3Event, location: StoredImageLocation, variant: DocImageVariant): Promise<DocsBucketObjectBody> => {
   const object = await useDocsBucket(event).get(getImageStorageKey(location, variant))
 
   if (!object) {
@@ -191,26 +182,18 @@ export const readImage = async (viewerId: string, imageId: string, variant: DocI
     })
   }
 
-  return { ...readableImage, object }
+  return object
 }
 
-export const readRecognitionImages = async (
+export const readStoredImage = (event: H3Event, { imageRow, folderId }: ReadableDocImage, variant: DocImageVariant): Promise<DocsBucketObjectBody> =>
+  readStoredObject(event, { folderId, documentId: imageRow.documentId, imageId: imageRow.id }, variant)
+
+export const createRecognitionImageReaders = (
   event: H3Event,
   access: DocDocumentAccess,
   imageIds: readonly string[],
-): Promise<Blob[]> => {
-  const bucket = useDocsBucket(event)
-
-  return Promise.all(imageIds.map(async (imageId) => {
-    const object = await bucket.get(getImageStorageKey({ folderId: access.folderRow.id, documentId: access.documentRow.id, imageId }, 'preview'))
-
-    if (!object) {
-      throw createError({
-        statusCode: 404,
-        message: ERROR_KEYS.DOCS_IMAGE_NOT_FOUND,
-      })
-    }
-
+): RecognitionImageReader[] =>
+  imageIds.map(imageId => async () => {
+    const object = await readStoredObject(event, { folderId: access.folderRow.id, documentId: access.documentRow.id, imageId }, 'preview')
     return object.blob()
-  }))
-}
+  })

@@ -2,7 +2,7 @@ import { asc, eq, inArray } from 'drizzle-orm'
 import { createError, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { docDocument, docFolder, docFolderShare, docImage, user, type DocFolder, type DocImageRow } from '~~/server/db/schema'
-import { resolveConnections } from '~~/server/services/connections'
+import { resolveConnections, resolveSharedUsers } from '~~/server/services/connections'
 import { getFolderAccess, getParticipantIds, isFolderVisibleTo } from '~~/server/services/docs/access'
 import { toDocDocument, toFolderSummary } from '~~/server/services/docs/mappers'
 import { notifyDocsParticipants } from '~~/server/services/docs/notifications'
@@ -137,7 +137,7 @@ export const updateFolder = async (actor: User, folderId: string, payload: Updat
 
   const newSharedWith = payload.sharedWithUserIds === undefined
     ? null
-    : await resolveConnections(actor.id, payload.sharedWithUserIds, event)
+    : await resolveSharedUsers(actor.id, payload.sharedWithUserIds, access.sharedWith, event)
   const updatedRow: DocFolder = {
     ...access.folderRow,
     name: payload.name ?? access.folderRow.name,

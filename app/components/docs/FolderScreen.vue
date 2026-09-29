@@ -13,7 +13,7 @@
     </NuxtLink>
 
     <div
-      v-if="isLoading"
+      v-if="isLoading || isLeaving"
       class="flex justify-center py-8"
     >
       <span class="loading loading-spinner loading-lg" />
@@ -133,9 +133,11 @@ const props = defineProps<Props>()
 
 const docsStore = useDocsStore()
 const docsModalsStore = useDocsModalsStore()
-const { deleteFolder } = useDocsActions()
+const { confirmFolderDeletion, deleteFolder } = useDocsActions()
 const { formatError } = useServerError()
 const { t } = useI18n()
+
+const isLeaving = ref(false)
 
 const details = computed(() => docsStore.details?.folder.id === props.folderId ? docsStore.details : null)
 
@@ -144,8 +146,17 @@ const isLoading = computed(() => !details.value && docsStore.detailsError?.folde
 const loadErrorMessage = computed(() => formatError(docsStore.detailsError, t('docs.folder.notFound')))
 
 const handleDelete = async (): Promise<void> => {
-  if (details.value && await deleteFolder(details.value.folder)) {
+  if (!details.value || !await confirmFolderDeletion(details.value.folder)) {
+    return
+  }
+
+  isLeaving.value = true
+
+  if (await deleteFolder(props.folderId)) {
     await navigateTo('/docs')
+  }
+  else {
+    isLeaving.value = false
   }
 }
 </script>

@@ -10,8 +10,10 @@ import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export type RecognitionLanguage = 'en' | 'ru'
 
+export type RecognitionImageReader = () => Promise<Blob>
+
 export interface RecognitionRequest {
-  images: readonly Blob[]
+  imageReaders: readonly RecognitionImageReader[]
   existingFields: readonly DocField[]
   language: RecognitionLanguage
 }
@@ -119,20 +121,38 @@ const deleteUploadedImages = async (client: Anthropic, fileIds: readonly string[
   await Promise.allSettled(fileIds.map(fileId => client.files.delete(fileId)))
 }
 
-const uploadImages = async (client: Anthropic, images: readonly Blob[]): Promise<string[]> => {
-  const uploads = await Promise.allSettled(images.map((image, index) => client.files.upload({
+const uploadImage = async (client: Anthropic, readImage: RecognitionImageReader, index: number): Promise<string> => {
+  const image = await readImage()
+  const uploadedFile = await client.files.upload({
     file: new File([image], `photo-${index + 1}.jpg`, { type: IMAGE_CONTENT_TYPE }),
     expires_in_seconds: UPLOADED_IMAGE_LIFETIME_SECONDS,
-  })))
-  const fileIds = uploads.flatMap(upload => upload.status === 'fulfilled' ? [upload.value.id] : [])
-  const failedUpload = uploads.find(upload => upload.status === 'rejected')
+  })
 
-  if (failedUpload) {
-    await deleteUploadedImages(client, fileIds)
-    throw failedUpload.reason
-  }
+  return uploadedFile.id
+}
 
-  return fileIds
+const uploadImages = (client: Anthropic, imageReaders: readonly RecognitionImageReader[]): Promise<string[]> =>
+  imageReaders.reduce<Promise<string[]>>(async (previousUploads, readImage, index) => {
+    const fileIds = await previousUploads
+
+    try {
+      return [...fileIds, await uploadImage(client, readImage, index)]
+    }
+    catch (error) {
+      await deleteUploadedImages(client, fileIds)
+      throw error
+    }
+  }, Promise.resolve([]))
+
+const describeTokens = ({ input_tokens, output_tokens }: Pick<Anthropic.Beta.BetaUsage, 'input_tokens' | 'output_tokens'>): string =>
+  `${input_tokens} input, ${output_tokens} output`
+
+const describeUsage = (usage: Anthropic.Beta.BetaUsage): string => {
+  const iterations = usage.iterations ?? []
+
+  return iterations.length > 1
+    ? iterations.map(iteration => `${iteration.type}: ${describeTokens(iteration)}`).join('; ')
+    : describeTokens(usage)
 }
 
 const readRecognition = async (client: Anthropic, fileIds: readonly string[], request: RecognitionRequest): Promise<RecognitionResult> => {
@@ -162,7 +182,7 @@ const readRecognition = async (client: Anthropic, fileIds: readonly string[], re
     model: response.model,
     stopReason: response.stop_reason,
     images: fileIds.length,
-    usage: `${response.usage.input_tokens} input, ${response.usage.output_tokens} output`,
+    usage: describeUsage(response.usage),
   })
 
   if (response.stop_reason === 'refusal') {
@@ -180,7 +200,7 @@ const readRecognition = async (client: Anthropic, fileIds: readonly string[], re
 
 const recognizeWithClaude = async (apiKey: string, request: RecognitionRequest): Promise<RecognitionResult> => {
   const client = new Anthropic({ apiKey, timeout: RECOGNITION_TIMEOUT_MS, maxRetries: RECOGNITION_MAX_RETRIES })
-  const fileIds = await uploadImages(client, request.images)
+  const fileIds = await uploadImages(client, request.imageReaders)
 
   try {
     return await readRecognition(client, fileIds, request)
@@ -190,14 +210,18 @@ const recognizeWithClaude = async (apiKey: string, request: RecognitionRequest):
   }
 }
 
-const recognizeInTestMode = ({ images, existingFields }: RecognitionRequest): RecognitionResult => ({
-  title: TEST_MODE_TITLE,
-  fields: [
-    { existingNumber: null, name: 'Test mode', value: 'ANTHROPIC_API_KEY is not set' },
-    { existingNumber: null, name: 'Photos read', value: String(images.length) },
-    ...existingFields.map((_, index) => ({ existingNumber: index + 1, name: '', value: '' })),
-  ],
-})
+const recognizeInTestMode = async ({ imageReaders, existingFields }: RecognitionRequest): Promise<RecognitionResult> => {
+  const images = await Promise.all(imageReaders.map(readImage => readImage()))
+
+  return {
+    title: TEST_MODE_TITLE,
+    fields: [
+      { existingNumber: null, name: 'Test mode', value: 'ANTHROPIC_API_KEY is not set' },
+      { existingNumber: null, name: 'Photos read', value: String(images.length) },
+      ...existingFields.map((_, index) => ({ existingNumber: index + 1, name: '', value: '' })),
+    ],
+  }
+}
 
 export const recognizeDocumentImages = async (request: RecognitionRequest): Promise<RecognitionResult> => {
   const apiKey = getApiKey()

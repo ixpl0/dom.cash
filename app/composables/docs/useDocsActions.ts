@@ -21,29 +21,27 @@ export const useDocsActions = () => {
 
   const getDocumentTitle = (title: string): string => title.trim() || t('docs.document.untitled')
 
-  const deleteFolder = async ({ id, name }: Pick<DocFolderSummary, 'id' | 'name'>): Promise<boolean> => {
-    const isConfirmed = await confirm({
-      title: t('docs.folder.deleteTitle'),
-      message: t('docs.folder.deleteMessage', { name }),
-      variant: 'danger',
-      confirmText: t('docs.folder.deleteConfirm'),
-      icon: 'heroicons:trash',
-    })
+  const confirmFolderDeletion = ({ name }: Pick<DocFolderSummary, 'name'>): Promise<boolean> => confirm({
+    title: t('docs.folder.deleteTitle'),
+    message: t('docs.folder.deleteMessage', { name }),
+    variant: 'danger',
+    confirmText: t('docs.folder.deleteConfirm'),
+    icon: 'heroicons:trash',
+  })
 
-    return isConfirmed && (await runAction(() => docsStore.deleteFolder(id), t('docs.errors.deleteFailed'))) !== null
-  }
+  const confirmDocumentDeletion = ({ title }: Pick<DocDocument, 'title'>): Promise<boolean> => confirm({
+    title: t('docs.document.deleteTitle'),
+    message: t('docs.document.deleteMessage', { name: getDocumentTitle(title) }),
+    variant: 'danger',
+    confirmText: t('docs.document.deleteConfirm'),
+    icon: 'heroicons:trash',
+  })
 
-  const deleteDocument = async ({ id, title }: Pick<DocDocument, 'id' | 'title'>): Promise<boolean> => {
-    const isConfirmed = await confirm({
-      title: t('docs.document.deleteTitle'),
-      message: t('docs.document.deleteMessage', { name: getDocumentTitle(title) }),
-      variant: 'danger',
-      confirmText: t('docs.document.deleteConfirm'),
-      icon: 'heroicons:trash',
-    })
+  const deleteFolder = async (folderId: string): Promise<boolean> =>
+    (await runAction(() => docsStore.deleteFolder(folderId), t('docs.errors.deleteFailed'))) !== null
 
-    return isConfirmed && (await runAction(() => docsStore.deleteDocument(id), t('docs.errors.deleteFailed'))) !== null
-  }
+  const deleteDocument = async (documentId: string): Promise<boolean> =>
+    (await runAction(() => docsStore.deleteDocument(documentId), t('docs.errors.deleteFailed'))) !== null
 
   const deleteImage = async (imageId: string): Promise<boolean> => {
     const isConfirmed = await confirm({
@@ -67,6 +65,8 @@ export const useDocsActions = () => {
   return {
     runAction,
     getDocumentTitle,
+    confirmFolderDeletion,
+    confirmDocumentDeletion,
     deleteFolder,
     deleteDocument,
     deleteImage,

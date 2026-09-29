@@ -12,11 +12,13 @@ export const DOC_MAX_RECOGNITION_IMAGES = 10
 export const DOC_MAX_SHARED_USERS = 50
 
 export const DOC_IMAGE_MAX_SIZE = 20 * 1024 * 1024
-export const DOC_PREVIEW_MAX_SIZE = 8 * 1024 * 1024
+export const DOC_PREVIEW_MAX_SIZE = 5 * 1024 * 1024
 export const DOC_THUMBNAIL_MAX_SIZE = 1024 * 1024
 export const DOC_UPLOAD_MAX_SIZE = DOC_IMAGE_MAX_SIZE + DOC_PREVIEW_MAX_SIZE + DOC_THUMBNAIL_MAX_SIZE
 export const DOC_IMAGE_MAX_DIMENSION = 100_000
 export const DOC_PREVIEW_MAX_DIMENSION = 2576
+export const DOC_PREVIEW_MAX_VISUAL_TOKENS = 4784
+export const DOC_VISUAL_TOKEN_SIZE = 28
 export const DOC_THUMBNAIL_MAX_DIMENSION = 640
 
 export const DOC_IMAGE_VARIANTS = ['original', 'preview', 'thumbnail'] as const

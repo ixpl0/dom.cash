@@ -85,6 +85,11 @@ export const useDocsStore = defineStore('docs', () => {
   const activities = ref<Record<string, DocActivity>>({})
   const isStale = ref(false)
   const lastLoadAt = ref<number | null>(null)
+  let localChangeCount = 0
+
+  const recordLocalChange = (): void => {
+    localChangeCount += 1
+  }
 
   const getDocument = (documentId: string): DocDocument | null =>
     details.value?.documents.find(document => document.id === documentId) ?? null
@@ -101,6 +106,7 @@ export const useDocsStore = defineStore('docs', () => {
 
   const loadFolders = async (): Promise<void> => {
     const requestFetch = useRequestFetch()
+    const changeCountAtStart = localChangeCount
     isLoadingFolders.value = folders.value === null
 
     try {
@@ -109,10 +115,15 @@ export const useDocsStore = defineStore('docs', () => {
         requestFetch<DocParticipant[]>('/api/docs/connections'),
       ])
 
-      folders.value = foldersData.folders
       connections.value = connectionsData
+
+      if (folders.value && localChangeCount !== changeCountAtStart) {
+        isStale.value = true
+        return
+      }
+
+      folders.value = foldersData.folders
       foldersError.value = null
-      isStale.value = false
     }
     catch (error) {
       if (!folders.value) {
@@ -128,6 +139,7 @@ export const useDocsStore = defineStore('docs', () => {
   const loadFolder = async (folderId: string): Promise<void> => {
     const requestFetch = useRequestFetch()
     const hasFolder = details.value?.folder.id === folderId
+    const changeCountAtStart = localChangeCount
     requestedFolderId.value = folderId
 
     if (!hasFolder) {
@@ -142,12 +154,19 @@ export const useDocsStore = defineStore('docs', () => {
         requestFetch<DocParticipant[]>('/api/docs/connections'),
       ])
 
-      if (requestedFolderId.value === folderId) {
-        details.value = detailsData
-        connections.value = connectionsData
-        detailsError.value = null
-        isStale.value = false
+      if (requestedFolderId.value !== folderId) {
+        return
       }
+
+      connections.value = connectionsData
+
+      if (details.value?.folder.id === folderId && localChangeCount !== changeCountAtStart) {
+        isStale.value = true
+        return
+      }
+
+      details.value = detailsData
+      detailsError.value = null
     }
     catch (error) {
       if (requestedFolderId.value === folderId && (!hasFolder || isFolderGoneError(error))) {
@@ -192,6 +211,7 @@ export const useDocsStore = defineStore('docs', () => {
     if (!details.value) {
       return
     }
+    recordLocalChange()
     const documentTitles = documents.map(({ title }) => title)
     details.value = { ...details.value, documents, folder: { ...details.value.folder, documentTitles } }
     setFolderTitles(details.value.folder.id, documentTitles)
@@ -208,6 +228,7 @@ export const useDocsStore = defineStore('docs', () => {
   }
 
   const putFolder = (folder: DocFolderSummary): void => {
+    recordLocalChange()
     if (folders.value) {
       const hasFolder = folders.value.some(({ id }) => id === folder.id)
       folders.value = hasFolder
@@ -233,6 +254,7 @@ export const useDocsStore = defineStore('docs', () => {
 
   const deleteFolder = async (folderId: string): Promise<void> => {
     await $fetch(getFolderPath(folderId), { method: 'DELETE' })
+    recordLocalChange()
     if (folders.value) {
       folders.value = folders.value.filter(folder => folder.id !== folderId)
     }

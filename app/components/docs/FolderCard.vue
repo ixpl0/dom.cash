@@ -81,7 +81,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const docsModalsStore = useDocsModalsStore()
-const { deleteFolder } = useDocsActions()
+const { confirmFolderDeletion, deleteFolder } = useDocsActions()
 const { t } = useI18n()
 
 const documentCount = computed(() => props.folder.documentTitles.length)
@@ -90,6 +90,8 @@ const documentTitles = computed(() =>
   props.folder.documentTitles.map(title => title || t('docs.document.untitled')).join(' · '))
 
 const handleDelete = async (): Promise<void> => {
-  await deleteFolder(props.folder)
+  if (await confirmFolderDeletion(props.folder)) {
+    await deleteFolder(props.folder.id)
+  }
 }
 </script>

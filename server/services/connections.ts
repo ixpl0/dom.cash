@@ -34,3 +34,17 @@ export const resolveConnections = async (ownerId: string, userIds: readonly stri
 
   return connections
 }
+
+export const resolveSharedUsers = async (
+  ownerId: string,
+  userIds: readonly string[],
+  currentSharedUsers: readonly Connection[],
+  event: H3Event,
+): Promise<Connection[]> => {
+  const requestedUserIds = new Set(userIds)
+  const keptUsers = currentSharedUsers.filter(sharedUser => requestedUserIds.has(sharedUser.id))
+  const keptUserIds = new Set(keptUsers.map(({ id }) => id))
+  const addedUsers = await resolveConnections(ownerId, [...requestedUserIds].filter(userId => !keptUserIds.has(userId)), event)
+
+  return [...keptUsers, ...addedUsers]
+}

@@ -31,7 +31,7 @@
         v-if="isOwner"
         class="form-control mb-6"
       >
-        <template v-if="connections.length > 0">
+        <template v-if="shareOptions.length > 0">
           <span class="label pb-1">
             <span class="label-text">{{ t('docs.folderModal.shareLabel') }}</span>
           </span>
@@ -40,17 +40,17 @@
             data-testid="docs-folder-modal-share-select"
           >
             <label
-              v-for="connection in connections"
-              :key="connection.id"
+              v-for="option in shareOptions"
+              :key="option.id"
               class="flex cursor-pointer items-center gap-2"
             >
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm"
-                :checked="form.sharedWithUserIds.includes(connection.id)"
-                @change="toggleConnection(connection.id)"
+                :checked="form.sharedWithUserIds.includes(option.id)"
+                @change="toggleSharedUser(option.id)"
               >
-              <span class="break-all">{{ connection.username }}</span>
+              <span class="break-all">{{ option.username }}</span>
             </label>
           </div>
           <span
@@ -61,7 +61,7 @@
           </span>
         </template>
         <p class="pt-1 text-xs text-base-content/50">
-          {{ connections.length > 0 ? t('docs.folderModal.shareHint') : t('docs.folderModal.noConnections') }}
+          {{ shareOptions.length > 0 ? t('docs.folderModal.shareHint') : t('docs.folderModal.noConnections') }}
         </p>
       </div>
 
@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import { DOC_FOLDER_NAME_MAX_LENGTH, docFolderNameSchema } from '~~/shared/schemas/docs'
+import type { DocParticipant } from '~~/shared/types/docs'
 
 interface FolderForm {
   name: string
@@ -109,7 +110,6 @@ const isSaving = ref(false)
 const nameInput = ref<HTMLInputElement | null>(null)
 
 const isOpen = computed(() => docsModalsStore.folderModal.isOpen)
-const connections = computed(() => docsStore.connections)
 
 const editingFolder = computed(() => {
   const folderId = docsModalsStore.folderModal.editingFolderId
@@ -123,6 +123,12 @@ const editingFolder = computed(() => {
 })
 
 const isOwner = computed(() => editingFolder.value?.isOwner ?? true)
+
+const shareOptions = computed<DocParticipant[]>(() => {
+  const connectionIds = new Set(docsStore.connections.map(({ id }) => id))
+  const formerConnections = (editingFolder.value?.sharedWith ?? []).filter(participant => !connectionIds.has(participant.id))
+  return [...docsStore.connections, ...formerConnections]
+})
 
 const getInitialForm = (): FolderForm => ({
   name: editingFolder.value?.name ?? '',
@@ -151,11 +157,11 @@ const requestClose = async (): Promise<void> => {
   }
 }
 
-const toggleConnection = (connectionId: string): void => {
+const toggleSharedUser = (userId: string): void => {
   const { sharedWithUserIds } = form.value
-  form.value.sharedWithUserIds = sharedWithUserIds.includes(connectionId)
-    ? sharedWithUserIds.filter(userId => userId !== connectionId)
-    : [...sharedWithUserIds, connectionId]
+  form.value.sharedWithUserIds = sharedWithUserIds.includes(userId)
+    ? sharedWithUserIds.filter(sharedUserId => sharedUserId !== userId)
+    : [...sharedWithUserIds, userId]
 }
 
 const saveFolder = async (): Promise<void> => {

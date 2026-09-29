@@ -4,7 +4,7 @@ import { useDatabase } from '~~/server/db'
 import { docDocument } from '~~/server/db/schema'
 import { getDocumentAccess, getParticipantIds } from '~~/server/services/docs/access'
 import { listDocumentImages, loadDocument } from '~~/server/services/docs/documents'
-import { readRecognitionImages } from '~~/server/services/docs/images'
+import { createRecognitionImageReaders } from '~~/server/services/docs/images'
 import { notifyDocsParticipants } from '~~/server/services/docs/notifications'
 import { recognizeDocumentImages, type RecognitionLanguage } from '~~/server/services/docs/recognizer'
 import { DOC_MAX_RECOGNITION_IMAGES } from '~~/shared/schemas/docs'
@@ -84,8 +84,8 @@ export const recognizeDocument = async (
   }
 
   const sentFields = payload.mode === 'merge' ? access.documentRow.fields : []
-  const images = await readRecognitionImages(event, access, imageIds)
-  const recognition = await recognizeDocumentImages({ images, existingFields: sentFields, language })
+  const imageReaders = createRecognitionImageReaders(event, access, imageIds)
+  const recognition = await recognizeDocumentImages({ imageReaders, existingFields: sentFields, language })
 
   const db = useDatabase(event)
   const [currentRow] = await db.select().from(docDocument).where(eq(docDocument.id, documentId)).limit(1)
