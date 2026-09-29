@@ -652,7 +652,6 @@ export default {
       delete: 'Delete document',
       copyAll: 'Copy all',
       copyField: 'Copy {name}',
-      moreFields: '{count} more field | {count} more fields',
       noFields: 'No fields yet',
       noFieldsHint: 'Add them by hand or recognize them from the photos',
       notFound: 'The document was not found. It may have been deleted.',

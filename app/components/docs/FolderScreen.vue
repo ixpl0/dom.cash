@@ -105,16 +105,14 @@
 
       <div
         v-else
-        class="columns-1 gap-4 md:columns-2 xl:columns-3 animate-fade-in-up-delayed-2"
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 animate-fade-in-up-delayed-2"
         data-testid="docs-document-list"
       >
-        <div
+        <DocsDocumentCard
           v-for="document in details.documents"
           :key="document.id"
-          class="mb-4 break-inside-avoid"
-        >
-          <DocsDocumentCard :document="document" />
-        </div>
+          :document="document"
+        />
       </div>
     </template>
 

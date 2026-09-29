@@ -264,19 +264,28 @@ test.describe('Docs', () => {
     await expect(photos.last()).toHaveAttribute('src', `/api/docs/images/${firstImageId}/thumbnail`)
   })
 
-  test('shows the first fields on the folder page and links to the rest', async ({ page, request }) => {
+  test('copies the hidden fields from a document card and opens the document from anywhere on it', async ({ page, context, request }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     const folder = await createFolderThroughApi(request, 'Andrew')
-    const fields = Array.from({ length: 7 }, (_, index) => ({ name: `Field ${index + 1}`, value: `Value ${index + 1}` }))
-    await createDocumentThroughApi(request, folder.id, 'Passport', fields)
+    const document = await createDocumentThroughApi(request, folder.id, 'Passport', [
+      { name: 'Surname', value: 'Ivanov' },
+      { name: 'Number', value: '45 12 345678' },
+    ])
     await page.goto(`/docs/${folder.id}`)
     await waitForHydration(page)
 
     const card = page.getByTestId('docs-document-card')
-    await expect(card.getByTestId('docs-field')).toHaveCount(5)
-    await card.getByTestId('docs-document-card-more').click()
+    await expect(card.getByTestId('docs-document-card-title')).toHaveText('Passport')
+    await expect(card.getByTestId('docs-field')).toHaveCount(0)
 
-    await page.waitForURL(DOCUMENT_PAGE_URL)
-    await expect(page.getByTestId('docs-field')).toHaveCount(7)
+    await card.getByTestId('docs-document-card-copy-all').click()
+    await expect(page.getByTestId('toast-success')).toBeVisible()
+    expect(await readClipboardText(page)).toBe('Passport\nSurname: Ivanov\nNumber: 45 12 345678')
+    await expect(page).toHaveURL(`/docs/${folder.id}`)
+
+    await card.click({ position: { x: 8, y: 8 } })
+    await page.waitForURL(`/docs/${folder.id}/${document.id}`)
+    await expect(page.getByTestId('docs-field-value')).toHaveText(['Ivanov', '45 12 345678'])
   })
 
   test('deletes a document and returns to its folder', async ({ page, request }) => {
@@ -333,7 +342,9 @@ test.describe('Docs', () => {
     await acceptConfirmModal(page)
 
     await page.waitForURL(`/docs/${folder.id}`)
-    await expect(page.getByTestId('docs-document-card').getByTestId('docs-field-value')).toHaveText(['Ivanov'])
+    await page.getByTestId('docs-document-card-title').click()
+    await page.waitForURL(`/docs/${folder.id}/${document.id}`)
+    await expect(page.getByTestId('docs-field-value')).toHaveText(['Ivanov'])
   })
 
   test('shows a message for a folder that does not exist', async ({ page }) => {

@@ -653,7 +653,6 @@ export default {
       delete: 'Удалить документ',
       copyAll: 'Копировать всё',
       copyField: 'Копировать: {name}',
-      moreFields: 'Ещё {count} поле | Ещё {count} поля | Ещё {count} полей',
       noFields: 'Полей пока нет',
       noFieldsHint: 'Добавьте их вручную или распознайте с фото',
       notFound: 'Документ не найден. Возможно, его удалили.',

@@ -1,12 +1,12 @@
 <template>
   <article
-    class="rounded-box bg-base-200/50 p-4 transition-colors duration-200 hover:bg-base-200"
+    class="relative rounded-box bg-base-200/50 p-4 transition-colors duration-200 hover:bg-base-200"
     data-testid="docs-document-card"
   >
     <div class="flex items-start justify-between gap-2">
       <NuxtLink
-        :to="documentPath"
-        class="group/title inline-flex min-w-0 items-center gap-1 text-lg font-semibold"
+        :to="`/docs/${document.folderId}/${document.id}`"
+        class="group/title inline-flex min-w-0 items-center gap-1 text-lg font-semibold after:absolute after:inset-0 after:content-['']"
         data-testid="docs-document-card-title"
       >
         <span class="break-words group-hover/title:underline">{{ getDocumentTitle(document.title) }}</span>
@@ -19,7 +19,7 @@
       <button
         v-if="document.fields.length > 0"
         type="button"
-        class="btn btn-ghost btn-sm btn-square flex-shrink-0 text-base-content/60 hover:text-base-content"
+        class="btn btn-ghost btn-sm btn-square relative z-10 flex-shrink-0 text-base-content/60 hover:text-base-content"
         :aria-label="t('docs.document.copyAll')"
         :title="t('docs.document.copyAll')"
         data-testid="docs-document-card-copy-all"
@@ -34,7 +34,7 @@
 
     <div
       v-if="document.images.length > 0"
-      class="mt-3 flex gap-2 overflow-x-auto pb-1"
+      class="relative z-10 mt-3 flex gap-2 overflow-x-auto pb-1"
       data-testid="docs-document-card-photos"
     >
       <button
@@ -59,27 +59,6 @@
       class="mt-3"
       :document-id="document.id"
     />
-
-    <DocsFieldList
-      v-if="shownFields.length > 0"
-      class="mt-3"
-      :fields="shownFields"
-    />
-    <p
-      v-else
-      class="mt-3 text-sm text-base-content/60"
-    >
-      {{ t('docs.document.noFields') }}
-    </p>
-
-    <NuxtLink
-      v-if="hiddenFieldCount > 0"
-      :to="documentPath"
-      class="link link-primary mt-2 inline-block text-sm"
-      data-testid="docs-document-card-more"
-    >
-      {{ t('docs.document.moreFields', { count: hiddenFieldCount }, hiddenFieldCount) }}
-    </NuxtLink>
   </article>
 </template>
 
@@ -91,17 +70,9 @@ interface Props {
   document: DocDocument
 }
 
-const props = defineProps<Props>()
-
-const SHOWN_FIELD_COUNT = 5
+defineProps<Props>()
 
 const docsModalsStore = useDocsModalsStore()
 const { copyAllFields, getDocumentTitle } = useDocsActions()
 const { t } = useI18n()
-
-const documentPath = computed(() => `/docs/${props.document.folderId}/${props.document.id}`)
-
-const shownFields = computed(() => props.document.fields.slice(0, SHOWN_FIELD_COUNT))
-
-const hiddenFieldCount = computed(() => props.document.fields.length - shownFields.value.length)
 </script>
