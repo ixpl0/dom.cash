@@ -136,6 +136,7 @@ const todoStore = useTodoStore()
 const todoModalsStore = useTodoModalsStore()
 const { t } = useI18n()
 const { toast } = useToast()
+const { formatError } = useServerError()
 const { confirmDiscardChanges } = useUnsavedChanges()
 
 const isSaving = ref(false)
@@ -212,27 +213,26 @@ const computePlannedDate = (): string | null => {
   return userDate ? `${plannedDate}T00:00` : null
 }
 
-const saveTodo = async (): Promise<boolean> => {
+const saveTodo = async (): Promise<void> => {
   const { content, recurrence, sharedWithUserIds } = form.value
   const plannedDate = computePlannedDate()
 
   if (editingTodo.value) {
-    return todoStore.updateTodo(editingTodo.value.id, {
+    await todoStore.updateTodo(editingTodo.value.id, {
       content,
       plannedDate,
       recurrence,
       ...(isOwner.value ? { sharedWithUserIds } : {}),
     })
+    return
   }
 
-  const createdTodo = await todoStore.createTodo({
+  await todoStore.createTodo({
     content,
     plannedDate: plannedDate ?? undefined,
     recurrence: recurrence ?? undefined,
     sharedWithUserIds: sharedWithUserIds.length > 0 ? sharedWithUserIds : undefined,
   })
-
-  return createdTodo !== null
 }
 
 const handleSubmit = async (): Promise<void> => {
@@ -243,12 +243,11 @@ const handleSubmit = async (): Promise<void> => {
   isSaving.value = true
 
   try {
-    if (await saveTodo()) {
-      closeModal()
-    }
-    else {
-      toast({ type: 'error', message: t('todo.errors.saveFailed') })
-    }
+    await saveTodo()
+    closeModal()
+  }
+  catch (error) {
+    toast({ type: 'error', message: formatError(error, t('todo.errors.saveFailed')) })
   }
   finally {
     isSaving.value = false

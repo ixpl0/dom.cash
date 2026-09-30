@@ -7,11 +7,18 @@ interface GoogleLoginResult {
 
 export const useAuth = () => {
   const { user, setUser, clearUser, isAuthenticated } = useAuthState()
-  const { $backHandlers } = useNuxtApp()
+  const { $backHandlers, $sessionSync } = useNuxtApp()
   const lastSharedBudgetCookie = useCookie<string | null>(COOKIE_NAMES.lastSharedBudget)
 
+  const acceptUser = (newUser: User): void => {
+    setUser(newUser)
+    if (import.meta.client) {
+      $sessionSync.announceSignIn(newUser.id)
+    }
+  }
+
   const signIn = async (request: Promise<User>): Promise<void> => {
-    setUser(await request)
+    acceptUser(await request)
   }
 
   const login = (credentials: LoginCredentials): Promise<void> =>
@@ -59,6 +66,7 @@ export const useAuth = () => {
     lastSharedBudgetCookie.value = null
 
     if (import.meta.client) {
+      $sessionSync.announceSignOut()
       await nextTick()
       $backHandlers.forgetGuardEntry()
       window.location.replace('/')
@@ -89,7 +97,7 @@ export const useAuth = () => {
       query: { code, state },
     })
 
-    setUser(response.user)
+    acceptUser(response.user)
     return response.redirectTo
   }
 

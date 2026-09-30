@@ -72,7 +72,7 @@ test.describe('Overdue task count', () => {
     await createTask('Future task', '2099-01-01T00:00')
     await createTask('Task without date')
     const completedTask = await createTask('Completed task', '2020-01-02T00:00')
-    const completionResponse = await request.put(`/api/todo/${completedTask.id}/completion`, { data: { isCompleted: true } })
+    const completionResponse = await request.put(`/api/todo/${completedTask.id}/completion`, { data: { isCompleted: true, plannedDate: '2020-01-02' } })
     expect(completionResponse.ok()).toBe(true)
 
     await page.goto('/budget')

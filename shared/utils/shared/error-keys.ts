@@ -40,7 +40,6 @@ export const ERROR_KEYS = {
   FAILED_TO_DELETE_MONTH: 'serverErrors.failed_to_delete_month',
   NO_PERMISSION_DELETE_MONTH: 'serverErrors.no_permission_delete_month',
   INSUFFICIENT_PERMISSIONS_CREATE_MONTHS: 'serverErrors.insufficient_permissions_create_months',
-  IMPORT_FAILED: 'serverErrors.import_failed',
   CANNOT_DELETE_YOURSELF: 'serverErrors.cannot_delete_yourself',
   CANNOT_DELETE_ADMIN: 'serverErrors.cannot_delete_admin',
   CANNOT_SHARE_WITH_YOURSELF: 'serverErrors.cannot_share_with_yourself',

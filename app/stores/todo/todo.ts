@@ -1,14 +1,18 @@
-import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, TodoCompletionPayload, TodoCompletionResult, OverdueTodoCount } from '~~/shared/types/todo'
+import type { TodoData, TodoListItem, CreateTodoPayload, UpdateTodoPayload, TodoConnection, TodoCompletionPayload, OverdueTodoCount } from '~~/shared/types/todo'
 import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
-import { isTodoOverdue } from '~~/shared/utils/todo'
+import { getSeenPlannedDate, isTodoOverdue } from '~~/shared/utils/todo'
 import { readServerErrorKey } from '~/utils/server-error'
+
+const LEAVE_ANIMATION_MS = 400
 
 export const useTodoStore = defineStore('todo', () => {
   const preferencesStore = usePreferencesStore()
+  const today = useToday()
 
   const data = ref<TodoData | null>(null)
   const connections = ref<TodoConnection[]>([])
   const serverOverdueCount = ref<number | null>(null)
+  const hasOverdueCountFailed = ref(false)
   const loadError = ref<{ message: string } | null>(null)
   const isLoading = ref(false)
   const isStale = ref(false)
@@ -28,14 +32,11 @@ export const useTodoStore = defineStore('todo', () => {
     return data.value.items
   })
 
-  const getToday = (): string => toLocalIsoDate(new Date())
-
   const sortedItems = computed((): TodoListItem[] => {
-    const today = getToday()
     const items = [...filteredItems.value]
     return items.sort((a, b) => {
-      const aOverdue = isTodoOverdue(a, today)
-      const bOverdue = isTodoOverdue(b, today)
+      const aOverdue = isTodoOverdue(a, today.value)
+      const bOverdue = isTodoOverdue(b, today.value)
       if (aOverdue && !bOverdue) {
         return -1
       }
@@ -59,12 +60,19 @@ export const useTodoStore = defineStore('todo', () => {
     if (!data.value) {
       return serverOverdueCount.value ?? 0
     }
-    const today = getToday()
-    return data.value.items.filter(item => isTodoOverdue(item, today)).length
+    return data.value.items.filter(item => isTodoOverdue(item, today.value)).length
   })
 
   const getTodoById = (id: string): TodoListItem | undefined => {
     return data.value?.items.find(item => item.id === id)
+  }
+
+  const replaceItem = (updatedItem: TodoListItem): void => {
+    if (data.value) {
+      data.value = {
+        items: data.value.items.map(item => item.id === updatedItem.id ? updatedItem : item),
+      }
+    }
   }
 
   const load = async (): Promise<void> => {
@@ -95,11 +103,13 @@ export const useTodoStore = defineStore('todo', () => {
 
   const loadOverdueCount = async (): Promise<void> => {
     try {
-      const { count } = await $fetch<OverdueTodoCount>('/api/todo/overdue-count', { query: { today: getToday() } })
+      const { count } = await $fetch<OverdueTodoCount>('/api/todo/overdue-count', { query: { today: toLocalIsoDate(new Date()) } })
       serverOverdueCount.value = count
+      hasOverdueCountFailed.value = false
       isStale.value = false
     }
     catch (error) {
+      hasOverdueCountFailed.value = true
       console.error('Failed to load the overdue task count', error)
     }
     finally {
@@ -108,7 +118,7 @@ export const useTodoStore = defineStore('todo', () => {
   }
 
   const markStale = (): void => {
-    if (data.value || serverOverdueCount.value !== null) {
+    if (data.value || serverOverdueCount.value !== null || hasOverdueCountFailed.value) {
       isStale.value = true
     }
   }
@@ -121,129 +131,91 @@ export const useTodoStore = defineStore('todo', () => {
     await (data.value ? load() : loadOverdueCount())
   }
 
-  const createTodo = async (payload: CreateTodoPayload): Promise<{ id: string } | null> => {
-    try {
-      const result = await $fetch<TodoListItem>('/api/todo', {
-        method: 'POST',
-        body: payload,
-      })
-
-      if (data.value) {
-        data.value = {
-          items: [result, ...data.value.items],
-        }
-      }
-
-      return { id: result.id }
+  watch(today, (newToday, oldToday) => {
+    if (oldToday !== null && newToday !== oldToday) {
+      markStale()
     }
-    catch {
-      return null
+  })
+
+  const createTodo = async (payload: CreateTodoPayload): Promise<TodoListItem> => {
+    const result = await $fetch<TodoListItem>('/api/todo', {
+      method: 'POST',
+      body: payload,
+    })
+
+    if (data.value) {
+      data.value = {
+        items: [result, ...data.value.items],
+      }
+    }
+
+    return result
+  }
+
+  const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<void> => {
+    const updatedItem = await $fetch<TodoListItem>(`/api/todo/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: payload,
+    })
+
+    replaceItem(updatedItem)
+  }
+
+  const deleteTodo = async (id: string): Promise<void> => {
+    await $fetch(`/api/todo/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+
+    if (data.value) {
+      data.value = {
+        items: data.value.items.filter(item => item.id !== id),
+      }
     }
   }
 
-  const updateTodo = async (id: string, payload: UpdateTodoPayload): Promise<boolean> => {
-    try {
-      const updatedItem = await $fetch<TodoListItem>(`/api/todo/${id}`, {
-        method: 'PUT',
-        body: payload,
-      })
+  const removeFromSet = (ids: ReadonlySet<string>, id: string): Set<string> =>
+    new Set([...ids].filter(existingId => existingId !== id))
 
-      if (data.value) {
-        data.value = {
-          items: data.value.items.map(item => item.id === id ? updatedItem : item),
-        }
-      }
+  const waitForLeaveAnimation = async (startTime: number): Promise<void> => {
+    const remainingDelay = Math.max(0, LEAVE_ANIMATION_MS - (Date.now() - startTime))
 
-      return true
-    }
-    catch {
-      return false
+    if (remainingDelay > 0) {
+      await new Promise(resolve => setTimeout(resolve, remainingDelay))
     }
   }
 
-  const deleteTodo = async (id: string): Promise<boolean> => {
-    try {
-      await $fetch(`/api/todo/${id}`, {
-        method: 'DELETE',
-      })
-      if (data.value) {
-        data.value = {
-          items: data.value.items.filter(item => item.id !== id),
-        }
-      }
-      return true
-    }
-    catch {
-      return false
-    }
-  }
-
-  const toggleTodo = async (id: string): Promise<boolean> => {
-    const item = data.value?.items.find(i => i.id === id)
-    if (!item) {
-      return false
+  const toggleTodo = async (id: string): Promise<void> => {
+    const item = getTodoById(id)
+    if (!item || togglingIds.value.has(id)) {
+      return
     }
 
-    if (togglingIds.value.has(id)) {
-      return true
-    }
-
-    const isRecurring = item.recurrence !== null
     const willBeCompleted = !item.isCompleted
-    const shouldAnimateLeave = !isRecurring && willBeCompleted && hideCompleted.value
-    const animationDuration = 400
+    const shouldAnimateLeave = item.recurrence === null && willBeCompleted && hideCompleted.value
     const startTime = Date.now()
 
     if (shouldAnimateLeave) {
       leavingIds.value = new Set([...leavingIds.value, id])
     }
     else if (!willBeCompleted) {
-      leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
+      leavingIds.value = removeFromSet(leavingIds.value, id)
     }
 
     togglingIds.value = new Set([...togglingIds.value, id])
 
     try {
-      const body: TodoCompletionPayload = { isCompleted: willBeCompleted }
-      const result = await $fetch<TodoCompletionResult>(`/api/todo/${id}/completion`, { method: 'PUT', body })
+      const body: TodoCompletionPayload = { isCompleted: willBeCompleted, plannedDate: getSeenPlannedDate(item) }
+      const updatedItem = await $fetch<TodoListItem>(`/api/todo/${encodeURIComponent(id)}/completion`, { method: 'PUT', body })
 
-      const elapsed = Date.now() - startTime
-      const remainingDelay = Math.max(0, animationDuration - elapsed)
-
-      if (remainingDelay > 0) {
-        await new Promise(resolve => setTimeout(resolve, remainingDelay))
-      }
-
-      togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
-
-      if (shouldAnimateLeave) {
-        leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
-      }
-
-      if (data.value) {
-        data.value = {
-          items: data.value.items.map(i =>
-            i.id === id
-              ? {
-                  ...i,
-                  isCompleted: result.isCompleted,
-                  plannedDate: result.plannedDate ?? i.plannedDate,
-                }
-              : i,
-          ),
-        }
-      }
-
-      return true
+      await waitForLeaveAnimation(startTime)
+      replaceItem(updatedItem)
     }
-    catch {
-      togglingIds.value = new Set([...togglingIds.value].filter(i => i !== id))
+    finally {
+      togglingIds.value = removeFromSet(togglingIds.value, id)
 
       if (shouldAnimateLeave) {
-        leavingIds.value = new Set([...leavingIds.value].filter(i => i !== id))
+        leavingIds.value = removeFromSet(leavingIds.value, id)
       }
-
-      return false
     }
   }
 

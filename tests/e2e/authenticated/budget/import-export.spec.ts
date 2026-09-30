@@ -192,7 +192,7 @@ test.describe('Import/Export functionality', () => {
       await importRoute.continue()
 
       await expect(importModal.getByTestId('import-close-button')).toBeVisible()
-      await expect(importModal.locator('.bg-success')).toBeVisible()
+      await expect(importModal.getByTestId('import-result')).toBeVisible()
     })
 
     test('should show preview after selecting valid file', async ({ page }) => {
@@ -346,7 +346,7 @@ test.describe('Import/Export functionality', () => {
       const closeButton = importModal.getByTestId('import-close-button')
       await expect(closeButton).toBeVisible()
 
-      const resultContainer = importModal.locator('.bg-success')
+      const resultContainer = importModal.getByTestId('import-result')
       await expect(resultContainer).toBeVisible()
     })
   })
@@ -401,6 +401,26 @@ test.describe('Import/Export functionality', () => {
       finally {
         await cleanupTempFile(tempFilePath)
       }
+    })
+
+    test('should show the server error and keep the file when the import fails', async ({ page }) => {
+      const budgetPath = join(process.cwd(), 'tests', 'e2e', 'fixtures', 'budgets', 'two-months-basic.json')
+      await page.route('**/api/budget/import', route => route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ statusCode: 500, message: 'serverErrors.failed_to_import_budget' }),
+      }), { times: 1 })
+
+      await page.getByTestId('import-budget-btn').click()
+
+      const importModal = page.getByTestId('import-modal')
+      await importModal.getByTestId('import-file-input').setInputFiles(budgetPath)
+      await importModal.getByTestId('import-submit-button').click()
+
+      await expect(importModal.getByTestId('import-error')).toBeVisible()
+      await expect(importModal.getByTestId('import-result')).toHaveCount(0)
+      await expect(importModal.getByTestId('import-submit-button')).toBeEnabled()
+      await expect(page.getByTestId('budget-month')).toHaveCount(0)
     })
 
     test('should disable submit button when no file selected', async ({ page }) => {

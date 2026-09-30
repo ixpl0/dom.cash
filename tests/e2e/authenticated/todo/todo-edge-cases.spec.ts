@@ -391,3 +391,59 @@ test.describe('Todo edge cases', () => {
     await expect(card).not.toHaveClass(/border-error/)
   })
 })
+
+test.describe('Todo dates in the browser time zone', () => {
+  const timeZone = 'Pacific/Kiritimati'
+
+  test.use({ timezoneId: timeZone })
+
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should highlight a task for today in a time zone ahead of UTC', async ({ page, request }) => {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date())
+    const response = await request.post('/api/todo', { data: { content: 'Task for today', plannedDate: `${today}T00:00` } })
+    expect(response.ok()).toBe(true)
+
+    await page.goto('/todo')
+    await waitForHydration(page)
+
+    await expect(page.getByTestId('todo-card').first()).toHaveClass(/border-error/)
+  })
+})
+
+test.describe('Recurring todo completion from a stale list', () => {
+  test.afterEach(async ({ request }) => {
+    await cleanupUserData(request)
+  })
+
+  test('should not skip a repetition when the task was already completed elsewhere', async ({ page, request }) => {
+    const createResponse = await request.post('/api/todo', {
+      data: {
+        content: 'Weekly task',
+        plannedDate: '2099-01-01T00:00',
+        recurrence: { type: 'interval', unit: 'week', value: 1 },
+      },
+    })
+    expect(createResponse.ok()).toBe(true)
+    const { id } = await createResponse.json()
+
+    await page.goto('/todo')
+    await waitForHydration(page)
+    const card = page.getByTestId('todo-card').first()
+    await expect(card).toBeVisible()
+
+    const completeElsewhere = await request.put(`/api/todo/${id}/completion`, { data: { isCompleted: true, plannedDate: '2099-01-01' } })
+    expect(completeElsewhere.ok()).toBe(true)
+
+    const completion = page.waitForResponse(response => response.url().endsWith(`/api/todo/${id}/completion`))
+    await card.getByTestId('todo-card-checkbox').click()
+    expect((await completion).ok()).toBe(true)
+
+    await expect(card.getByTestId('todo-card-checkbox')).not.toHaveClass(/is-completed/)
+    const listResponse = await request.get('/api/todo')
+    const { items } = await listResponse.json()
+    expect(items).toEqual([expect.objectContaining({ id, isCompleted: false, plannedDate: '2099-01-08T00:00' })])
+  })
+})

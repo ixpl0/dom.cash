@@ -24,6 +24,7 @@ export const createTodoSchema = z.object({
 
 export const todoCompletionSchema = z.object({
   isCompleted: z.boolean(),
+  plannedDate: z.iso.date().nullable(),
 })
 
 export const updateTodoSchema = z.object({

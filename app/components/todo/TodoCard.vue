@@ -20,7 +20,6 @@
 
 <script setup lang="ts">
 import type { TodoListItem } from '~~/shared/types/todo'
-import { toLocalIsoDate } from '~~/shared/utils/shared/dates'
 import { isTodoOverdue } from '~~/shared/utils/todo'
 
 interface Props {
@@ -34,6 +33,8 @@ const todoModalsStore = useTodoModalsStore()
 const { confirm } = useConfirmation()
 const { toast } = useToast()
 const { t } = useI18n()
+const { formatError } = useServerError()
+const today = useToday()
 
 const shortWeekdayNames = computed(() => [
   t('todo.recurrence.weekdayNamesShort.sun'),
@@ -77,12 +78,14 @@ const visualIsCompleted = computed(() => {
   return props.todo.isCompleted || todoStore.isToggling(props.todo.id)
 })
 
-const isOverdue = computed(() => isTodoOverdue(props.todo, toLocalIsoDate(new Date())))
+const isOverdue = computed(() => isTodoOverdue(props.todo, today.value))
 
 const handleToggle = async () => {
-  const success = await todoStore.toggleTodo(props.todo.id)
-  if (!success) {
-    toast({ type: 'error', message: t('todo.errors.toggleFailed') })
+  try {
+    await todoStore.toggleTodo(props.todo.id)
+  }
+  catch (error) {
+    toast({ type: 'error', message: formatError(error, t('todo.errors.toggleFailed')) })
   }
 }
 
@@ -100,9 +103,11 @@ const handleDelete = async () => {
   })
 
   if (confirmed) {
-    const success = await todoStore.deleteTodo(props.todo.id)
-    if (!success) {
-      toast({ type: 'error', message: t('todo.errors.deleteFailed') })
+    try {
+      await todoStore.deleteTodo(props.todo.id)
+    }
+    catch (error) {
+      toast({ type: 'error', message: formatError(error, t('todo.errors.deleteFailed')) })
     }
   }
 }

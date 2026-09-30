@@ -130,7 +130,7 @@ test('importBudget converts the plans of a file kept in another main currency', 
     { year: 2026, month: 8, plannedBalanceChange: null, comment: 'Only a note' },
   ]), { strategy: 'skip' }, database.event)
 
-  assert.equal(result.success, true)
+  assert.deepEqual(result, { importedMonths: 0, importedEntries: 0, skippedMonths: 0 })
   assert.deepEqual(readPlans(database), { '2026-6': 1000, '2026-7': -100, '2026-8': null })
 })
 
@@ -142,7 +142,7 @@ test('importBudget keeps the plans of a file in the same main currency without r
     { year: 2026, month: 6, plannedBalanceChange: 1000, comment: null },
   ]), { strategy: 'skip' }, database.event)
 
-  assert.equal(result.success, true)
+  assert.deepEqual(result, { importedMonths: 0, importedEntries: 0, skippedMonths: 0 })
   assert.deepEqual(readPlans(database), { '2026-6': 1000 })
 })
 

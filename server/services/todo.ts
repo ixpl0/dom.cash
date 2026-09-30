@@ -6,9 +6,10 @@ import { resolveConnections, resolveSharedUsers } from '~~/server/services/conne
 import { sendNotification, type NotificationType } from '~~/server/services/notifications'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import type { User } from '~~/shared/types'
-import type { CreateTodoPayload, TodoCompletionResult, TodoConnection, TodoListItem, UpdateTodoPayload } from '~~/shared/types/todo'
+import type { CreateTodoPayload, TodoCompletionPayload, TodoConnection, TodoListItem, UpdateTodoPayload } from '~~/shared/types/todo'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 import { PLAIN_DATE_LENGTH } from '~~/shared/utils/shared/dates'
+import { getSeenPlannedDate } from '~~/shared/utils/todo'
 import { calculateNextDate, formatDateForDb } from '~~/shared/utils/recurrence'
 
 type TodoRow = typeof todo.$inferSelect
@@ -212,31 +213,47 @@ export const updateTodo = async (actor: User, todoId: string, payload: UpdateTod
   return toTodoListItem(updatedRow, access.ownerUsername, newSharedWith ?? access.sharedWith, actor.id)
 }
 
-export const setTodoCompletion = async (actor: User, todoId: string, isCompleted: boolean, event: H3Event): Promise<TodoCompletionResult> => {
+const hasStoredPlannedDate = (plannedDate: string | null) =>
+  plannedDate === null ? isNull(todo.plannedDate) : eq(todo.plannedDate, plannedDate)
+
+const getCompletionChanges = ({ recurrence, plannedDate }: TodoRow, isCompleted: boolean, now: Date) => {
+  if (recurrence && isCompleted) {
+    const baseDate = plannedDate ? new Date(plannedDate) : now
+    return { plannedDate: formatDateForDb(calculateNextDate(recurrence, baseDate)), isCompleted: false, updatedAt: now }
+  }
+  return { isCompleted, updatedAt: now }
+}
+
+export const setTodoCompletion = async (
+  actor: User,
+  todoId: string,
+  { isCompleted, plannedDate: seenPlannedDate }: TodoCompletionPayload,
+  event: H3Event,
+): Promise<TodoListItem> => {
   const access = await getTodoAccess(todoId, actor.id, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE, event)
-  const { todoRow } = access
-  const isRecurring = todoRow.recurrence !== null
-  const now = new Date()
-  const db = useDatabase(event)
+  const { todoRow, ownerUsername, sharedWith } = access
+  const shouldMove = todoRow.recurrence !== null && isCompleted
+  const hasRequestedState = !shouldMove && (todoRow.isCompleted ?? false) === isCompleted
+  const hasSeenOtherDate = isCompleted && getSeenPlannedDate(todoRow) !== seenPlannedDate
 
-  if (todoRow.recurrence && isCompleted) {
-    const baseDate = todoRow.plannedDate ? new Date(todoRow.plannedDate) : now
-    const plannedDate = formatDateForDb(calculateNextDate(todoRow.recurrence, baseDate))
-
-    await db.update(todo).set({ plannedDate, isCompleted: false, updatedAt: now }).where(eq(todo.id, todoId))
-    await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', false)
-
-    return { isCompleted: false, plannedDate, isRecurring }
+  if (hasRequestedState || hasSeenOtherDate) {
+    return toTodoListItem(todoRow, ownerUsername, sharedWith, actor.id)
   }
 
-  if ((todoRow.isCompleted ?? false) === isCompleted) {
-    return { isCompleted, isRecurring }
+  const [updatedRow] = await useDatabase(event)
+    .update(todo)
+    .set(getCompletionChanges(todoRow, isCompleted, new Date()))
+    .where(and(eq(todo.id, todoId), hasStoredPlannedDate(todoRow.plannedDate)))
+    .returning()
+
+  if (!updatedRow) {
+    const current = await getTodoAccess(todoId, actor.id, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE, event)
+    return toTodoListItem(current.todoRow, current.ownerUsername, current.sharedWith, actor.id)
   }
 
-  await db.update(todo).set({ isCompleted, updatedAt: now }).where(eq(todo.id, todoId))
-  await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', isCompleted)
+  await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', updatedRow.isCompleted ?? false)
 
-  return { isCompleted, isRecurring }
+  return toTodoListItem(updatedRow, ownerUsername, sharedWith, actor.id)
 }
 
 export const deleteTodo = async (actor: User, todoId: string, event: H3Event): Promise<void> => {

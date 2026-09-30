@@ -147,7 +147,7 @@ const saveShownSeries = (shownSeries: ShownSeries): void => {
   }
 }
 
-const shownSeries = ref<ShownSeries>(loadShownSeries())
+let shownSeries = loadShownSeries()
 
 const getSeriesName = (key: SeriesKey): string => t(`chart.${key}`)
 
@@ -160,9 +160,8 @@ const seriesConfigs = computed((): ReadonlyArray<ChartSeriesConfig> =>
   })),
 )
 
-const legendSelected = computed((): Record<string, boolean> =>
-  Object.fromEntries(SERIES.map(({ key }) => [getSeriesName(key), shownSeries.value[key]])),
-)
+const getLegendSelected = (): Record<string, boolean> =>
+  Object.fromEntries(SERIES.map(({ key }) => [getSeriesName(key), shownSeries[key]]))
 
 const tooltipFormatter = (p: TooltipParams): string => {
   const list = toList(p)
@@ -181,11 +180,15 @@ const tooltipFormatter = (p: TooltipParams): string => {
 const yAxisFormatter = (value: number): string => formatChartValue(value)
 
 const chartOption = computed((): ChartOption => {
+  if (!isOpen.value) {
+    return {}
+  }
+
   const baseOption = buildChartOption({
     colors: themeColors.value,
     labels: chartData.value.labels,
     series: seriesConfigs.value,
-    legendSelected: legendSelected.value,
+    legendSelected: getLegendSelected(),
     tooltipFormatter,
     yAxisFormatter,
     enableDataZoom: true,
@@ -203,8 +206,8 @@ const chartOption = computed((): ChartOption => {
 })
 
 const handleLegendSelectChanged = (selected: Record<string, boolean>): void => {
-  shownSeries.value = toShownSeries(key => selected[getSeriesName(key)] ?? shownSeries.value[key])
-  saveShownSeries(shownSeries.value)
+  shownSeries = toShownSeries(key => selected[getSeriesName(key)] ?? shownSeries[key])
+  saveShownSeries(shownSeries)
 }
 
 const hide = () => {

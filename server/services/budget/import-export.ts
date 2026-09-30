@@ -1,11 +1,10 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
 import { user, month, entry, plan } from '~~/server/db/schema'
 import { loadMonths } from './months'
-import { getUserPlans, upsertPlan } from './plans'
+import { getUserPlans } from './plans'
 import { convertPlansToCurrency } from './currency'
-import { secureLog } from '~~/server/utils/secure-logger'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import { CURRENT_BUDGET_EXPORT_VERSION } from '~~/shared/schemas/export-import'
 import type {
@@ -15,7 +14,6 @@ import type {
   BudgetExportEntry,
   BudgetImportOptions,
   BudgetImportResult,
-  BudgetImportError,
 } from '~~/shared/types/export-import'
 
 export const exportBudget = async (userId: string, event: H3Event): Promise<BudgetExportData> => {
@@ -89,123 +87,28 @@ export const exportBudget = async (userId: string, event: H3Event): Promise<Budg
   }
 }
 
-type MonthImportOutcome
-  = | { status: 'skipped' }
-    | { status: 'imported', monthId: string, createdMonth: boolean, insertedEntries: number }
-    | { status: 'failed', errorKind: BudgetImportError['kind'] }
+interface MonthPosition {
+  year: number
+  month: number
+}
 
-const maxStatementsPerMonthBatch = 100
+const makeMonthKey = ({ year, month: monthIndex }: MonthPosition): string => `${year}-${monthIndex}`
+
+const keepFirstOfEveryMonth = <T extends MonthPosition>(items: readonly T[]): T[] => {
+  const firstIndexByMonth = items.reduceRight(
+    (indexes, item, index) => indexes.set(makeMonthKey(item), index),
+    new Map<string, number>(),
+  )
+  return items.filter((item, index) => firstIndexByMonth.get(makeMonthKey(item)) === index)
+}
+
+const monthsPerInsertStatement = getRowsPerInsertStatement(month)
 
 const entriesPerInsertStatement = getRowsPerInsertStatement(entry)
 
-type ExistingMonthKey = `${number}-${number}`
+const plansPerInsertStatement = getRowsPerInsertStatement(plan)
 
-const makeMonthKey = (year: number, monthIndex: number): ExistingMonthKey => `${year}-${monthIndex}`
-
-const loadExistingMonthIds = async (
-  db: ReturnType<typeof useDatabase>,
-  userId: string,
-): Promise<Map<ExistingMonthKey, string>> => {
-  const existingRows = await db
-    .select({ id: month.id, year: month.year, month: month.month })
-    .from(month)
-    .where(eq(month.userId, userId))
-
-  return new Map(existingRows.map(row => [makeMonthKey(row.year, row.month), row.id]))
-}
-
-const loadExistingPlanKeys = async (
-  db: ReturnType<typeof useDatabase>,
-  userId: string,
-): Promise<Set<ExistingMonthKey>> => {
-  const existingRows = await db
-    .select({ year: plan.year, month: plan.month })
-    .from(plan)
-    .where(eq(plan.userId, userId))
-
-  return new Set(existingRows.map(row => makeMonthKey(row.year, row.month)))
-}
-
-const importSingleMonth = async (
-  db: ReturnType<typeof useDatabase>,
-  userId: string,
-  importMonth: BudgetExportMonth,
-  strategy: BudgetImportOptions['strategy'],
-  existingMonthId: string | undefined,
-): Promise<MonthImportOutcome> => {
-  const monthAlreadyExists = existingMonthId !== undefined
-
-  if (monthAlreadyExists && strategy === 'skip') {
-    return { status: 'skipped' }
-  }
-
-  const insertStatementCount = Math.ceil(importMonth.entries.length / entriesPerInsertStatement)
-  const totalStatementCount = 1 + insertStatementCount
-  if (totalStatementCount > maxStatementsPerMonthBatch) {
-    return { status: 'failed', errorKind: 'tooLarge' }
-  }
-
-  const monthId = existingMonthId ?? crypto.randomUUID()
-
-  const monthSetupStatement = monthAlreadyExists
-    ? db.delete(entry).where(eq(entry.monthId, monthId))
-    : db
-        .insert(month)
-        .values({
-          id: monthId,
-          userId,
-          year: importMonth.year,
-          month: importMonth.month,
-        })
-
-  const entriesToInsert = importMonth.entries.map(importEntry => ({
-    id: crypto.randomUUID(),
-    monthId,
-    kind: importEntry.kind,
-    description: importEntry.description,
-    amount: importEntry.amount,
-    currency: importEntry.currency,
-    date: importEntry.date ?? null,
-    isOptional: importEntry.kind === 'expense' && importEntry.isOptional === true,
-  }))
-
-  const entryInsertStatements = chunkArray(entriesToInsert, entriesPerInsertStatement)
-    .map(entryChunk => db.insert(entry).values(entryChunk))
-
-  await db.batch([monthSetupStatement, ...entryInsertStatements])
-
-  return {
-    status: 'imported',
-    monthId,
-    createdMonth: !monthAlreadyExists,
-    insertedEntries: entriesToInsert.length,
-  }
-}
-
-const runImportSafely = async (
-  db: ReturnType<typeof useDatabase>,
-  userId: string,
-  importMonth: BudgetExportMonth,
-  strategy: BudgetImportOptions['strategy'],
-  existingMonthId: string | undefined,
-): Promise<MonthImportOutcome> => {
-  try {
-    return await importSingleMonth(db, userId, importMonth, strategy, existingMonthId)
-  }
-  catch (error) {
-    const errorName = error instanceof Error ? error.name : 'NonErrorThrown'
-    const rawMessage = error instanceof Error ? error.message : String(error)
-    const truncatedMessage = rawMessage.length > 200 ? `${rawMessage.slice(0, 200)}…` : rawMessage
-    secureLog.error('Budget import month failed', {
-      userId,
-      year: importMonth.year,
-      month: importMonth.month,
-      errorName,
-      errorMessage: truncatedMessage,
-    })
-    return { status: 'failed', errorKind: 'failed' }
-  }
-}
+const planConflictTarget = [plan.userId, plan.year, plan.month]
 
 export const importBudget = async (
   userId: string,
@@ -214,114 +117,81 @@ export const importBudget = async (
   event: H3Event,
 ): Promise<BudgetImportResult> => {
   const db = useDatabase(event)
-
-  type ImportPlan = BudgetExportPlan
-  const deduplicatedPlans = new Map<ExistingMonthKey, ImportPlan>()
-  for (const candidate of importData.plans ?? []) {
-    const key = makeMonthKey(candidate.year, candidate.month)
-    if (!deduplicatedPlans.has(key)) {
-      deduplicatedPlans.set(key, candidate)
-    }
-  }
-  const [account] = await db.select({ mainCurrency: user.mainCurrency }).from(user).where(eq(user.id, userId)).limit(1)
+  const isOverwrite = options.strategy === 'overwrite'
   const fileCurrency = importData.user.mainCurrency
-  const uniqueImportPlans = await convertPlansToCurrency(
-    Array.from(deduplicatedPlans.values()),
+
+  const [[account], existingMonths] = await Promise.all([
+    db.select({ mainCurrency: user.mainCurrency }).from(user).where(eq(user.id, userId)).limit(1),
+    db.select({ id: month.id, year: month.year, month: month.month }).from(month).where(eq(month.userId, userId)),
+  ])
+
+  const importPlans = await convertPlansToCurrency(
+    keepFirstOfEveryMonth(importData.plans ?? []),
     fileCurrency,
     account?.mainCurrency ?? fileCurrency,
     event,
   )
 
-  const knownMonthIds = await loadExistingMonthIds(db, userId)
+  const existingMonthIds = new Map(existingMonths.map(row => [makeMonthKey(row), row.id]))
+  const importMonths = keepFirstOfEveryMonth(importData.months)
+  const monthsToWrite = importMonths
+    .filter(importMonth => isOverwrite || !existingMonthIds.has(makeMonthKey(importMonth)))
+    .map((importMonth) => {
+      const existingId = existingMonthIds.get(makeMonthKey(importMonth))
+      return { importMonth, isNew: existingId === undefined, monthId: existingId ?? crypto.randomUUID() }
+    })
 
-  const deduplicatedMonths = new Map<ExistingMonthKey, BudgetExportMonth>()
-  for (const candidate of importData.months) {
-    const key = makeMonthKey(candidate.year, candidate.month)
-    if (!deduplicatedMonths.has(key)) {
-      deduplicatedMonths.set(key, candidate)
-    }
-  }
-  const uniqueImportMonths = Array.from(deduplicatedMonths.values())
+  const overwrittenMonthIds = monthsToWrite
+    .filter(({ isNew }) => !isNew)
+    .map(({ monthId }) => monthId)
 
-  const emptyResult: BudgetImportResult = {
-    success: true,
-    importedMonths: 0,
-    importedEntries: 0,
-    skippedMonths: 0,
-    errors: [],
-  }
+  const newMonths = monthsToWrite
+    .filter(({ isNew }) => isNew)
+    .map(({ importMonth, monthId }) => ({
+      id: monthId,
+      userId,
+      year: importMonth.year,
+      month: importMonth.month,
+    }))
 
-  const monthsResult = await uniqueImportMonths.reduce<Promise<BudgetImportResult>>(
-    async (previousResultPromise, importMonth) => {
-      const previousResult = await previousResultPromise
-      const existingMonthId = knownMonthIds.get(makeMonthKey(importMonth.year, importMonth.month))
-      const outcome = await runImportSafely(db, userId, importMonth, options.strategy, existingMonthId)
+  const entriesToInsert = monthsToWrite.flatMap(({ importMonth, monthId }) => importMonth.entries.map(importEntry => ({
+    id: crypto.randomUUID(),
+    monthId,
+    kind: importEntry.kind,
+    description: importEntry.description,
+    amount: importEntry.amount,
+    currency: importEntry.currency,
+    date: importEntry.date ?? null,
+    isOptional: importEntry.kind === 'expense' && importEntry.isOptional === true,
+  })))
 
-      if (outcome.status === 'skipped') {
-        return { ...previousResult, skippedMonths: previousResult.skippedMonths + 1 }
-      }
+  const plansToSave = importPlans.map(importPlan => ({
+    id: crypto.randomUUID(),
+    userId,
+    year: importPlan.year,
+    month: importPlan.month,
+    plannedBalanceChange: importPlan.plannedBalanceChange,
+    comment: importPlan.comment ?? null,
+  }))
 
-      if (outcome.status === 'imported') {
-        if (outcome.createdMonth) {
-          knownMonthIds.set(makeMonthKey(importMonth.year, importMonth.month), outcome.monthId)
-        }
-        return {
-          ...previousResult,
-          importedMonths: previousResult.importedMonths + (outcome.createdMonth ? 1 : 0),
-          importedEntries: previousResult.importedEntries + outcome.insertedEntries,
-        }
-      }
-
-      return {
-        ...previousResult,
-        success: false,
-        errors: [
-          ...previousResult.errors,
-          { year: importMonth.year, month: importMonth.month, kind: outcome.errorKind },
-        ],
-      }
-    },
-    Promise.resolve(emptyResult),
-  )
-
-  const existingPlanKeys = await loadExistingPlanKeys(db, userId)
-
-  return uniqueImportPlans.reduce<Promise<BudgetImportResult>>(
-    async (previousResultPromise, importPlan) => {
-      const previousResult = await previousResultPromise
-      const planKey = makeMonthKey(importPlan.year, importPlan.month)
-      const planAlreadyExists = existingPlanKeys.has(planKey)
-
-      if (planAlreadyExists && options.strategy === 'skip') {
-        return previousResult
-      }
-
-      try {
-        await upsertPlan(userId, importPlan.year, importPlan.month, importPlan.plannedBalanceChange, importPlan.comment ?? null, event)
-        existingPlanKeys.add(planKey)
-        return previousResult
-      }
-      catch (error) {
-        const errorName = error instanceof Error ? error.name : 'NonErrorThrown'
-        const rawMessage = error instanceof Error ? error.message : String(error)
-        const truncatedMessage = rawMessage.length > 200 ? `${rawMessage.slice(0, 200)}…` : rawMessage
-        secureLog.error('Budget import plan failed', {
-          userId,
-          year: importPlan.year,
-          month: importPlan.month,
-          errorName,
-          errorMessage: truncatedMessage,
+  await db.batch([
+    db.delete(entry).where(sql`${entry.monthId} IN (SELECT value FROM json_each(${JSON.stringify(overwrittenMonthIds)}))`),
+    ...chunkArray(newMonths, monthsPerInsertStatement).map(monthChunk => db.insert(month).values(monthChunk)),
+    ...chunkArray(entriesToInsert, entriesPerInsertStatement).map(entryChunk => db.insert(entry).values(entryChunk)),
+    ...chunkArray(plansToSave, plansPerInsertStatement).map(planChunk => isOverwrite
+      ? db.insert(plan).values(planChunk).onConflictDoUpdate({
+          target: planConflictTarget,
+          set: {
+            plannedBalanceChange: sql`excluded.planned_balance_change`,
+            comment: sql`excluded.comment`,
+          },
         })
-        return {
-          ...previousResult,
-          success: false,
-          errors: [
-            ...previousResult.errors,
-            { year: importPlan.year, month: importPlan.month, kind: 'failed' },
-          ],
-        }
-      }
-    },
-    Promise.resolve(monthsResult),
-  )
+      : db.insert(plan).values(planChunk).onConflictDoNothing({ target: planConflictTarget })),
+  ])
+
+  return {
+    importedMonths: monthsToWrite.length,
+    importedEntries: entriesToInsert.length,
+    skippedMonths: importMonths.length - monthsToWrite.length,
+  }
 }

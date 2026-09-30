@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createError, isError } from 'h3'
 import { requireAuth } from '~~/server/utils/session'
 import { parseBody } from '~~/server/utils/validation'
+import { secureLog } from '~~/server/utils/secure-logger'
 import { importBudget } from '~~/server/services/budget/import-export'
 import { resolveBudget } from '~~/server/services/budget/access'
 import { sendNotification } from '~~/server/services/notifications'
@@ -25,40 +26,29 @@ export default defineEventHandler(async (event) => {
 
   const { owner } = await resolveBudget(event, currentUser, username, 'write', ERROR_KEYS.INSUFFICIENT_PERMISSIONS_IMPORT)
 
-  try {
-    const result = await importBudget(owner.id, data, options, event)
-
-    if (result.importedMonths > 0 || result.importedEntries > 0) {
-      await sendNotification(event, {
-        sourceUserId: currentUser.id,
-        budgetOwnerId: owner.id,
-        type: 'budget_imported',
-        params: {
-          username: currentUser.username,
-          monthsCount: result.importedMonths,
-          entriesCount: result.importedEntries,
-        },
-      })
-    }
-
-    if (!result.success) {
-      throw createError({
-        statusCode: 400,
-        message: ERROR_KEYS.IMPORT_FAILED,
-        data: result,
-      })
-    }
-
-    return result
-  }
-  catch (error) {
+  const result = await importBudget(owner.id, data, options, event).catch((error: unknown) => {
     if (isError(error)) {
       throw error
     }
-
+    secureLog.error('Budget import failed', { userId: owner.id, error })
     throw createError({
       statusCode: 500,
       message: ERROR_KEYS.FAILED_TO_IMPORT_BUDGET,
     })
+  })
+
+  if (result.importedMonths > 0 || result.importedEntries > 0) {
+    await sendNotification(event, {
+      sourceUserId: currentUser.id,
+      budgetOwnerId: owner.id,
+      type: 'budget_imported',
+      params: {
+        username: currentUser.username,
+        monthsCount: result.importedMonths,
+        entriesCount: result.importedEntries,
+      },
+    })
   }
+
+  return result
 })

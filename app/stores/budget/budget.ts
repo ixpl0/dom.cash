@@ -81,20 +81,39 @@ export const useBudgetStore = defineStore('budget', () => {
     !isOwnBudget.value && data.value?.user?.username ? data.value.user.username : undefined,
   )
 
+  let plansRequestId = 0
   let plansRequest: Promise<void> | null = null
+
+  const startPlansRequest = (requestFetch: RequestFetch, targetUsername: string | undefined) => {
+    plansRequestId += 1
+    plansRequest = null
+    const requestId = plansRequestId
+    return {
+      isLatest: (): boolean => requestId === plansRequestId,
+      response: requestFetch<{ plans: PlanData[] }>('/api/budget/plans', { query: { username: targetUsername } }),
+    }
+  }
+
+  const setPlans = (loadedPlans: PlanData[]): void => {
+    plans.value = loadedPlans
+    plansLoaded.value = true
+  }
 
   const loadPlans = (): Promise<void> => {
     if (plansRequest) {
       return plansRequest
     }
 
-    const request: Promise<void> = $fetch<{ plans: PlanData[] }>('/api/budget/plans', {
-      query: { username: targetUsernameForApi.value },
-    })
-      .then((response) => {
-        if (plansRequest === request) {
-          plans.value = response.plans
-          plansLoaded.value = true
+    const { isLatest, response } = startPlansRequest($fetch, targetUsernameForApi.value)
+    const request: Promise<void> = response
+      .then(({ plans: loadedPlans }) => {
+        if (isLatest()) {
+          setPlans(loadedPlans)
+        }
+      })
+      .catch((err: unknown) => {
+        if (isLatest()) {
+          throw err
         }
       })
       .finally(() => {
@@ -108,26 +127,45 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   const forgetPlans = (): void => {
+    plansRequestId += 1
+    plansRequest = null
     plans.value = []
     plansLoaded.value = false
-    plansRequest = null
   }
 
-  const refreshPlans = async (): Promise<void> => {
-    forgetPlans()
+  const fetchRefreshedPlans = (requestFetch: RequestFetch, targetUsername: string | undefined) => {
+    const { isLatest, response } = startPlansRequest(requestFetch, targetUsername)
+    return {
+      isLatest,
+      response: response
+        .then(({ plans: loadedPlans }): PlanData[] | null => loadedPlans)
+        .catch((err: unknown) => {
+          console.error('Error loading plans:', err)
+          return null
+        }),
+    }
+  }
 
-    if (!isPlanningMode.value) {
+  const applyRefreshedPlans = (loadedPlans: PlanData[] | null): void => {
+    if (loadedPlans === null || !isPlanningMode.value) {
+      isPlanningMode.value = false
+      forgetPlans()
       return
     }
 
-    try {
-      await loadPlans()
+    setPlans(loadedPlans)
+  }
+
+  const refreshPlans = async (): Promise<void> => {
+    if (!isPlanningMode.value) {
+      forgetPlans()
+      return
     }
-    catch (err) {
-      console.error('Error loading plans:', err)
-      if (!plansLoaded.value && !plansRequest) {
-        isPlanningMode.value = false
-      }
+
+    const { isLatest, response } = fetchRefreshedPlans($fetch, targetUsernameForApi.value)
+    const loadedPlans = await response
+    if (isLatest()) {
+      applyRefreshedPlans(loadedPlans)
     }
   }
 
@@ -319,18 +357,29 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   const refreshShownBudget = async (requestFetch: RequestFetch, targetUsername: string | undefined, isLatestLoad: () => boolean): Promise<boolean> => {
+    const plansRefresh = isPlanningMode.value ? fetchRefreshedPlans(requestFetch, targetUsername) : null
     try {
       const yearsData = await fetchYears(requestFetch, targetUsername)
       const availableYearNumbers = new Set(yearsData.availableYears.map(({ year }) => year))
       const years = [...new Set([...loadedYears.value, ...yearsData.initialYears])]
         .filter(year => availableYearNumbers.has(year))
-      const budgetData = await fetchBudget(requestFetch, targetUsername, years)
+      const [budgetData, loadedPlans] = await Promise.all([
+        fetchBudget(requestFetch, targetUsername, years),
+        plansRefresh?.response ?? null,
+      ])
       if (!isLatestLoad()) {
         return false
       }
 
       applyBudget(budgetData, yearsData, years)
-      await refreshPlans()
+      if (plansRefresh) {
+        if (plansRefresh.isLatest()) {
+          applyRefreshedPlans(loadedPlans)
+        }
+      }
+      else if (!isPlanningMode.value && !plansRequest) {
+        forgetPlans()
+      }
       return true
     }
     catch (err) {

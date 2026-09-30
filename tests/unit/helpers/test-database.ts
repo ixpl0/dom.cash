@@ -31,6 +31,7 @@ export interface TestDatabase {
   sqlite: DatabaseSync
   docsBucket: TestBucket
   getQueries: () => string[]
+  getRequestCount: () => number
 }
 
 const MIGRATIONS_DIRECTORY = new URL('../../../migrations/', import.meta.url)
@@ -61,6 +62,12 @@ export const createTestDatabase = (): TestDatabase => {
   sqlite.exec('PRAGMA foreign_keys = ON')
 
   let queries: string[] = []
+  let requestCount = 0
+
+  const countRequest = <T>(result: T): T => {
+    requestCount += 1
+    return result
+  }
 
   const createStatement = (query: string, values: SQLInputValue[]): TestStatement => {
     const execute = (): StatementResult => {
@@ -75,19 +82,20 @@ export const createTestDatabase = (): TestDatabase => {
         }
         return createStatement(query, nextValues.map(toSqlValue))
       },
-      all: async () => execute(),
-      run: async () => execute(),
+      all: async () => countRequest(execute()),
+      run: async () => countRequest(execute()),
       raw: async () => {
         queries = [...queries, query]
         const statement = sqlite.prepare(query)
         statement.setReturnArrays(true)
-        return statement.all(...values).map(row => Object.values(row))
+        return countRequest(statement.all(...values).map(row => Object.values(row)))
       },
       execute,
     }
   }
 
   const batch = async (statements: TestStatement[]): Promise<StatementResult[]> => {
+    requestCount += 1
     sqlite.exec('BEGIN')
     try {
       const results = statements.map(statement => statement.execute())
@@ -113,5 +121,6 @@ export const createTestDatabase = (): TestDatabase => {
     sqlite,
     docsBucket,
     getQueries: () => queries,
+    getRequestCount: () => requestCount,
   }
 }

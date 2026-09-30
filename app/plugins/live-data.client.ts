@@ -1,5 +1,6 @@
 import type { NotificationEvent } from '~~/shared/types/i18n'
 import { formatNotificationMessage, getReconnectDelay, getStaleStores, isSilentNotification, parseServerMessage } from '~/utils/notifications'
+import { shouldCheckSession } from '~/utils/session-sync'
 
 const STALE_AFTER_MS = 15 * 60 * 1000
 const REFRESH_CHECK_MS = 3000
@@ -85,6 +86,15 @@ export default defineNuxtPlugin({
       }
     }
 
+    const checkSession = async (): Promise<void> => {
+      try {
+        await $fetch('/api/user/session')
+      }
+      catch (error) {
+        console.error('Failed to check the session', error)
+      }
+    }
+
     const disconnect = (): void => {
       clearTimeout(reconnectTimer)
       eventSource?.close()
@@ -102,8 +112,14 @@ export default defineNuxtPlugin({
           return
         }
         eventSource = null
+        if (!user.value) {
+          return
+        }
         reconnectTimer = setTimeout(connect, getReconnectDelay(failedAttempts))
         failedAttempts += 1
+        if (shouldCheckSession(failedAttempts)) {
+          checkSession()
+        }
       }
 
       eventSource = source

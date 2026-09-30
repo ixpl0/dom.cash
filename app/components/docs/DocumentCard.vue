@@ -36,7 +36,8 @@
         v-for="image in document.images"
         :key="image.id"
         type="button"
-        class="h-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-80"
+        class="h-20 max-w-40 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg bg-base-300 transition-opacity duration-200 hover:opacity-80"
+        :style="{ aspectRatio: getImageAspectRatio(image) }"
         :aria-label="image.fileName"
         data-testid="docs-document-card-photo"
         @click="docsModalsStore.openPhotoViewer(document.id, image.id)"
@@ -45,7 +46,7 @@
           :src="getDocImagePath(image.id, 'thumbnail')"
           :alt="image.fileName"
           loading="lazy"
-          class="h-full w-auto max-w-40 object-contain"
+          class="h-full w-full object-contain"
         >
       </button>
     </div>
@@ -58,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DocDocument } from '~~/shared/types/docs'
+import type { DocDocument, DocImage } from '~~/shared/types/docs'
 import { getDocImagePath } from '~~/shared/utils/docs'
 
 interface Props {
@@ -70,4 +71,7 @@ defineProps<Props>()
 const docsModalsStore = useDocsModalsStore()
 const { copyAllFields, getDocumentTitle } = useDocsActions()
 const { t } = useI18n()
+
+const getImageAspectRatio = ({ width, height }: DocImage): string =>
+  width && height ? `${width} / ${height}` : '1'
 </script>

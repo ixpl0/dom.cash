@@ -99,6 +99,7 @@
       <div
         v-if="error"
         class="alert alert-error mb-4"
+        data-testid="import-error"
       >
         <span>{{ error }}</span>
       </div>
@@ -114,8 +115,8 @@
 
       <div
         v-if="importResult"
-        class="mb-4 p-4 rounded"
-        :class="importResultBackgroundClass"
+        class="mb-4 p-4 rounded bg-success text-success-content"
+        data-testid="import-result"
       >
         <h4 class="font-semibold mb-2">
           {{ t('import.resultTitle') }}
@@ -129,22 +130,6 @@
         <p class="text-sm">
           {{ t('import.skippedMonths') }} {{ importResult.skippedMonths }}
         </p>
-        <div
-          v-if="importResult.errors.length > 0"
-          class="mt-2"
-        >
-          <p class="text-sm font-semibold">
-            {{ t('import.errors') }}
-          </p>
-          <ul class="text-xs">
-            <li
-              v-for="importResultError in importResult.errors"
-              :key="`${importResultError.year}-${importResultError.month}-${importResultError.kind}`"
-            >
-              • {{ formatImportError(importResultError) }}
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
 
@@ -184,8 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import type { BudgetExportData, BudgetImportError, BudgetImportOptions, BudgetImportResult } from '~~/shared/types/export-import'
-import { readServerErrorData } from '~/utils/server-error'
+import type { BudgetExportData, BudgetImportOptions, BudgetImportResult } from '~~/shared/types/export-import'
 import { BUDGET_EXPORT_VERSIONS, budgetExportSchema } from '~~/shared/schemas/export-import'
 
 interface Props {
@@ -210,6 +194,7 @@ type ImportMode = 'skip' | 'overwrite'
 
 const importMode = ref<ImportMode>('skip')
 const { t, locale } = useI18n()
+const { formatError } = useServerError()
 
 const options = computed<BudgetImportOptions>(() => ({
   strategy: importMode.value,
@@ -265,7 +250,7 @@ const handleImport = async () => {
   error.value = ''
 
   try {
-    const response = await $fetch('/api/budget/import', {
+    importResult.value = await $fetch<BudgetImportResult>('/api/budget/import', {
       method: 'POST',
       body: {
         data: previewData.value,
@@ -273,97 +258,20 @@ const handleImport = async () => {
         username: props.targetUsername,
       },
     })
-
-    if (!isBudgetImportResult(response)) {
-      error.value = t('import.importError')
-      importResult.value = null
-      return
-    }
-
-    importResult.value = response
-
-    if (response.success) {
-      emit('imported')
-    }
+    emit('imported')
   }
   catch (fetchError: unknown) {
-    const errorData = extractImportResult(fetchError)
-    if (errorData) {
-      importResult.value = errorData
-      if (errorData.importedMonths > 0 || errorData.importedEntries > 0) {
-        emit('imported')
-      }
-    }
-    else {
-      error.value = t('import.importError')
-      importResult.value = null
-    }
+    error.value = formatError(fetchError, t('import.importError'))
+    importResult.value = null
   }
   finally {
     isImporting.value = false
   }
 }
 
-const importErrorKindKeys: Record<BudgetImportError['kind'], string> = {
-  tooLarge: 'import.errorKind.tooLarge',
-  failed: 'import.errorKind.failed',
-}
-
-const isBudgetImportError = (value: unknown): value is BudgetImportError => {
-  if (!value || typeof value !== 'object') {
-    return false
-  }
-  const candidate = value as Record<string, unknown>
-  return typeof candidate.year === 'number'
-    && Number.isInteger(candidate.year)
-    && typeof candidate.month === 'number'
-    && Number.isInteger(candidate.month)
-    && candidate.month >= 0
-    && candidate.month <= 11
-    && typeof candidate.kind === 'string'
-    && candidate.kind in importErrorKindKeys
-}
-
-const isBudgetImportResult = (value: unknown): value is BudgetImportResult => {
-  if (!value || typeof value !== 'object') {
-    return false
-  }
-  const candidate = value as Record<string, unknown>
-  return typeof candidate.success === 'boolean'
-    && typeof candidate.importedMonths === 'number'
-    && typeof candidate.importedEntries === 'number'
-    && typeof candidate.skippedMonths === 'number'
-    && Array.isArray(candidate.errors)
-    && candidate.errors.every(isBudgetImportError)
-}
-
 const isSupportedVersion = (content: unknown): boolean =>
   typeof content === 'object' && content !== null && 'version' in content
   && BUDGET_EXPORT_VERSIONS.some(version => version === content.version)
-
-const extractImportResult = (fetchError: unknown): BudgetImportResult | null => {
-  const payload = readServerErrorData(fetchError)
-  return isBudgetImportResult(payload) ? payload : null
-}
-
-const formatImportError = (importError: BudgetImportError): string => {
-  const monthLabel = `${importError.year}-${String(importError.month + 1).padStart(2, '0')}`
-  return `${monthLabel}: ${t(importErrorKindKeys[importError.kind])}`
-}
-
-const importResultBackgroundClass = computed(() => {
-  if (!importResult.value) {
-    return ''
-  }
-  if (importResult.value.success) {
-    return 'bg-success text-success-content'
-  }
-  const hasPartialProgress = importResult.value.importedMonths > 0 || importResult.value.importedEntries > 0
-  if (hasPartialProgress) {
-    return 'bg-warning text-warning-content'
-  }
-  return 'bg-error text-error-content'
-})
 
 const hide = () => {
   if (isImporting.value) {

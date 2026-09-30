@@ -30,12 +30,6 @@ export interface TodoData {
   items: TodoListItem[]
 }
 
-export interface TodoCompletionResult {
-  isCompleted: boolean
-  plannedDate?: string
-  isRecurring: boolean
-}
-
 export interface OverdueTodoCount {
   count: number
 }
