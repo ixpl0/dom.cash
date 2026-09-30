@@ -50,6 +50,8 @@ const isFolderGoneError = (error: unknown): boolean => {
 
 type Translate = ReturnType<typeof useT>
 
+type RequestFetch = ReturnType<typeof useRequestFetch>
+
 const readErrorMessage = (error: unknown): string | null => error instanceof Error ? error.message : null
 
 const formatError = (t: Translate, error: unknown, fallback: string): string => {
@@ -88,9 +90,22 @@ export const useDocsStore = defineStore('docs', () => {
   const isStale = ref(false)
   const lastLoadAt = ref<number | null>(null)
   let localChangeCount = 0
+  let connectionsRequest: Promise<DocParticipant[]> | null = null
 
   const recordLocalChange = (): void => {
     localChangeCount += 1
+  }
+
+  const fetchConnections = (requestFetch: RequestFetch): Promise<DocParticipant[]> => {
+    if (connectionsRequest) {
+      return connectionsRequest
+    }
+
+    const request = requestFetch<DocParticipant[]>('/api/docs/connections').finally(() => {
+      connectionsRequest = null
+    })
+    connectionsRequest = request
+    return request
   }
 
   const getDocument = (documentId: string): DocDocument | null =>
@@ -114,7 +129,7 @@ export const useDocsStore = defineStore('docs', () => {
     try {
       const [foldersData, connectionsData] = await Promise.all([
         requestFetch<DocFoldersData>('/api/docs/folders'),
-        requestFetch<DocParticipant[]>('/api/docs/connections'),
+        fetchConnections(requestFetch),
       ])
 
       connections.value = connectionsData
@@ -153,7 +168,7 @@ export const useDocsStore = defineStore('docs', () => {
     try {
       const [detailsData, connectionsData] = await Promise.all([
         requestFetch<DocFolderDetails>(getFolderPath(folderId)),
-        requestFetch<DocParticipant[]>('/api/docs/connections'),
+        fetchConnections(requestFetch),
       ])
 
       if (requestedFolderId.value !== folderId) {

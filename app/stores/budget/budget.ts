@@ -1,12 +1,14 @@
 import type { MonthData, PlanData, ComputedMonthData, YearSummary, YearInfo, BudgetData, YearsData, EntryPayload, SavedEntry } from '~~/shared/types/budget'
 import type { EntryKind } from '~~/shared/types'
-import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, isPastMonth, sortMonthsNewestFirst } from '~~/shared/utils/budget/month-helpers'
+import { getNextMonth, getPreviousMonth, findClosestMonthForCopy, findMonthBounds, isPastMonth, sortMonthsNewestFirst } from '~~/shared/utils/budget/month-helpers'
 import { getEntryConfig, updateMonthWithNewEntry, updateMonthWithUpdatedEntry, updateMonthWithDeletedEntry, findEntryKindByEntryId, monthHasEntry } from '~~/shared/utils/budget/entry-strategies'
 import { computeMonthData, computeYearSummary, createMonthKey, computeExpectedBalances } from '~~/shared/utils/budget/budget-calculations'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { readServerErrorKey } from '~/utils/server-error'
 
 const PLAN_ONLY_ID_PREFIX = 'plan-only-'
+const ROLLING_AVERAGE_MONTHS = 12
+const ROLLING_AVERAGE_MIN_MONTHS = 3
 
 const isPlanOnlyId = (id: string): boolean => id.startsWith(PLAN_ONLY_ID_PREFIX)
 
@@ -66,7 +68,6 @@ export const useBudgetStore = defineStore('budget', () => {
   const isPlanningMode = ref(false)
   const plans = ref<PlanData[]>([])
   const plansLoaded = ref(false)
-  const isPlansLoading = ref(false)
   const isStale = ref(false)
   const lastLoadAt = ref<number | null>(null)
 
@@ -80,32 +81,67 @@ export const useBudgetStore = defineStore('budget', () => {
     !isOwnBudget.value && data.value?.user?.username ? data.value.user.username : undefined,
   )
 
-  const ensurePlansLoaded = async (): Promise<void> => {
-    if (plansLoaded.value || isPlansLoading.value) {
+  let plansRequest: Promise<void> | null = null
+
+  const loadPlans = (): Promise<void> => {
+    if (plansRequest) {
+      return plansRequest
+    }
+
+    const request: Promise<void> = $fetch<{ plans: PlanData[] }>('/api/budget/plans', {
+      query: { username: targetUsernameForApi.value },
+    })
+      .then((response) => {
+        if (plansRequest === request) {
+          plans.value = response.plans
+          plansLoaded.value = true
+        }
+      })
+      .finally(() => {
+        if (plansRequest === request) {
+          plansRequest = null
+        }
+      })
+
+    plansRequest = request
+    return request
+  }
+
+  const forgetPlans = (): void => {
+    plans.value = []
+    plansLoaded.value = false
+    plansRequest = null
+  }
+
+  const refreshPlans = async (): Promise<void> => {
+    forgetPlans()
+
+    if (!isPlanningMode.value) {
       return
     }
-    isPlansLoading.value = true
+
     try {
-      const response = await $fetch<{ plans: PlanData[] }>('/api/budget/plans', {
-        query: { username: targetUsernameForApi.value },
-      })
-      plans.value = response.plans
-      plansLoaded.value = true
+      await loadPlans()
     }
     catch (err) {
       console.error('Error loading plans:', err)
-    }
-    finally {
-      isPlansLoading.value = false
+      if (!plansLoaded.value && !plansRequest) {
+        isPlanningMode.value = false
+      }
     }
   }
 
   const togglePlanningMode = async (): Promise<void> => {
-    const willEnter = !isPlanningMode.value
-    if (willEnter) {
-      await ensurePlansLoaded()
+    if (isPlanningMode.value) {
+      isPlanningMode.value = false
+      return
     }
-    isPlanningMode.value = willEnter
+
+    if (!plansLoaded.value) {
+      await loadPlans()
+    }
+
+    isPlanningMode.value = plansLoaded.value
   }
 
   const months = computed((): MonthData[] => {
@@ -155,16 +191,16 @@ export const useBudgetStore = defineStore('budget', () => {
     return yearsSummary.value.find(y => y.year === year)
   }
 
-  const getRollingAverageExpenses = (monthCount: number = 12, minMonths: number = 3): number | null => {
+  const rollingAverageExpenses = computed((): number | null => {
     const monthsWithExpenses = computedMonths.value
       .filter(month =>
         month.totalAllExpenses !== null
         && month.totalAllExpenses > 0
         && isPastMonth(month.year, month.month),
       )
-      .slice(0, monthCount)
+      .slice(0, ROLLING_AVERAGE_MONTHS)
 
-    if (monthsWithExpenses.length < minMonths) {
+    if (monthsWithExpenses.length < ROLLING_AVERAGE_MIN_MONTHS) {
       return null
     }
 
@@ -174,7 +210,7 @@ export const useBudgetStore = defineStore('budget', () => {
     )
 
     return Math.ceil(totalExpenses / monthsWithExpenses.length)
-  }
+  })
 
   const nextYearToLoad = computed((): YearInfo | null => {
     if (availableYears.value.length === 0) {
@@ -187,6 +223,17 @@ export const useBudgetStore = defineStore('budget', () => {
     const oldestLoadedYear = Math.min(...loadedYears.value)
     return availableYears.value.find(({ year }) => year < oldestLoadedYear) ?? null
   })
+
+  const monthBounds = computed(() => findMonthBounds(months.value))
+
+  const canDeleteMonth = (monthId: string): boolean => {
+    if (!canEdit.value) {
+      return false
+    }
+
+    const { earliest, latest } = monthBounds.value
+    return monthId === latest?.id || (monthId === earliest?.id && !nextYearToLoad.value)
+  }
 
   const getEntriesByMonthAndKind = (monthId: string, entryKind: EntryKind) => {
     const month = data.value?.months.find(m => m.id === monthId)
@@ -215,9 +262,7 @@ export const useBudgetStore = defineStore('budget', () => {
     loadedYears.value = new Set()
     isLoadingYear.value = false
     isPlanningMode.value = false
-    plans.value = []
-    plansLoaded.value = false
-    isPlansLoading.value = false
+    forgetPlans()
     isStale.value = false
     lastLoadAt.value = null
   }
@@ -232,7 +277,7 @@ export const useBudgetStore = defineStore('budget', () => {
   }
 
   const fetchBudget = (requestFetch: RequestFetch, targetUsername: string | undefined, years: readonly number[]) =>
-    requestFetch<BudgetData>(targetUsername ? `/api/budget/user/${targetUsername}` : '/api/budget', {
+    requestFetch<BudgetData>(targetUsername ? `/api/budget/user/${encodeURIComponent(targetUsername)}` : '/api/budget', {
       query: years.length > 0 ? { years: years.join(',') } : undefined,
     })
 
@@ -285,11 +330,7 @@ export const useBudgetStore = defineStore('budget', () => {
       }
 
       applyBudget(budgetData, yearsData, years)
-      plans.value = []
-      plansLoaded.value = false
-      if (isPlanningMode.value) {
-        await ensurePlansLoaded()
-      }
+      await refreshPlans()
       return true
     }
     catch (err) {
@@ -544,11 +585,7 @@ export const useBudgetStore = defineStore('budget', () => {
         mainCurrency: currency,
       },
     }
-    plans.value = []
-    plansLoaded.value = false
-    if (isPlanningMode.value) {
-      await ensurePlansLoaded()
-    }
+    await refreshPlans()
   }
 
   const getNextMonthData = (): { year: number, month: number } => {
@@ -582,7 +619,8 @@ export const useBudgetStore = defineStore('budget', () => {
     getEntriesByMonthAndKind,
     getComputedMonthByKey,
     getYearSummary,
-    getRollingAverageExpenses,
+    rollingAverageExpenses,
+    canDeleteMonth,
     load,
     markStale,
     refreshIfStale,

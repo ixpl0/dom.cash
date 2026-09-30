@@ -20,6 +20,14 @@ test.describe('Home page (unauthenticated)', () => {
     await expect(page.getByTestId('demo-subtitle')).toBeVisible()
   })
 
+  test('demo months do not open entry lists', async ({ page }) => {
+    const demoMonth = page.getByTestId('budget-month').first()
+
+    await expect(demoMonth.getByTestId('balance-button')).toBeDisabled()
+    await expect(demoMonth.getByTestId('incomes-button')).toBeDisabled()
+    await expect(demoMonth.getByTestId('expenses-button')).toBeDisabled()
+  })
+
   test('features section renders', async ({ page }) => {
     await expect(page.getByTestId('cta-title')).toBeVisible()
     await expect(page.getByTestId('cta-register-btn')).toBeVisible()

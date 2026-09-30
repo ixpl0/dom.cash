@@ -1,4 +1,5 @@
-import { defineEventHandler, getMethod, getHeaders, createError } from 'h3'
+import { defineEventHandler, getHeaders, createError } from 'h3'
+import { getMediaType, getRoutePath, isWriteRequest } from '~~/server/utils/request'
 import { DOC_UPLOAD_MAX_SIZE } from '~~/shared/schemas/docs'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 
@@ -13,6 +14,12 @@ interface UploadRoute {
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024
 
+const JSON_CONTENT_TYPE = 'application/json'
+
+const NO_BODY_ENDPOINTS: readonly string[] = [
+  '/api/auth/logout',
+]
+
 const UPLOAD_ROUTES: readonly UploadRoute[] = [
   {
     method: 'POST',
@@ -24,8 +31,8 @@ const UPLOAD_ROUTES: readonly UploadRoute[] = [
   },
 ]
 
-const validateUpload = (uploadRoute: UploadRoute, contentType: string | undefined, contentLength: string | undefined): void => {
-  if (!contentType || !contentType.includes(uploadRoute.contentType)) {
+const validateUpload = (uploadRoute: UploadRoute, contentType: string, contentLength: string | undefined): void => {
+  if (contentType !== uploadRoute.contentType) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Bad Request',
@@ -43,46 +50,42 @@ const validateUpload = (uploadRoute: UploadRoute, contentType: string | undefine
 }
 
 export default defineEventHandler(async (event) => {
-  const method = getMethod(event)
-  const url = event.node.req.url || ''
+  const path = getRoutePath(event)
 
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && url.startsWith('/api/')) {
-    const headers = getHeaders(event)
-    const contentType = headers['content-type']
-    const contentLength = headers['content-length']
-    const path = url.split('?')[0] ?? ''
-    const uploadRoute = UPLOAD_ROUTES.find(route => route.method === method && route.path.test(path))
+  if (!isWriteRequest(event) || !path.startsWith('/api/')) {
+    return
+  }
 
-    if (uploadRoute) {
-      validateUpload(uploadRoute, contentType, contentLength)
-      return
-    }
+  const headers = getHeaders(event)
+  const contentType = getMediaType(headers['content-type'])
+  const contentLength = headers['content-length']
+  const uploadRoute = UPLOAD_ROUTES.find(route => route.method === event.method && route.path.test(path))
 
-    const noBodyEndpoints = [
-      '/api/auth/logout',
-    ]
+  if (uploadRoute) {
+    validateUpload(uploadRoute, contentType, contentLength)
+    return
+  }
 
-    const isDeleteRequest = method === 'DELETE'
-    const isNoBodyEndpoint = noBodyEndpoints.includes(url)
+  const isDeleteRequest = event.method === 'DELETE'
+  const isNoBodyEndpoint = NO_BODY_ENDPOINTS.includes(path)
 
-    if (!isDeleteRequest && !isNoBodyEndpoint) {
-      if (contentLength && parseInt(contentLength) > 0) {
-        if (!contentType || !contentType.includes('application/json')) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Bad Request',
-            message: ERROR_KEYS.CONTENT_TYPE_REQUIRED,
-          })
-        }
+  if (!isDeleteRequest && !isNoBodyEndpoint) {
+    if (contentLength && parseInt(contentLength) > 0) {
+      if (contentType !== JSON_CONTENT_TYPE) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: ERROR_KEYS.CONTENT_TYPE_REQUIRED,
+        })
       }
     }
+  }
 
-    if (contentLength && parseInt(contentLength) > MAX_REQUEST_SIZE) {
-      throw createError({
-        statusCode: 413,
-        statusMessage: 'Payload Too Large',
-        message: ERROR_KEYS.PAYLOAD_TOO_LARGE,
-      })
-    }
+  if (contentLength && parseInt(contentLength) > MAX_REQUEST_SIZE) {
+    throw createError({
+      statusCode: 413,
+      statusMessage: 'Payload Too Large',
+      message: ERROR_KEYS.PAYLOAD_TOO_LARGE,
+    })
   }
 })

@@ -19,6 +19,7 @@
               type="file"
               accept=".json,application/json"
               class="file-input file-input-bordered w-full"
+              :disabled="isImporting"
               data-testid="import-file-input"
               @change="handleFileSelect"
             >
@@ -41,6 +42,7 @@
                 name="importMode"
                 value="skip"
                 class="radio mr-2"
+                :disabled="isImporting"
                 data-testid="import-strategy-skip"
               >
               <span class="label-text whitespace-break-spaces">{{ t('import.strategySkip') }}</span>
@@ -55,6 +57,7 @@
                 name="importMode"
                 value="overwrite"
                 class="radio mr-2"
+                :disabled="isImporting"
                 data-testid="import-strategy-overwrite"
               >
               <span class="label-text whitespace-break-spaces">{{ t('import.strategyOverwrite') }}</span>
@@ -149,6 +152,8 @@
       <button
         v-if="!importResult"
         class="btn btn-ghost"
+        :disabled="isImporting"
+        data-testid="import-cancel-button"
         @click="hide"
       >
         {{ t('import.cancel') }}
@@ -361,6 +366,10 @@ const importResultBackgroundClass = computed(() => {
 })
 
 const hide = () => {
+  if (isImporting.value) {
+    return
+  }
+
   selectedFile.value = null
   previewData.value = null
   error.value = ''

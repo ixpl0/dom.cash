@@ -48,7 +48,7 @@
         :class="budgetStore.isPlanningMode ? 'btn-primary' : 'btn-ghost'"
         data-testid="planning-mode-toggle"
         :title="t('budget.planningModeTooltip')"
-        @click="budgetStore.togglePlanningMode"
+        @click="togglePlanningMode"
       >
         <Icon
           name="heroicons:calendar-days"
@@ -146,6 +146,17 @@ const budgetStore = useBudgetStore()
 const modalsStore = useModalsStore()
 const { t } = useI18n()
 const { getCurrencyName } = useCurrencies()
+const { formatError } = useServerError()
+const { toast } = useToast()
+
+const togglePlanningMode = async (): Promise<void> => {
+  try {
+    await budgetStore.togglePlanningMode()
+  }
+  catch (error) {
+    toast({ type: 'error', message: formatError(error, t('budget.plan.loadError')) })
+  }
+}
 
 const getAccessText = (access: string): string => {
   switch (access) {

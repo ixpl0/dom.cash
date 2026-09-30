@@ -237,21 +237,12 @@ export const createMonth = async (params: CreateMonthParams, event: H3Event): Pr
   return toMonthData(createdMonth, copiedEntries, exchangeRatesData)
 }
 
-export const deleteMonth = async (monthId: string, event: H3Event): Promise<void> => {
+export const deleteMonth = async (monthRecord: typeof month.$inferSelect, event: H3Event): Promise<void> => {
   const db = useDatabase(event)
-  const [monthRecord] = await db
-    .select()
-    .from(month)
-    .where(eq(month.id, monthId))
-    .limit(1)
-
-  if (!monthRecord) {
-    throw new Error('Month not found')
-  }
 
   await db.batch([
-    db.delete(entry).where(eq(entry.monthId, monthId)),
-    db.delete(month).where(eq(month.id, monthId)),
+    db.delete(entry).where(eq(entry.monthId, monthRecord.id)),
+    db.delete(month).where(eq(month.id, monthRecord.id)),
     db.delete(plan).where(and(
       eq(plan.userId, monthRecord.userId),
       eq(plan.year, monthRecord.year),

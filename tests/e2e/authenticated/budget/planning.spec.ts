@@ -53,6 +53,28 @@ test.describe('Budget planning', () => {
     await expect(saveButton).toBeEnabled()
   })
 
+  test('should stay out of planning mode until the plans are loaded', async ({ page }) => {
+    const response = await page.request.put('/api/budget/plans', {
+      data: { year: PLAN_YEAR, month: PLAN_MONTH, plannedBalanceChange: PLAN_IN_USD, comment: 'Trip' },
+    })
+    expect(response.ok()).toBe(true)
+
+    const planningToggle = page.getByTestId('planning-mode-toggle')
+    const planButtons = page.getByTestId('planned-balance-change-button')
+
+    await page.route('**/api/budget/plans*', route => route.abort())
+    await planningToggle.click()
+
+    await expect(page.getByTestId('toast-error')).toBeVisible()
+    await expect(planButtons).toHaveCount(0)
+    await expect(page.getByTestId('incomes-button').first()).toBeVisible()
+
+    await page.unroute('**/api/budget/plans*')
+    await planningToggle.click()
+
+    await expect(planButtons.first()).toContainText(String(PLAN_IN_USD))
+  })
+
   test('should convert plans when the main currency changes', async ({ page }) => {
     const response = await page.request.put('/api/budget/plans', {
       data: { year: PLAN_YEAR, month: PLAN_MONTH, plannedBalanceChange: PLAN_IN_USD, comment: null },

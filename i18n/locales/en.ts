@@ -242,6 +242,7 @@ export default {
       savedToast: 'Plan saved',
       clearedToast: 'Plan cleared',
       saveError: 'Failed to save plan. Please try again.',
+      loadError: 'Failed to load plans. Please try again.',
     },
   },
 
@@ -593,6 +594,7 @@ export default {
     no_rate_to_convert_plans: 'There is no exchange rate to convert the plans into the other currency, so nothing was changed',
     cannot_impersonate_yourself: 'You cannot view the site as yourself',
     impersonation_read_only: 'View-as mode is read-only: changes are not allowed',
+    cross_origin_request: 'The request came from another site and was refused',
     docs_id_required: 'Document ID is required',
     docs_folder_not_found: 'Folder not found',
     docs_document_not_found: 'Document not found',

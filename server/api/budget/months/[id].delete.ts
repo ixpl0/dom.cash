@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDatabase(event)
   const [monthRecord] = await db
-    .select({ userId: month.userId, year: month.year, month: month.month })
+    .select()
     .from(month)
     .where(eq(month.id, monthId))
     .limit(1)
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   await requireBudgetWriteAccess(monthRecord.userId, currentUser, event, ERROR_KEYS.NO_PERMISSION_DELETE_MONTH)
 
   try {
-    await deleteMonth(monthId, event)
+    await deleteMonth(monthRecord, event)
   }
   catch (error) {
     secureLog.error('Delete month error:', error)

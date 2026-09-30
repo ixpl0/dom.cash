@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { isFirstMonth, isLastMonth, isCurrentMonth, isPastMonth } from '~~/shared/utils/budget/month-helpers'
+import { isCurrentMonth, isPastMonth } from '~~/shared/utils/budget/month-helpers'
 import { capitalizeFirstLetter } from '~~/shared/utils/shared/text'
 import { useBudgetStore } from '~/stores/budget/budget'
 import { useModalsStore } from '~/stores/budget/modals'
@@ -70,8 +70,6 @@ const isPastMonthValue = computed(() =>
   currentMonth.value !== null && isPastMonth(monthData.value.year, monthData.value.month, currentMonth.value),
 )
 
-const rollingAverageExpenses = computed(() => budgetStore.getRollingAverageExpenses())
-
 const uiMonthData = computed((): UiMonthData => ({
   startBalance: monthData.value.startBalance,
   totalIncome: monthData.value.totalIncome,
@@ -97,10 +95,11 @@ const monthBadgeTooltip = computed(() => {
 })
 
 const balanceTooltip = computed(() => {
-  if (rollingAverageExpenses.value === null || monthData.value.startBalance === null) {
+  const { rollingAverageExpenses } = budgetStore
+  if (rollingAverageExpenses === null || monthData.value.startBalance === null) {
     return t('budget.month.balanceTooltipShort')
   }
-  const months = Math.floor(monthData.value.startBalance / rollingAverageExpenses.value)
+  const months = Math.floor(monthData.value.startBalance / rollingAverageExpenses)
   return `${t('budget.month.balanceTooltip')} ${months} ${t('budget.month.balanceTooltipMonths')}`
 })
 
@@ -222,23 +221,7 @@ const openPlanModal = (focusField: 'amount' | 'comment' = 'amount'): void => {
   })
 }
 
-const canDeleteMonth = computed(() => {
-  if (isReadOnly.value) {
-    return false
-  }
-
-  const allMonths = budgetStore.months
-  const rawMonthData = allMonths.find(month => month.id === monthData.value.id)
-  if (!rawMonthData) {
-    return false
-  }
-
-  const isFirstAmongLoaded = isFirstMonth(rawMonthData, allMonths)
-  const isLastAmongLoaded = isLastMonth(rawMonthData, allMonths)
-  const hasMoreYearsToLoad = Boolean(budgetStore.nextYearToLoad)
-
-  return isLastAmongLoaded || (isFirstAmongLoaded && !hasMoreYearsToLoad)
-})
+const canDeleteMonth = computed(() => budgetStore.canDeleteMonth(monthData.value.id))
 
 const handleDeleteMonth = async (): Promise<void> => {
   const monthName = `${budgetStore.monthNames[monthData.value.month]} ${monthData.value.year}`

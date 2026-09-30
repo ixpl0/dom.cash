@@ -32,11 +32,13 @@ export const entryAmountForKindSchema = z.object({
   amount: amountSchema,
 }).refine(hasAmountAllowedForKind, amountForKindRule)
 
+export const entryDateSchema = z.union([z.iso.date(), z.literal('')])
+
 export const updateEntrySchema = z.object({
   description: descriptionSchema,
   amount: amountSchema,
   currency: currencySchema,
-  date: z.string().optional(),
+  date: entryDateSchema.optional(),
   isOptional: z.boolean().optional(),
 })
 

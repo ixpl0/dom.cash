@@ -3,14 +3,13 @@ import { test, type TestContext } from 'node:test'
 import type { MonthData } from '../../shared/types/budget'
 import {
   findClosestMonthForCopy,
+  findMonthBounds,
   getFollowingMonth,
   getMonthStartDate,
   getNextMonth,
   getPreviousMonth,
   hasMonthEndedEverywhere,
   isCurrentMonth,
-  isFirstMonth,
-  isLastMonth,
   isLateToEditStartBalance,
   isPastMonth,
   sortMonthsNewestFirst,
@@ -132,32 +131,20 @@ test('findClosestMonthForCopy finds nothing without months', () => {
   )
 })
 
-test('isFirstMonth and isLastMonth compare months across years', () => {
-  const months = [createMonth(2026, 0), createMonth(2025, 11), createMonth(2026, 1)]
+test('findMonthBounds finds the earliest and the latest month across years', () => {
+  const { earliest, latest } = findMonthBounds([createMonth(2026, 0), createMonth(2025, 11), createMonth(2026, 1)])
 
-  assert.deepEqual(months.map(month => [month.id, isFirstMonth(month, months), isLastMonth(month, months)]), [
-    ['jan-2026', false, false],
-    ['dec-2025', true, false],
-    ['feb-2026', false, true],
-  ])
+  assert.deepEqual([earliest?.id, latest?.id], ['dec-2025', 'feb-2026'])
 })
 
-test('isFirstMonth and isLastMonth are false without months', () => {
-  const month = createMonth(2026, 0)
-
-  assert.deepEqual([isFirstMonth(month, []), isLastMonth(month, [])], [false, false])
+test('findMonthBounds finds nothing without months', () => {
+  assert.deepEqual(findMonthBounds([]), { earliest: null, latest: null })
 })
 
-test('isFirstMonth treats a lone month as the first month', () => {
+test('findMonthBounds treats a lone month as both bounds', () => {
   const month = createMonth(2026, 0)
 
-  assert.equal(isFirstMonth(month, [month]), true)
-})
-
-test('isLastMonth treats a lone month as the last month', () => {
-  const month = createMonth(2026, 0)
-
-  assert.equal(isLastMonth(month, [month]), true)
+  assert.deepEqual(findMonthBounds([month]), { earliest: month, latest: month })
 })
 
 test('isCurrentMonth matches only the month and year of today', (context) => {

@@ -33,7 +33,12 @@
   * Pages start loading with `await callOnce(key, () => store.load(), { mode: 'navigation' })`: it runs during SSR, is skipped during hydration and runs again on every client navigation.
   * Keep data fresh with the store's `markStale()`: the `live-data` plugin reloads stale stores in place when the tab is visible and no overlay or edit mode is open, and marks data older than 15 minutes stale. Do not reload the whole app to refresh data.
   * Use `$fetch` for mutations (POST/PUT/DELETE).
-  * Pass query parameters through the `query` option so they are encoded.
+  * Pass query parameters through the `query` option so they are encoded, and wrap a value that goes into the path (a username, an id) in `encodeURIComponent`.
+* **Request guards** (`server/middleware/`): they run before every route.
+  * `origin-guard` refuses a write request (any method except GET, HEAD and OPTIONS) that a browser sends from another origin: other sites live on sibling subdomains, so `SameSite` cookies do not stop them. It trusts `Sec-Fetch-Site` (`same-origin` or `none`), falls back to comparing `Origin` with `Host`, and lets through clients that send neither header.
+  * `content-validation` accepts only an `application/json` body on `/api/` routes; a route that takes another body is listed in `UPLOAD_ROUTES`.
+  * `impersonation-guard` refuses writes while an admin views the site as a user, except the routes in `ALLOWED_WRITES` and the notification subscriptions.
+  * Match routes with `getRoutePath(event)` (`server/utils/request.ts`): it is the decoded path the router uses. `event.node.req.url` is the raw path, so `/%61pi/…` would slip past a check made on it.
 * **Errors**:
   * Throw `createError({ statusCode, message: ERROR_KEYS.X })` with a key from `shared/utils/shared/error-keys.ts`. Every key needs a `serverErrors` translation in both locales (a unit test checks it).
   * Validate input with `parseBody` / `parseQuery` (`server/utils/validation.ts`): they answer 400 with an error key and list the failed fields in `data.issues`.
@@ -54,7 +59,7 @@
   * Russian messages with a count list three forms, `one | few | many` (`{count} минуту | {count} минуты | {count} минут`); `i18n/plural-rules.ts` picks the form.
   * `ru.ts` is checked against `en.ts` (`satisfies typeof en`): add and remove every key in both files, and delete keys the code no longer uses.
   * Email texts live in `server/utils/email.ts`; a code email goes out in the interface language (`LOCALE_COOKIE_NAME`). The Excel export gets `t` and the month names, so it follows the interface language too.
-* **Icons**: @nuxt/icon with @iconify-json/heroicons
+* **Icons**: @nuxt/icon with @iconify-json/heroicons. Only that set is bundled (`icon.serverBundle` in `nuxt.config.ts`) and nothing is fetched from a CDN or the Iconify API, so an icon from another set does not render: draw it as an inline SVG component (`UiGoogleLogo`).
 * **Excel import/export**: xlsx-js-style, loaded only when exporting (`useBudgetExport`)
 * **Charts**: ECharts via vue-echarts
 * **Linting**: Husky + lint-staged for pre-commit hooks
@@ -87,7 +92,7 @@
   * `api/` — API routes (auth/, budget/, todo/, docs/, notifications/, user/, admin/, test/ — the test routes exist only in development)
   * `db/` — Database schema (`schema.ts`) and index
   * `services/` — Business logic services (auth/, budget/, docs/, connections, notifications, todo)
-  * `middleware/` — Server middleware (content-validation, impersonation-guard)
+  * `middleware/` — Server middleware (content-validation, impersonation-guard, origin-guard)
   * `types/` — Server-specific type definitions (Cloudflare D1)
   * `utils/` — Server-side utilities
 * `migrations/` — Wrangler D1 SQL migration files
@@ -116,7 +121,10 @@
   * Plans are whole numbers in the owner's main currency: `convertPlansToCurrency` (`server/services/budget/currency.ts`) converts them with the rates of their months when the main currency changes and when a file kept in another main currency is imported, and refuses with `NO_RATE_TO_CONVERT_PLANS` (nothing is changed) when a planned month has no rate for either currency.
   * The balance of a month is the savings on its first day, and its change to the next month's balance is what went out during the month. The balance modal says the date in its title, and from the 4th day of the current month it warns that new account balances belong to the next month (`isLateToEditStartBalance`, `shared/utils/budget/month-helpers.ts`).
   * A month's `id` (and every `monthId`) is its UUID. `createMonthKey(year, month)` gives the key `"2026-08"` that matches months and plans; the month index is zero-based, so that key is September.
+  * Planning mode opens only with loaded plans: `togglePlanningMode` throws when they fail to load (the header shows a toast), and a failed reload after a refresh or a currency change leaves the mode. With no plans on screen a new plan would overwrite the saved amount and comment.
+  * `useBudgetColumnsSync` aligns the columns of months and year headers: it reads the width of `.column-content` in every cell and never resets the cell itself, so that element must keep its own width whatever the cell's width is (`w-fit`, text that does not wrap).
 * **Budget Sharing**: Share budgets with other users (read/write access)
+  * A reader sees every month and opens its entry lists in view mode, without adding, editing or deleting; plans stay closed to them. `UiMonth` takes `canOpenEntries` apart from `isReadOnly`: the landing demo turns both off, so nothing opens there.
 * **Connections**: people who shared their budget with a user (`server/services/connections.ts`). Tasks and doc folders can be shared only with connections. A participant who stops being a connection stays until the owner removes them (`resolveSharedUsers`).
 * **Todo**: Task management with planned dates, recurrence patterns, sharing between users
   * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.
@@ -131,7 +139,8 @@
 * **Metrics**: Analytics dashboard with charts
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
-  * The session is restored only during server rendering (`app/plugins/auth.server.ts`). The browser keeps that user, sign-in updates it with `setUser`, logout reloads the app.
+  * The session is restored only during server rendering (`app/plugins/auth.server.ts`). The browser keeps that user, sign-in updates it with `setUser`, logout reloads the app. Every sign-in deletes the sessions that have expired (`createSession`).
+  * Google sign-in needs an email that Google has verified (`verifyGoogleToken`).
   * Sign-in, registration and password reset requests live in `useAuth`; `app/pages/auth.vue` only switches steps and shows messages. Validate fields with `getAuthFieldErrors` (`app/utils/auth-validation.ts`), which uses the schemas from `shared/schemas/auth.ts` that the server checks too.
   * Admins close and open registration on the metrics page, or open it for `TEMPORARY_REGISTRATION_MINUTES`; the state lives in the single-row `app_settings` table (`server/services/auth/registration.ts`), and without that row registration is open. Every route that creates a user (email code, direct registration, first Google sign-in) calls `assertRegistrationOpen`; the sign-in page shows a notice instead of the register button, and existing users sign in as usual.
 

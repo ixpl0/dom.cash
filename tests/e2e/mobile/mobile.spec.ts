@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures'
-import { cleanupUserData } from '../helpers/auth'
+import { cleanupUserData, registerUser } from '../helpers/auth'
+import { initBudget } from '../helpers/budget-setup'
 import { createDocumentThroughApi, createFolderThroughApi, uploadImageThroughApi } from '../helpers/docs'
+import { createTestEmail } from '../helpers/users'
 import { waitForHydration } from '../helpers/wait-for-hydration'
 
 test.describe('Mobile layout', () => {
@@ -64,6 +66,27 @@ test.describe('Mobile layout', () => {
 
     await expect(modal.getByTestId('entry-row')).toHaveCount(1)
     await expect(modal.getByTestId('entry-row')).toContainText('Salary')
+  })
+
+  test('a reader opens the entries of a shared month as cards without edit buttons', async ({ browser, page, workerCredentials }) => {
+    const ownerContext = await browser.newContext()
+    const ownerPage = await ownerContext.newPage()
+    const ownerEmail = createTestEmail('owner')
+    await registerUser(ownerPage, ownerEmail, 'TestPassword123!')
+    await initBudget(ownerPage, 'one-month-with-data')
+
+    const shareResponse = await ownerPage.request.post('/api/budget/shares', { data: { username: workerCredentials.email, access: 'read' } })
+    expect(shareResponse.ok()).toBe(true)
+
+    await page.goto(`/budget/${ownerEmail}`)
+    await waitForHydration(page)
+    await page.getByTestId('expenses-button').first().click()
+
+    const modal = page.getByTestId('entry-modal')
+    await expect(modal.getByTestId('entry-row')).toHaveCount(2)
+    await expect(modal.getByTestId('entry-edit-button')).toHaveCount(0)
+    await expect(modal.getByTestId('add-entry-button')).toHaveCount(0)
+    await ownerContext.close()
   })
 
   test('creates and completes a task', async ({ page }) => {

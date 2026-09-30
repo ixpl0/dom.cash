@@ -138,6 +138,7 @@
                 :data="month.data"
                 :is-current-month="index === 0"
                 :is-read-only="true"
+                :can-open-entries="false"
                 :can-delete="false"
                 :format-amount="formatDemoAmount"
                 :amount-sign="getDemoAmountSign"

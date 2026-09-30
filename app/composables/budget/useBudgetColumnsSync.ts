@@ -1,5 +1,23 @@
 const SYNC_DEBOUNCE_MS = 50
 
+const findColumnContent = (element: HTMLElement): HTMLElement | null =>
+  element.querySelector<HTMLElement>('.column-content')
+
+const readNaturalWidth = (element: HTMLElement | undefined): number => {
+  if (!element || element.offsetWidth === 0 || element.offsetHeight === 0) {
+    return 0
+  }
+
+  return findColumnContent(element)?.offsetWidth ?? 0
+}
+
+const measureColumnWidths = (rows: HTMLElement[][]): number[] => {
+  const columnCount = rows.reduce((longest, row) => Math.max(longest, row.length), 0)
+
+  return Array.from({ length: columnCount }, (_, columnIndex) =>
+    rows.reduce((widest, row) => Math.max(widest, readNaturalWidth(row[columnIndex])), 0))
+}
+
 export const useBudgetColumnsSync = () => {
   const isClient = import.meta.client
   const observer = ref<ResizeObserver | null>(null)
@@ -9,11 +27,30 @@ export const useBudgetColumnsSync = () => {
   let syncTimerId: ReturnType<typeof setTimeout> | null = null
   let isRunningSync = false
 
+  const getObservedElement = (element: HTMLElement): HTMLElement => findColumnContent(element) ?? element
+
+  const observeRow = (elements: HTMLElement[]): void => {
+    elements.forEach((element) => {
+      if (element) {
+        observer.value?.observe(getObservedElement(element))
+      }
+    })
+  }
+
+  const unobserveRow = (elements: HTMLElement[]): void => {
+    elements.forEach((element) => {
+      if (element) {
+        observer.value?.unobserve(getObservedElement(element))
+      }
+    })
+  }
+
   const registerRow = (elements: HTMLElement[]) => {
     registeredRows.value = [...registeredRows.value, elements]
 
-    if (mounted.value) {
-      startObserving()
+    if (mounted.value && !isUnmounting.value) {
+      observeRow(elements)
+      syncColumnWidths()
     }
   }
 
@@ -24,8 +61,9 @@ export const useBudgetColumnsSync = () => {
     )
     if (index !== -1) {
       registeredRows.value = registeredRows.value.filter((_, rowIndex) => rowIndex !== index)
-      if (mounted.value) {
-        startObserving()
+      if (mounted.value && !isUnmounting.value) {
+        unobserveRow(elements)
+        syncColumnWidths()
       }
     }
   }
@@ -38,30 +76,7 @@ export const useBudgetColumnsSync = () => {
     isRunningSync = true
 
     nextTick(() => {
-      const columnWidths: Record<number, number> = {}
-
-      registeredRows.value.forEach((row) => {
-        row.forEach((element, columnIndex) => {
-          if (!element || element.offsetWidth === 0 || element.offsetHeight === 0) {
-            return
-          }
-
-          const columnContent = element.querySelector('.column-content') as HTMLElement
-          if (!columnContent) {
-            return
-          }
-
-          const currentWidth = element.offsetWidth
-          element.style.width = 'auto'
-          element.style.transition = 'none'
-
-          const naturalWidth = columnContent.offsetWidth
-
-          element.style.width = `${currentWidth}px`
-
-          columnWidths[columnIndex] = Math.max(columnWidths[columnIndex] || 0, naturalWidth)
-        })
-      })
+      const columnWidths = measureColumnWidths(registeredRows.value)
 
       requestAnimationFrame(() => {
         registeredRows.value.forEach((row) => {
@@ -101,27 +116,13 @@ export const useBudgetColumnsSync = () => {
       return
     }
 
-    if (observer.value) {
-      observer.value.disconnect()
-    }
-
     observer.value = new ResizeObserver(() => {
       if (!isUnmounting.value) {
         syncColumnWidths()
       }
     })
 
-    registeredRows.value.flat().forEach((element) => {
-      if (element) {
-        const columnContent = element.querySelector('.column-content') as HTMLElement
-        if (columnContent) {
-          observer.value?.observe(columnContent)
-        }
-        else {
-          observer.value?.observe(element)
-        }
-      }
-    })
+    registeredRows.value.forEach(observeRow)
 
     syncColumnWidths()
   }

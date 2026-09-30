@@ -366,10 +366,7 @@
             data-testid="google-auth-btn"
             @click="handleGoogleLogin"
           >
-            <Icon
-              name="logos:google-icon"
-              size="20"
-            />
+            <UiGoogleLogo class="size-5" />
             <span
               v-if="isGoogleLoading"
               class="loading loading-spinner loading-sm"

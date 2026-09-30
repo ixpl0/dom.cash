@@ -3,8 +3,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { authSchema, emailSchema } from '../../shared/schemas/auth'
 import { accessSchema, currencySchema, MAX_AMOUNT } from '../../shared/schemas/common'
-import { createEntrySchema, entryAmountForKindSchema } from '../../shared/schemas/budget'
-import { todoFormSchema } from '../../shared/schemas/todo'
+import { createEntrySchema, entryAmountForKindSchema, updateEntrySchema } from '../../shared/schemas/budget'
+import { createTodoSchema, todoFormSchema, updateTodoSchema } from '../../shared/schemas/todo'
 import {
   dayOfMonthRecurrenceSchema,
   intervalRecurrenceSchema,
@@ -43,6 +43,8 @@ const fixtureNames = readdirSync(FIXTURES_DIRECTORY).filter(name => name.endsWit
 const readFixture = (name: string): unknown => JSON.parse(readFileSync(new URL(name, FIXTURES_DIRECTORY), 'utf8'))
 
 const emailOfLength = (length: number): string => `${'a'.repeat(length - '@b.com'.length)}@b.com`
+
+const userIds = (count: number): string[] => Array.from({ length: count }, (_, index) => `user-${index}`)
 
 const MONTH_ID = '6f1c1b0a-8d8f-4f6e-9a57-3b8f4f0c2d11'
 const validEntry = { kind: 'expense', description: 'Rent', amount: 1200, currency: 'USD' }
@@ -253,6 +255,35 @@ const validationGroups: ValidationGroup[] = [
       { name: 'a zero balance', input: { ...validEntry, kind: 'balance', amount: 0, monthId: MONTH_ID }, isValid: true },
       { name: 'a zero expense', input: { ...validEntry, amount: 0, monthId: MONTH_ID }, isValid: false },
       { name: 'an entry without a month', input: validEntry, isValid: false },
+      { name: 'an expense with a date', input: { ...validEntry, monthId: MONTH_ID, date: '2026-03-05' }, isValid: true },
+      { name: 'an expense with a cleared date', input: { ...validEntry, monthId: MONTH_ID, date: '' }, isValid: true },
+      { name: 'a date that is not a date', input: { ...validEntry, monthId: MONTH_ID, date: 'next Friday' }, isValid: false },
+      { name: 'a date with a time', input: { ...validEntry, monthId: MONTH_ID, date: '2026-03-05T10:00' }, isValid: false },
+      { name: 'February 30', input: { ...validEntry, monthId: MONTH_ID, date: '2026-02-30' }, isValid: false },
+    ],
+  },
+  {
+    schemaName: 'updateEntrySchema',
+    schema: updateEntrySchema,
+    cases: [
+      { name: 'an entry without a date', input: { description: 'Rent', amount: 1200, currency: 'USD' }, isValid: true },
+      { name: 'a date that is not a date', input: { description: 'Rent', amount: 1200, currency: 'USD', date: '05.03.2026' }, isValid: false },
+    ],
+  },
+  {
+    schemaName: 'createTodoSchema',
+    schema: createTodoSchema,
+    cases: [
+      { name: '50 participants', input: { content: 'Plan the trip', sharedWithUserIds: userIds(50) }, isValid: true },
+      { name: '51 participants', input: { content: 'Plan the trip', sharedWithUserIds: userIds(51) }, isValid: false },
+    ],
+  },
+  {
+    schemaName: 'updateTodoSchema',
+    schema: updateTodoSchema,
+    cases: [
+      { name: '50 participants', input: { sharedWithUserIds: userIds(50) }, isValid: true },
+      { name: '51 participants', input: { sharedWithUserIds: userIds(51) }, isValid: false },
     ],
   },
   {

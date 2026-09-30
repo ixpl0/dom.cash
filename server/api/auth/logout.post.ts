@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
+import { clearImpersonationCookie } from '~~/server/utils/impersonation'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
@@ -27,6 +28,7 @@ export default defineEventHandler(async (event) => {
   deleteCookie(event, 'auth-token', {
     path: '/',
   })
+  clearImpersonationCookie(event)
 
   return { success: true }
 })

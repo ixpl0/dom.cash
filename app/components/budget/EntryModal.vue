@@ -39,6 +39,7 @@ import type { EntryFormData } from '~/composables/budget/useEntryForm'
 import { getEntryErrorKey } from '~/utils/entry-validation'
 import type { ConfirmationModalMessage } from '~/components/ui/ConfirmationModal.vue'
 import type { BackSource } from '~/utils/back-handlers'
+import { convertAmount } from '~~/shared/utils/budget/budget'
 import { getFollowingMonth, getMonthStartDate, isLateToEditStartBalance, type MonthPosition } from '~~/shared/utils/budget/month-helpers'
 import { formatPlainDate } from '~~/shared/utils/shared/dates'
 
@@ -69,11 +70,7 @@ const getAmountTooltip = (entry: BudgetEntry): string | undefined => {
     return undefined
   }
 
-  const fromRate = rates[entry.currency] || 1
-  const toRate = rates[baseCurrency] || 1
-  const converted = (entry.amount / fromRate) * toRate
-
-  return formatMoneyRounded(converted, baseCurrency)
+  return formatMoneyRounded(convertAmount(entry.amount, entry.currency, baseCurrency, rates), baseCurrency)
 }
 
 const currentEntries = computed(() => {

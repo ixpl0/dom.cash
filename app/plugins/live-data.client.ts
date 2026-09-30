@@ -24,7 +24,7 @@ export default defineNuxtPlugin({
 
     const postSubscription = async (action: 'subscribe' | 'unsubscribe', username: string): Promise<void> => {
       try {
-        await $fetch(`/api/notifications/${action}/${username}`, { method: 'POST' })
+        await $fetch(`/api/notifications/${action}/${encodeURIComponent(username)}`, { method: 'POST' })
       }
       catch (error) {
         console.error(`Failed to ${action} budget notifications`, error)
@@ -130,11 +130,11 @@ export default defineNuxtPlugin({
       markOldDataStale()
       isRefreshing = true
       try {
-        if (watchedBudget) {
-          await budgetStore.refreshIfStale()
-        }
-        await todoStore.refreshIfStale()
-        await docsStore.refreshIfStale()
+        await Promise.all([
+          watchedBudget ? budgetStore.refreshIfStale() : Promise.resolve(),
+          todoStore.refreshIfStale(),
+          docsStore.refreshIfStale(),
+        ])
       }
       finally {
         isRefreshing = false

@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { createError, setCookie, type H3Event } from 'h3'
-import { eq, sql } from 'drizzle-orm'
+import { eq, lte, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
@@ -177,13 +177,16 @@ export const createSession = async (userId: string, now: Date, event: H3Event): 
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_SECONDS * 1000)
 
-  await database.insert(session).values({
-    id: crypto.randomUUID(),
-    userId,
-    tokenHash,
-    createdAt: now,
-    expiresAt,
-  })
+  await database.batch([
+    database.delete(session).where(lte(session.expiresAt, now)),
+    database.insert(session).values({
+      id: crypto.randomUUID(),
+      userId,
+      tokenHash,
+      createdAt: now,
+      expiresAt,
+    }),
+  ])
 
   return token
 }

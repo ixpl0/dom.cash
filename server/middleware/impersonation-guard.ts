@@ -1,19 +1,26 @@
-import { defineEventHandler, getMethod, getCookie, createError } from 'h3'
+import { defineEventHandler, getCookie, createError } from 'h3'
 import { IMPERSONATION_COOKIE } from '~~/server/utils/impersonation'
+import { getRoutePath, isWriteRequest } from '~~/server/utils/request'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
-const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
+interface AllowedWrite {
+  method: string
+  path: string
+}
+
+const ALLOWED_WRITES: readonly AllowedWrite[] = [
+  { method: 'DELETE', path: '/api/admin/impersonate' },
+  { method: 'POST', path: '/api/auth/logout' },
+]
 
 export default defineEventHandler((event) => {
-  const method = getMethod(event)
-  const url = event.node.req.url || ''
-  const path = url.split('?')[0] || ''
+  const path = getRoutePath(event)
 
-  if (!path.startsWith('/api/') || !WRITE_METHODS.includes(method)) {
+  if (!isWriteRequest(event) || !path.startsWith('/api/')) {
     return
   }
 
-  if (path === '/api/admin/impersonate' && method === 'DELETE') {
+  if (ALLOWED_WRITES.some(allowed => allowed.method === event.method && allowed.path === path)) {
     return
   }
 

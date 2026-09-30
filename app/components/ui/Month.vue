@@ -75,7 +75,7 @@
             <button
               class="btn btn-ghost text-2xl"
               :class="signedValueClass(data.startBalance, 'text-primary', 'text-primary')"
-              :disabled="isReadOnly || data.startBalance === null"
+              :disabled="!canOpenEntries || data.startBalance === null"
               data-testid="balance-button"
               @click="$emit('balanceClick')"
             >
@@ -94,7 +94,7 @@
             <button
               class="btn btn-ghost text-2xl"
               :class="signedValueClass(data.totalIncome, 'text-success', 'text-success')"
-              :disabled="isReadOnly"
+              :disabled="!canOpenEntries"
               data-testid="incomes-button"
               @click="$emit('incomeClick')"
             >
@@ -113,7 +113,7 @@
             <button
               class="btn btn-ghost text-2xl"
               :class="signedValueClass(data.totalExpenses, 'text-error', 'text-error')"
-              :disabled="isReadOnly"
+              :disabled="!canOpenEntries"
               data-testid="expenses-button"
               @click="$emit('expenseClick')"
             >
@@ -365,6 +365,7 @@ interface Props {
   data: UiMonthData
   isCurrentMonth?: boolean
   isReadOnly?: boolean
+  canOpenEntries?: boolean
   canDelete?: boolean
   isPlanningMode?: boolean
   isPastMonth?: boolean
@@ -378,6 +379,7 @@ const props = withDefaults(defineProps<Props>(), {
   expectedBalanceTooltip: '',
   isCurrentMonth: false,
   isReadOnly: false,
+  canOpenEntries: true,
   canDelete: false,
   isPlanningMode: false,
   isPastMonth: false,
@@ -446,7 +448,7 @@ const mobileStats = computed((): MonthStatItem[] => {
     valueText: formatOrDash(props.data.startBalance),
     valueClass: signedValueClass(props.data.startBalance, 'text-primary', 'text-primary'),
     clickable: true,
-    disabled: props.isReadOnly || props.data.startBalance === null,
+    disabled: !props.canOpenEntries || props.data.startBalance === null,
     testId: 'balance-button',
     event: 'balanceClick',
   }
@@ -508,7 +510,7 @@ const mobileStats = computed((): MonthStatItem[] => {
       valueText: props.formatAmount(props.data.totalIncome),
       valueClass: signedValueClass(props.data.totalIncome, 'text-success', 'text-success'),
       clickable: true,
-      disabled: props.isReadOnly,
+      disabled: !props.canOpenEntries,
       testId: 'incomes-button',
       event: 'incomeClick',
     },
@@ -518,7 +520,7 @@ const mobileStats = computed((): MonthStatItem[] => {
       valueText: props.formatAmount(props.data.totalExpenses),
       valueClass: signedValueClass(props.data.totalExpenses, 'text-error', 'text-error'),
       clickable: true,
-      disabled: props.isReadOnly,
+      disabled: !props.canOpenEntries,
       testId: 'expenses-button',
       event: 'expenseClick',
     },

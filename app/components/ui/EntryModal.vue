@@ -87,7 +87,10 @@
                 <th v-if="entryKind === 'expense'">
                   {{ t('entry.optional') }}
                 </th>
-                <th class="w-1">
+                <th
+                  v-if="!isReadOnly"
+                  class="w-1"
+                >
                   {{ t('entry.actions') }}
                 </th>
               </tr>
@@ -156,10 +159,12 @@
                       class="text-success inline-block"
                     />
                   </td>
-                  <td class="w-1">
+                  <td
+                    v-if="!isReadOnly"
+                    class="w-1"
+                  >
                     <div class="flex gap-2">
                       <button
-                        v-if="!isReadOnly"
                         class="btn btn-sm btn-warning"
                         data-testid="entry-edit-button"
                         @click="$emit('startEdit', entry)"
@@ -170,7 +175,6 @@
                         />
                       </button>
                       <button
-                        v-if="!isReadOnly"
                         class="btn btn-sm btn-error"
                         :disabled="deletingEntryId === entry.id"
                         @click="$emit('delete', entry.id)"

@@ -8,6 +8,8 @@ export default defineNuxtPlugin(() => {
     default: () => null,
   })
 
+  let faviconUrl: string | null = null
+
   const updateFavicon = () => {
     const colors: FaviconColors = {
       contours: getComputedStyle(document.documentElement).getPropertyValue('--logo-contours').trim(),
@@ -34,6 +36,11 @@ export default defineNuxtPlugin(() => {
       link.href = url
       document.head.appendChild(link)
     }
+
+    if (faviconUrl) {
+      URL.revokeObjectURL(faviconUrl)
+    }
+    faviconUrl = url
   }
 
   onNuxtReady(() => {

@@ -7,7 +7,7 @@ interface GoogleUserInfo {
 
 export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> => {
   try {
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`)
 
     if (!response.ok) {
       throw new Error(`Google API responded with ${response.status}`)
@@ -16,6 +16,7 @@ export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> 
     const payload = await response.json() as {
       sub?: string
       email?: string
+      email_verified?: boolean | string
       name?: string
       picture?: string
       aud?: string
@@ -25,6 +26,10 @@ export const verifyGoogleToken = async (token: string): Promise<GoogleUserInfo> 
 
     if (!payload.sub || !payload.email) {
       throw new Error('Missing required user information')
+    }
+
+    if (payload.email_verified !== true && payload.email_verified !== 'true') {
+      throw new Error('Email is not verified')
     }
 
     if (payload.aud !== process.env.GOOGLE_OAUTH_CLIENT_ID) {

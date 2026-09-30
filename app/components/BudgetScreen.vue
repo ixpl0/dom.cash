@@ -220,7 +220,6 @@ const isCreatingCurrentMonth = ref(false)
 const isCreatingNextMonth = ref(false)
 const isCreatingPreviousMonth = ref(false)
 const isImportModalOpen = ref(false)
-const BudgetChartModal = defineAsyncComponent(() => import('~/components/budget/ChartModal.vue'))
 
 const isOwnBudget = computed(() => budgetStore.isOwnBudget)
 const isViewingOwnBudgetUrl = computed(() => !targetUsername.value)

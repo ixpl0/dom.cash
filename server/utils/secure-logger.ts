@@ -57,13 +57,3 @@ export const secureLog = {
     console.error(message, data ? sanitizeLogData(data) : '')
   },
 }
-
-export const maskApiKey = (key: string | undefined): string => {
-  if (!key) {
-    return '[NOT_SET]'
-  }
-  if (key.length <= 8) {
-    return '[MASKED]'
-  }
-  return `${key.slice(0, 4)}...${key.slice(-4)}`
-}

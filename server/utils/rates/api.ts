@@ -1,4 +1,4 @@
-import { secureLog, maskApiKey } from '~~/server/utils/secure-logger'
+import { secureLog } from '~~/server/utils/secure-logger'
 
 interface ExchangeRatesResponse {
   disclaimer: string
@@ -18,7 +18,6 @@ const getApiKey = (): string => {
     secureLog.error('OPENEXCHANGERATES_APP_ID environment variable is required')
     throw new Error('API key not configured')
   }
-  secureLog.info(`Using API key: ${maskApiKey(apiKey)}`)
   return apiKey
 }
 

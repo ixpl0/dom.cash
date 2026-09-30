@@ -49,7 +49,7 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           ...(process.env.NODE_ENV === 'production' && {
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-            'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://static.cloudflareinsights.com; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\' https://cloudflareinsights.com; frame-ancestors \'none\'',
+            'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://static.cloudflareinsights.com; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\' https://cloudflareinsights.com; frame-ancestors \'none\'; base-uri \'self\'; form-action \'self\'',
           }),
         },
       },
@@ -75,6 +75,10 @@ export default defineNuxtConfig({
     },
   },
   icon: {
+    serverBundle: {
+      collections: ['heroicons'],
+    },
+    fallbackToApi: false,
     clientBundle: {
       scan: true,
     },

@@ -1,3 +1,4 @@
+import type { Page, Route } from '@playwright/test'
 import { test, expect } from '../../fixtures'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { initBudget } from '../../helpers/budget-setup'
@@ -21,6 +22,11 @@ const createTempFile = async (filename: string, content: string): Promise<string
 const cleanupTempFile = async (filepath: string) => {
   await unlink(filepath).catch(() => {})
 }
+
+const holdImportRequest = (page: Page): Promise<Route> =>
+  new Promise((resolve, reject) => {
+    page.route('**/api/budget/import', resolve, { times: 1 }).catch(reject)
+  })
 
 test.describe('Import/Export functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -165,6 +171,28 @@ test.describe('Import/Export functionality', () => {
       await page.keyboard.press('Escape')
 
       await expect(importModal).not.toBeVisible()
+    })
+
+    test('should stay open until the import finishes', async ({ page }) => {
+      const budgetPath = join(process.cwd(), 'tests', 'e2e', 'fixtures', 'budgets', 'two-months-basic.json')
+      const heldImport = holdImportRequest(page)
+
+      await page.getByTestId('import-budget-btn').click()
+
+      const importModal = page.getByTestId('import-modal')
+      await importModal.getByTestId('import-file-input').setInputFiles(budgetPath)
+      await importModal.getByTestId('import-submit-button').click()
+
+      const importRoute = await heldImport
+      await expect(importModal.getByTestId('import-cancel-button')).toBeDisabled()
+      await expect(importModal.getByTestId('import-file-input')).toBeDisabled()
+      await page.keyboard.press('Escape')
+      await expect(importModal.getByTestId('import-loading')).toBeVisible()
+
+      await importRoute.continue()
+
+      await expect(importModal.getByTestId('import-close-button')).toBeVisible()
+      await expect(importModal.locator('.bg-success')).toBeVisible()
     })
 
     test('should show preview after selecting valid file', async ({ page }) => {

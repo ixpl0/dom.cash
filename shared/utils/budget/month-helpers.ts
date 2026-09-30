@@ -51,11 +51,15 @@ export const findClosestMonthForCopy = (
   return closestMonth?.id
 }
 
-export const isFirstMonth = (monthData: MonthData, allMonths: MonthData[]): boolean =>
-  sortMonthsNewestFirst(allMonths).at(-1)?.id === monthData.id
+export interface MonthBounds<T> {
+  earliest: T | null
+  latest: T | null
+}
 
-export const isLastMonth = (monthData: MonthData, allMonths: MonthData[]): boolean =>
-  sortMonthsNewestFirst(allMonths)[0]?.id === monthData.id
+export const findMonthBounds = <T extends MonthPosition>(months: readonly T[]): MonthBounds<T> => {
+  const sortedMonths = sortMonthsNewestFirst(months)
+  return { earliest: sortedMonths.at(-1) ?? null, latest: sortedMonths[0] ?? null }
+}
 
 export const isCurrentMonth = (monthData: MonthPosition, currentMonth: MonthPosition = getCurrentMonth()): boolean =>
   monthData.year === currentMonth.year && monthData.month === currentMonth.month

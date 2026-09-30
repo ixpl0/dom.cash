@@ -67,6 +67,7 @@ export const ERROR_KEYS = {
   NO_RATE_TO_CONVERT_PLANS: 'serverErrors.no_rate_to_convert_plans',
   CANNOT_IMPERSONATE_YOURSELF: 'serverErrors.cannot_impersonate_yourself',
   IMPERSONATION_READ_ONLY: 'serverErrors.impersonation_read_only',
+  CROSS_ORIGIN_REQUEST: 'serverErrors.cross_origin_request',
   DOCS_ID_REQUIRED: 'serverErrors.docs_id_required',
   DOCS_FOLDER_NOT_FOUND: 'serverErrors.docs_folder_not_found',
   DOCS_DOCUMENT_NOT_FOUND: 'serverErrors.docs_document_not_found',

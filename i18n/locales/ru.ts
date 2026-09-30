@@ -243,6 +243,7 @@ export default {
       savedToast: 'План сохранён',
       clearedToast: 'План очищен',
       saveError: 'Не удалось сохранить план. Попробуйте ещё раз.',
+      loadError: 'Не удалось загрузить планы. Попробуйте ещё раз.',
     },
   },
 
@@ -594,6 +595,7 @@ export default {
     no_rate_to_convert_plans: 'Нет курса, чтобы пересчитать планы в другую валюту, поэтому ничего не изменено',
     cannot_impersonate_yourself: 'Нельзя смотреть сайт от имени самого себя',
     impersonation_read_only: 'Режим просмотра от имени пользователя: изменения запрещены',
+    cross_origin_request: 'Запрос с другого сайта отклонён',
     docs_id_required: 'Не указан идентификатор',
     docs_folder_not_found: 'Папка не найдена',
     docs_document_not_found: 'Документ не найден',

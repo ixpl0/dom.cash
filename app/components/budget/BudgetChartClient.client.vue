@@ -30,12 +30,6 @@ use([
   DataZoomComponent,
 ])
 
-defineOptions({
-  components: {
-    VChart,
-  },
-})
-
 interface Props {
   option: ChartOption
 }

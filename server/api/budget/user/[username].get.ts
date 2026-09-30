@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/utils/session'
 import { parseQuery } from '~~/server/utils/validation'
 import { getBudgetView } from '~~/server/services/budget/budget-view'
-import { updateUserActivity } from '~~/server/services/auth/users'
+import { recordUserActivity } from '~~/server/services/auth/users'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import type { BudgetData } from '~~/shared/types/budget'
 
@@ -26,9 +26,7 @@ export default defineEventHandler(async (event): Promise<BudgetData> => {
 
   const budget = await getBudgetView(event, currentUser, username, query.years)
 
-  if (!currentUser.impersonatedBy) {
-    await updateUserActivity(currentUser.id, event)
-  }
+  recordUserActivity(currentUser, event)
 
   return budget
 })
