@@ -85,6 +85,10 @@ export const ERROR_KEYS = {
   DOCS_RECOGNITION_FAILED: 'serverErrors.docs_recognition_failed',
   DOCS_RECOGNITION_REFUSED: 'serverErrors.docs_recognition_refused',
   DOCS_RECOGNITION_BUSY: 'serverErrors.docs_recognition_busy',
+  METHOD_NOT_ALLOWED: 'serverErrors.method_not_allowed',
+  MCP_TOKEN_ID_REQUIRED: 'serverErrors.mcp_token_id_required',
+  MCP_TOKEN_NOT_FOUND: 'serverErrors.mcp_token_not_found',
+  MCP_TOO_MANY_TOKENS: 'serverErrors.mcp_too_many_tokens',
 } as const
 
 export type ErrorKey = typeof ERROR_KEYS[keyof typeof ERROR_KEYS]

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { and, eq, gt } from 'drizzle-orm'
 import { createError, getCookie, type H3Event } from 'h3'
 import { useDatabase } from '~~/server/db'
@@ -6,11 +5,10 @@ import { session, user } from '~~/server/db/schema'
 import { REFRESH_INTERVAL_MS, SESSION_LIFETIME_MS, setAuthCookie } from '~~/server/utils/auth'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { resolveImpersonation } from '~~/server/utils/impersonation'
+import { hashToken } from '~~/server/utils/crypto'
 import type { User } from '~~/shared/types'
 
 const AUTH_COOKIE_NAME = 'auth-token'
-
-const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex')
 
 const needsRefresh = (expiresAt: Date, now: Date): boolean => {
   const isLegacySession = expiresAt.getTime() - now.getTime() > SESSION_LIFETIME_MS

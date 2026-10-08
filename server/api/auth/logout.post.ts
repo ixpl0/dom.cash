@@ -1,8 +1,8 @@
 import { defineEventHandler, getCookie, deleteCookie, createError } from 'h3'
-import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { session } from '~~/server/db/schema'
+import { hashToken } from '~~/server/utils/crypto'
 import { clearImpersonationCookie } from '~~/server/utils/impersonation'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
@@ -12,9 +12,8 @@ export default defineEventHandler(async (event) => {
 
   if (token) {
     try {
-      const tokenHash = createHash('sha256').update(token).digest('hex')
       const db = useDatabase(event)
-      await db.delete(session).where(eq(session.tokenHash, tokenHash))
+      await db.delete(session).where(eq(session.tokenHash, hashToken(token)))
     }
     catch (error) {
       secureLog.error('Database error during logout:', error)

@@ -38,5 +38,6 @@ export interface RegistrationState {
 
 export * from './docs'
 export * from './export-import'
+export * from './mcp'
 export * from './recurrence'
 export * from './todo'

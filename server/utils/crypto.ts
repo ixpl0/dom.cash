@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto'
+
+export const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex')
+
 export const timingSafeCompare = (a: Uint8Array, b: Uint8Array): boolean => {
   if (a.length !== b.length) {
     return false

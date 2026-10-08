@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 import type { DocField } from '~~/shared/types/docs'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import { ACCESS_LEVELS, ENTRY_KINDS } from '~~/shared/schemas/common'
+import type { McpScope } from '~~/shared/schemas/mcp'
 
 type Rates = Record<string, number>
 
@@ -46,6 +47,25 @@ export const session = sqliteTable(
 
 export type Session = typeof session.$inferSelect
 export type NewSession = typeof session.$inferInsert
+
+export const mcpToken = sqliteTable(
+  'mcp_token',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    scopes: text('scopes', { mode: 'json' }).$type<McpScope[]>().notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
+  },
+  t => [
+    index('idx_mcp_token_user').on(t.userId),
+    check('ck_mcp_token_scopes_is_array', sql`${t.scopes} GLOB '[[]*]'`),
+  ],
+)
+
+export type McpTokenRow = typeof mcpToken.$inferSelect
 
 export const currency = sqliteTable(
   'currency',

@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures'
 import { cleanupUserData, registerUser } from '../helpers/auth'
+import { pressBrowserBack } from '../helpers/back-navigation'
 import { initBudget } from '../helpers/budget-setup'
 import { createDocumentThroughApi, createFolderThroughApi, uploadImageThroughApi } from '../helpers/docs'
 import { createTestEmail } from '../helpers/users'
@@ -27,6 +28,23 @@ test.describe('Mobile layout', () => {
     await page.getByTestId('mobile-docs-btn').click()
     await page.waitForURL('/docs')
     await expect(page.getByTestId('docs-page')).toBeVisible()
+  })
+
+  test('opens the Claude access window from the mobile menu and closes it with back', async ({ page }) => {
+    await page.goto('/budget')
+    await waitForHydration(page)
+
+    await page.getByTestId('mobile-menu-btn').click()
+    await page.getByTestId('mobile-mcp-btn').click()
+
+    const modal = page.getByTestId('mcp-modal')
+    await expect(modal).toBeVisible()
+    await expect(page.getByTestId('mobile-mcp-btn')).toBeHidden()
+    await expect(modal.getByTestId('mcp-empty-state')).toBeVisible()
+
+    await pressBrowserBack(page)
+    await expect(modal).toBeHidden()
+    await expect(page).toHaveURL('/budget')
   })
 
   test('shows a document with its photos and opens a photo full screen', async ({ page, request }) => {

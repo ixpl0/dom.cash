@@ -1,10 +1,10 @@
-import { createHash, timingSafeEqual } from 'node:crypto'
+import { timingSafeEqual } from 'node:crypto'
 import { createError, setCookie, type H3Event } from 'h3'
 import { eq, lte, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
 import { user, session } from '~~/server/db/schema'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
-import { timingSafeCompare } from '~~/server/utils/crypto'
+import { hashToken, timingSafeCompare } from '~~/server/utils/crypto'
 
 export const SESSION_LIFETIME_SECONDS = 60 * 60 * 24 * 90
 export const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000
@@ -174,7 +174,7 @@ export const findUserByGoogleId = async (googleId: string, event: H3Event) => {
 export const createSession = async (userId: string, now: Date, event: H3Event): Promise<string> => {
   const database = useDatabase(event)
   const token = generateSessionToken()
-  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const tokenHash = hashToken(token)
   const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_SECONDS * 1000)
 
   await database.batch([

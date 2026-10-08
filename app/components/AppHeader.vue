@@ -112,6 +112,18 @@
           </li>
           <li>
             <button
+              data-testid="mcp-btn"
+              @click="openMcpModal"
+            >
+              <Icon
+                name="heroicons:sparkles"
+                size="16"
+              />
+              {{ t('header.claude') }}
+            </button>
+          </li>
+          <li>
+            <button
               data-testid="logout-btn"
               @click="logout"
             >
@@ -236,6 +248,18 @@
             </div>
             <li>
               <button
+                data-testid="mobile-mcp-btn"
+                @click="openMcpModal"
+              >
+                <Icon
+                  name="heroicons:sparkles"
+                  size="16"
+                />
+                {{ t('header.claude') }}
+              </button>
+            </li>
+            <li>
+              <button
                 data-testid="mobile-logout-btn"
                 @click="logout"
               >
@@ -289,6 +313,12 @@
       />
     </button>
   </div>
+
+  <McpTokensModal
+    v-if="isAuthenticated"
+    :is-open="isMcpModalOpen"
+    @close="isMcpModalOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -296,17 +326,27 @@ const { user, isAuthenticated, logout } = useAuth()
 const todoStore = useTodoStore()
 const { t } = useI18n()
 
+const isMcpModalOpen = ref(false)
+
 const {
   dropdownRef: userMenuRef,
   handleFocusIn: handleUserMenuFocusIn,
   handleFocusOut: handleUserMenuFocusOut,
+  close: closeUserMenu,
 } = useDropdownBackHandler()
 
 const {
   dropdownRef: mobileMenuRef,
   handleFocusIn: handleMobileMenuFocusIn,
   handleFocusOut: handleMobileMenuFocusOut,
+  close: closeMobileMenu,
 } = useDropdownBackHandler()
+
+const openMcpModal = (): void => {
+  closeUserMenu()
+  closeMobileMenu()
+  isMcpModalOpen.value = true
+}
 
 const exitImpersonation = async (): Promise<void> => {
   await $fetch('/api/admin/impersonate', { method: 'DELETE' }).catch(() => {})

@@ -1,6 +1,6 @@
 import { eq, inArray, or } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { budgetShare, docFolder, docFolderShare, entry, month, plan, todo, todoShare, user as userTable } from '~~/server/db/schema'
+import { budgetShare, docFolder, docFolderShare, entry, mcpToken, month, plan, todo, todoShare, user as userTable } from '~~/server/db/schema'
 import { deleteFolderFiles, listOwnedFolderIds } from '~~/server/services/docs/folders'
 import { requireAuth } from '~~/server/utils/session'
 import { secureLog } from '~~/server/utils/secure-logger'
@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
       db.delete(entry).where(inArray(entry.monthId, userMonthIds)),
       db.delete(month).where(eq(month.userId, user.id)),
       db.delete(plan).where(eq(plan.userId, user.id)),
+      db.delete(mcpToken).where(eq(mcpToken.userId, user.id)),
       db.update(userTable).set({ mainCurrency: 'USD' }).where(eq(userTable.id, user.id)),
     ])
     await deleteFolderFiles(folderIds, event)

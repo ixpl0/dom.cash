@@ -5,7 +5,7 @@ export interface MonthPosition {
   month: number
 }
 
-const toMonthNumber = ({ year, month }: MonthPosition): number => year * 12 + month
+export const toMonthNumber = ({ year, month }: MonthPosition): number => year * 12 + month
 
 export const sortMonthsNewestFirst = <T extends MonthPosition>(months: readonly T[]): T[] =>
   [...months].sort((a, b) => toMonthNumber(b) - toMonthNumber(a))
@@ -15,7 +15,7 @@ export const getCurrentMonth = (): MonthPosition => {
   return { year: now.getFullYear(), month: now.getMonth() }
 }
 
-const fromMonthNumber = (monthNumber: number): MonthPosition => ({
+export const fromMonthNumber = (monthNumber: number): MonthPosition => ({
   year: Math.floor(monthNumber / 12),
   month: monthNumber % 12,
 })

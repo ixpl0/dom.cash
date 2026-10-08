@@ -75,6 +75,8 @@ const FRACTION_DIGITS_BY_CURRENCY: Readonly<Record<string, number>> = {
 const getMaxFractionDigits = (currency: string, isRounded: boolean): number =>
   FRACTION_DIGITS_BY_CURRENCY[currency] ?? (isRounded ? 0 : DEFAULT_FRACTION_DIGITS)
 
+export const getCurrencyFractionDigits = (currency: string): number => getMaxFractionDigits(currency, false)
+
 const isShownAsZero = (amount: number, maxFractionDigits: number): boolean =>
   Math.abs(amount) < 0.5 / 10 ** maxFractionDigits
 

@@ -44,13 +44,18 @@ test.describe('Logout', () => {
 
   test('should send the tab to the sign-in page when the session is gone', async ({ page, context }) => {
     await registerUser(page, createTestEmail('logout-expired'), PASSWORD)
+    const budgetSubscribed = page.waitForResponse(response =>
+      response.url().includes('/api/notifications/subscribe/') && response.ok())
+    const overdueCountLoaded = page.waitForResponse(response =>
+      response.url().includes('/api/todo/overdue-count') && response.ok())
     await page.goto('/budget')
     await waitForHydration(page)
+    await Promise.all([budgetSubscribed, overdueCountLoaded])
 
     await context.clearCookies()
     await page.getByTestId('todo-btn').click()
 
-    await expect(page).toHaveURL(/\/auth\?redirect=/)
+    await expect(page).toHaveURL('/auth?redirect=/todo')
     await expect(page.getByTestId('user-dropdown')).not.toBeVisible()
   })
 })

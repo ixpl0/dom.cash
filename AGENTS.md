@@ -90,16 +90,16 @@
   * `types/` — App-specific type definitions
   * `utils/` — Client-side utilities
 * `server/` — Nitro server
-  * `api/` — API routes (auth/, budget/, todo/, docs/, notifications/, user/, admin/, test/ — the test routes exist only in development)
+  * `api/` — API routes (auth/, budget/, todo/, docs/, notifications/, user/, admin/, test/ — the test routes exist only in development; `mcp.ts` is the MCP endpoint)
   * `db/` — Database schema (`schema.ts`) and index
-  * `services/` — Business logic services (auth/, budget/, docs/, connections, notifications, todo)
+  * `services/` — Business logic services (auth/, budget/, docs/, mcp/, connections, notifications, todo)
   * `middleware/` — Server middleware (content-validation, impersonation-guard, origin-guard)
   * `types/` — Server-specific type definitions (Cloudflare D1)
   * `utils/` — Server-side utilities
 * `migrations/` — Wrangler D1 SQL migration files
 * `shared/` — Shared between client and server (isomorphic code)
-  * `schemas/` — Zod validation schemas (auth, budget, common, docs, export-import, recurrence, todo)
-  * `types/` — TypeScript types (budget, todo, i18n, recurrence, export-import)
+  * `schemas/` — Zod validation schemas (auth, budget, common, docs, export-import, mcp, recurrence, todo)
+  * `types/` — TypeScript types (budget, todo, docs, i18n, mcp, recurrence, export-import)
   * `utils/` — Shared utilities (budget calculations, recurrence, currencies, dates, error keys)
 * `tests/unit/` — Unit tests (`*.test.ts`, Node test runner)
 * `tests/e2e/` — Playwright E2E tests
@@ -139,6 +139,13 @@
   * Recognition (`server/services/docs/recognizer.ts`): the previews go to the Anthropic Files API one at a time, to keep the memory of the request small (they expire in an hour and are deleted after the answer), `claude-haiku-5-5` returns the fields sorted by importance as structured output. The effort is chosen in the interface for now (`DocsRecognitionEffortSelect` next to the recognize button and in the upload modals, see `FOLLOWUPS.md`): `low` by default, remembered in the `user-preferences` cookie (`usePreferencesStore`), the docs store sends it with every recognition. `mergeRecognizedFields` (`shared/utils/docs.ts`) keeps every field the user already has and adds only new ones; mode `replace` replaces them. Without `ANTHROPIC_API_KEY` recognition is off, except in test mode, where a fake recognizer answers.
   * Uploads and recognition run in the docs store (`uploadImages`, `recognizeDocument`), so they go on after the modal closes; the page shows their progress. A folder reload that started before a local change is dropped and marks the store stale. Photos cannot be added in edit mode, because recognition would change the fields under the draft.
   * Limits are in `shared/schemas/docs.ts`. Recognition has no rate limit yet (decision of 28 September 2026, see `FOLLOWUPS.md`).
+* **Claude access (MCP)**: a read-only MCP server at `/api/mcp` (`server/api/mcp.ts`, `server/services/mcp/`), so Claude can answer questions about the user's budget, tasks and documents.
+  * Streamable HTTP without sessions or SSE: one JSON-RPC message per POST, answered with JSON by `handleMcpMessage` (`protocol.ts`); notifications get 202, GET answers 405, no dependency on the MCP SDK.
+  * The client sends a personal token (`Authorization: Bearer dcmcp_…`); the session cookie is not accepted. The user creates tokens in the header menu (`McpTokensModal`), the secret is shown once, `mcp_token` keeps its SHA-256 hash (`hashToken`, `server/utils/crypto.ts`), the scopes (`budget`, `todo`, `docs`, `MCP_SCOPES`) and the last use, written at most once an hour. Up to `MCP_MAX_TOKENS` per user; revoking deletes the row.
+  * Tools (`budget-tools.ts`, `todo-tools.ts`, `docs-tools.ts`) call the same services and access checks as the API, and `tools/list` shows only the tools of the token scopes. Define a tool with `defineMcpTool`: its zod input becomes the JSON Schema; wrong arguments and service errors return a tool result with `isError`, which the model reads, not a JSON-RPC error.
+  * Months in tool arguments and answers are calendar `YYYY-MM` (September is `09`), unlike `createMonthKey`. Totals come from `computeMonthData` and `computeExpectedBalances` like in the budget store, rounded to the currency precision; a reader of a shared budget gets no plans, as in the interface.
+  * Every field of an answer costs the model context: leave out empty values and ids the model cannot use.
+  * Claude Code connects with the command the modal shows: `claude mcp add --transport http --scope user dom-cash https://<host>/api/mcp --header "Authorization: Bearer <token>"`. claude.ai and the mobile app need OAuth, which is not done yet (see `FOLLOWUPS.md`).
 * **Metrics**: Analytics dashboard with charts
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.
