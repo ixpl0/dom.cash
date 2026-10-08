@@ -282,9 +282,7 @@ pnpm run db:migrate:prod
 | `pnpm run db:migrate` | Apply migrations | Local |
 | `pnpm run db:migrate:test` | Apply migrations | Test (remote) |
 | `pnpm run db:migrate:prod` | Apply migrations | Production (remote) |
-| `pnpm run db:backup` | Create backup `backups/backup-local-<UTC time>.sql` | Local |
-| `pnpm run db:backup:test` | Create backup `backups/backup-test-<UTC time>.sql` | Test (remote) |
-| `pnpm run db:backup:prod` | Create backup `backups/backup-prod-<UTC time>.sql` | Production (remote) |
+| `pnpm run db:backup:prod` | Create backup `backups/backup-prod-<UTC time>.sql`, delete backups older than two months | Production (remote) |
 | `pnpm run db:reset` | Reset database | Local only |
 
 ### Important Notes
@@ -326,7 +324,7 @@ pnpm run deploy:prod
 pnpm run deploy:all
 ```
 
-A release checks and builds the app first, then backs up the database, applies the migrations and deploys:
+A release checks and builds the app first, then applies the migrations and deploys; the production release backs up the database before the migrations:
 
 ```bash
 pnpm run release:test
