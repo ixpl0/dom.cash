@@ -28,7 +28,7 @@ const messageResponse = (content: unknown[], stopReason: string): Response => js
   id: 'msg_test',
   type: 'message',
   role: 'assistant',
-  model: 'claude-sonnet-5-5',
+  model: 'claude-haiku-5-5',
   content,
   stop_reason: stopReason,
   stop_sequence: null,
@@ -112,7 +112,7 @@ const readMessageRequest = (api: FakeApi): RecordedRequest => {
   return messageRequest
 }
 
-test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the fields with the chosen effort and deletes the photos', async (context) => {
+test('recognizeDocumentImages uploads the photos, asks Claude Haiku 5.5 for the fields with the chosen effort and deletes the photos', async (context) => {
   const output = {
     title: 'Паспорт РФ',
     fields: [
@@ -159,10 +159,10 @@ test('recognizeDocumentImages uploads the photos, asks Claude Sonnet 5.5 for the
   const body = messageRequest.json
   assert.ok(body)
   assert.equal(messageRequest.search, '?beta=true')
-  assert.match(messageRequest.headers.get('anthropic-beta') ?? '', /server-side-fallback-2026-07-01/)
-  assert.equal(body.model, 'claude-sonnet-5-5')
+  assert.doesNotMatch(messageRequest.headers.get('anthropic-beta') ?? '', /server-side-fallback/)
+  assert.equal(body.model, 'claude-haiku-5-5')
   assert.equal(body.max_tokens, 16000)
-  assert.equal(body.fallbacks, 'default')
+  assert.equal(body.fallbacks, undefined)
   assert.equal(body.thinking, undefined)
   assert.equal(body.stream, undefined)
 

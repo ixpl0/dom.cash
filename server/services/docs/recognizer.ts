@@ -30,12 +30,11 @@ interface LanguageExamples {
   titles: string
 }
 
-const RECOGNITION_MODEL = 'claude-sonnet-5-5'
+const RECOGNITION_MODEL = 'claude-haiku-5-5'
 const RECOGNITION_MAX_TOKENS = 16000
 const RECOGNITION_TIMEOUT_MS = 3 * 60 * 1000
 const RECOGNITION_MAX_RETRIES = 1
 const UPLOADED_IMAGE_LIFETIME_SECONDS = 60 * 60
-const SERVER_SIDE_FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 const IMAGE_CONTENT_TYPE = 'image/jpeg'
 
 const LANGUAGE_EXAMPLES: Record<RecognitionLanguage, LanguageExamples> = {
@@ -165,8 +164,6 @@ const readRecognition = async (client: Anthropic, fileIds: readonly string[], re
   const response = await client.beta.messages.create({
     model: RECOGNITION_MODEL,
     max_tokens: RECOGNITION_MAX_TOKENS,
-    betas: [SERVER_SIDE_FALLBACK_BETA],
-    fallbacks: 'default',
     output_config: {
       effort: request.effort,
       format: outputFormat,

@@ -123,7 +123,7 @@ Styles are split into logical CSS files in `app/assets/`:
 - **Backend**: Nitro, Cloudflare Workers
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
 - **File storage**: Cloudflare R2 (photos of documents in the docs section)
-- **AI**: Claude Sonnet 5.5 through the official `@anthropic-ai/sdk` (reading fields from photos of documents)
+- **AI**: Claude Haiku 5.5 through the official `@anthropic-ai/sdk` (reading fields from photos of documents)
 - **Authentication**: random session tokens stored as SHA-256 hashes in D1, HTTP-only cookies, sliding 90-day sessions, Google OAuth
 - **Styling**: Tailwind CSS 4 + DaisyUI 5
 - **Type Safety**: TypeScript 5 with strict mode
@@ -185,7 +185,7 @@ All users have an `emailVerified` field, so verification can be required later f
 The key of the Claude API that reads fields from photos in the docs section. Create it in the Claude Console (platform.claude.com, Settings → API keys). API usage is billed there, separately from a claude.ai subscription; one document costs a few cents.
 
 - **Unset**: recognition is off, the interface hides it and says it is not set up. Photos and fields still work.
-- **Set**: `server/services/docs/recognizer.ts` uploads the previews of the photos to the Files API (they expire after an hour and are deleted right after the answer) and asks `claude-sonnet-5-5` for the fields with the effort chosen in the interface (`low` by default).
+- **Set**: `server/services/docs/recognizer.ts` uploads the previews of the photos to the Files API (they expire after an hour and are deleted right after the answer) and asks `claude-haiku-5-5` for the fields with the effort chosen in the interface (`low` by default).
 - **Test mode without a key** (`nuxt dev` and the e2e build): a fake recognizer returns the fields "Test mode" and "Photos read", so the whole flow can be checked without the API.
 
 #### Google OAuth
