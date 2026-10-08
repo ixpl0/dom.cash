@@ -20,6 +20,7 @@
     "db:migrate:prod": "wrangler d1 migrations apply DB --remote --env=\"production\"",
     "db:reset": "rm -rf .wrangler/state/v3/d1/miniflare-D1DatabaseObject && pnpm run db:migrate",
     "db:backup:prod": "tsx scripts/backup-database.ts",
+    "push:keys": "tsx scripts/generate-vapid-keys.ts",
     "deploy:test": "pnpm run check && pnpm run build && wrangler deploy --assets .output/public --env=\"\"",
     "deploy:prod": "pnpm run check && pnpm run build && wrangler deploy --assets .output/public --env=\"production\"",
     "deploy:all": "pnpm run check && pnpm run build && wrangler deploy --assets .output/public --env=\"\" && wrangler deploy --assets .output/public --env=\"production\"",

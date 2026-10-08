@@ -4,6 +4,8 @@ import type { DocField } from '~~/shared/types/docs'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import { ACCESS_LEVELS, ENTRY_KINDS } from '~~/shared/schemas/common'
 import type { McpScope } from '~~/shared/schemas/mcp'
+import { TODO_DIGEST_OVERDUE_MODES } from '~~/shared/schemas/push'
+import { SUPPORTED_LOCALES } from '~~/shared/utils/shared/locale'
 
 type Rates = Record<string, number>
 
@@ -224,6 +226,47 @@ export const todoShare = sqliteTable(
 
 export type TodoShare = typeof todoShare.$inferSelect
 export type NewTodoShare = typeof todoShare.$inferInsert
+
+export const pushSubscription = sqliteTable(
+  'push_subscription',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id').notNull().references(() => session.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    unique('uq_push_subscription_endpoint').on(t.endpoint),
+    index('idx_push_subscription_user').on(t.userId),
+    index('idx_push_subscription_session').on(t.sessionId),
+  ],
+)
+
+export type PushSubscriptionRow = typeof pushSubscription.$inferSelect
+
+export const todoDigestSettings = sqliteTable(
+  'todo_digest_settings',
+  {
+    userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+    digestTime: integer('digest_time').notNull(),
+    weekdays: text('weekdays', { mode: 'json' }).$type<number[]>().notNull(),
+    overdueMode: text('overdue_mode', { enum: TODO_DIGEST_OVERDUE_MODES }).notNull(),
+    timeZone: text('time_zone').notNull(),
+    locale: text('locale', { enum: SUPPORTED_LOCALES }).notNull(),
+    lastSentDate: text('last_sent_date'),
+  },
+  t => [
+    check('ck_todo_digest_time', sql`${t.digestTime} BETWEEN 0 AND 1439`),
+    check('ck_todo_digest_weekdays_is_array', sql`${t.weekdays} GLOB '[[]*]'`),
+    check('ck_todo_digest_overdue_mode', sql`${t.overdueMode} IN ('fading', 'daily', 'off')`),
+  ],
+)
+
+export type TodoDigestSettingsRow = typeof todoDigestSettings.$inferSelect
 
 export const docFolder = sqliteTable(
   'doc_folder',

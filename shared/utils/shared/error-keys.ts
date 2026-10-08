@@ -89,6 +89,9 @@ export const ERROR_KEYS = {
   MCP_TOKEN_ID_REQUIRED: 'serverErrors.mcp_token_id_required',
   MCP_TOKEN_NOT_FOUND: 'serverErrors.mcp_token_not_found',
   MCP_TOO_MANY_TOKENS: 'serverErrors.mcp_too_many_tokens',
+  PUSH_NOT_CONFIGURED: 'serverErrors.push_not_configured',
+  PUSH_SUBSCRIPTION_NOT_FOUND: 'serverErrors.push_subscription_not_found',
+  PUSH_DELIVERY_FAILED: 'serverErrors.push_delivery_failed',
 } as const
 
 export type ErrorKey = typeof ERROR_KEYS[keyof typeof ERROR_KEYS]

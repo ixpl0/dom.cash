@@ -6,3 +6,5 @@ export const isTodoOverdue = ({ plannedDate, isCompleted }: Pick<TodoListItem, '
 
 export const getSeenPlannedDate = ({ plannedDate }: Pick<TodoListItem, 'plannedDate'>): string | null =>
   plannedDate === null ? null : getPlainDate(plannedDate)
+
+export const toStoredPlannedDate = (date: string): string => `${getPlainDate(date)}T00:00`

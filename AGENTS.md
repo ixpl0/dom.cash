@@ -14,6 +14,7 @@
   * `pnpm run dev` (local) / `pnpm run deploy:test` (test) / `pnpm run deploy:prod` (production)
   * `pnpm run db:backup:prod` — backup the production database into `backups/backup-prod-<UTC time>.sql` (never overwrites an older backup) and delete backups older than two months
   * `pnpm run db:reset` — reset local database (deletes local D1 state and re-migrates)
+  * `pnpm run push:keys` — print a new VAPID key pair for push notifications (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`; put them into `.env` or `wrangler secret put` for each environment, `VAPID_SUBJECT` is optional). A new pair invalidates every subscription: browsers resubscribe on the next app start.
   * `pnpm run deploy:all` — deploy to test and production
   * `pnpm run release:test` / `pnpm run release:prod` — check and build, then apply migrations and deploy; the production release backs up the database first
   * Every `deploy:*` script runs `pnpm run check` first.
@@ -33,6 +34,7 @@
   * Pages start loading with `await callOnce(key, () => store.load(), { mode: 'navigation' })`: it runs during SSR, is skipped during hydration and runs again on every client navigation.
   * Keep data fresh with the store's `markStale()`: the `live-data` plugin reloads stale stores in place when the tab is visible and no overlay or edit mode is open, and marks data older than 15 minutes stale. Do not reload the whole app to refresh data.
   * Use `$fetch` for mutations (POST/PUT/DELETE).
+  * A `DELETE` request carries no body on Workers: Nitro passes the body only for POST, PUT and PATCH (`requestHasBody`), while `nuxt dev` passes it for every method. Send the data of a removal in the path, the query or a POST (`/api/push/unsubscribe`).
   * Pass query parameters through the `query` option so they are encoded, and wrap a value that goes into the path (a username, an id) in `encodeURIComponent`.
 * **Request guards** (`server/middleware/`): they run before every route.
   * `origin-guard` refuses a write request (any method except GET, HEAD and OPTIONS) that a browser sends from another origin: other sites live on sibling subdomains, so `SameSite` cookies do not stop them. It trusts `Sec-Fetch-Site` (`same-origin` or `none`), falls back to comparing `Origin` with `Host`, and lets through clients that send neither header.
@@ -68,6 +70,15 @@
   * `EventSource` cannot see the status of a failed connection: from the second failure in a row the plugin asks `/api/user/session`, whose 401 reloads the tab through the session check above, so an ended session stops the reconnects.
   * An event shows a toast and marks the affected store stale (`app/utils/notifications.ts` decides which); a reconnect marks everything stale because events may have been missed. Silent events (`docs_images_changed`) only mark the store stale.
   * **Known limitation (accepted)**: SSE state (`activeConnections`, `budgetSubscriptions`) lives in a module-level `Map` in `server/services/notifications.ts`. In Cloudflare Workers there is no guarantee of a single isolate, so parallel viewers landing in different isolates may not receive each other's events. This is intentional and not considered critical — best-effort delivery is acceptable; do not "fix" by introducing Durable Objects without explicit ask.
+* **Push notifications and the installed app**: the daily task digest goes out through Web Push.
+  * `public/manifest.webmanifest` and `public/icons/` (rendered from `public/logo.svg`: the maskable icon keeps the logo inside the safe zone, `badge-96.png` is a white silhouette for the Android status bar) make the site installable; Chrome on Android then builds a WebAPK, so notifications come from dom.cash and open its window. The header and the reminders modal offer the install button when the browser fires `beforeinstallprompt` (`useInstallPrompt`). The `favicon` plugin keeps `theme-color` equal to `--color-base-200`, the colour of the header.
+  * `public/sw.js` is plain JavaScript without a `fetch` handler (nothing is cached). It shows a pushed message, opens or focuses the app on a click and runs the actions of a single-task digest: «Done» calls `PUT /api/todo/:id/completion`, «Tomorrow» calls `PUT /api/todo/:id/planned-date` with the date the notification showed, so a stale notification changes nothing. After an action it posts `todo-changed` to open tabs (`app/plugins/service-worker.client.ts` marks the todo store stale).
+  * `server/utils/web-push.ts` encrypts messages by RFC 8291 (`aes128gcm`) and signs the VAPID token (ES256) with WebCrypto, because the `web-push` package needs Node's `crypto` and `https`. A unit test reproduces the example of RFC 8291 byte for byte.
+  * A subscription (`push_subscription`) belongs to the session that saved it: logout, a password reset and session expiry delete it with `ON DELETE CASCADE`, and logout also unsubscribes the browser. On every app start `syncDevice` sends the subscription again with the device time zone and language, so after a password reset or an expired session the next sign-in on that browser restores it; it also resubscribes when the VAPID key changed and skips impersonation. The `push-subscription-owner` key in `localStorage` keeps another user who signs in on the same browser from inheriting the subscription.
+  * Push routes live under `/api/push/`, so the impersonation guard refuses them. Endpoints are accepted only from known push services (`pushEndpointSchema`: FCM, Mozilla, Apple, WNS), because the server posts to them.
+  * The cron trigger (`*/15 * * * *` in `wrangler.toml`) runs `server/plugins/todo-digest.ts` (`cloudflare:scheduled`), which calls `sendTodoDigests` (`server/services/todo-digest.ts`): a digest is due on the chosen weekdays from the chosen time until two hours later in the user's time zone (`todo_digest_settings`). A conditional update of `last_sent_date` claims the day before sending, so two runs never send twice and a failed delivery is not repeated. One run sends at most 10 digests; the rest wait for the next run.
+  * `buildTodoDigestMessage` (`server/utils/todo-digest.ts`) names at most four tasks, today's first. Nothing is sent without tasks for today or reminded overdue tasks; overdue tasks are reminded on the 1st, 3rd and 7th day and then weekly (`fading`), every day or never; a digest of overdue tasks only is silent. The tag `todo-digest` and the `Topic` header make a new digest replace the old one; opening `/todo` closes it. Texts live in `server/utils/push-texts.ts` in the language of the device.
+  * Without VAPID keys the feature is off, except in test mode, where `server/utils/test-push-recorder.ts` records messages instead of sending them (`/api/test/push-messages`, `/api/test/todo-digest`). With keys in `.env`, `pnpm dev` sends real pushes to Chrome on localhost. `wrangler dev --test-scheduled` and `/__scheduled?cron=*/15+*+*+*+*` run the cron locally.
 * Commands:
   * `pnpm check` — lint, type-check the app and the tests, run unit tests (run before committing)
   * `pnpm typecheck` / `pnpm typecheck:tests` — type-check the app / the tests
@@ -85,21 +96,21 @@
   * `composables/` — Composables organized by feature (auth/, budget/, docs/, shared/)
   * `layouts/` — Nuxt layouts (default.vue)
   * `middleware/` — Client middleware (auth.global.ts)
-  * `plugins/` — Nuxt plugins (auth, favicon, animate-on-scroll, back-handlers, live-data)
+  * `plugins/` — Nuxt plugins (auth, favicon, animate-on-scroll, back-handlers, live-data, service-worker)
   * `stores/` — Pinia stores organized by feature (budget/, todo/, docs/, preferences)
   * `types/` — App-specific type definitions
   * `utils/` — Client-side utilities
 * `server/` — Nitro server
   * `api/` — API routes (auth/, budget/, todo/, docs/, notifications/, user/, admin/, test/ — the test routes exist only in development; `mcp.ts` is the MCP endpoint)
   * `db/` — Database schema (`schema.ts`) and index
-  * `services/` — Business logic services (auth/, budget/, docs/, mcp/, connections, notifications, todo)
+  * `services/` — Business logic services (auth/, budget/, docs/, mcp/, connections, notifications, push, todo, todo-digest)
   * `middleware/` — Server middleware (content-validation, impersonation-guard, origin-guard)
   * `types/` — Server-specific type definitions (Cloudflare D1)
   * `utils/` — Server-side utilities
 * `migrations/` — Wrangler D1 SQL migration files
 * `shared/` — Shared between client and server (isomorphic code)
-  * `schemas/` — Zod validation schemas (auth, budget, common, docs, export-import, mcp, recurrence, todo)
-  * `types/` — TypeScript types (budget, todo, docs, i18n, mcp, recurrence, export-import)
+  * `schemas/` — Zod validation schemas (auth, budget, common, docs, export-import, mcp, push, recurrence, todo)
+  * `types/` — TypeScript types (budget, todo, docs, i18n, mcp, push, recurrence, export-import)
   * `utils/` — Shared utilities (budget calculations, recurrence, currencies, dates, error keys)
 * `tests/unit/` — Unit tests (`*.test.ts`, Node test runner)
 * `tests/e2e/` — Playwright E2E tests
@@ -107,7 +118,7 @@
   * `authenticated/` — Tests for authenticated pages (budget/, todo/)
   * `mobile/` — Phone layout tests (Pixel 7 project)
   * `admin/` — Admin tests that change settings every test shares (`admin` project, runs after the others)
-  * `helpers/` — Test helpers (auth, confirmation, budget-setup, docs, wait-for-hydration, text, users)
+  * `helpers/` — Test helpers (auth, confirmation, budget-setup, docs, push, wait-for-hydration, text, users)
   * `fixtures.ts` — Test fixtures (one registered user per worker)
   * `fixtures/budgets/` — JSON budget fixtures for import tests
   * `constants.ts` — Test constants
@@ -132,6 +143,8 @@
   * A task is overdue when it is open and planned for today or earlier (`isTodoOverdue`, `shared/utils/todo.ts`). Today comes from `useToday()`, which stays empty during server rendering and hydration like `useCurrentMonth()`, so nothing is overdue until the browser knows its local date. The header count comes from the loaded list, or from `/api/todo/overdue-count` with the browser's local date, so server rendering never waits for tasks.
   * The checkbox sends the wanted state (`PUT /api/todo/:id/completion`), never a toggle, together with the planned date it shows (`YYYY-MM-DD` or `null`). The server completes the task or moves a recurring one to its next date only while the stored date matches (a conditional `UPDATE`), so a repeated request or a tick from a stale list changes nothing and gets the current task back to show. A click while the request runs is ignored.
   * Store actions throw, the card and the task modal show the error with `formatError`. A failed overdue count lets `markStale()` mark the store, so the next staleness refresh loads it again.
+  * Reminders: the bell next to the title opens `TodoNotificationsModal`, which turns push notifications on for this device and edits the digest settings shared by all devices of the user (time in 15-minute steps, weekdays, overdue mode); every change is saved at once (`useTodoNotificationsStore`). See «Push notifications» above.
+  * `PUT /api/todo/:id/planned-date` moves a task from the date the client saw to a new date with the same conditional `UPDATE` as the checkbox; the notification button «Tomorrow» uses it.
 * **Docs**: folders (a person, a car, a home) hold documents; a document has photos and an ordered list of fields (`name`/`value`, JSON in `doc_document.fields`).
   * Access works like tasks: the owner shares a folder with connections, every participant can change and delete everything in it, only the owner changes the participants.
   * Photos live in R2 under `docs/<folderId>/<documentId>/<imageId>/<variant>`: the `original` as uploaded, a JPEG `preview` sized to the model's image limits (`getDocPreviewSize`: 2576 px on the long edge, 4784 visual tokens) for recognition and a JPEG `thumbnail` up to 480 px, enough for the card strip and the gallery tiles of the document page on a retina screen. The browser makes the preview and the thumbnail (`app/utils/doc-images.ts`) and sends the three files in one `application/octet-stream` body with their sizes in the query (`uploadDocImageQuerySchema`); the server checks magic bytes and never trusts a declared type. Photos are served only by `/api/docs/images/:id/:variant` after an access check, with `Cache-Control: private, no-cache` and an ETag, so the browser revalidates every time and gets a 304 instead of the file. Rows are deleted first, then files; a failed file deletion is only logged.
@@ -175,6 +188,7 @@
 * **Unit Tests**: `tests/unit/*.test.ts`, run with `pnpm test:unit`. Cover pure logic in `shared/`; test server services against `createTestDatabase()` (`tests/unit/helpers/test-database.ts`): an in-memory SQLite with all migrations that D1 code can use through `event`, and that counts the queries; its `docsBucket` is an in-memory R2 bucket. The Claude request is tested against a fake API that replaces `globalThis.fetch` (`tests/unit/docs-recognizer.test.ts`). Compute expected values by hand, never copy them from the output; record known bugs as `{ todo: 'reason' }` tests with the correct expectation.
 * **E2E Tests**: Use Playwright with TypeScript
   * Docs tests prepare folders, documents and photos with `tests/e2e/helpers/docs.ts`; recognition in the e2e build uses the fake recognizer, so the tests need no API key.
+  * Push tests replace `PushManager` and `Notification.permission` in the page with `stubPushService` (`tests/e2e/helpers/push.ts`): Playwright's Chromium cannot reach a push service, and its `Notification.permission` stays `denied` even after `grantPermissions`. The e2e build records messages instead of sending them, and the tests read them with `readRecordedPushes`.
   * `pnpm test:e2e` runs against a production-like build (`nuxt build --envName e2e` into `.output-e2e`) served by `wrangler dev` on port 8787, with a fresh local D1 in `.wrangler/e2e` on every run. `playwright.dev.config.ts` targets the dev server instead.
   * Test-only behaviour (verification code `111111`, codes logged instead of emailed, `/api/test/*` routes) is guarded by `isTestMode()` (`server/utils/test-mode.ts`): it is on in `nuxt dev` and in the e2e build; production builds replace the flag with `false` at build time.
   * Desktop Chrome runs `public/` and `authenticated/`; the `mobile` project (Pixel 7) runs `tests/e2e/mobile/`, which covers the mobile menu and cards. Tests retry only on CI.

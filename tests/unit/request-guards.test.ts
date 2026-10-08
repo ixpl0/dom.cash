@@ -67,6 +67,10 @@ const blockedWrites = [
   { method: 'DELETE', url: '/api/docs/folders/folder-id' },
   { method: 'POST', url: '/api/admin/impersonate' },
   { method: 'POST', url: '/api/auth/logout/extra' },
+  { method: 'PUT', url: '/api/push/subscription' },
+  { method: 'PUT', url: '/api/push/settings' },
+  { method: 'POST', url: '/api/push/test' },
+  { method: 'POST', url: '/api/push/unsubscribe' },
 ]
 
 blockedWrites.forEach(({ method, url }) => {

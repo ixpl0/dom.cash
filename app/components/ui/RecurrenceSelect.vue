@@ -92,6 +92,7 @@
 
 <script setup lang="ts">
 import type { IntervalUnit, RecurrencePattern } from '~~/shared/types/recurrence'
+import { WEEKDAYS } from '~/utils/weekdays'
 
 interface Props {
   modelValue: RecurrencePattern | null
@@ -110,16 +111,6 @@ const intervalValue = ref(1)
 const intervalUnit = ref<IntervalUnit>('day')
 const selectedWeekdays = ref<number[]>([])
 const dayOfMonthValue = ref(1)
-
-const WEEKDAYS = [
-  { key: 'mon', jsIndex: 1 },
-  { key: 'tue', jsIndex: 2 },
-  { key: 'wed', jsIndex: 3 },
-  { key: 'thu', jsIndex: 4 },
-  { key: 'fri', jsIndex: 5 },
-  { key: 'sat', jsIndex: 6 },
-  { key: 'sun', jsIndex: 0 },
-] as const
 
 const weekdaysWithIndex = computed(() =>
   WEEKDAYS.map(({ key, jsIndex }) => ({ day: t(`todo.recurrence.weekdayNames.${key}`), jsIndex })),

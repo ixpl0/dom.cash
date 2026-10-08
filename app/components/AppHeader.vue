@@ -98,6 +98,18 @@
         >
           <UiLanguagePicker class="xl:hidden px-3 py-1" />
           <UiThemePicker class="xl:hidden px-3 py-1" />
+          <li v-if="canInstall">
+            <button
+              data-testid="install-app-btn"
+              @click="installApp"
+            >
+              <Icon
+                name="heroicons:device-phone-mobile"
+                size="16"
+              />
+              {{ t('header.installApp') }}
+            </button>
+          </li>
           <li v-if="user?.isAdmin">
             <NuxtLink
               to="/metrics"
@@ -237,6 +249,19 @@
           <UiLanguagePicker class="px-3 py-1" />
           <UiThemePicker class="px-3 py-1" />
 
+          <li v-if="canInstall">
+            <button
+              data-testid="mobile-install-app-btn"
+              @click="installApp"
+            >
+              <Icon
+                name="heroicons:device-phone-mobile"
+                size="16"
+              />
+              {{ t('header.installApp') }}
+            </button>
+          </li>
+
           <template v-if="isAuthenticated">
             <div class="divider my-0" />
             <div class="flex items-center gap-2 px-3 py-2">
@@ -325,6 +350,7 @@
 const { user, isAuthenticated, logout } = useAuth()
 const todoStore = useTodoStore()
 const { t } = useI18n()
+const { canInstall, install } = useInstallPrompt()
 
 const isMcpModalOpen = ref(false)
 
@@ -346,6 +372,12 @@ const openMcpModal = (): void => {
   closeUserMenu()
   closeMobileMenu()
   isMcpModalOpen.value = true
+}
+
+const installApp = async (): Promise<void> => {
+  closeUserMenu()
+  closeMobileMenu()
+  await install()
 }
 
 const exitImpersonation = async (): Promise<void> => {

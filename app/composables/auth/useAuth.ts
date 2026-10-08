@@ -59,6 +59,12 @@ export const useAuth = () => {
   }
 
   const logout = async (): Promise<void> => {
+    if (import.meta.client) {
+      await unsubscribeBrowserPush().catch((error: unknown) => {
+        console.error('Failed to unsubscribe from push notifications', error)
+      })
+    }
+
     await $fetch('/api/auth/logout', {
       method: 'POST',
     }).catch(() => {})

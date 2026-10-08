@@ -20,6 +20,7 @@ export default {
     login: 'Login',
     impersonationBanner: 'You are viewing the site as {username}',
     impersonationExit: 'Back to your account',
+    installApp: 'Install app',
   },
 
   auth: {
@@ -612,6 +613,9 @@ export default {
     mcp_token_id_required: 'Token ID is required',
     mcp_token_not_found: 'Token not found',
     mcp_too_many_tokens: 'You have too many tokens, revoke one you no longer use',
+    push_not_configured: 'Notifications are not set up on the server',
+    push_subscription_not_found: 'This device is not subscribed to notifications, turn them on again',
+    push_delivery_failed: 'The notification service did not accept the message, try again later',
   },
 
   docs: {
@@ -830,6 +834,39 @@ export default {
       deleteFailed: 'Failed to delete task',
       saveFailed: 'Failed to save task',
       loadFailed: 'Failed to load tasks',
+    },
+    notifications: {
+      open: 'Reminders',
+      title: 'Task reminders',
+      description: 'Once a day you get a digest of the tasks for today and the overdue ones. No tasks, no notification.',
+      device: 'Notifications on this device',
+      unsupported: 'This browser cannot receive notifications. On Android, open the site in Chrome.',
+      notConfigured: 'Notifications are not set up on the server yet.',
+      denied: 'Notifications are blocked for this site. Allow them in the site settings of the browser and turn them on again.',
+      time: 'Digest time',
+      weekdays: 'Days',
+      overdue: 'Overdue tasks',
+      overdueModes: {
+        fading: 'Remind less and less often',
+        daily: 'Every day',
+        off: 'Do not remind',
+      },
+      overdueHints: {
+        fading: 'A task gets into the digest on the 1st, 3rd and 7th day overdue, then once a week. On other days it is only counted in the "and N more" line.',
+        daily: 'Every overdue task in every digest.',
+        off: 'The digest names only the tasks for today.',
+      },
+      test: 'Send a test notification',
+      testSent: 'Sent. If nothing arrived, check the notification settings of the phone.',
+      installTitle: 'App on the home screen',
+      installHint: 'It opens in its own window without the address bar, and notifications come from dom.cash.',
+      errors: {
+        load: 'Failed to load the reminder settings',
+        enable: 'Failed to turn on notifications',
+        disable: 'Failed to turn off notifications',
+        save: 'Failed to save the reminder settings',
+        test: 'Failed to send a test notification',
+      },
     },
   },
 

@@ -1,9 +1,23 @@
 <template>
   <div data-testid="todo-page">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <h1 class="text-2xl font-bold animate-fade-in-left">
-        {{ t('todo.title') }}
-      </h1>
+      <div class="flex items-center gap-2 animate-fade-in-left">
+        <h1 class="text-2xl font-bold">
+          {{ t('todo.title') }}
+        </h1>
+        <button
+          class="btn btn-ghost btn-sm btn-square"
+          :title="t('todo.notifications.open')"
+          :aria-label="t('todo.notifications.open')"
+          data-testid="todo-notifications-button"
+          @click="todoModalsStore.openNotificationsModal()"
+        >
+          <Icon
+            name="heroicons:bell"
+            size="20"
+          />
+        </button>
+      </div>
 
       <div class="flex items-center gap-4 animate-fade-in-right-delayed">
         <label class="label cursor-pointer gap-2">
@@ -59,6 +73,7 @@
     </div>
 
     <TodoModal />
+    <TodoNotificationsModal />
   </div>
 </template>
 

@@ -24,9 +24,12 @@ export default defineNuxtConfig({
       meta: [
         { property: 'og:type', content: 'website' },
         { property: 'og:url', content: 'https://domcash.ixplo.ai' },
+        { key: 'theme-color', name: 'theme-color', content: '#fff9ee' },
       ],
       link: [
         { rel: 'canonical', href: 'https://domcash.ixplo.ai' },
+        { rel: 'manifest', href: '/manifest.webmanifest' },
+        { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' },
       ],
     },
   },

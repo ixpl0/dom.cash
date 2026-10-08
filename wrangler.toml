@@ -6,6 +6,9 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+[triggers]
+crons = ["*/15 * * * *"]
+
 [vars]
 NUXT_PUBLIC_ENVIRONMENT = "test"
 
@@ -26,6 +29,9 @@ name = "dom-cash"
 routes = [
   { pattern = "domcash.ixplo.ai", custom_domain = true }
 ]
+
+[env.production.triggers]
+crons = ["*/15 * * * *"]
 
 [env.production.vars]
 NUXT_PUBLIC_ENVIRONMENT = "production"

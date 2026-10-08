@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { useDatabase } from '../../server/db'
 import { budgetShare, todo, todoShare, user } from '../../server/db/schema'
-import { countOverdueTodos, createTodo, deleteTodo, listTodos, setTodoCompletion, updateTodo } from '../../server/services/todo'
+import { countOverdueTodos, createTodo, deleteTodo, listTodos, moveTodo, setTodoCompletion, updateTodo } from '../../server/services/todo'
 import { chunkArray, getRowsPerInsertStatement } from '../../server/utils/d1-limits'
 import type { User } from '../../shared/types'
 import type { TodoListItem } from '../../shared/types/todo'
@@ -222,6 +222,58 @@ test('setTodoCompletion reopens a recurring task without moving it', async () =>
 
   assert.deepEqual(pickCompletion(result), { isCompleted: false, plannedDate: '2026-09-10T00:00' })
   assert.deepEqual({ ...readTodo(database, created.id) }, { isCompleted: 0, plannedDate: '2026-09-10T00:00' })
+})
+
+test('moveTodo moves a task from the date the client saw to the new date', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, { content: 'Book the dentist', plannedDate: '2026-10-06T00:00', sharedWithUserIds: [friend.id] }, database.event)
+
+  const moved = await moveTodo(friend, created.id, { plannedDate: '2026-10-06', newPlannedDate: '2026-10-10' }, database.event)
+
+  assert.deepEqual(pickCompletion(moved), { isCompleted: false, plannedDate: '2026-10-10T00:00' })
+  assert.deepEqual({ ...readTodo(database, created.id) }, { isCompleted: 0, plannedDate: '2026-10-10T00:00' })
+})
+
+test('moveTodo leaves a task whose date or state changed after the client saw it', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, { content: 'Pay rent', plannedDate: '2026-10-09T00:00' }, database.event)
+
+  const stale = await moveTodo(owner, created.id, { plannedDate: '2026-10-08', newPlannedDate: '2026-10-10' }, database.event)
+  assert.equal(stale.plannedDate, '2026-10-09T00:00')
+
+  await setTodoCompletion(owner, created.id, { isCompleted: true, plannedDate: '2026-10-09' }, database.event)
+  const completed = await moveTodo(owner, created.id, { plannedDate: '2026-10-09', newPlannedDate: '2026-10-10' }, database.event)
+
+  assert.deepEqual(pickCompletion(completed), { isCompleted: true, plannedDate: '2026-10-09T00:00' })
+  assert.deepEqual({ ...readTodo(database, created.id) }, { isCompleted: 1, plannedDate: '2026-10-09T00:00' })
+})
+
+test('moveTodo moves a recurring task once when two taps arrive together', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, {
+    content: 'Water the plants',
+    plannedDate: '2026-10-09T00:00',
+    recurrence: { type: 'interval', unit: 'day', value: 3 },
+  }, database.event)
+  const payload = { plannedDate: '2026-10-09', newPlannedDate: '2026-10-10' }
+
+  await Promise.all([
+    moveTodo(owner, created.id, payload, database.event),
+    moveTodo(owner, created.id, { ...payload, newPlannedDate: '2026-10-11' }, database.event),
+  ])
+
+  assert.equal(readTodo(database, created.id)?.plannedDate, '2026-10-10T00:00')
+})
+
+test('moveTodo refuses a user who cannot see the task', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, { content: 'Secret', plannedDate: '2026-10-09T00:00' }, database.event)
+
+  await assert.rejects(moveTodo(stranger, created.id, { plannedDate: '2026-10-09', newPlannedDate: '2026-10-10' }, database.event), {
+    statusCode: 403,
+    message: ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE,
+  })
+  assert.equal(readTodo(database, created.id)?.plannedDate, '2026-10-09T00:00')
 })
 
 test('updateTodo lets a participant edit the task but not its participants', async () => {

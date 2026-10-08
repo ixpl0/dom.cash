@@ -9,6 +9,8 @@ export const useTodoModalsStore = defineStore('todoModals', () => {
     editingTodoId: null,
   })
 
+  const isNotificationsModalOpen = ref(false)
+
   const openTodoModal = (todoId?: string) => {
     todoModal.value = {
       isOpen: true,
@@ -23,9 +25,20 @@ export const useTodoModalsStore = defineStore('todoModals', () => {
     }
   }
 
+  const openNotificationsModal = () => {
+    isNotificationsModalOpen.value = true
+  }
+
+  const closeNotificationsModal = () => {
+    isNotificationsModalOpen.value = false
+  }
+
   return {
     todoModal,
+    isNotificationsModalOpen,
     openTodoModal,
     closeTodoModal,
+    openNotificationsModal,
+    closeNotificationsModal,
   }
 })

@@ -1,15 +1,15 @@
 import { and, count, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { createError, type H3Event } from 'h3'
-import { useDatabase } from '~~/server/db'
+import { useDatabase, type Database } from '~~/server/db'
 import { todo, todoShare, user } from '~~/server/db/schema'
 import { resolveConnections, resolveSharedUsers } from '~~/server/services/connections'
 import { sendNotification, type NotificationType } from '~~/server/services/notifications'
 import { chunkArray, getRowsPerInsertStatement } from '~~/server/utils/d1-limits'
 import type { User } from '~~/shared/types'
-import type { CreateTodoPayload, TodoCompletionPayload, TodoConnection, TodoListItem, UpdateTodoPayload } from '~~/shared/types/todo'
+import type { CreateTodoPayload, TodoCompletionPayload, TodoConnection, TodoListItem, TodoPlannedDatePayload, UpdateTodoPayload } from '~~/shared/types/todo'
 import { ERROR_KEYS, type ErrorKey } from '~~/shared/utils/shared/error-keys'
 import { PLAIN_DATE_LENGTH } from '~~/shared/utils/shared/dates'
-import { getSeenPlannedDate } from '~~/shared/utils/todo'
+import { getSeenPlannedDate, toStoredPlannedDate } from '~~/shared/utils/todo'
 import { calculateNextDate, formatDateForDb } from '~~/shared/utils/recurrence'
 
 type TodoRow = typeof todo.$inferSelect
@@ -103,7 +103,7 @@ const getTodoAccess = async (todoId: string, viewerId: string, forbiddenKey: Err
   return { ...found, sharedWith, isOwner }
 }
 
-const isVisibleTo = (db: ReturnType<typeof useDatabase>, viewerId: string) => or(
+export const isVisibleTo = (db: Database, viewerId: string) => or(
   eq(todo.userId, viewerId),
   inArray(todo.id, db.select({ todoId: todoShare.todoId }).from(todoShare).where(eq(todoShare.sharedWithId, viewerId))),
 )
@@ -252,6 +252,36 @@ export const setTodoCompletion = async (
   }
 
   await notifyParticipants(event, actor, todoRow, getParticipantIds(access), 'todo_toggled', updatedRow.isCompleted ?? false)
+
+  return toTodoListItem(updatedRow, ownerUsername, sharedWith, actor.id)
+}
+
+export const moveTodo = async (
+  actor: User,
+  todoId: string,
+  { plannedDate: seenPlannedDate, newPlannedDate }: TodoPlannedDatePayload,
+  event: H3Event,
+): Promise<TodoListItem> => {
+  const access = await getTodoAccess(todoId, actor.id, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE, event)
+  const { todoRow, ownerUsername, sharedWith } = access
+  const hasSeenOtherState = (todoRow.isCompleted ?? false) || getSeenPlannedDate(todoRow) !== seenPlannedDate
+
+  if (hasSeenOtherState || seenPlannedDate === newPlannedDate) {
+    return toTodoListItem(todoRow, ownerUsername, sharedWith, actor.id)
+  }
+
+  const [updatedRow] = await useDatabase(event)
+    .update(todo)
+    .set({ plannedDate: toStoredPlannedDate(newPlannedDate), updatedAt: new Date() })
+    .where(and(eq(todo.id, todoId), hasStoredPlannedDate(todoRow.plannedDate)))
+    .returning()
+
+  if (!updatedRow) {
+    const current = await getTodoAccess(todoId, actor.id, ERROR_KEYS.INSUFFICIENT_PERMISSIONS_UPDATE, event)
+    return toTodoListItem(current.todoRow, current.ownerUsername, current.sharedWith, actor.id)
+  }
+
+  await notifyParticipants(event, actor, updatedRow, getParticipantIds(access), 'todo_updated')
 
   return toTodoListItem(updatedRow, ownerUsername, sharedWith, actor.id)
 }

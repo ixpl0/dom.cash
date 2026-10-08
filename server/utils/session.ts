@@ -10,13 +10,18 @@ import type { User } from '~~/shared/types'
 
 const AUTH_COOKIE_NAME = 'auth-token'
 
+export interface AuthSession {
+  sessionId: string
+  user: User
+}
+
 const needsRefresh = (expiresAt: Date, now: Date): boolean => {
   const isLegacySession = expiresAt.getTime() - now.getTime() > SESSION_LIFETIME_MS
   const lastRefreshedAt = expiresAt.getTime() - SESSION_LIFETIME_MS
   return isLegacySession || now.getTime() - lastRefreshedAt > REFRESH_INTERVAL_MS
 }
 
-export const getSessionUser = async (event: H3Event): Promise<User | null> => {
+const getAuthSession = async (event: H3Event): Promise<AuthSession | null> => {
   const token = getCookie(event, AUTH_COOKIE_NAME)
 
   if (!token) {
@@ -64,18 +69,23 @@ export const getSessionUser = async (event: H3Event): Promise<User | null> => {
 
   const impersonatedUser = await resolveImpersonation(event, sessionUser)
 
-  return impersonatedUser ?? sessionUser
+  return { sessionId: record.sessionId, user: impersonatedUser ?? sessionUser }
 }
 
-export const requireAuth = async (event: H3Event): Promise<User> => {
-  const currentUser = await getSessionUser(event)
+export const getSessionUser = async (event: H3Event): Promise<User | null> =>
+  (await getAuthSession(event))?.user ?? null
 
-  if (!currentUser) {
+export const requireAuthSession = async (event: H3Event): Promise<AuthSession> => {
+  const authSession = await getAuthSession(event)
+
+  if (!authSession) {
     throw createError({
       statusCode: 401,
       message: ERROR_KEYS.UNAUTHORIZED,
     })
   }
 
-  return currentUser
+  return authSession
 }
+
+export const requireAuth = async (event: H3Event): Promise<User> => (await requireAuthSession(event)).user
