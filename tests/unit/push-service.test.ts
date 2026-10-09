@@ -148,7 +148,7 @@ test('savePushDevice stores the device and the time zone with default digest set
 test('savePushDevice keeps the schedule and moves a device to whoever subscribes it again', async () => {
   const database = await createDatabaseWithUsers()
   const db = useDatabase(database.event)
-  const settings = { digestTime: 7 * 60 + 30, weekdays: [1, 2, 3, 4, 5], overdueMode: 'daily' } as const
+  const settings = { digestTime: 7 * 60 + 30, weekdays: [1, 2, 3, 4, 5], overdueMode: 'daily', undatedMode: 'monthly' } as const
   await savePushDevice(toAuthSession(OWNER_ID), createDevice(PHONE_ENDPOINT), db, MOSCOW_NINE_AM)
   await updateTodoDigestSettings(OWNER_ID, { ...settings, weekdays: [...settings.weekdays] }, db)
 
@@ -308,6 +308,38 @@ test('sendTodoDigests sends one digest when two runs overlap', async () => {
 
   assert.deepEqual(results.map(result => result.userCount).sort(), [0, 1])
   assert.equal(sender.getSent().length, 1)
+})
+
+test('sendTodoDigests reminds of tasks without a date in the first digest of every week', async () => {
+  const database = await createDatabaseWithUsers()
+  const db = useDatabase(database.event)
+  await subscribeOwner(database, { ...NINE_AM_SETTINGS, undatedMode: 'weekly' })
+  await addTodo(database, 'undated', null)
+  await addTodo(database, 'november', '2026-11-22T00:00')
+  const sender = createFakeSender()
+  const moscowNineAmOn = (date: string) => new Date(`${date}T06:00:00Z`)
+
+  await sendTodoDigests(db, moscowNineAmOn('2026-10-09'), sender.send)
+  await sendTodoDigests(db, moscowNineAmOn('2026-10-10'), sender.send)
+  await sendTodoDigests(db, moscowNineAmOn('2026-10-11'), sender.send)
+  await sendTodoDigests(db, moscowNineAmOn('2026-10-12'), sender.send)
+
+  assert.deepEqual(sender.getSent().map(({ message }) => [message.title, message.body]), [
+    ['1 task without a date', 'Task undated · no date'],
+    ['1 task without a date', 'Task undated · no date'],
+  ])
+  assert.equal(database.sqlite.prepare('SELECT last_undated_date AS lastUndatedDate FROM todo_digest_settings WHERE user_id = ?').get(OWNER_ID)?.lastUndatedDate, '2026-10-12')
+})
+
+test('sendTodoDigests leaves tasks without a date out unless the user asked for them', async () => {
+  const database = await createDatabaseWithUsers()
+  const db = useDatabase(database.event)
+  await subscribeOwner(database)
+  await addTodo(database, 'undated', null)
+  const sender = createFakeSender()
+
+  assert.deepEqual(await sendTodoDigests(db, MOSCOW_NINE_AM, sender.send), { userCount: 1, deliveredCount: 0, goneCount: 0 })
+  assert.deepEqual(sender.getSent(), [])
 })
 
 test('sendTodoDigests marks the day even when there is nothing to say', async () => {

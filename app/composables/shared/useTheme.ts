@@ -1,20 +1,8 @@
 import type { FaviconColors } from '~/utils/favicon'
 import { COOKIE_NAMES, UI_COOKIE_OPTIONS } from '~/utils/cookies'
 import { generateFaviconDataUrl } from '~/utils/favicon'
+import { DAISY_THEMES, getThemeColorMetas, type DaisyTheme } from '~/utils/theme-colors'
 
-export const DAISY_THEMES = [
-  'kekdark',
-  'kekdarker',
-  'keklight',
-  'keklighter',
-  'summerhaze',
-  'ritualhabitual',
-  'crystalclear',
-  'grayscale',
-  'grayscaledark',
-] as const
-
-type DaisyTheme = typeof DAISY_THEMES[number]
 type ThemeSelection = DaisyTheme | 'auto'
 
 const AUTO = 'auto'
@@ -90,6 +78,7 @@ export const useTheme = () => {
     htmlAttrs: effectiveTheme.value ? { 'data-theme': effectiveTheme.value } : {},
     bodyAttrs: effectiveTheme.value ? { 'data-theme': effectiveTheme.value } : {},
     link: faviconLink.value ?? [],
+    meta: getThemeColorMetas(effectiveTheme.value),
   })))
 
   const setTheme = (theme: string) => {

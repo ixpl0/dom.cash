@@ -28,6 +28,24 @@ test.describe('HTML head meta tags', () => {
     await expect(canonical).toHaveAttribute('href', 'https://domcash.ixplo.ai')
   })
 
+  test('colours the browser bars like the header of the theme from the first paint', async ({ page }) => {
+    await page.context().clearCookies()
+    await page.goto('/')
+
+    const themeColors = page.locator('meta[name="theme-color"]')
+    await expect(themeColors).toHaveCount(2)
+    await expect(themeColors.nth(0)).toHaveAttribute('media', '(prefers-color-scheme: light)')
+    await expect(themeColors.nth(0)).toHaveAttribute('content', '#fff9ee')
+    await expect(themeColors.nth(1)).toHaveAttribute('media', '(prefers-color-scheme: dark)')
+    await expect(themeColors.nth(1)).toHaveAttribute('content', '#282b2f')
+
+    await page.context().addCookies([{ name: 'theme', value: 'summerhaze', domain: 'localhost', path: '/' }])
+    const response = await page.request.get('/')
+    const html = await response.text()
+
+    expect(html.match(/<meta name="theme-color"[^>]*>/g)).toEqual(['<meta name="theme-color" content="#ffe0e4">'])
+  })
+
   test('has correct lang attribute in English', async ({ page }) => {
     await page.context().clearCookies()
     await page.context().addCookies([{

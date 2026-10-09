@@ -1,7 +1,9 @@
 import type { z } from 'zod'
-import type { pushDeviceSchema, pushEndpointBodySchema, TODO_DIGEST_OVERDUE_MODES, todoDigestSettingsSchema } from '~~/shared/schemas/push'
+import type { pushDeviceSchema, pushEndpointBodySchema, TODO_DIGEST_OVERDUE_MODES, TODO_DIGEST_UNDATED_MODES, todoDigestSettingsSchema } from '~~/shared/schemas/push'
 
 export type TodoDigestOverdueMode = typeof TODO_DIGEST_OVERDUE_MODES[number]
+
+export type TodoDigestUndatedMode = typeof TODO_DIGEST_UNDATED_MODES[number]
 
 export type TodoDigestSettings = z.infer<typeof todoDigestSettingsSchema>
 
@@ -24,7 +26,7 @@ export type PushActionName = 'complete' | 'postpone'
 
 export interface PushMessageTodo {
   id: string
-  plannedDate: string
+  plannedDate: string | null
 }
 
 export interface PushMessage {

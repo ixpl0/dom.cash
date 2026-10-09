@@ -6,7 +6,7 @@
   "start_url": "/budget",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fff9ee",
+  "background_color": "#FFD866",
   "theme_color": "#fff9ee",
   "icons": [
     {

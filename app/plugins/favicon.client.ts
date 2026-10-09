@@ -10,16 +10,6 @@ export default defineNuxtPlugin(() => {
 
   let faviconUrl: string | null = null
 
-  const themeColor = ref<string | null>(null)
-
-  useHead({
-    meta: computed(() => themeColor.value ? [{ key: 'theme-color', name: 'theme-color', content: themeColor.value }] : []),
-  })
-
-  const updateThemeColor = () => {
-    themeColor.value = getComputedStyle(document.documentElement).getPropertyValue('--color-base-200').trim() || null
-  }
-
   const updateFavicon = () => {
     const colors: FaviconColors = {
       contours: getComputedStyle(document.documentElement).getPropertyValue('--logo-contours').trim(),
@@ -55,7 +45,6 @@ export default defineNuxtPlugin(() => {
 
   onNuxtReady(() => {
     updateFavicon()
-    updateThemeColor()
 
     const observer = new MutationObserver((mutations) => {
       const themeChanged = mutations.some(mutation =>
@@ -65,10 +54,7 @@ export default defineNuxtPlugin(() => {
       )
 
       if (themeChanged) {
-        setTimeout(() => {
-          updateFavicon()
-          updateThemeColor()
-        }, 0)
+        setTimeout(updateFavicon, 0)
       }
     })
 

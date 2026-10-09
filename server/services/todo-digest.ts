@@ -3,7 +3,7 @@ import type { Database } from '~~/server/db'
 import { pushSubscription, todo, todoDigestSettings, type TodoDigestSettingsRow } from '~~/server/db/schema'
 import { deleteGoneSubscriptions, deliverPushMessage, type PushDeliveryResult } from '~~/server/services/push'
 import { isVisibleTo } from '~~/server/services/todo'
-import { buildTodoDigestMessage, isTodoDigestDue, type DigestTodo } from '~~/server/utils/todo-digest'
+import { buildTodoDigestMessage, isTodoDigestDue, isUndatedReminderDue, type DigestTodo } from '~~/server/utils/todo-digest'
 import type { PushOptions, PushSender } from '~~/server/utils/web-push'
 import { TODO_DIGEST_TAG } from '~~/shared/schemas/push'
 import { getPlainDate, PLAIN_DATE_LENGTH } from '~~/shared/utils/shared/dates'
@@ -44,13 +44,19 @@ export const listDigestTodos = async (userId: string, today: string, database: D
     .where(and(
       isVisibleTo(database, userId),
       or(isNull(todo.isCompleted), eq(todo.isCompleted, false)),
-      lte(sql`substr(${todo.plannedDate}, 1, ${PLAIN_DATE_LENGTH})`, today),
+      or(isNull(todo.plannedDate), lte(sql`substr(${todo.plannedDate}, 1, ${PLAIN_DATE_LENGTH})`, today)),
     ))
     .orderBy(asc(todo.plannedDate), asc(todo.createdAt))
 
-  return todoRows.flatMap(({ id, content, plannedDate }) =>
-    plannedDate ? [{ id, content, plannedDate: getPlainDate(plannedDate) }] : [])
+  return todoRows.map(({ id, content, plannedDate }) => ({
+    id,
+    content,
+    plannedDate: plannedDate === null ? null : getPlainDate(plannedDate),
+  }))
 }
+
+const isUndatedReminderDueFor = ({ undatedMode, lastUndatedDate }: TodoDigestSettingsRow, today: string): boolean =>
+  isUndatedReminderDue(undatedMode, lastUndatedDate, today)
 
 export const deliverTodoDigest = async (
   settings: TodoDigestSettingsRow,
@@ -58,7 +64,12 @@ export const deliverTodoDigest = async (
   database: Database,
   send: PushSender,
 ): Promise<PushDeliveryResult> => {
-  const message = buildTodoDigestMessage(await listDigestTodos(settings.userId, today, database), today, settings.overdueMode, settings.locale)
+  const message = buildTodoDigestMessage(await listDigestTodos(settings.userId, today, database), {
+    today,
+    overdueMode: settings.overdueMode,
+    includeUndated: isUndatedReminderDueFor(settings, today),
+    locale: settings.locale,
+  })
 
   if (!message) {
     return { deliveredCount: 0, goneIds: [] }
@@ -92,7 +103,9 @@ const findDueDigests = async (database: Database, now: Date): Promise<DueDigest[
 const claimDueDigests = async (dueDigests: readonly DueDigest[], database: Database): Promise<DueDigest[]> => {
   const [firstClaim, ...otherClaims] = dueDigests.map(({ settings, zonedTime }) => database
     .update(todoDigestSettings)
-    .set({ lastSentDate: zonedTime.date })
+    .set(isUndatedReminderDueFor(settings, zonedTime.date)
+      ? { lastSentDate: zonedTime.date, lastUndatedDate: zonedTime.date }
+      : { lastSentDate: zonedTime.date })
     .where(and(
       eq(todoDigestSettings.userId, settings.userId),
       or(isNull(todoDigestSettings.lastSentDate), ne(todoDigestSettings.lastSentDate, zonedTime.date)),

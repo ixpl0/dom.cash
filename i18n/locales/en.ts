@@ -858,6 +858,17 @@ export default {
         daily: 'Every overdue task in every digest.',
         off: 'The digest names only the tasks for today.',
       },
+      undated: 'Tasks without a date',
+      undatedModes: {
+        off: 'Do not remind',
+        weekly: 'Once a week',
+        monthly: 'Once a month',
+      },
+      undatedHints: {
+        off: 'Tasks without a date never get into the digest.',
+        weekly: 'They come in the first digest of every week, usually on Monday, even when nothing else is planned.',
+        monthly: 'They come in the first digest of every month, even when nothing else is planned.',
+      },
       test: 'Send a test notification',
       testSent: 'Sent. If nothing arrived, check the notification settings of the phone.',
       installTitle: 'App on the home screen',

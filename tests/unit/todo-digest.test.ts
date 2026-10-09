@@ -1,13 +1,18 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildTestPushMessage, buildTodoDigestMessage, isTodoDigestDue, shortenTodoContent, shouldRemindOverdue, type DigestTodo } from '../../server/utils/todo-digest'
+import { buildTestPushMessage, buildTodoDigestMessage, isTodoDigestDue, isUndatedReminderDue, shortenTodoContent, shouldRemindOverdue, type DigestTodo } from '../../server/utils/todo-digest'
 import { pushDeviceSchema, todoDigestSettingsSchema } from '../../shared/schemas/push'
-import { getDaysBetweenPlainDates } from '../../shared/utils/shared/dates'
+import type { TodoDigestOverdueMode } from '../../shared/types/push'
+import { getDaysBetweenPlainDates, getWeekStartPlainDate } from '../../shared/utils/shared/dates'
+import type { SupportedLocale } from '../../shared/utils/shared/locale'
 import { getZonedTime, isValidTimeZone } from '../../shared/utils/shared/time-zones'
 
 const TODAY = '2026-10-09'
 
-const todoOn = (id: string, plannedDate: string, content = `Task ${id}`): DigestTodo => ({ id, content, plannedDate })
+const todoOn = (id: string, plannedDate: string | null, content = `Task ${id}`): DigestTodo => ({ id, content, plannedDate })
+
+const digest = (todos: readonly DigestTodo[], overdueMode: TodoDigestOverdueMode, locale: SupportedLocale, includeUndated = false) =>
+  buildTodoDigestMessage(todos, { today: TODAY, overdueMode, includeUndated, locale })
 
 const CHROME_SUBSCRIPTION = {
   endpoint: 'https://fcm.googleapis.com/fcm/send/dmSx3Wq9F1k:APA91bGx',
@@ -62,7 +67,7 @@ test('shouldRemindOverdue fades to weekly reminders', () => {
 })
 
 test('buildTodoDigestMessage lists the tasks for today in a silent notification', () => {
-  const message = buildTodoDigestMessage([todoOn('a', TODAY, 'Pay for the internet'), todoOn('b', TODAY, 'Pick up the parcel')], TODAY, 'fading', 'en')
+  const message = digest([todoOn('a', TODAY, 'Pay for the internet'), todoOn('b', TODAY, 'Pick up the parcel')], 'fading', 'en')
 
   assert.deepEqual(message, {
     title: '2 tasks for today',
@@ -76,7 +81,7 @@ test('buildTodoDigestMessage lists the tasks for today in a silent notification'
 })
 
 test('buildTodoDigestMessage offers actions when the digest names a single task', () => {
-  const message = buildTodoDigestMessage([todoOn('a', TODAY, 'Оплатить интернет')], TODAY, 'fading', 'ru')
+  const message = digest([todoOn('a', TODAY, 'Оплатить интернет')], 'fading', 'ru')
 
   assert.equal(message?.title, '1 задача на сегодня')
   assert.equal(message?.body, 'Оплатить интернет')
@@ -87,15 +92,15 @@ test('buildTodoDigestMessage offers actions when the digest names a single task'
 test('buildTodoDigestMessage reminds of an overdue task quietly on fading days only', () => {
   const dentist = todoOn('dentist', '2026-10-06', 'Book the dentist')
 
-  const thirdDay = buildTodoDigestMessage([dentist], TODAY, 'fading', 'en')
+  const thirdDay = digest([dentist], 'fading', 'en')
 
   assert.equal(thirdDay?.title, '1 overdue task')
   assert.equal(thirdDay?.body, 'Book the dentist · 3 days ago')
   assert.equal(thirdDay?.isSilent, true)
   assert.deepEqual(thirdDay?.todo, { id: 'dentist', plannedDate: '2026-10-06' })
-  assert.equal(buildTodoDigestMessage([todoOn('dentist', '2026-10-07')], TODAY, 'fading', 'en'), null)
-  assert.equal(buildTodoDigestMessage([todoOn('dentist', '2026-10-07')], TODAY, 'daily', 'en')?.body, 'Task dentist · 2 days ago')
-  assert.equal(buildTodoDigestMessage([dentist], TODAY, 'off', 'en'), null)
+  assert.equal(digest([todoOn('dentist', '2026-10-07')], 'fading', 'en'), null)
+  assert.equal(digest([todoOn('dentist', '2026-10-07')], 'daily', 'en')?.body, 'Task dentist · 2 days ago')
+  assert.equal(digest([dentist], 'off', 'en'), null)
 })
 
 test('buildTodoDigestMessage counts overdue tasks it does not name', () => {
@@ -106,13 +111,13 @@ test('buildTodoDigestMessage counts overdue tasks it does not name', () => {
     todoOn('five-days', '2026-10-04', 'Renew the passport'),
   ]
 
-  const message = buildTodoDigestMessage(todos, TODAY, 'fading', 'ru')
+  const message = digest(todos, 'fading', 'ru')
 
   assert.equal(message?.title, '1 задача на сегодня')
   assert.equal(message?.body, 'Water the plants\nCall grandma · 1 день назад\nи ещё 2 просроченные')
   assert.equal(message?.todo, null)
   assert.deepEqual(message?.actions, [])
-  assert.equal(buildTodoDigestMessage(todos, TODAY, 'off', 'ru')?.body, 'Water the plants')
+  assert.equal(digest(todos, 'off', 'ru')?.body, 'Water the plants')
 })
 
 test('buildTodoDigestMessage names at most four tasks', () => {
@@ -121,7 +126,7 @@ test('buildTodoDigestMessage names at most four tasks', () => {
     todoOn('week', '2026-10-02'),
   ]
 
-  const message = buildTodoDigestMessage(todos, TODAY, 'daily', 'en')
+  const message = digest(todos, 'daily', 'en')
 
   assert.equal(message?.title, '5 tasks for today')
   assert.equal(message?.body, 'Task today-0\nTask today-1\nTask today-2\nTask today-3\nand 1 more for today\nand 1 more overdue')
@@ -130,11 +135,70 @@ test('buildTodoDigestMessage names at most four tasks', () => {
 test('buildTodoDigestMessage picks Russian plural forms', () => {
   const todayTasks = (count: number) => Array.from({ length: count }, (_, index) => todoOn(`t${index}`, TODAY))
 
-  assert.equal(buildTodoDigestMessage(todayTasks(2), TODAY, 'off', 'ru')?.title, '2 задачи на сегодня')
-  assert.equal(buildTodoDigestMessage(todayTasks(5), TODAY, 'off', 'ru')?.title, '5 задач на сегодня')
-  assert.equal(buildTodoDigestMessage(todayTasks(21), TODAY, 'off', 'ru')?.title, '21 задача на сегодня')
-  assert.equal(buildTodoDigestMessage([todoOn('old', '2026-09-18', 'Отправить документы')], TODAY, 'fading', 'ru')?.body, 'Отправить документы · 21 день назад')
-  assert.equal(buildTodoDigestMessage([todoOn('a', '2026-10-08'), todoOn('b', '2026-10-01')], TODAY, 'daily', 'ru')?.title, '2 просроченные задачи')
+  assert.equal(digest(todayTasks(2), 'off', 'ru')?.title, '2 задачи на сегодня')
+  assert.equal(digest(todayTasks(5), 'off', 'ru')?.title, '5 задач на сегодня')
+  assert.equal(digest(todayTasks(21), 'off', 'ru')?.title, '21 задача на сегодня')
+  assert.equal(digest([todoOn('old', '2026-09-18', 'Отправить документы')], 'fading', 'ru')?.body, 'Отправить документы · 21 день назад')
+  assert.equal(digest([todoOn('a', '2026-10-08'), todoOn('b', '2026-10-01')], 'daily', 'ru')?.title, '2 просроченные задачи')
+})
+
+test('getWeekStartPlainDate finds the Monday of the week', () => {
+  assert.equal(getWeekStartPlainDate('2026-10-10'), '2026-10-05')
+  assert.equal(getWeekStartPlainDate('2026-10-11'), '2026-10-05')
+  assert.equal(getWeekStartPlainDate('2026-10-05'), '2026-10-05')
+  assert.equal(getWeekStartPlainDate('2026-11-01T00:00'), '2026-10-26')
+})
+
+test('isUndatedReminderDue reminds in the first digest of a week or a month', () => {
+  assert.equal(isUndatedReminderDue('off', null, TODAY), false)
+  assert.equal(isUndatedReminderDue('weekly', null, TODAY), true)
+  assert.equal(isUndatedReminderDue('weekly', '2026-10-05', '2026-10-11'), false)
+  assert.equal(isUndatedReminderDue('weekly', '2026-10-05', '2026-10-12'), true)
+  assert.equal(isUndatedReminderDue('weekly', '2026-10-09', '2026-10-12'), true)
+  assert.equal(isUndatedReminderDue('monthly', null, TODAY), true)
+  assert.equal(isUndatedReminderDue('monthly', '2026-10-01', '2026-10-31'), false)
+  assert.equal(isUndatedReminderDue('monthly', '2026-10-01', '2026-11-01'), true)
+  assert.equal(isUndatedReminderDue('monthly', '2026-12-31', '2027-01-01'), true)
+})
+
+test('buildTodoDigestMessage lists tasks without a date only when they are due', () => {
+  const undated = [todoOn('tbc', null, 'Close the TBC card'), todoOn('credo', null, 'Close the CREDO card'), todoOn('cv', null, 'Sync the CV')]
+
+  assert.equal(digest(undated, 'daily', 'en'), null)
+  assert.deepEqual(digest(undated, 'daily', 'en', true), {
+    title: '3 tasks without a date',
+    body: 'Close the TBC card · no date\nClose the CREDO card · no date\nSync the CV · no date',
+    tag: 'todo-digest',
+    url: '/todo',
+    isSilent: true,
+    todo: null,
+    actions: [],
+  })
+})
+
+test('buildTodoDigestMessage puts tasks without a date after the dated ones', () => {
+  const undated = (count: number) => Array.from({ length: count }, (_, index) => todoOn(`undated-${index}`, null))
+
+  assert.equal(
+    digest([todoOn('today', TODAY, 'Water the plants'), ...undated(5)], 'daily', 'ru', true)?.body,
+    'Water the plants\nTask undated-0 · без даты\nTask undated-1 · без даты\nTask undated-2 · без даты\nи ещё 2 без даты',
+  )
+  assert.equal(digest([todoOn('today', TODAY), ...undated(2)], 'daily', 'ru', true)?.title, '1 задача на сегодня')
+  assert.equal(digest(undated(2), 'daily', 'ru', true)?.title, '2 задачи без даты')
+  assert.equal(digest(undated(5), 'daily', 'ru', true)?.title, '5 задач без даты')
+
+  const withQuietOverdue = digest([todoOn('two-days', '2026-10-07'), ...undated(1)], 'fading', 'en', true)
+
+  assert.equal(withQuietOverdue?.title, '1 task without a date')
+  assert.equal(withQuietOverdue?.body, 'Task undated-0 · no date\nand 1 more overdue')
+  assert.equal(withQuietOverdue?.todo, null)
+})
+
+test('buildTodoDigestMessage offers actions for a single task without a date', () => {
+  const message = digest([todoOn('cv', null, 'Sync the CV')], 'fading', 'en', true)
+
+  assert.deepEqual(message?.todo, { id: 'cv', plannedDate: null })
+  assert.deepEqual(message?.actions.map(({ action }) => action), ['complete', 'postpone'])
 })
 
 test('shortenTodoContent keeps the first line and cuts long text without breaking characters', () => {
@@ -174,7 +238,7 @@ test('pushDeviceSchema refuses other hosts, plain http, broken keys and unknown 
 })
 
 test('todoDigestSettingsSchema takes quarter hours and distinct weekdays', () => {
-  const settings = { digestTime: 8 * 60 + 15, weekdays: [1, 2, 3], overdueMode: 'fading' }
+  const settings = { digestTime: 8 * 60 + 15, weekdays: [1, 2, 3], overdueMode: 'fading', undatedMode: 'weekly' }
 
   assert.equal(todoDigestSettingsSchema.safeParse(settings).success, true)
   assert.equal(todoDigestSettingsSchema.safeParse({ ...settings, weekdays: [] }).success, true)
@@ -183,4 +247,6 @@ test('todoDigestSettingsSchema takes quarter hours and distinct weekdays', () =>
   assert.equal(todoDigestSettingsSchema.safeParse({ ...settings, weekdays: [1, 1] }).success, false)
   assert.equal(todoDigestSettingsSchema.safeParse({ ...settings, weekdays: [7] }).success, false)
   assert.equal(todoDigestSettingsSchema.safeParse({ ...settings, overdueMode: 'hourly' }).success, false)
+  assert.equal(todoDigestSettingsSchema.safeParse({ ...settings, undatedMode: 'yearly' }).success, false)
+  assert.equal(todoDigestSettingsSchema.safeParse({ digestTime: 480, weekdays: [1], overdueMode: 'fading' }).success, false)
 })

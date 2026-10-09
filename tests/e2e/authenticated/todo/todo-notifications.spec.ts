@@ -30,6 +30,7 @@ test.describe('Todo notifications', () => {
     await Promise.all([settingsSaved(), page.getByTestId('todo-notifications-time').selectOption('450')])
     await Promise.all([settingsSaved(), page.getByTestId('todo-notifications-weekday-0').uncheck()])
     await Promise.all([settingsSaved(), page.getByTestId('todo-notifications-overdue').selectOption('daily')])
+    await Promise.all([settingsSaved(), page.getByTestId('todo-notifications-undated').selectOption('monthly')])
 
     await page.reload()
     await waitForHydration(page)
@@ -41,6 +42,7 @@ test.describe('Todo notifications', () => {
     await expect(page.getByTestId('todo-notifications-weekday-0')).not.toBeChecked()
     await expect(page.getByTestId('todo-notifications-weekday-1')).toBeChecked()
     await expect(page.getByTestId('todo-notifications-overdue')).toHaveValue('daily')
+    await expect(page.getByTestId('todo-notifications-undated')).toHaveValue('monthly')
 
     const unsubscribed = page.waitForResponse(response => response.url().endsWith('/api/push/unsubscribe'))
     await deviceToggle.click()
@@ -84,6 +86,32 @@ test.describe('Todo notifications', () => {
       todo: { id, plannedDate: today },
     }))
     expect(digest?.actions.map(({ action }) => action)).toEqual(['complete', 'postpone'])
+  })
+
+  test('should remind of tasks without a date when the user asks for it', async ({ page, context, request }) => {
+    const endpoint = createPushEndpoint()
+    await stubPushService(context, endpoint)
+    await page.goto('/todo')
+    await waitForHydration(page)
+    await openTodoNotifications(page)
+    await page.getByTestId('todo-notifications-device-toggle').click()
+    await expect(page.getByTestId('todo-notifications-undated')).toHaveValue('off')
+
+    const createResponse = await request.post('/api/todo', { data: { content: 'Close the TBC card' } })
+    const { id } = await createResponse.json()
+    const today = toLocalIsoDate(new Date())
+    expect(await sendTodoDigestNow(request, today)).toBe(0)
+
+    const settingsSaved = page.waitForResponse(response => response.url().endsWith('/api/push/settings') && response.request().method() === 'PUT')
+    await page.getByTestId('todo-notifications-undated').selectOption('weekly')
+    await settingsSaved
+
+    expect(await sendTodoDigestNow(request, today)).toBe(1)
+    expect(await readRecordedPushes(request, endpoint)).toEqual([expect.objectContaining({
+      title: '1 task without a date',
+      body: 'Close the TBC card · no date',
+      todo: { id, plannedDate: null },
+    })])
   })
 
   test('should move a task from the digest to tomorrow and complete it', async ({ request }) => {

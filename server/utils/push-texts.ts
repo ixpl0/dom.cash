@@ -3,9 +3,9 @@ import type { SupportedLocale } from '~~/shared/utils/shared/locale'
 
 type PluralForms = readonly [string, ...string[]]
 
-type CountedTextKey = 'todayTitle' | 'overdueTitle' | 'daysAgo' | 'moreToday' | 'moreOverdue'
+type CountedTextKey = 'todayTitle' | 'overdueTitle' | 'undatedTitle' | 'daysAgo' | 'moreToday' | 'moreOverdue' | 'moreUndated'
 
-type PlainTextKey = 'complete' | 'postpone' | 'testTitle' | 'testBody'
+type PlainTextKey = 'noDate' | 'complete' | 'postpone' | 'testTitle' | 'testBody'
 
 interface PushTexts {
   counted: Record<CountedTextKey, PluralForms>
@@ -17,11 +17,14 @@ const PUSH_TEXTS: Record<SupportedLocale, PushTexts> = {
     counted: {
       todayTitle: ['{count} task for today', '{count} tasks for today'],
       overdueTitle: ['{count} overdue task', '{count} overdue tasks'],
+      undatedTitle: ['{count} task without a date', '{count} tasks without a date'],
       daysAgo: ['{count} day ago', '{count} days ago'],
       moreToday: ['and {count} more for today'],
       moreOverdue: ['and {count} more overdue'],
+      moreUndated: ['and {count} more without a date'],
     },
     plain: {
+      noDate: 'no date',
       complete: 'Done',
       postpone: 'Tomorrow',
       testTitle: 'Notifications work',
@@ -32,11 +35,14 @@ const PUSH_TEXTS: Record<SupportedLocale, PushTexts> = {
     counted: {
       todayTitle: ['{count} задача на сегодня', '{count} задачи на сегодня', '{count} задач на сегодня'],
       overdueTitle: ['{count} просроченная задача', '{count} просроченные задачи', '{count} просроченных задач'],
+      undatedTitle: ['{count} задача без даты', '{count} задачи без даты', '{count} задач без даты'],
       daysAgo: ['{count} день назад', '{count} дня назад', '{count} дней назад'],
       moreToday: ['и ещё {count} на сегодня'],
       moreOverdue: ['и ещё {count} просроченная', 'и ещё {count} просроченные', 'и ещё {count} просроченных'],
+      moreUndated: ['и ещё {count} без даты'],
     },
     plain: {
+      noDate: 'без даты',
       complete: 'Готово',
       postpone: 'Завтра',
       testTitle: 'Уведомления работают',

@@ -4,7 +4,7 @@ import type { DocField } from '~~/shared/types/docs'
 import type { RecurrencePattern } from '~~/shared/types/recurrence'
 import { ACCESS_LEVELS, ENTRY_KINDS } from '~~/shared/schemas/common'
 import type { McpScope } from '~~/shared/schemas/mcp'
-import { TODO_DIGEST_OVERDUE_MODES } from '~~/shared/schemas/push'
+import { TODO_DIGEST_OVERDUE_MODES, TODO_DIGEST_UNDATED_MODES } from '~~/shared/schemas/push'
 import { SUPPORTED_LOCALES } from '~~/shared/utils/shared/locale'
 
 type Rates = Record<string, number>
@@ -314,11 +314,14 @@ export const todoDigestSettings = sqliteTable(
     timeZone: text('time_zone').notNull(),
     locale: text('locale', { enum: SUPPORTED_LOCALES }).notNull(),
     lastSentDate: text('last_sent_date'),
+    undatedMode: text('undated_mode', { enum: TODO_DIGEST_UNDATED_MODES }).notNull(),
+    lastUndatedDate: text('last_undated_date'),
   },
   t => [
     check('ck_todo_digest_time', sql`${t.digestTime} BETWEEN 0 AND 1439`),
     check('ck_todo_digest_weekdays_is_array', sql`${t.weekdays} GLOB '[[]*]'`),
     check('ck_todo_digest_overdue_mode', sql`${t.overdueMode} IN ('fading', 'daily', 'off')`),
+    check('ck_todo_digest_undated_mode', sql`${t.undatedMode} IN ('off', 'weekly', 'monthly')`),
   ],
 )
 

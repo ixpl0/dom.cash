@@ -5,6 +5,8 @@ import { isValidTimeZone } from '~~/shared/utils/shared/time-zones'
 
 export const TODO_DIGEST_OVERDUE_MODES = ['fading', 'daily', 'off'] as const
 
+export const TODO_DIGEST_UNDATED_MODES = ['off', 'weekly', 'monthly'] as const
+
 export const TODO_DIGEST_TAG = 'todo-digest'
 
 export const TODO_DIGEST_TIME_STEP_MINUTES = 15
@@ -52,10 +54,12 @@ export const todoDigestSettingsSchema = z.object({
     .max(ALL_WEEKDAYS.length)
     .refine(weekdays => new Set(weekdays).size === weekdays.length),
   overdueMode: z.enum(TODO_DIGEST_OVERDUE_MODES),
+  undatedMode: z.enum(TODO_DIGEST_UNDATED_MODES),
 })
 
 export const DEFAULT_TODO_DIGEST_SETTINGS: z.infer<typeof todoDigestSettingsSchema> = {
   digestTime: 8 * 60,
   weekdays: [...ALL_WEEKDAYS],
   overdueMode: 'fading',
+  undatedMode: 'off',
 }

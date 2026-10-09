@@ -52,7 +52,7 @@ export const getPushSender = (now: Date): PushSender | null => {
   return isTestMode() ? recordTestPush : null
 }
 
-const toSettings = ({ digestTime, weekdays, overdueMode }: TodoDigestSettingsRow): TodoDigestSettings => ({ digestTime, weekdays, overdueMode })
+const toSettings = ({ digestTime, weekdays, overdueMode, undatedMode }: TodoDigestSettingsRow): TodoDigestSettings => ({ digestTime, weekdays, overdueMode, undatedMode })
 
 const createSettingsRow = (userId: string, overrides: Partial<TodoDigestSettingsRow>): TodoDigestSettingsRow => ({
   userId,
@@ -60,6 +60,7 @@ const createSettingsRow = (userId: string, overrides: Partial<TodoDigestSettings
   timeZone: DEFAULT_TIME_ZONE,
   locale: DEFAULT_LOCALE,
   lastSentDate: null,
+  lastUndatedDate: null,
   ...overrides,
 })
 

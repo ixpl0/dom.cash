@@ -129,6 +129,30 @@
           </span>
         </label>
 
+        <label class="flex flex-col gap-1">
+          <span class="label-text">{{ t('todo.notifications.undated') }}</span>
+          <select
+            class="select select-bordered w-full"
+            :value="settings.undatedMode"
+            data-testid="todo-notifications-undated"
+            @change="changeUndatedMode"
+          >
+            <option
+              v-for="mode in TODO_DIGEST_UNDATED_MODES"
+              :key="mode"
+              :value="mode"
+            >
+              {{ t(`todo.notifications.undatedModes.${mode}`) }}
+            </option>
+          </select>
+          <span
+            class="text-xs text-base-content/60"
+            data-testid="todo-notifications-undated-hint"
+          >
+            {{ t(`todo.notifications.undatedHints.${settings.undatedMode}`) }}
+          </span>
+        </label>
+
         <button
           type="button"
           class="btn btn-outline btn-sm self-start"
@@ -169,8 +193,8 @@
 </template>
 
 <script setup lang="ts">
-import { MINUTES_PER_DAY, TODO_DIGEST_OVERDUE_MODES, TODO_DIGEST_TIME_STEP_MINUTES } from '~~/shared/schemas/push'
-import type { TodoDigestOverdueMode, TodoDigestSettings } from '~~/shared/types/push'
+import { MINUTES_PER_DAY, TODO_DIGEST_OVERDUE_MODES, TODO_DIGEST_TIME_STEP_MINUTES, TODO_DIGEST_UNDATED_MODES } from '~~/shared/schemas/push'
+import type { TodoDigestOverdueMode, TodoDigestSettings, TodoDigestUndatedMode } from '~~/shared/types/push'
 import { toSupportedLocale } from '~~/shared/utils/shared/locale'
 import { appendErrorReason } from '~/utils/server-error'
 import { WEEKDAYS } from '~/utils/weekdays'
@@ -201,6 +225,9 @@ const timeOptions = computed(() =>
 
 const isOverdueMode = (value: string): value is TodoDigestOverdueMode =>
   TODO_DIGEST_OVERDUE_MODES.some(mode => mode === value)
+
+const isUndatedMode = (value: string): value is TodoDigestUndatedMode =>
+  TODO_DIGEST_UNDATED_MODES.some(mode => mode === value)
 
 const close = (): void => {
   todoModalsStore.closeNotificationsModal()
@@ -256,6 +283,14 @@ const changeOverdueMode = (event: Event): void => {
 
   if (isOverdueMode(overdueMode)) {
     saveSettings({ overdueMode })
+  }
+}
+
+const changeUndatedMode = (event: Event): void => {
+  const undatedMode = readSelectValue(event)
+
+  if (isUndatedMode(undatedMode)) {
+    saveSettings({ undatedMode })
   }
 }
 

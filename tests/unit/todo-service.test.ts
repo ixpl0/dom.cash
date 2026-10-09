@@ -265,6 +265,18 @@ test('moveTodo moves a recurring task once when two taps arrive together', async
   assert.equal(readTodo(database, created.id)?.plannedDate, '2026-10-10T00:00')
 })
 
+test('moveTodo gives a date to a task without one only once', async () => {
+  const database = await createDatabaseWithFriends()
+  const created = await createTodo(owner, { content: 'Sync the CV' }, database.event)
+
+  const moved = await moveTodo(owner, created.id, { plannedDate: null, newPlannedDate: '2026-10-11' }, database.event)
+  const repeated = await moveTodo(owner, created.id, { plannedDate: null, newPlannedDate: '2026-10-12' }, database.event)
+
+  assert.equal(moved.plannedDate, '2026-10-11T00:00')
+  assert.equal(repeated.plannedDate, '2026-10-11T00:00')
+  assert.equal(readTodo(database, created.id)?.plannedDate, '2026-10-11T00:00')
+})
+
 test('moveTodo refuses a user who cannot see the task', async () => {
   const database = await createDatabaseWithFriends()
   const created = await createTodo(owner, { content: 'Secret', plannedDate: '2026-10-09T00:00' }, database.event)
