@@ -6,9 +6,6 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
-[triggers]
-crons = ["*/15 * * * *"]
-
 [vars]
 NUXT_PUBLIC_ENVIRONMENT = "test"
 
