@@ -1,24 +1,12 @@
 import assert from 'node:assert/strict'
 import { test, type TestContext } from 'node:test'
-import { eq } from 'drizzle-orm'
 import { useDatabase } from '../../server/db'
 import { budgetShare, currency, docDocument, docFolder, docFolderShare, entry, month, plan, todo, todoShare, user } from '../../server/db/schema'
 import { handleMcpMessage, type McpReply } from '../../server/services/mcp/protocol'
-import {
-  createMcpToken,
-  deleteMcpToken,
-  findMcpCaller,
-  LAST_USED_REFRESH_MS,
-  listMcpTokens,
-  MCP_TOKEN_PREFIX,
-  readBearerToken,
-} from '../../server/services/mcp/tokens'
 import { describeRecurrence } from '../../server/services/mcp/todo-tools'
 import type { McpContext } from '../../server/services/mcp/tool-definition'
-import { hashToken } from '../../server/utils/crypto'
-import { MCP_MAX_TOKENS, MCP_SCOPES, type McpScope } from '../../shared/schemas/mcp'
+import { MCP_SCOPES, type McpScope } from '../../shared/schemas/mcp'
 import type { User } from '../../shared/types'
-import { ERROR_KEYS } from '../../shared/utils/shared/error-keys'
 import { createTestDatabase, type TestDatabase } from './helpers/test-database'
 
 interface ToolCallResult {
@@ -29,7 +17,7 @@ interface ToolCallResult {
 interface ListedTool {
   name: string
   inputSchema: Record<string, unknown>
-  annotations: { readOnlyHint: boolean }
+  annotations: { readOnlyHint: boolean, destructiveHint: boolean }
 }
 
 const NOW = new Date('2026-08-15T12:00:00Z')
@@ -83,98 +71,6 @@ const readToolData = async (database: TestDatabase, viewer: User, name: string, 
   assert.equal(isError, false, text)
   return JSON.parse(text)
 }
-
-const readStoredToken = (database: TestDatabase, tokenId: string) =>
-  database.sqlite.prepare('SELECT token_hash AS tokenHash, last_used_at AS lastUsedAt, scopes FROM mcp_token WHERE id = ?').get(tokenId)
-
-test('readBearerToken takes the token from a Bearer authorization header only', () => {
-  assert.equal(readBearerToken('Bearer dcmcp_abc'), 'dcmcp_abc')
-  assert.equal(readBearerToken('  bearer   dcmcp_abc  '), 'dcmcp_abc')
-  assert.equal(readBearerToken('Basic dcmcp_abc'), null)
-  assert.equal(readBearerToken('Bearer'), null)
-  assert.equal(readBearerToken(undefined), null)
-})
-
-test('createMcpToken returns the secret once and stores only its hash with the scopes in a fixed order', async () => {
-  const database = await createDatabaseWithUsers()
-
-  const { token, secret } = await createMcpToken(owner.id, { name: 'Laptop', scopes: ['docs', 'budget', 'docs'] }, NOW, database.event)
-
-  assert.ok(secret.startsWith(MCP_TOKEN_PREFIX))
-  assert.deepEqual(token, { id: token.id, name: 'Laptop', scopes: ['budget', 'docs'], createdAt: NOW.toISOString(), lastUsedAt: null })
-  assert.deepEqual(await listMcpTokens(owner.id, database.event), [token])
-  assert.deepEqual(await listMcpTokens(friend.id, database.event), [])
-
-  const stored = readStoredToken(database, token.id)
-  assert.equal(stored?.tokenHash, hashToken(secret))
-  assert.equal(stored?.scopes, '["budget","docs"]')
-  assert.ok(!JSON.stringify(database.sqlite.prepare('SELECT * FROM mcp_token').all()).includes(secret))
-})
-
-test('createMcpToken refuses a token over the limit and writes nothing', async () => {
-  const database = await createDatabaseWithUsers()
-  await Promise.all(Array.from({ length: MCP_MAX_TOKENS }, (_, index) =>
-    createMcpToken(owner.id, { name: `Token ${index}`, scopes: ['todo'] }, NOW, database.event)))
-
-  await assert.rejects(createMcpToken(owner.id, { name: 'One more', scopes: ['todo'] }, NOW, database.event), {
-    statusCode: 409,
-    message: ERROR_KEYS.MCP_TOO_MANY_TOKENS,
-  })
-  assert.equal((await listMcpTokens(owner.id, database.event)).length, MCP_MAX_TOKENS)
-  assert.equal((await createMcpToken(friend.id, { name: 'Friend', scopes: ['todo'] }, NOW, database.event)).token.name, 'Friend')
-})
-
-test('findMcpCaller finds the owner of a token and records its use at most once an hour', async () => {
-  const database = await createDatabaseWithUsers()
-  const { token, secret } = await createMcpToken(owner.id, { name: 'Laptop', scopes: ['budget', 'todo'] }, NOW, database.event)
-  const firstUse = new Date(NOW.getTime() + 1000)
-
-  assert.deepEqual(await findMcpCaller(secret, firstUse, database.event), { tokenId: token.id, user: owner, scopes: ['budget', 'todo'] })
-  assert.equal(readStoredToken(database, token.id)?.lastUsedAt, firstUse.getTime())
-
-  await findMcpCaller(secret, new Date(firstUse.getTime() + LAST_USED_REFRESH_MS - 1), database.event)
-  assert.equal(readStoredToken(database, token.id)?.lastUsedAt, firstUse.getTime())
-
-  const laterUse = new Date(firstUse.getTime() + LAST_USED_REFRESH_MS)
-  await findMcpCaller(secret, laterUse, database.event)
-  assert.equal(readStoredToken(database, token.id)?.lastUsedAt, laterUse.getTime())
-  assert.equal((await listMcpTokens(owner.id, database.event))[0]?.lastUsedAt, laterUse.toISOString())
-})
-
-test('findMcpCaller ignores unknown secrets and skips the database for a foreign format', async () => {
-  const database = await createDatabaseWithUsers()
-  await createMcpToken(owner.id, { name: 'Laptop', scopes: ['budget'] }, NOW, database.event)
-  const requestCount = database.getRequestCount()
-
-  assert.equal(await findMcpCaller('session-token', NOW, database.event), null)
-  assert.equal(database.getRequestCount(), requestCount)
-  assert.equal(await findMcpCaller(`${MCP_TOKEN_PREFIX}unknown`, NOW, database.event), null)
-})
-
-test('deleteMcpToken revokes only a token of the user', async () => {
-  const database = await createDatabaseWithUsers()
-  const { token, secret } = await createMcpToken(owner.id, { name: 'Laptop', scopes: ['budget'] }, NOW, database.event)
-
-  await assert.rejects(deleteMcpToken(friend.id, token.id, database.event), {
-    statusCode: 404,
-    message: ERROR_KEYS.MCP_TOKEN_NOT_FOUND,
-  })
-  assert.notEqual(await findMcpCaller(secret, NOW, database.event), null)
-
-  await deleteMcpToken(owner.id, token.id, database.event)
-  assert.equal(await findMcpCaller(secret, NOW, database.event), null)
-  assert.deepEqual(await listMcpTokens(owner.id, database.event), [])
-})
-
-test('deleting a user deletes the tokens', async () => {
-  const database = await createDatabaseWithUsers()
-  const { secret } = await createMcpToken(owner.id, { name: 'Laptop', scopes: ['budget'] }, NOW, database.event)
-
-  await useDatabase(database.event).delete(user).where(eq(user.id, owner.id))
-
-  assert.equal(database.sqlite.prepare('SELECT count(*) AS total FROM mcp_token').get()?.total, 0)
-  assert.equal(await findMcpCaller(secret, NOW, database.event), null)
-})
 
 test('initialize answers with a supported requested version and describes the token scopes', async () => {
   const database = await createDatabaseWithUsers()
@@ -238,7 +134,7 @@ test('tools/list shows only the read-only tools of the token scopes', async () =
   allTools.forEach(({ name, inputSchema, annotations }) => {
     assert.equal(inputSchema.type, 'object', name)
     assert.equal('$schema' in inputSchema, false, name)
-    assert.equal(annotations.readOnlyHint, true, name)
+    assert.deepEqual(annotations, { readOnlyHint: true, destructiveHint: false }, name)
   })
 })
 

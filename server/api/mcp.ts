@@ -1,7 +1,7 @@
 import { createError, readBody, sendNoContent, setResponseHeader, setResponseStatus } from 'h3'
 import { recordUserActivity } from '~~/server/services/auth/users'
 import { handleMcpMessage } from '~~/server/services/mcp/protocol'
-import { requireMcpCaller } from '~~/server/services/mcp/tokens'
+import { requireMcpCaller } from '~~/server/services/mcp/oauth-tokens'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
 export default defineEventHandler(async (event) => {

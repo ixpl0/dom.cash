@@ -50,24 +50,80 @@ export const session = sqliteTable(
 export type Session = typeof session.$inferSelect
 export type NewSession = typeof session.$inferInsert
 
-export const mcpToken = sqliteTable(
-  'mcp_token',
+export const OAUTH_TOKEN_KINDS = ['access', 'refresh'] as const
+
+export const oauthClient = sqliteTable(
+  'oauth_client',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    redirectUris: text('redirect_uris', { mode: 'json' }).$type<string[]>().notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    check('ck_oauth_client_redirect_uris_is_array', sql`${t.redirectUris} GLOB '[[]*]'`),
+  ],
+)
+
+export type OAuthClientRow = typeof oauthClient.$inferSelect
+
+export const oauthAuthorizationCode = sqliteTable(
+  'oauth_authorization_code',
+  {
+    codeHash: text('code_hash').primaryKey(),
+    clientId: text('client_id').notNull().references(() => oauthClient.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    redirectUri: text('redirect_uri').notNull(),
+    codeChallenge: text('code_challenge').notNull(),
+    scopes: text('scopes', { mode: 'json' }).$type<McpScope[]>().notNull(),
+    resource: text('resource'),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    index('idx_oauth_authorization_code_expires').on(t.expiresAt),
+    check('ck_oauth_authorization_code_scopes_is_array', sql`${t.scopes} GLOB '[[]*]'`),
+  ],
+)
+
+export type OAuthAuthorizationCodeRow = typeof oauthAuthorizationCode.$inferSelect
+
+export const oauthGrant = sqliteTable(
+  'oauth_grant',
   {
     id: text('id').primaryKey(),
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
-    tokenHash: text('token_hash').notNull().unique(),
+    clientId: text('client_id').notNull().references(() => oauthClient.id, { onDelete: 'cascade' }),
     scopes: text('scopes', { mode: 'json' }).$type<McpScope[]>().notNull(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
   },
   t => [
-    index('idx_mcp_token_user').on(t.userId),
-    check('ck_mcp_token_scopes_is_array', sql`${t.scopes} GLOB '[[]*]'`),
+    index('idx_oauth_grant_user').on(t.userId),
+    index('idx_oauth_grant_client').on(t.clientId),
+    check('ck_oauth_grant_scopes_is_array', sql`${t.scopes} GLOB '[[]*]'`),
   ],
 )
 
-export type McpTokenRow = typeof mcpToken.$inferSelect
+export type OAuthGrantRow = typeof oauthGrant.$inferSelect
+
+export const oauthToken = sqliteTable(
+  'oauth_token',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    grantId: text('grant_id').notNull().references(() => oauthGrant.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: OAUTH_TOKEN_KINDS }).notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    index('idx_oauth_token_grant').on(t.grantId),
+    index('idx_oauth_token_expires').on(t.expiresAt),
+    check('ck_oauth_token_kind', sql`${t.kind} IN ('access', 'refresh')`),
+  ],
+)
+
+export type OAuthTokenRow = typeof oauthToken.$inferSelect
 
 export const currency = sqliteTable(
   'currency',

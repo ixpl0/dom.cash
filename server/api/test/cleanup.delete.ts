@@ -1,6 +1,6 @@
 import { inArray, or, sql } from 'drizzle-orm'
 import { useDatabase } from '~~/server/db'
-import { appSettings, budgetShare, docFolder, docFolderShare, emailVerificationCode, entry, mcpToken, month, plan, pushSubscription, session, todo, todoDigestSettings, todoShare, user } from '~~/server/db/schema'
+import { appSettings, budgetShare, docFolder, docFolderShare, emailVerificationCode, entry, month, oauthAuthorizationCode, oauthGrant, plan, pushSubscription, session, todo, todoDigestSettings, todoShare, user } from '~~/server/db/schema'
 import { deleteFolderFiles } from '~~/server/services/docs/folders'
 import { secureLog } from '~~/server/utils/secure-logger'
 import { isTestMode } from '~~/server/utils/test-mode'
@@ -38,7 +38,8 @@ export default defineEventHandler(async (event) => {
       db.delete(pushSubscription).where(inArray(pushSubscription.userId, testUserIds)),
       db.delete(todoDigestSettings).where(inArray(todoDigestSettings.userId, testUserIds)),
       db.delete(session).where(inArray(session.userId, testUserIds)),
-      db.delete(mcpToken).where(inArray(mcpToken.userId, testUserIds)),
+      db.delete(oauthGrant).where(inArray(oauthGrant.userId, testUserIds)),
+      db.delete(oauthAuthorizationCode).where(inArray(oauthAuthorizationCode.userId, testUserIds)),
       db.delete(emailVerificationCode).where(sql`${emailVerificationCode.email} GLOB ${TEST_EMAIL_PATTERN}`),
       db.delete(user).where(isTestUser),
       db.delete(appSettings),

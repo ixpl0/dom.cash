@@ -1,9 +1,11 @@
 import { createError, defineEventHandler } from 'h3'
-import { isCrossOriginRequest, isWriteRequest } from '~~/server/utils/request'
+import { getRoutePath, isCrossOriginRequest, isWriteRequest } from '~~/server/utils/request'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 
+const COOKIELESS_ROUTES: readonly string[] = ['/api/mcp', '/oauth/register', '/oauth/token']
+
 export default defineEventHandler((event) => {
-  if (!isWriteRequest(event) || !isCrossOriginRequest(event)) {
+  if (!isWriteRequest(event) || COOKIELESS_ROUTES.includes(getRoutePath(event)) || !isCrossOriginRequest(event)) {
     return
   }
 

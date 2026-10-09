@@ -96,7 +96,7 @@ const describeTool = ({ name, title, description, inputSchema }: McpTool) => ({
   title,
   description,
   inputSchema,
-  annotations: { readOnlyHint: true },
+  annotations: { readOnlyHint: true, destructiveHint: false },
 })
 
 const callTool = async (id: RequestId, params: McpRequest['params'], context: McpContext): Promise<JsonRpcResponse> => {

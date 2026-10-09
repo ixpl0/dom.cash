@@ -52,6 +52,16 @@ test('a write request from another site is refused on every path and method', as
   await assert.rejects(routeThrough(originGuard, createRequestEvent('PUT', '/budget', headers)), crossOriginError)
 })
 
+test('a write request from another site reaches the routes that take no cookies', async () => {
+  const headers = { 'host': HOST, 'sec-fetch-site': 'cross-site', 'origin': 'https://claude.ai' }
+
+  assert.equal(await routeThrough(originGuard, createRequestEvent('POST', '/api/mcp', headers)), '/api/mcp')
+  assert.equal(await routeThrough(originGuard, createRequestEvent('POST', '/oauth/token', headers)), '/oauth/token')
+  assert.equal(await routeThrough(originGuard, createRequestEvent('POST', '/oauth/register', headers)), '/oauth/register')
+  await assert.rejects(routeThrough(originGuard, createRequestEvent('POST', '/api/mcp/other', headers)), crossOriginError)
+  await assert.rejects(routeThrough(originGuard, createRequestEvent('POST', '/api/oauth/authorization', headers)), crossOriginError)
+})
+
 test('a page opened from another site is still served', async () => {
   const event = createRequestEvent('GET', '/budget', { 'host': HOST, 'sec-fetch-site': 'cross-site' })
 

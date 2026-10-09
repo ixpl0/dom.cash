@@ -37,7 +37,7 @@
   * A `DELETE` request carries no body on Workers: Nitro passes the body only for POST, PUT and PATCH (`requestHasBody`), while `nuxt dev` passes it for every method. Send the data of a removal in the path, the query or a POST (`/api/push/unsubscribe`).
   * Pass query parameters through the `query` option so they are encoded, and wrap a value that goes into the path (a username, an id) in `encodeURIComponent`.
 * **Request guards** (`server/middleware/`): they run before every route.
-  * `origin-guard` refuses a write request (any method except GET, HEAD and OPTIONS) that a browser sends from another origin: other sites live on sibling subdomains, so `SameSite` cookies do not stop them. It trusts `Sec-Fetch-Site` (`same-origin` or `none`), falls back to comparing `Origin` with `Host`, and lets through clients that send neither header.
+  * `origin-guard` refuses a write request (any method except GET, HEAD and OPTIONS) that a browser sends from another origin: other sites live on sibling subdomains, so `SameSite` cookies do not stop them. It trusts `Sec-Fetch-Site` (`same-origin` or `none`), falls back to comparing `Origin` with `Host`, and lets through clients that send neither header. The cookieless MCP and OAuth routes (`COOKIELESS_ROUTES`) are skipped.
   * `content-validation` accepts only an `application/json` body on `/api/` routes; a route that takes another body is listed in `UPLOAD_ROUTES`.
   * `impersonation-guard` refuses writes while an admin views the site as a user, except the routes in `ALLOWED_WRITES` and the notification subscriptions.
   * Match routes with `getRoutePath(event)` (`server/utils/request.ts`): it is the decoded path the router uses. `event.node.req.url` is the raw path, so `/%61pi/…` would slip past a check made on it.
@@ -91,7 +91,7 @@
 ## Project Structure
 
 * `app/` — Nuxt application
-  * `pages/` — Pages: index (landing), auth, budget, metrics, todo, docs
+  * `pages/` — Pages: index (landing), auth, budget, metrics, todo, docs, oauth/authorize (the consent page for Claude)
   * `components/` — Vue components organized by feature (budget/, todo/, docs/, ui/, etc.)
   * `composables/` — Composables organized by feature (auth/, budget/, docs/, shared/)
   * `layouts/` — Nuxt layouts (default.vue)
@@ -103,6 +103,7 @@
 * `server/` — Nitro server
   * `api/` — API routes (auth/, budget/, todo/, docs/, notifications/, user/, admin/, test/ — the test routes exist only in development; `mcp.ts` is the MCP endpoint)
   * `db/` — Database schema (`schema.ts`) and index
+  * `routes/` — Routes outside `/api/`: the OAuth metadata in `.well-known/` and `/oauth/register`, `/oauth/token`
   * `services/` — Business logic services (auth/, budget/, docs/, mcp/, connections, notifications, push, todo, todo-digest)
   * `middleware/` — Server middleware (content-validation, impersonation-guard, origin-guard)
   * `types/` — Server-specific type definitions (Cloudflare D1)
@@ -154,11 +155,17 @@
   * Limits are in `shared/schemas/docs.ts`. Recognition has no rate limit yet (decision of 28 September 2026, see `FOLLOWUPS.md`).
 * **Claude access (MCP)**: a read-only MCP server at `/api/mcp` (`server/api/mcp.ts`, `server/services/mcp/`), so Claude can answer questions about the user's budget, tasks and documents.
   * Streamable HTTP without sessions or SSE: one JSON-RPC message per POST, answered with JSON by `handleMcpMessage` (`protocol.ts`); notifications get 202, GET answers 405, no dependency on the MCP SDK.
-  * The client sends a personal token (`Authorization: Bearer dcmcp_…`); the session cookie is not accepted. The user creates tokens in the header menu (`McpTokensModal`), the secret is shown once, `mcp_token` keeps its SHA-256 hash (`hashToken`, `server/utils/crypto.ts`), the scopes (`budget`, `todo`, `docs`, `MCP_SCOPES`) and the last use, written at most once an hour. Up to `MCP_MAX_TOKENS` per user; revoking deletes the row.
-  * Tools (`budget-tools.ts`, `todo-tools.ts`, `docs-tools.ts`) call the same services and access checks as the API, and `tools/list` shows only the tools of the token scopes. Define a tool with `defineMcpTool`: its zod input becomes the JSON Schema; wrong arguments and service errors return a tool result with `isError`, which the model reads, not a JSON-RPC error.
+  * Claude connects as a custom connector (Customize → Connectors → Add custom connector with the URL `https://<host>/api/mcp`, which the header modal `McpConnectionsModal` shows), so one connection serves the chats, Claude Code and the phone. dom.cash is its own OAuth 2.1 authorization server, built to Claude's requirements (https://claude.com/docs/connectors/building/authentication):
+    * `/api/mcp` answers a request without a valid token with 401 and `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/api/mcp"`; the session cookie is never accepted there. The protected resource metadata (RFC 9728, `resource` equals the MCP URL exactly) and the authorization server metadata (RFC 8414) live in `server/routes/.well-known/` and are built by `oauth-metadata.ts` from the request origin, so every environment describes itself.
+    * Claude registers itself through Dynamic Client Registration (`POST /oauth/register`, `oauth-clients.ts`): only the redirect URI `https://claude.ai/api/mcp/auth_callback` is accepted, so a registered client can send codes nowhere else. The metadata does not advertise Client ID Metadata Documents, so Claude uses DCR; Claude Code's own loopback flow (`claude mcp add`) is not supported. Clients that stay unconnected for a day are deleted at the next registration.
+    * `/oauth/authorize` is a page (`app/pages/oauth/authorize.vue`): a signed-out user goes through `/auth?redirect=…` and comes back, then picks the sections (`MCP_SCOPES`) and allows or denies. `POST /api/oauth/authorization` (session, origin and impersonation guards as usual) checks the client, the redirect URI and the `resource` again and returns the address to send the browser to, with a single-use code (10 minutes, stored hashed with the PKCE S256 challenge) or `error=access_denied`.
+    * `POST /oauth/token` (form-urlencoded, `oauth-tokens.ts`) exchanges a code after checking the client, the redirect URI and the PKCE verifier, creates an `oauth_grant` (the connection the modal lists) and issues an access token (`dcat_…`, one hour) and a refresh token (`dcrt_…`, 90 days). A refresh token works once: the response that consumes it carries the next one, an older access token lives until it expires. Errors follow RFC 6749 (`invalid_grant`, `invalid_request`, `unsupported_grant_type`, `invalid_target`), not `ERROR_KEYS`.
+    * Every token is stored as its SHA-256 hash (`hashToken`, `server/utils/crypto.ts`). The grant keeps the granted scopes and the last use, written at most once an hour. Disconnecting in the modal deletes the grant with its tokens.
+    * `origin-guard` skips `/api/mcp`, `/oauth/register` and `/oauth/token`: they read no cookies, so a cross-site request gains nothing, and Claude's servers may send an `Origin`.
+  * Tools (`budget-tools.ts`, `todo-tools.ts`, `docs-tools.ts`) call the same services and access checks as the API, and `tools/list` shows only the tools of the granted scopes, each with `readOnlyHint: true` and `destructiveHint: false`. Define a tool with `defineMcpTool`: its zod input becomes the JSON Schema; wrong arguments and service errors return a tool result with `isError`, which the model reads, not a JSON-RPC error.
   * Months in tool arguments and answers are calendar `YYYY-MM` (September is `09`), unlike `createMonthKey`. Totals come from `computeMonthData` and `computeExpectedBalances` like in the budget store, rounded to the currency precision; a reader of a shared budget gets no plans, as in the interface.
   * Every field of an answer costs the model context: leave out empty values and ids the model cannot use.
-  * Claude Code connects with the command the modal shows: `claude mcp add --transport http --scope user dom-cash https://<host>/api/mcp --header "Authorization: Bearer <token>"`. claude.ai and the mobile app need OAuth, which is not done yet (see `FOLLOWUPS.md`).
+  * The table `mcp_token` of the first version (personal tokens) is no longer read; dropping it waits for a decision (see `FOLLOWUPS.md`).
 * **Metrics**: Analytics dashboard with charts
 * **Auth**: Email/password and Google OAuth, sliding sessions (90 days, refresh every 24h)
   * The email is the username. New emails are stored in lowercase; older accounts may keep mixed case, so look users up with `findUser` (`server/utils/auth.ts`), which ignores case.

@@ -339,7 +339,7 @@
     </button>
   </div>
 
-  <McpTokensModal
+  <McpConnectionsModal
     v-if="isAuthenticated"
     :is-open="isMcpModalOpen"
     @close="isMcpModalOpen = false"

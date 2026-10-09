@@ -1,21 +1,28 @@
 import type { z } from 'zod'
-import type { createMcpTokenSchema, McpScope } from '~~/shared/schemas/mcp'
+import type { McpScope, oauthAuthorizationRequestSchema, oauthDecisionSchema } from '~~/shared/schemas/mcp'
 
-export interface McpTokenSummary {
+export interface McpConnection {
   id: string
-  name: string
+  clientName: string
   scopes: McpScope[]
   createdAt: string
   lastUsedAt: string | null
 }
 
-export interface CreatedMcpToken {
-  token: McpTokenSummary
-  secret: string
+export interface McpConnectionsData {
+  connections: McpConnection[]
 }
 
-export interface McpTokensData {
-  tokens: McpTokenSummary[]
+export interface OAuthAuthorizationDetails {
+  clientName: string
+  redirectHost: string
+  scopes: McpScope[]
 }
 
-export type CreateMcpTokenPayload = z.infer<typeof createMcpTokenSchema>
+export interface OAuthDecisionResult {
+  redirectUrl: string
+}
+
+export type OAuthAuthorizationRequest = z.infer<typeof oauthAuthorizationRequestSchema>
+
+export type OAuthDecisionPayload = z.infer<typeof oauthDecisionSchema>
