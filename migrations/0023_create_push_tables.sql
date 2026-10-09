@@ -15,7 +15,7 @@ CREATE INDEX idx_push_subscription_session ON push_subscription(session_id);
 
 CREATE TABLE todo_digest_settings (
   user_id TEXT PRIMARY KEY NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  digest_time INTEGER NOT NULL DEFAULT 540,
+  digest_time INTEGER NOT NULL DEFAULT 480,
   weekdays TEXT NOT NULL DEFAULT '[0,1,2,3,4,5,6]',
   overdue_mode TEXT NOT NULL DEFAULT 'fading',
   time_zone TEXT NOT NULL DEFAULT 'UTC',

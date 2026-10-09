@@ -21,13 +21,12 @@ interface DueDigest {
 }
 
 const MAX_DIGESTS_PER_RUN = 10
-const DIGEST_TTL_SECONDS = 12 * 60 * 60
 
-const getDigestPushOptions = (isSilent: boolean): PushOptions => ({
-  ttlSeconds: DIGEST_TTL_SECONDS,
-  urgency: isSilent ? 'normal' : 'high',
+const DIGEST_PUSH_OPTIONS: PushOptions = {
+  ttlSeconds: 12 * 60 * 60,
+  urgency: 'normal',
   topic: TODO_DIGEST_TAG,
-})
+}
 
 const readZonedTime = (now: Date, timeZone: string): ZonedTime | null => {
   try {
@@ -70,7 +69,7 @@ export const deliverTodoDigest = async (
     .from(pushSubscription)
     .where(eq(pushSubscription.userId, settings.userId))
 
-  return deliverPushMessage(subscriptions, message, getDigestPushOptions(message.isSilent), send)
+  return deliverPushMessage(subscriptions, message, DIGEST_PUSH_OPTIONS, send)
 }
 
 const findDueDigests = async (database: Database, now: Date): Promise<DueDigest[]> => {

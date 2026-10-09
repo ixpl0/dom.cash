@@ -838,7 +838,7 @@ export default {
     notifications: {
       open: 'Reminders',
       title: 'Task reminders',
-      description: 'Once a day you get a digest of the tasks for today and the overdue ones. No tasks, no notification.',
+      description: 'Once a day a silent digest of the tasks for today and the overdue ones waits in the notification shade. No tasks, no notification.',
       device: 'Notifications on this device',
       unsupported: 'This browser cannot receive notifications. On Android, open the site in Chrome.',
       notConfigured: 'Notifications are not set up on the server yet.',

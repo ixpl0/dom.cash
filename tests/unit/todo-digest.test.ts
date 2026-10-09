@@ -61,7 +61,7 @@ test('shouldRemindOverdue fades to weekly reminders', () => {
   assert.equal(shouldRemindOverdue(1, 'off'), false)
 })
 
-test('buildTodoDigestMessage lists the tasks for today and stays loud', () => {
+test('buildTodoDigestMessage lists the tasks for today in a silent notification', () => {
   const message = buildTodoDigestMessage([todoOn('a', TODAY, 'Pay for the internet'), todoOn('b', TODAY, 'Pick up the parcel')], TODAY, 'fading', 'en')
 
   assert.deepEqual(message, {
@@ -69,7 +69,7 @@ test('buildTodoDigestMessage lists the tasks for today and stays loud', () => {
     body: 'Pay for the internet\nPick up the parcel',
     tag: 'todo-digest',
     url: '/todo',
-    isSilent: false,
+    isSilent: true,
     todo: null,
     actions: [],
   })
@@ -110,7 +110,6 @@ test('buildTodoDigestMessage counts overdue tasks it does not name', () => {
 
   assert.equal(message?.title, '1 задача на сегодня')
   assert.equal(message?.body, 'Water the plants\nCall grandma · 1 день назад\nи ещё 2 просроченные')
-  assert.equal(message?.isSilent, false)
   assert.equal(message?.todo, null)
   assert.deepEqual(message?.actions, [])
   assert.equal(buildTodoDigestMessage(todos, TODAY, 'off', 'ru')?.body, 'Water the plants')
@@ -149,6 +148,7 @@ test('buildTestPushMessage speaks the user language', () => {
   assert.equal(buildTestPushMessage('ru').title, 'Уведомления работают')
   assert.equal(buildTestPushMessage('en').title, 'Notifications work')
   assert.equal(buildTestPushMessage('en').tag, 'push-test')
+  assert.equal(buildTestPushMessage('en').isSilent, true)
 })
 
 test('pushDeviceSchema accepts a browser subscription from a known push service', () => {

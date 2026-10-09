@@ -55,7 +55,7 @@ export const todoDigestSettingsSchema = z.object({
 })
 
 export const DEFAULT_TODO_DIGEST_SETTINGS: z.infer<typeof todoDigestSettingsSchema> = {
-  digestTime: 9 * 60,
+  digestTime: 8 * 60,
   weekdays: [...ALL_WEEKDAYS],
   overdueMode: 'fading',
 }

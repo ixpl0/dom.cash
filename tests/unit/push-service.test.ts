@@ -101,7 +101,9 @@ const readSubscriptionOwners = (database: TestDatabase) =>
 const readLastSentDate = (database: TestDatabase, userId: string): unknown =>
   database.sqlite.prepare('SELECT last_sent_date AS lastSentDate FROM todo_digest_settings WHERE user_id = ?').get(userId)?.lastSentDate
 
-const subscribeOwner = async (database: TestDatabase, settings = DEFAULT_TODO_DIGEST_SETTINGS): Promise<void> => {
+const NINE_AM_SETTINGS = { ...DEFAULT_TODO_DIGEST_SETTINGS, digestTime: 9 * 60 }
+
+const subscribeOwner = async (database: TestDatabase, settings = NINE_AM_SETTINGS): Promise<void> => {
   const db = useDatabase(database.event)
   await savePushDevice(toAuthSession(OWNER_ID), createDevice(PHONE_ENDPOINT), db, MOSCOW_NINE_AM)
   await updateTodoDigestSettings(OWNER_ID, settings, db)
@@ -262,11 +264,11 @@ test('sendTodoDigests sends the digest at the local digest time once a day', asy
       body: 'Task today\nTask overdue · 3 days ago',
       tag: 'todo-digest',
       url: '/todo',
-      isSilent: false,
+      isSilent: true,
       todo: null,
       actions: [],
     },
-    options: { ttlSeconds: 12 * 60 * 60, urgency: 'high', topic: 'todo-digest' },
+    options: { ttlSeconds: 12 * 60 * 60, urgency: 'normal', topic: 'todo-digest' },
   }])
   assert.equal(readLastSentDate(database, OWNER_ID), MOSCOW_TODAY)
 })
@@ -302,7 +304,7 @@ test('sendTodoDigests marks the day even when there is nothing to say', async ()
 test('sendTodoDigests skips days that are not chosen', async () => {
   const database = await createDatabaseWithUsers()
   const db = useDatabase(database.event)
-  await subscribeOwner(database, { ...DEFAULT_TODO_DIGEST_SETTINGS, weekdays: [1, 2, 3, 4] })
+  await subscribeOwner(database, { ...NINE_AM_SETTINGS, weekdays: [1, 2, 3, 4] })
   await addTodo(database, 'today', `${MOSCOW_TODAY}T00:00`)
   const sender = createFakeSender()
 
@@ -351,7 +353,7 @@ test('sendTodoDigests forgets gone devices and keeps going past a broken time zo
   assert.deepEqual(readEndpoints(database), ['https://fcm.googleapis.com/fcm/send/friend', PHONE_ENDPOINT])
 })
 
-test('sendTodoDigests sends a quiet reminder about an overdue task with actions', async () => {
+test('sendTodoDigests sends a silent reminder about an overdue task with actions and normal urgency', async () => {
   const database = await createDatabaseWithUsers()
   const db = useDatabase(database.event)
   await subscribeOwner(database)

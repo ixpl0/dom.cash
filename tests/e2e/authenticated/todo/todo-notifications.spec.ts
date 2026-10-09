@@ -23,7 +23,7 @@ test.describe('Todo notifications', () => {
 
     await deviceToggle.click()
     await expect(deviceToggle).toBeChecked()
-    await expect(page.getByTestId('todo-notifications-time')).toHaveValue('540')
+    await expect(page.getByTestId('todo-notifications-time')).toHaveValue('480')
     await expect(page.getByTestId('todo-notifications-denied')).toHaveCount(0)
 
     const settingsSaved = () => page.waitForResponse(response => response.url().endsWith('/api/push/settings') && response.request().method() === 'PUT')
@@ -80,7 +80,7 @@ test.describe('Todo notifications', () => {
       tag: 'todo-digest',
       url: '/todo',
       body: 'Pay for the internet',
-      isSilent: false,
+      isSilent: true,
       todo: { id, plannedDate: today },
     }))
     expect(digest?.actions.map(({ action }) => action)).toEqual(['complete', 'postpone'])

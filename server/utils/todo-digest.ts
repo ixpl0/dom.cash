@@ -103,7 +103,7 @@ export const buildTodoDigestMessage = (
     body: lines.join('\n'),
     tag: TODO_DIGEST_TAG,
     url: TODO_DIGEST_URL,
-    isSilent: dueToday.length === 0,
+    isSilent: true,
     todo: singleTodo ? { id: singleTodo.id, plannedDate: singleTodo.plannedDate } : null,
     actions: singleTodo
       ? [
@@ -119,7 +119,7 @@ export const buildTestPushMessage = (locale: SupportedLocale): PushMessage => ({
   body: getPushText(locale, 'testBody'),
   tag: PUSH_TEST_TAG,
   url: TODO_DIGEST_URL,
-  isSilent: false,
+  isSilent: true,
   todo: null,
   actions: [],
 })
