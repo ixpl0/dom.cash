@@ -32,6 +32,10 @@ export const useTodoNotificationsStore = defineStore('todoNotifications', () => 
 
   const readPermission = (): DevicePermission => isPushSupported() ? Notification.permission : 'unsupported'
 
+  const refreshPermission = (): void => {
+    permission.value = readPermission()
+  }
+
   const readDeviceEndpoint = async (serverKey: string | null): Promise<string | null> => {
     const subscription = await getBrowserPushSubscription()
     const isOwnSubscription = subscription !== null
@@ -195,6 +199,7 @@ export const useTodoNotificationsStore = defineStore('todoNotifications', () => 
     isBusy,
     isSubscribed,
     load,
+    refreshPermission,
     enable,
     disable,
     saveSettings,

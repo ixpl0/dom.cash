@@ -63,7 +63,7 @@
         class="text-sm text-warning"
         data-testid="todo-notifications-denied"
       >
-        {{ t('todo.notifications.denied') }}
+        {{ isInstalledApp ? t('todo.notifications.deniedApp') : t('todo.notifications.deniedBrowser') }}
       </p>
 
       <template v-if="notificationsStore.isSubscribed && settings">
@@ -185,6 +185,7 @@ const { formatError } = useServerError()
 const { canInstall, install } = useInstallPrompt()
 
 const isSendingTest = ref(false)
+const isInstalledApp = ref(false)
 
 const isOpen = computed(() => todoModalsStore.isNotificationsModalOpen)
 const settings = computed(() => notificationsStore.settings)
@@ -282,9 +283,24 @@ const sendTest = async (): Promise<void> => {
   }
 }
 
+const refreshPermissionOnReturn = (): void => {
+  if (isOpen.value && document.visibilityState === 'visible') {
+    notificationsStore.refreshPermission()
+  }
+}
+
 watch(isOpen, (isNowOpen) => {
   if (isNowOpen) {
     notificationsStore.load()
   }
+})
+
+onMounted(() => {
+  isInstalledApp.value = window.matchMedia('(display-mode: standalone)').matches
+  document.addEventListener('visibilitychange', refreshPermissionOnReturn)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', refreshPermissionOnReturn)
 })
 </script>

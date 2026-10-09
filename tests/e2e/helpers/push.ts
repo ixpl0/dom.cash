@@ -44,8 +44,13 @@ export const stubPushService = async (context: BrowserContext, endpoint: string,
       return btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''))
     }
 
-    Object.defineProperty(Notification, 'permission', { configurable: true, get: () => permission })
-    Notification.requestPermission = async () => permission
+    const readPermission = (): NotificationPermission => {
+      const changedPermission = document.documentElement.dataset.e2ePushPermission
+      return changedPermission === 'granted' || changedPermission === 'denied' ? changedPermission : permission
+    }
+
+    Object.defineProperty(Notification, 'permission', { configurable: true, get: readPermission })
+    Notification.requestPermission = async () => readPermission()
 
     PushManager.prototype.getSubscription = async function () {
       const storedKey = localStorage.getItem(storageKey)
@@ -61,6 +66,13 @@ export const stubPushService = async (context: BrowserContext, endpoint: string,
       return createSubscription(toBase64(key)) as unknown as PushSubscription
     }
   }, { endpoint, permission, p256dh: USER_AGENT_PUBLIC_KEY, auth: USER_AGENT_AUTH_SECRET })
+}
+
+export const allowNotificationsInSettings = async (page: Page): Promise<void> => {
+  await page.evaluate(() => {
+    document.documentElement.dataset.e2ePushPermission = 'granted'
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
 }
 
 export const readRecordedPushes = async (request: APIRequestContext, endpoint: string): Promise<RecordedPushMessage[]> => {

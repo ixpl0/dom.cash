@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures'
 import { cleanupUserData } from '../../helpers/auth'
 import { pressBrowserBack } from '../../helpers/back-navigation'
-import { createPushEndpoint, openTodoNotifications, readRecordedPushes, sendTodoDigestNow, stubPushService } from '../../helpers/push'
+import { allowNotificationsInSettings, createPushEndpoint, openTodoNotifications, readRecordedPushes, sendTodoDigestNow, stubPushService } from '../../helpers/push'
 import { waitForHydration } from '../../helpers/wait-for-hydration'
 import { toLocalIsoDate } from '../../../../shared/utils/shared/dates'
 
@@ -100,7 +100,7 @@ test.describe('Todo notifications', () => {
     expect(await staleResponse.json()).toEqual(expect.objectContaining({ plannedDate: `${tomorrow}T00:00`, isCompleted: false }))
   })
 
-  test('should explain that notifications are blocked', async ({ page, context }) => {
+  test('should explain that notifications are blocked and notice when they get allowed', async ({ page, context }) => {
     await stubPushService(context, createPushEndpoint(), 'denied')
     await page.goto('/todo')
     await waitForHydration(page)
@@ -111,6 +111,13 @@ test.describe('Todo notifications', () => {
 
     await expect(page.getByTestId('todo-notifications-denied')).toBeVisible()
     await expect(deviceToggle).not.toBeChecked()
+
+    await allowNotificationsInSettings(page)
+
+    await expect(page.getByTestId('todo-notifications-denied')).toHaveCount(0)
+    await deviceToggle.click()
+    await expect(deviceToggle).toBeChecked()
+    await expect(page.getByTestId('todo-notifications-test')).toBeVisible()
   })
 
   test('should close the reminders with the back button', async ({ page, context }) => {
