@@ -1,5 +1,5 @@
 import { secureLog } from '~~/server/utils/secure-logger'
-import { decodeBase64Url, encodeBase64Url } from '~~/shared/utils/shared/base64url'
+import { decodeBase64Url, encodeBase64Url, getBase64UrlLength } from '~~/shared/utils/shared/base64url'
 
 type Bytes = Uint8Array<ArrayBuffer>
 
@@ -105,6 +105,18 @@ export const encryptPushMessage = async (
 
   return concatBytes(salt, toUint32Bytes(PUSH_RECORD_SIZE), Uint8Array.of(PUBLIC_KEY_BYTES), publicKey, ciphertext)
 }
+
+const PRIVATE_KEY_BYTES = 32
+const UNCOMPRESSED_POINT_PREFIX = 4
+const BASE64URL_PATTERN = /^[\w-]+$/
+
+const isBase64UrlOfLength = (value: string, byteLength: number): boolean =>
+  BASE64URL_PATTERN.test(value) && value.length === getBase64UrlLength(byteLength)
+
+export const isValidVapidKeyPair = (publicKey: string, privateKey: string): boolean =>
+  isBase64UrlOfLength(publicKey, PUBLIC_KEY_BYTES)
+  && isBase64UrlOfLength(privateKey, PRIVATE_KEY_BYTES)
+  && decodeBase64Url(publicKey)[0] === UNCOMPRESSED_POINT_PREFIX
 
 const encodeJson = (value: unknown): string => encodeBase64Url(encoder.encode(JSON.stringify(value)))
 

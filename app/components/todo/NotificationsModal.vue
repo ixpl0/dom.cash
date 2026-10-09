@@ -172,7 +172,10 @@
 import { MINUTES_PER_DAY, TODO_DIGEST_OVERDUE_MODES, TODO_DIGEST_TIME_STEP_MINUTES } from '~~/shared/schemas/push'
 import type { TodoDigestOverdueMode, TodoDigestSettings } from '~~/shared/types/push'
 import { toSupportedLocale } from '~~/shared/utils/shared/locale'
+import { appendErrorReason } from '~/utils/server-error'
 import { WEEKDAYS } from '~/utils/weekdays'
+
+const ERROR_REASON_TOAST_MS = 20000
 
 const todoModalsStore = useTodoModalsStore()
 const notificationsStore = useTodoNotificationsStore()
@@ -217,7 +220,7 @@ const toggleDevice = async (event: Event): Promise<void> => {
   }
   catch (error) {
     const fallback = shouldEnable ? t('todo.notifications.errors.enable') : t('todo.notifications.errors.disable')
-    toast({ type: 'error', message: formatError(error, fallback) })
+    toast({ type: 'error', message: formatError(error, appendErrorReason(fallback, error)), timeout: ERROR_REASON_TOAST_MS })
   }
   finally {
     if (checkbox) {

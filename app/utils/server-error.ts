@@ -12,3 +12,10 @@ const readData = (value: unknown): unknown =>
 
 export const readServerErrorKey = (error: unknown): ErrorKey | null =>
   [readMessage(readData(error)), readMessage(error)].find(isErrorKey) ?? null
+
+export const appendErrorReason = (text: string, error: unknown): string => {
+  if (!(error instanceof Error) || !error.message) {
+    return text
+  }
+  return error.name && error.name !== 'Error' ? `${text}: ${error.name}: ${error.message}` : `${text}: ${error.message}`
+}

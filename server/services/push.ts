@@ -7,7 +7,7 @@ import { secureLog } from '~~/server/utils/secure-logger'
 import { isTestMode } from '~~/server/utils/test-mode'
 import { recordTestPush } from '~~/server/utils/test-push-recorder'
 import { buildTestPushMessage } from '~~/server/utils/todo-digest'
-import { createWebPushSender, type PushOptions, type PushSender, type VapidKeys } from '~~/server/utils/web-push'
+import { createWebPushSender, isValidVapidKeyPair, type PushOptions, type PushSender, type VapidKeys } from '~~/server/utils/web-push'
 import { DEFAULT_TODO_DIGEST_SETTINGS } from '~~/shared/schemas/push'
 import type { PushDevice, PushMessage, PushTestResult, TodoDigestSettings } from '~~/shared/types/push'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
@@ -28,6 +28,11 @@ export const readVapidKeys = (): VapidKeys | null => {
   const privateKey = process.env.VAPID_PRIVATE_KEY?.trim()
 
   if (!publicKey || !privateKey) {
+    return null
+  }
+
+  if (!isValidVapidKeyPair(publicKey, privateKey)) {
+    secureLog.error('Push notifications are off: VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must hold only the base64url values that pnpm push:keys prints after "="')
     return null
   }
 

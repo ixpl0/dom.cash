@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test, type TestContext } from 'node:test'
-import { createVapidToken, createWebPushSender, encryptPushMessage, PUSH_PAYLOAD_MAX_BYTES, type LocalKeys, type VapidKeys } from '../../server/utils/web-push'
+import { createVapidToken, createWebPushSender, encryptPushMessage, isValidVapidKeyPair, PUSH_PAYLOAD_MAX_BYTES, type LocalKeys, type VapidKeys } from '../../server/utils/web-push'
 import { decodeBase64Url, encodeBase64Url } from '../../shared/utils/shared/base64url'
 
 type Bytes = Uint8Array<ArrayBuffer>
@@ -150,6 +150,17 @@ test('encryptPushMessage refuses a message longer than one record holds', async 
   assert.equal(PUSH_PAYLOAD_MAX_BYTES, 3993)
   await assert.doesNotReject(encryptPushMessage(new Uint8Array(3993), userAgent))
   await assert.rejects(encryptPushMessage(new Uint8Array(3994), userAgent), /at most 3993 bytes/)
+})
+
+test('isValidVapidKeyPair accepts only the bare base64url values of a P-256 key pair', async () => {
+  const { keys } = await createVapidKeys()
+
+  assert.equal(isValidVapidKeyPair(keys.publicKey, keys.privateKey), true)
+  assert.equal(isValidVapidKeyPair(`VAPID_PUBLIC_KEY=${keys.publicKey}`, keys.privateKey), false)
+  assert.equal(isValidVapidKeyPair(keys.publicKey, `VAPID_PRIVATE_KEY=${keys.privateKey}`), false)
+  assert.equal(isValidVapidKeyPair(keys.privateKey, keys.publicKey), false)
+  assert.equal(isValidVapidKeyPair(keys.publicKey.slice(0, -2), keys.privateKey), false)
+  assert.equal(isValidVapidKeyPair(`A${keys.publicKey.slice(1)}`, keys.privateKey), false)
 })
 
 test('createVapidToken signs the audience, the expiry and the subject with the private key', async () => {

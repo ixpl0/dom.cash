@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test, type TestContext } from 'node:test'
 import { useDatabase } from '../../server/db'
 import { session, todo, todoShare, user } from '../../server/db/schema'
-import { getTodoDigestSettings, removePushDevice, savePushDevice, sendTestPush, updateTodoDigestSettings } from '../../server/services/push'
+import { getPushPublicKey, getTodoDigestSettings, readVapidKeys, removePushDevice, savePushDevice, sendTestPush, updateTodoDigestSettings } from '../../server/services/push'
 import { sendTodoDigests } from '../../server/services/todo-digest'
 import type { AuthSession } from '../../server/utils/session'
 import type { PushOptions, PushResult, PushSender, PushTarget } from '../../server/utils/web-push'
@@ -224,6 +224,27 @@ test('sendTestPush reports a push service that refuses the message', async (cont
     message: ERROR_KEYS.PUSH_DELIVERY_FAILED,
   })
   assert.deepEqual(readEndpoints(database), [PHONE_ENDPOINT])
+})
+
+test('broken VAPID secrets turn push notifications off and say why in the log', async (context) => {
+  const { publicKey, privateKey } = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign'])
+  const previousKeys = [process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY]
+  process.env.VAPID_PUBLIC_KEY = `VAPID_PUBLIC_KEY=${encodeBase64Url(new Uint8Array(await crypto.subtle.exportKey('raw', publicKey)))}`
+  process.env.VAPID_PRIVATE_KEY = (await crypto.subtle.exportKey('jwk', privateKey)).d
+  context.after(() => {
+    process.env.VAPID_PUBLIC_KEY = previousKeys[0] ?? ''
+    process.env.VAPID_PRIVATE_KEY = previousKeys[1] ?? ''
+  })
+  const errorLog = context.mock.method(console, 'error', () => {})
+  const database = await createDatabaseWithUsers()
+
+  assert.equal(readVapidKeys(), null)
+  assert.equal(getPushPublicKey(), null)
+  await assert.rejects(sendTestPush(OWNER_ID, PHONE_ENDPOINT, useDatabase(database.event), MOSCOW_NINE_AM), {
+    statusCode: 503,
+    message: ERROR_KEYS.PUSH_NOT_CONFIGURED,
+  })
+  assert.match(String(errorLog.mock.calls[0]?.arguments[0]), /VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY/)
 })
 
 test('sendTestPush needs VAPID keys outside test mode', async (context) => {
