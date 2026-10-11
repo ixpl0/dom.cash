@@ -14,7 +14,7 @@
       <button
         v-if="document.fields.length > 0"
         type="button"
-        class="btn btn-ghost btn-sm btn-square relative z-10 flex-shrink-0 text-base-content/60 hover:text-base-content"
+        class="btn btn-ghost btn-sm btn-square relative z-10 -mr-2 flex-shrink-0 text-base-content/60 hover:text-base-content"
         :aria-label="t('docs.document.copyAll')"
         :title="t('docs.document.copyAll')"
         data-testid="docs-document-card-copy-all"
@@ -26,6 +26,12 @@
         />
       </button>
     </div>
+
+    <DocsFieldList
+      v-if="mainField"
+      class="relative z-10 mt-1"
+      :fields="[mainField]"
+    />
 
     <div
       v-if="document.images.length > 0"
@@ -66,11 +72,13 @@ interface Props {
   document: DocDocument
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const docsModalsStore = useDocsModalsStore()
 const { copyAllFields, getDocumentTitle } = useDocsActions()
 const { t } = useI18n()
+
+const mainField = computed(() => props.document.fields.find(({ value }) => value !== ''))
 
 const getImageAspectRatio = ({ width, height }: DocImage): string =>
   width && height ? `${width} / ${height}` : '1'

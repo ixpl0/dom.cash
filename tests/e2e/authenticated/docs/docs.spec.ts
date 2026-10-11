@@ -291,12 +291,12 @@ test.describe('Docs', () => {
     await expect(photos.last()).toHaveAttribute('src', `/api/docs/images/${firstImageId}/thumbnail`)
   })
 
-  test('copies the hidden fields from a document card, shows its photo and opens the document from anywhere else on it', async ({ page, context, request }) => {
+  test('copies the main field and all fields from a document card, shows its photo and opens the document from anywhere else on it', async ({ page, context, request }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     const folder = await createFolderThroughApi(request, 'Andrew')
     const document = await createDocumentThroughApi(request, folder.id, 'Passport', [
-      { name: 'Surname', value: 'Ivanov' },
       { name: 'Number', value: '45 12 345678' },
+      { name: 'Surname', value: 'Ivanov' },
     ])
     const { imageId } = await uploadImageThroughApi(request, document.id, 'page-1.png')
     await page.goto(`/docs/${folder.id}`)
@@ -304,11 +304,17 @@ test.describe('Docs', () => {
 
     const card = page.getByTestId('docs-document-card')
     await expect(card.getByTestId('docs-document-card-title')).toHaveText('Passport')
-    await expect(card.getByTestId('docs-field')).toHaveCount(0)
+    await expect(card.getByTestId('docs-field-name')).toHaveText(['Number'])
+    await expect(card.getByTestId('docs-field-value')).toHaveText(['45 12 345678'])
+
+    await card.getByTestId('docs-field').click()
+    await expect(card.getByTestId('docs-field-copied')).toBeVisible()
+    expect(await readClipboardText(page)).toBe('45 12 345678')
+    await expect(page).toHaveURL(`/docs/${folder.id}`)
 
     await card.getByTestId('docs-document-card-copy-all').click()
     await expect(page.getByTestId('toast-success')).toBeVisible()
-    expect(await readClipboardText(page)).toBe('Passport\nSurname: Ivanov\nNumber: 45 12 345678')
+    expect(await readClipboardText(page)).toBe('Passport\nNumber: 45 12 345678\nSurname: Ivanov')
     await expect(page).toHaveURL(`/docs/${folder.id}`)
 
     await card.getByTestId('docs-document-card-photo').click()
@@ -325,7 +331,22 @@ test.describe('Docs', () => {
     }
     await card.click({ position: { x: cardBox.width - 40, y: photosBox.y - cardBox.y + photosBox.height / 2 } })
     await page.waitForURL(`/docs/${folder.id}/${document.id}`)
-    await expect(page.getByTestId('docs-field-value')).toHaveText(['Ivanov', '45 12 345678'])
+    await expect(page.getByTestId('docs-field-value')).toHaveText(['45 12 345678', 'Ivanov'])
+  })
+
+  test('shows the first field with a value on a document card', async ({ page, request }) => {
+    const folder = await createFolderThroughApi(request, 'Andrew')
+    await createDocumentThroughApi(request, folder.id, 'Insurance', [
+      { name: 'Policy', value: '' },
+      { name: 'Number', value: '123-456-789 01' },
+    ])
+    await createDocumentThroughApi(request, folder.id, 'Notes')
+    await page.goto(`/docs/${folder.id}`)
+    await waitForHydration(page)
+
+    await expect(page.getByTestId('docs-document-card')).toHaveCount(2)
+    await expect(page.getByTestId('docs-field-name')).toHaveText(['Number'])
+    await expect(page.getByTestId('docs-field-value')).toHaveText(['123-456-789 01'])
   })
 
   test('deletes a document and returns to its folder', async ({ page, request }) => {

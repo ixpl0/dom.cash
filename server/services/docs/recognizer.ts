@@ -56,7 +56,7 @@ const recognitionOutputSchema = z.object({
     existingNumber: z.number().nullable().describe('Number of a field the user already has, or null for a new field'),
     name: z.string().describe('Field name, empty for a field the user already has'),
     value: z.string().describe('Value exactly as printed, empty for a field the user already has'),
-  })).describe('Every field of the document, the most needed first'),
+  })).describe('Every field of the document, the value people open it for first'),
 })
 
 const TEST_MODE_TITLE = 'Test document'
@@ -82,7 +82,10 @@ Field names
 - Write field names in ${examples.name}. Keep them short and conventional, the way forms ask for them, for example ${examples.fieldNames}.
 
 Order
-- Put first the fields people need most often: the holder's full name, the document number (series and number), date of birth, dates of issue and expiry, the issuing authority and its code, place of birth, sex. Then the rest. Do not follow the order of the photo.
+- Put first the value people open this document for: the one they copy into forms or dictate and cannot remember. Usually it is the number of the document (series and number) or the number it assigns, such as an insurance, tax, policy, account or card number, a VIN or a booking code. People know their own names, so the holder's name comes after it.
+- Then the values forms ask for along with it: dates of issue and expiry, the issuing authority and its code.
+- Then the holder: full name, date of birth, place of birth, sex.
+- Then the rest. Do not follow the order of the photo.
 
 Title
 - In "title", name the document in ${examples.name} in a few words, for example ${examples.titles}. Leave it empty if the photos show no document.
