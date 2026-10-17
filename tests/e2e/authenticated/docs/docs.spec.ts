@@ -263,6 +263,7 @@ test.describe('Docs', () => {
     expect((await response.body()).subarray(1, 4).toString('ascii')).toBe('PNG')
     expect(response.headers()['cache-control']).toBe('private, no-cache')
     expect(response.headers()['x-content-type-options']).toBe('nosniff')
+    expect(response.headers()['cross-origin-resource-policy']).toBe('same-origin')
 
     const etag = response.headers()['etag']
     expect(etag).toBeTruthy()
@@ -273,6 +274,16 @@ test.describe('Docs', () => {
     const anonymousResponse = await anonymousContext.request.get(`${BASE_URL}/api/docs/images/${imageId}/original`)
     expect(anonymousResponse.status()).toBe(401)
     await anonymousContext.close()
+  })
+
+  test('keeps answers with document fields out of the browser cache and away from other sites', async ({ request }) => {
+    const folder = await createFolderThroughApi(request, 'Andrew')
+    await createDocumentThroughApi(request, folder.id, 'Passport')
+
+    const response = await request.get(`${BASE_URL}/api/docs/folders/${folder.id}`)
+    expect(response.status()).toBe(200)
+    expect(response.headers()['cache-control']).toBe('no-store')
+    expect(response.headers()['cross-origin-resource-policy']).toBe('same-origin')
   })
 
   test('moves photos in edit mode', async ({ page, request }) => {

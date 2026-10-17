@@ -9,6 +9,7 @@ import type { TodoListItem } from '../../shared/types/todo'
 import { todoCompletionSchema } from '../../shared/schemas/todo'
 import { ERROR_KEYS } from '../../shared/utils/shared/error-keys'
 import { getSeenPlannedDate, isTodoOverdue } from '../../shared/utils/todo'
+import { listenToNotifications } from './helpers/notifications'
 import { createTestDatabase, type TestDatabase } from './helpers/test-database'
 
 const toUser = (id: string): User => ({ id, username: `${id}@example.com`, mainCurrency: 'USD', isAdmin: false })
@@ -323,6 +324,18 @@ test('updateTodo replaces the participants', async () => {
 
   assert.deepEqual(updated.sharedWith.map(participant => participant.id), ['neighbour'])
   assert.deepEqual(readSharedWithIds(database, created.id), ['neighbour'])
+})
+
+test('updateTodo shows the new text to the remaining participants and tells a removed participant about the text they knew', async (context) => {
+  const database = await createDatabaseWithFriends([friend.id, 'neighbour'])
+  const created = await createTodo(owner, { content: 'Plan trip', sharedWithUserIds: [friend.id, 'neighbour'] }, database.event)
+  const friendNotifications = listenToNotifications(context, friend.id)
+  const neighbourNotifications = listenToNotifications(context, 'neighbour')
+
+  await updateTodo(owner, created.id, { content: 'Plan the trip to Rome', sharedWithUserIds: ['neighbour'] }, database.event)
+
+  assert.deepEqual(friendNotifications().map(({ type, params }) => [type, params.todoContent]), [['todo_unshared', 'Plan trip']])
+  assert.deepEqual(neighbourNotifications().map(({ type, params }) => [type, params.todoContent]), [['todo_updated', 'Plan the trip to Rome']])
 })
 
 test('updateTodo keeps a participant who is no longer a connection until the owner removes them', async () => {

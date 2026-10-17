@@ -250,16 +250,18 @@ test('get_budget_summary keeps to the requested months', async (context) => {
   assert.deepEqual(summary.months, [JUNE_TOTALS])
 })
 
-test('get_budget_summary shows a reader the shared budget without plans', async (context) => {
+test('get_budget_summary shows a reader the same budget as its owner, plans included', async (context) => {
   pinClock(context)
   const database = await createBudget()
 
-  const summary = await readToolData(database, friend, 'get_budget_summary', { username: 'OWNER@example.com' }) as Record<string, unknown>
+  const ownerSummary = await readToolData(database, owner, 'get_budget_summary') as Record<string, unknown>
+  const readerSummary = await readToolData(database, friend, 'get_budget_summary', { username: 'OWNER@example.com' })
 
-  assert.equal(summary.access, 'read')
-  assert.deepEqual(summary.months, [JUNE_TOTALS, JULY_TOTALS])
-  assert.deepEqual(summary.budgetsSharedWithUser, [{ owner: owner.username, access: 'read' }])
-  assert.equal((summary.years as Array<Record<string, unknown>>)[0]?.plannedBalanceChange, undefined)
+  assert.deepEqual(readerSummary, {
+    ...ownerSummary,
+    access: 'read',
+    budgetsSharedWithUser: [{ owner: owner.username, access: 'read' }],
+  })
 })
 
 test('get_budget_summary refuses a budget that is not shared and a wrong range', async (context) => {

@@ -513,6 +513,7 @@ export default {
     todo_updated: '{username} изменил задачу: "{todoContent}"',
     todo_deleted: '{username} удалил задачу: "{todoContent}"',
     todo_toggled: '{username} отметил "{todoContent}" как {isCompleted}',
+    todo_unshared: '{username} закрыл вам доступ к задаче «{todoContent}»',
     docs_folder_shared: '{username} поделился с вами папкой «{folderName}»',
     docs_folder_unshared: '{username} закрыл вам доступ к папке «{folderName}»',
     docs_folder_updated: '{username} переименовал папку в «{folderName}»',

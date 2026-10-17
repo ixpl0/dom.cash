@@ -68,7 +68,7 @@ const loadBudget = async ({ event, user: viewer }: McpContext, username: string 
   const { owner, access } = await resolveBudget(event, viewer, username, 'read')
   const [availableYears, plans] = await Promise.all([
     getAvailableYears(owner.id, event),
-    access === 'read' ? Promise.resolve<PlanData[]>([]) : getUserPlans(owner.id, event),
+    getUserPlans(owner.id, event),
   ])
 
   return { owner, access, plans, latestRecordedMonth: findLatestRecordedMonth(availableYears) }

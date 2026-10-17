@@ -392,6 +392,7 @@
 
 <script setup lang="ts">
 import type { CodeRequestResult } from '~~/shared/types'
+import { sanitizeRedirectPath } from '~~/shared/utils/shared/redirect'
 import { getAuthFieldErrors, type AuthFieldErrors, type AuthFieldValues } from '~/utils/auth-validation'
 
 const {
@@ -427,11 +428,6 @@ const newPassword = ref('')
 const errors = ref<AuthFieldErrors>({})
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
-
-const redirectPath = computed<string | null>(() => {
-  const { redirect } = route.query
-  return typeof redirect === 'string' ? redirect : null
-})
 
 const shownFieldValues = computed((): AuthFieldValues => {
   if (showVerificationStep.value) {
@@ -469,7 +465,7 @@ const goHome = () => {
 }
 
 const navigateAfterLogin = async (): Promise<void> => {
-  await router.push(redirectPath.value ?? '/')
+  await router.push(sanitizeRedirectPath(route.query.redirect))
 }
 
 const showCodeRequestResult = (result: CodeRequestResult, sentMessage: string): void => {

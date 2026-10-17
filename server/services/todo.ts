@@ -36,7 +36,7 @@ const toTodoListItem = (todoRow: TodoRow, ownerUsername: string, sharedWith: Tod
   sharedWith: sharedWith.filter(participant => participant.id !== viewerId),
 })
 
-const getParticipantIds = ({ todoRow, sharedWith }: TodoAccess): string[] =>
+const getParticipantIds = ({ todoRow, sharedWith }: Pick<TodoAccess, 'todoRow' | 'sharedWith'>): string[] =>
   [todoRow.userId, ...sharedWith.map(participant => participant.id)]
 
 const notifyParticipants = async (
@@ -208,9 +208,16 @@ export const updateTodo = async (actor: User, todoId: string, payload: UpdateTod
     ...replaceShares,
   ])
 
-  await notifyParticipants(event, actor, updatedRow, getParticipantIds(access), 'todo_updated')
+  const sharedWith = newSharedWith ?? access.sharedWith
+  const previousIds = getParticipantIds(access)
+  const currentIds = new Set(getParticipantIds({ todoRow: access.todoRow, sharedWith }))
 
-  return toTodoListItem(updatedRow, access.ownerUsername, newSharedWith ?? access.sharedWith, actor.id)
+  await Promise.all([
+    notifyParticipants(event, actor, updatedRow, previousIds.filter(userId => currentIds.has(userId)), 'todo_updated'),
+    notifyParticipants(event, actor, access.todoRow, previousIds.filter(userId => !currentIds.has(userId)), 'todo_unshared'),
+  ])
+
+  return toTodoListItem(updatedRow, access.ownerUsername, sharedWith, actor.id)
 }
 
 const hasStoredPlannedDate = (plannedDate: string | null) =>

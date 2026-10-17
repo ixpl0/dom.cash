@@ -11,6 +11,7 @@ import { DOC_MAX_DOCUMENTS, DOC_MAX_IMAGES } from '../../shared/schemas/docs'
 import type { User } from '../../shared/types'
 import type { UploadDocImageQuery } from '../../shared/types/docs'
 import { ERROR_KEYS } from '../../shared/utils/shared/error-keys'
+import { listenToNotifications } from './helpers/notifications'
 import { createTestDatabase, type TestDatabase } from './helpers/test-database'
 
 const toUser = (id: string): User => ({ id, username: `${id}@example.com`, mainCurrency: 'USD', isAdmin: false })
@@ -166,6 +167,16 @@ test('updateFolder lets the owner stop sharing a folder', async () => {
   assert.deepEqual(updated.sharedWith, [])
   assert.deepEqual(await listFolders(friend.id, database.event), [])
   await assert.rejects(getFolderDetails(friend, folder.id, database.event), { statusCode: 403 })
+})
+
+test('updateFolder tells a removed participant the name they knew, not the new one', async (context) => {
+  const database = await createDatabaseWithFriend()
+  const { folder } = await createSharedDocument(database)
+  const friendNotifications = listenToNotifications(context, friend.id)
+
+  await updateFolder(owner, folder.id, { name: 'Andrew Ivanov', sharedWithUserIds: [] }, database.event)
+
+  assert.deepEqual(friendNotifications().map(({ type, params }) => [type, params.folderName]), [['docs_folder_unshared', 'Andrew']])
 })
 
 test('updateFolder keeps a participant who is no longer a connection until the owner removes them', async () => {

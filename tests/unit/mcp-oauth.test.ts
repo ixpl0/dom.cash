@@ -3,6 +3,8 @@ import { test } from 'node:test'
 import { eq } from 'drizzle-orm'
 import { useDatabase } from '../../server/db'
 import { user } from '../../server/db/schema'
+import { replaceUserPassword } from '../../server/services/auth/users'
+import { createSession, findUser } from '../../server/utils/auth'
 import { AUTHORIZATION_CODE_LIFETIME_MS, decideAuthorization, describeAuthorizationRequest, parseRequestedScopes } from '../../server/services/mcp/oauth-authorization'
 import { findOAuthClient, registerOAuthClient, UNUSED_CLIENT_LIFETIME_MS } from '../../server/services/mcp/oauth-clients'
 import { buildAuthorizationServerMetadata, buildProtectedResourceMetadata } from '../../server/services/mcp/oauth-metadata'
@@ -191,6 +193,18 @@ test('registerOAuthClient deletes the clients that stayed unconnected for a day'
   assert.notEqual(await findOAuthClient(connectedClientId, database.event), undefined)
   assert.notEqual(await findOAuthClient(recentClientId, database.event), undefined)
   assert.notEqual(await findOAuthClient(newClientId, database.event), undefined)
+})
+
+test('registerOAuthClient removes the unused clients and their codes through indexes instead of reading every row', async () => {
+  const database = await createDatabaseWithUsers()
+  await registerClient(database)
+
+  const cleanup = database.getQueries().find(query => query.startsWith('delete from "oauth_client"'))
+  assert.ok(cleanup)
+  const plan = database.sqlite.prepare(`EXPLAIN QUERY PLAN ${cleanup}`).all().map(row => String(row.detail))
+
+  assert.ok(plan.some(step => step.includes('idx_oauth_client_created')), plan.join('\n'))
+  assert.equal(plan.some(step => step.startsWith('SCAN')), false, plan.join('\n'))
 })
 
 test('parseRequestedScopes keeps the known scopes in a fixed order', () => {
@@ -388,4 +402,23 @@ test('deleting a user deletes the connections and the codes', async () => {
   assert.equal(countRows(database, 'oauth_grant'), 0)
   assert.equal(countRows(database, 'oauth_token'), 0)
   assert.equal(countRows(database, 'oauth_authorization_code'), 0)
+})
+
+test('a password reset deletes the connections, the codes not yet exchanged and the sessions of that user only', async () => {
+  const database = await createDatabaseWithUsers()
+  const ownerConnection = await connect(database)
+  const friendConnection = await connect(database, ['budget'], friend)
+  const pendingClientId = await registerClient(database)
+  const pendingCode = await authorize(database, pendingClientId)
+  await createSession(owner.id, NOW, database.event)
+  await createSession(friend.id, NOW, database.event)
+
+  await replaceUserPassword(owner.id, 'new-hash', database.event)
+
+  assert.equal(await findMcpCaller(ownerConnection.accessToken, NOW, database.event), null)
+  assert.deepEqual(await refresh(database, ownerConnection.clientId, ownerConnection.refreshToken), invalidGrant)
+  assert.deepEqual(await exchangeCode(database, pendingClientId, pendingCode, {}, later(AUTHORIZATION_CODE_LIFETIME_MS / 2)), invalidGrant)
+  assert.notEqual(await findMcpCaller(friendConnection.accessToken, NOW, database.event), null)
+  assert.deepEqual(database.sqlite.prepare('SELECT user_id AS userId FROM session').all().map(row => row.userId), [friend.id])
+  assert.equal((await findUser(owner.username, database.event))?.passwordHash, 'new-hash')
 })

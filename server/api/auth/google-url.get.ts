@@ -3,9 +3,9 @@ import { z } from 'zod'
 import { getGoogleClientId } from '~~/server/utils/google-oauth'
 import { parseQuery } from '~~/server/utils/validation'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
+import { sanitizeRedirectPath } from '~~/shared/utils/shared/redirect'
 import {
   createGoogleOAuthState,
-  sanitizeOAuthRedirect,
   setGoogleOAuthState,
 } from '~~/server/utils/google-auth-state'
 
@@ -28,7 +28,7 @@ export default defineEventHandler((event) => {
     })
   }
 
-  const redirect = sanitizeOAuthRedirect(query.redirect)
+  const redirect = sanitizeRedirectPath(query.redirect)
   const state = createGoogleOAuthState()
   setGoogleOAuthState(event, state, redirect)
 

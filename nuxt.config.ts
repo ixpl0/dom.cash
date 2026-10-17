@@ -46,13 +46,18 @@ export default defineNuxtConfig({
       '/**': {
         headers: {
           'X-Content-Type-Options': 'nosniff',
-          'X-XSS-Protection': '1; mode=block',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           ...(process.env.NODE_ENV === 'production' && {
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
             'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' \'unsafe-inline\' https://static.cloudflareinsights.com; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\' https://cloudflareinsights.com; frame-ancestors \'none\'; base-uri \'self\'; form-action \'self\'',
           }),
+        },
+      },
+      '/api/**': {
+        headers: {
+          'Cache-Control': 'no-store',
+          'Cross-Origin-Resource-Policy': 'same-origin',
         },
       },
     },

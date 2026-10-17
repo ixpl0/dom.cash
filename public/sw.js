@@ -3,6 +3,8 @@ const DEFAULT_TITLE = 'dom.cash'
 const ICON_URL = '/icons/icon-192.png'
 const BADGE_URL = '/icons/badge-96.png'
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
+const IGNORED_URL_CHARACTERS = /[\t\n\r]/g
+const SCHEME_RELATIVE_START = /^[\\/]{2}/
 
 const readMessage = (event) => {
   try {
@@ -48,16 +50,32 @@ const getAppWindows = async () => {
   return windows.filter(client => new URL(client.url).origin === self.location.origin)
 }
 
+const toAppPath = (url) => {
+  if (typeof url !== 'string' || !url.startsWith('/') || SCHEME_RELATIVE_START.test(url.replace(IGNORED_URL_CHARACTERS, ''))) {
+    return null
+  }
+
+  try {
+    const parsed = new URL(url, self.location.origin)
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`
+    return parsed.origin === self.location.origin && !path.startsWith('//') ? path : null
+  }
+  catch {
+    return null
+  }
+}
+
 const openApp = async (url) => {
+  const appPath = toAppPath(url) ?? DEFAULT_URL
   const [appWindow] = await getAppWindows()
 
   if (!appWindow) {
-    await self.clients.openWindow(url)
+    await self.clients.openWindow(appPath)
     return
   }
 
   await appWindow.focus()
-  appWindow.postMessage({ type: 'navigate', url })
+  appWindow.postMessage({ type: 'navigate', url: appPath })
 }
 
 const announceTodoChange = async () => {

@@ -2,6 +2,7 @@ import { TODO_DIGEST_TAG } from '~~/shared/schemas/push'
 import type { PushDevicePayload } from '~~/shared/types/push'
 import { decodeBase64Url, encodeBase64Url } from '~~/shared/utils/shared/base64url'
 import type { SupportedLocale } from '~~/shared/utils/shared/locale'
+import { isAppPath } from '~~/shared/utils/shared/redirect'
 import { isValidTimeZone } from '~~/shared/utils/shared/time-zones'
 
 export type ServiceWorkerMessage = { type: 'todo-changed' } | { type: 'navigate', url: string }
@@ -14,9 +15,6 @@ const PUSH_OWNER_STORAGE_KEY = 'push-subscription-owner'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
-
-const isAppPath = (url: unknown): url is string =>
-  typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')
 
 export const parseServiceWorkerMessage = (data: unknown): ServiceWorkerMessage | null => {
   if (!isRecord(data)) {

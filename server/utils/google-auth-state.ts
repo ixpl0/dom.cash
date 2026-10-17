@@ -1,6 +1,7 @@
 import { deleteCookie, getCookie, setCookie, type H3Event } from 'h3'
 import { timingSafeCompareStrings } from '~~/server/utils/crypto'
 import { generateSessionToken } from '~~/server/utils/auth'
+import { sanitizeRedirectPath } from '~~/shared/utils/shared/redirect'
 
 const GOOGLE_OAUTH_STATE_COOKIE = 'google-oauth-state'
 const GOOGLE_OAUTH_REDIRECT_COOKIE = 'google-oauth-redirect'
@@ -16,22 +17,6 @@ const getCookieOptions = () => {
     path: '/',
     maxAge: GOOGLE_OAUTH_COOKIE_MAX_AGE,
   }
-}
-
-export const sanitizeOAuthRedirect = (redirect: string | undefined): string => {
-  if (!redirect) {
-    return '/'
-  }
-
-  if (!redirect.startsWith('/')) {
-    return '/'
-  }
-
-  if (redirect.startsWith('//')) {
-    return '/'
-  }
-
-  return redirect
 }
 
 export const createGoogleOAuthState = (): string => {
@@ -64,7 +49,7 @@ export const validateGoogleOAuthState = (
 
 export const getGoogleOAuthRedirect = (event: H3Event): string => {
   const redirect = getCookie(event, GOOGLE_OAUTH_REDIRECT_COOKIE)
-  return sanitizeOAuthRedirect(redirect)
+  return sanitizeRedirectPath(redirect)
 }
 
 export const clearGoogleOAuthState = (event: H3Event): void => {

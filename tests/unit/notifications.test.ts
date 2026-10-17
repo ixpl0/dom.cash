@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
-import { test, type TestContext } from 'node:test'
+import { test } from 'node:test'
 import { createEvent } from 'h3'
 import {
-  addConnection,
   createNotification,
-  removeConnection,
   subscribeToBudget,
   unsubscribeFromBudget,
 } from '../../server/services/notifications'
+import { listenToNotifications } from './helpers/notifications'
 
 interface SharedBudget {
   ownerId: string
@@ -49,30 +48,15 @@ const createDatabaseEvent = (getShares: () => readonly SharedBudget[]) => {
   return event
 }
 
-const listen = (context: TestContext, userId: string) => {
-  const connectionId = crypto.randomUUID()
-  let messages: readonly string[] = []
-
-  addConnection(userId, connectionId, {
-    write: (message) => {
-      messages = messages.concat(message)
-    },
-    close: () => {},
-  })
-  context.after(() => removeConnection(userId, connectionId))
-
-  return () => messages
-}
-
 test('financial notifications reach the owner and current readers and writers only', async (context) => {
   const ownerId = crypto.randomUUID()
   const readerId = crypto.randomUUID()
   const writerId = crypto.randomUUID()
   const unrelatedUserId = crypto.randomUUID()
-  const ownerMessages = listen(context, ownerId)
-  const readerMessages = listen(context, readerId)
-  const writerMessages = listen(context, writerId)
-  const unrelatedMessages = listen(context, unrelatedUserId)
+  const ownerMessages = listenToNotifications(context, ownerId)
+  const readerMessages = listenToNotifications(context, readerId)
+  const writerMessages = listenToNotifications(context, writerId)
+  const unrelatedMessages = listenToNotifications(context, unrelatedUserId)
   const event = createDatabaseEvent(() => [
     { ownerId, userId: readerId, access: 'read' },
     { ownerId, userId: writerId, access: 'write' },
@@ -99,7 +83,7 @@ test('financial notifications reach the owner and current readers and writers on
 test('a notification tells the recipient which budget it belongs to', async (context) => {
   const ownerId = crypto.randomUUID()
   const viewerId = crypto.randomUUID()
-  const viewerMessages = listen(context, viewerId)
+  const viewerMessages = listenToNotifications(context, viewerId)
   const event = createDatabaseEvent(() => [{ ownerId, userId: viewerId, access: 'read' }])
 
   subscribeToBudget(viewerId, ownerId)
@@ -110,21 +94,16 @@ test('a notification tells the recipient which budget it belongs to', async (con
     params: { month: 'march', year: 2026 },
   })
 
-  const [message = ''] = viewerMessages()
-  assert.ok(message.startsWith('data: '))
-  const payload: unknown = JSON.parse(message.slice('data: '.length))
   assert.deepEqual(
-    payload && typeof payload === 'object' && 'budgetOwnerId' in payload && 'type' in payload
-      ? { budgetOwnerId: payload.budgetOwnerId, type: payload.type }
-      : null,
-    { budgetOwnerId: ownerId, type: 'budget_month_added' },
+    viewerMessages().map(({ budgetOwnerId, type }) => ({ budgetOwnerId, type })),
+    [{ budgetOwnerId: ownerId, type: 'budget_month_added' }],
   )
 })
 
 test('revoking access blocks an existing subscription without disconnecting its stream', async (context) => {
   const ownerId = crypto.randomUUID()
   const viewerId = crypto.randomUUID()
-  const receivedMessages = listen(context, viewerId)
+  const receivedMessages = listenToNotifications(context, viewerId)
   let shares: readonly SharedBudget[] = [{ ownerId, userId: viewerId, access: 'read' }]
   const event = createDatabaseEvent(() => shares)
   const notification = {
@@ -149,7 +128,7 @@ test('revoking access blocks an existing subscription without disconnecting its 
 test('unsubscribing removes the recipient even while a budget share still exists', async (context) => {
   const ownerId = crypto.randomUUID()
   const viewerId = crypto.randomUUID()
-  const receivedMessages = listen(context, viewerId)
+  const receivedMessages = listenToNotifications(context, viewerId)
   const event = createDatabaseEvent(() => [{ ownerId, userId: viewerId, access: 'read' }])
 
   subscribeToBudget(viewerId, ownerId)
@@ -167,7 +146,7 @@ test('unsubscribing removes the recipient even while a budget share still exists
 test('revocation notices and direct todo notifications remain deliverable without budget access', async (context) => {
   const ownerId = crypto.randomUUID()
   const viewerId = crypto.randomUUID()
-  const receivedMessages = listen(context, viewerId)
+  const receivedMessages = listenToNotifications(context, viewerId)
   const event = createDatabaseEvent(unsupportedDatabaseCall)
 
   await createNotification(event, {
@@ -191,7 +170,7 @@ test('revocation notices and direct todo notifications remain deliverable withou
 test('failed permission checks never deliver financial notifications', async (context) => {
   const ownerId = crypto.randomUUID()
   const viewerId = crypto.randomUUID()
-  const receivedMessages = listen(context, viewerId)
+  const receivedMessages = listenToNotifications(context, viewerId)
   const event = createDatabaseEvent(() => {
     throw new Error('Database unavailable')
   })

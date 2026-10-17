@@ -61,6 +61,7 @@ export const oauthClient = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   },
   t => [
+    index('idx_oauth_client_created').on(t.createdAt),
     check('ck_oauth_client_redirect_uris_is_array', sql`${t.redirectUris} GLOB '[[]*]'`),
   ],
 )
@@ -82,6 +83,7 @@ export const oauthAuthorizationCode = sqliteTable(
   },
   t => [
     index('idx_oauth_authorization_code_expires').on(t.expiresAt),
+    index('idx_oauth_authorization_code_client').on(t.clientId),
     check('ck_oauth_authorization_code_scopes_is_array', sql`${t.scopes} GLOB '[[]*]'`),
   ],
 )

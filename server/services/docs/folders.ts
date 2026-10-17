@@ -170,7 +170,7 @@ export const updateFolder = async (actor: User, folderId: string, payload: Updat
       ownerId: updatedRow.userId,
       recipientIds: [...previousIds].filter(userId => !currentIds.has(userId)),
       type: 'docs_folder_unshared',
-      params,
+      params: { folderName: access.folderRow.name },
     }),
     updatedRow.name === access.folderRow.name
       ? Promise.resolve()

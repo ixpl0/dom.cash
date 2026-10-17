@@ -512,6 +512,7 @@ export default {
     todo_updated: '{username} updated task: "{todoContent}"',
     todo_deleted: '{username} deleted task: "{todoContent}"',
     todo_toggled: '{username} marked "{todoContent}" as {isCompleted}',
+    todo_unshared: '{username} stopped sharing the task "{todoContent}" with you',
     docs_folder_shared: '{username} shared the folder "{folderName}" with you',
     docs_folder_unshared: '{username} stopped sharing the folder "{folderName}" with you',
     docs_folder_updated: '{username} renamed a folder to "{folderName}"',

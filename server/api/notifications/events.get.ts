@@ -8,7 +8,6 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'content-type', 'text/event-stream; charset=utf-8')
   setHeader(event, 'cache-control', 'no-cache, no-transform')
   setHeader(event, 'connection', 'keep-alive')
-  setHeader(event, 'cross-origin-resource-policy', 'same-origin')
   setHeader(event, 'x-accel-buffering', 'no')
 
   let keepAlive: ReturnType<typeof setInterval> | null = null

@@ -18,6 +18,7 @@ export type NotificationType
     | 'todo_updated'
     | 'todo_deleted'
     | 'todo_toggled'
+    | 'todo_unshared'
     | 'docs_folder_shared'
     | 'docs_folder_unshared'
     | 'docs_folder_updated'

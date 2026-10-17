@@ -60,6 +60,7 @@ export const PUSH_PAYLOAD_MAX_BYTES = PUSH_RECORD_SIZE - HEADER_BYTES - TAG_BYTE
 
 const VAPID_TOKEN_LIFETIME_SECONDS = 12 * 60 * 60
 const GONE_STATUSES: readonly number[] = [404, 410]
+const PUSH_REQUEST_TIMEOUT_MS = 10_000
 
 const P256_ECDH = { name: 'ECDH', namedCurve: 'P-256' } as const
 const P256_ECDSA = { name: 'ECDSA', namedCurve: 'P-256' } as const
@@ -153,7 +154,7 @@ const toPushResult = (status: number): PushResult => ({
   isGone: GONE_STATUSES.includes(status),
 })
 
-export const createWebPushSender = (keys: VapidKeys, now: Date): PushSender => {
+export const createWebPushSender = (keys: VapidKeys, now: Date, timeoutMilliseconds = PUSH_REQUEST_TIMEOUT_MS): PushSender => {
   const tokens = new Map<string, Promise<string>>()
 
   const getToken = (audience: string): Promise<string> => {
@@ -177,6 +178,7 @@ export const createWebPushSender = (keys: VapidKeys, now: Date): PushSender => {
           ...(topic ? { Topic: topic } : {}),
         },
         body,
+        signal: AbortSignal.timeout(timeoutMilliseconds),
       })
       await response.body?.cancel()
       return toPushResult(response.status)

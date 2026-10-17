@@ -10,6 +10,7 @@ interface RecordedRequest {
   method: string
   headers: Headers
   body: Bytes
+  signal: AbortSignal | null
 }
 
 const RFC_PLAINTEXT = 'When I grow up, I want to be a watermelon'
@@ -111,6 +112,7 @@ const useFakePushService = (context: TestContext, reply: (request: RecordedReque
       method: request.method,
       headers: request.headers,
       body: new Uint8Array(await request.arrayBuffer()),
+      signal: init?.signal ?? null,
     }
     requests = [...requests, recorded]
     return reply(recorded)
@@ -243,4 +245,18 @@ test('createWebPushSender reports gone subscriptions and failed requests', async
   assert.deepEqual(await sendTo('busy'), { status: 429, isDelivered: false, isGone: false })
   assert.deepEqual(await sendTo('offline'), { status: 0, isDelivered: false, isGone: false })
   assert.equal(errorLog.mock.callCount(), 1)
+})
+
+test('createWebPushSender stops waiting for a push service that does not answer', { timeout: 5000 }, async (context) => {
+  const { keys } = await createVapidKeys()
+  const userAgent = await createUserAgentKeys()
+  context.mock.method(console, 'error', () => {})
+  useFakePushService(context, ({ signal }) => new Promise((_, reject) => {
+    signal?.addEventListener('abort', () => reject(signal.reason))
+  }))
+  const send = createWebPushSender(keys, new Date('2026-10-09T06:00:00Z'), 20)
+
+  const result = await send({ endpoint: 'https://fcm.googleapis.com/fcm/send/silent', ...userAgent }, {}, { ttlSeconds: 60, urgency: 'normal' })
+
+  assert.deepEqual(result, { status: 0, isDelivered: false, isGone: false })
 })

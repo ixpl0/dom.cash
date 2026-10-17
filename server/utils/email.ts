@@ -1,6 +1,8 @@
 import { createError, getCookie, type H3Event } from 'h3'
+import { z } from 'zod'
 import { ERROR_KEYS } from '~~/shared/utils/shared/error-keys'
 import { isTestMode } from '~~/server/utils/test-mode'
+import { secureLog } from '~~/server/utils/secure-logger'
 import { LOCALE_COOKIE_NAME } from '~~/shared/utils/shared/locale'
 
 export type EmailTemplate = 'verification' | 'reset-password'
@@ -81,6 +83,16 @@ const buildText = (template: EmailTemplate, code: string, language: EmailLanguag
   return `${content.message} ${code}\n${content.expiration}`
 }
 
+const resendErrorSchema = z.object({ name: z.string() })
+
+const readResendErrorName = async (response: Response): Promise<string | null> => {
+  const body: unknown = await response.json().catch(() => null)
+  const parsed = resendErrorSchema.safeParse(body)
+  return parsed.success ? parsed.data.name : null
+}
+
+const createSendError = () => createError({ statusCode: 500, message: ERROR_KEYS.FAILED_TO_SEND_EMAIL })
+
 export const sendVerificationEmail = async (params: EmailParams): Promise<void> => {
   const { event, to, code, template, language = getEmailLanguage(event) } = params
   if (isTestMode()) {
@@ -97,30 +109,27 @@ export const sendVerificationEmail = async (params: EmailParams): Promise<void> 
 
   const content = TEMPLATES[language][template]
 
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'dom.cash <noreply@domcash.ixplo.ai>',
-        to: [to],
-        subject: content.subject,
-        html: buildHtml(template, code, language),
-        text: buildText(template, code, language),
-        tags: [{ name: 'type', value: template }],
-      }),
-    })
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'dom.cash <noreply@domcash.ixplo.ai>',
+      to: [to],
+      subject: content.subject,
+      html: buildHtml(template, code, language),
+      text: buildText(template, code, language),
+      tags: [{ name: 'type', value: template }],
+    }),
+  }).catch((error: unknown) => {
+    secureLog.error('Resend request failed:', error)
+    throw createSendError()
+  })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('Resend API error:', errorData)
-      throw new Error('Resend API request failed')
-    }
-  }
-  catch {
-    throw createError({ statusCode: 500, message: ERROR_KEYS.FAILED_TO_SEND_EMAIL })
+  if (!response.ok) {
+    secureLog.error('Resend API error:', { status: response.status, name: await readResendErrorName(response) })
+    throw createSendError()
   }
 }

@@ -3,6 +3,7 @@ import { test } from 'node:test'
 import { parseServiceWorkerMessage } from '../../app/utils/push'
 import { appendErrorReason } from '../../app/utils/server-error'
 import { toSupportedLocale } from '../../shared/utils/shared/locale'
+import { FOREIGN_ADDRESSES } from './helpers/redirect-cases'
 
 test('parseServiceWorkerMessage reads task changes and navigation inside the app', () => {
   assert.deepEqual(parseServiceWorkerMessage({ type: 'todo-changed' }), { type: 'todo-changed' })
@@ -12,8 +13,10 @@ test('parseServiceWorkerMessage reads task changes and navigation inside the app
 test('parseServiceWorkerMessage ignores other messages and addresses outside the app', () => {
   assert.equal(parseServiceWorkerMessage(null), null)
   assert.equal(parseServiceWorkerMessage('todo-changed'), null)
-  assert.equal(parseServiceWorkerMessage({ type: 'navigate', url: 'https://example.com' }), null)
-  assert.equal(parseServiceWorkerMessage({ type: 'navigate', url: '//example.com/todo' }), null)
+  assert.deepEqual(
+    FOREIGN_ADDRESSES.map(url => parseServiceWorkerMessage({ type: 'navigate', url })),
+    FOREIGN_ADDRESSES.map(() => null),
+  )
   assert.equal(parseServiceWorkerMessage({ type: 'navigate' }), null)
   assert.equal(parseServiceWorkerMessage({ type: 'reload' }), null)
 })
