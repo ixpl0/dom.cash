@@ -6,7 +6,6 @@ import type { SupportedLocale } from '~~/shared/utils/shared/locale'
 import type { ZonedTime } from '~~/shared/utils/shared/time-zones'
 
 export interface DigestTodo {
-  id: string
   content: string
   plannedDate: string | null
 }
@@ -134,9 +133,6 @@ export const buildTodoDigestMessage = (
     ...(hiddenOverdueCount > 0 ? [formatCountedPushText(locale, 'moreOverdue', hiddenOverdueCount)] : []),
     ...(hiddenUndatedCount > 0 ? [formatCountedPushText(locale, 'moreUndated', hiddenUndatedCount)] : []),
   ]
-  const listedTodos: DigestTodo[] = [...listedToday, ...listedOverdue, ...listedUndated]
-  const hasHiddenTodos = hiddenTodayCount + hiddenOverdueCount + hiddenUndatedCount > 0
-  const [singleTodo] = listedTodos.length === 1 && !hasHiddenTodos ? listedTodos : []
 
   return {
     title: getDigestTitle(dueToday.length, remindedOverdue.length, overdue.length, undated.length, locale),
@@ -144,13 +140,6 @@ export const buildTodoDigestMessage = (
     tag: TODO_DIGEST_TAG,
     url: TODO_DIGEST_URL,
     isSilent: true,
-    todo: singleTodo ? { id: singleTodo.id, plannedDate: singleTodo.plannedDate } : null,
-    actions: singleTodo
-      ? [
-          { action: 'complete', title: getPushText(locale, 'complete') },
-          { action: 'postpone', title: getPushText(locale, 'postpone') },
-        ]
-      : [],
   }
 }
 
@@ -160,6 +149,4 @@ export const buildTestPushMessage = (locale: SupportedLocale): PushMessage => ({
   tag: PUSH_TEST_TAG,
   url: TODO_DIGEST_URL,
   isSilent: true,
-  todo: null,
-  actions: [],
 })

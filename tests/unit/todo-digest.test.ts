@@ -9,7 +9,7 @@ import { getZonedTime, isValidTimeZone } from '../../shared/utils/shared/time-zo
 
 const TODAY = '2026-10-09'
 
-const todoOn = (id: string, plannedDate: string | null, content = `Task ${id}`): DigestTodo => ({ id, content, plannedDate })
+const todoOn = (name: string, plannedDate: string | null, content = `Task ${name}`): DigestTodo => ({ content, plannedDate })
 
 const digest = (todos: readonly DigestTodo[], overdueMode: TodoDigestOverdueMode, locale: SupportedLocale, includeUndated = false) =>
   buildTodoDigestMessage(todos, { today: TODAY, overdueMode, includeUndated, locale })
@@ -75,18 +75,24 @@ test('buildTodoDigestMessage lists the tasks for today in a silent notification'
     tag: 'todo-digest',
     url: '/todo',
     isSilent: true,
-    todo: null,
-    actions: [],
   })
 })
 
-test('buildTodoDigestMessage offers actions when the digest names a single task', () => {
-  const message = digest([todoOn('a', TODAY, 'Оплатить интернет')], 'fading', 'ru')
-
-  assert.equal(message?.title, '1 задача на сегодня')
-  assert.equal(message?.body, 'Оплатить интернет')
-  assert.deepEqual(message?.todo, { id: 'a', plannedDate: TODAY })
-  assert.deepEqual(message?.actions, [{ action: 'complete', title: 'Готово' }, { action: 'postpone', title: 'Завтра' }])
+test('buildTodoDigestMessage names a single task without buttons', () => {
+  assert.deepEqual(digest([todoOn('a', TODAY, 'Оплатить интернет')], 'fading', 'ru'), {
+    title: '1 задача на сегодня',
+    body: 'Оплатить интернет',
+    tag: 'todo-digest',
+    url: '/todo',
+    isSilent: true,
+  })
+  assert.deepEqual(digest([todoOn('cv', null, 'Sync the CV')], 'fading', 'en', true), {
+    title: '1 task without a date',
+    body: 'Sync the CV · no date',
+    tag: 'todo-digest',
+    url: '/todo',
+    isSilent: true,
+  })
 })
 
 test('buildTodoDigestMessage reminds of an overdue task quietly on fading days only', () => {
@@ -97,7 +103,6 @@ test('buildTodoDigestMessage reminds of an overdue task quietly on fading days o
   assert.equal(thirdDay?.title, '1 overdue task')
   assert.equal(thirdDay?.body, 'Book the dentist · 3 days ago')
   assert.equal(thirdDay?.isSilent, true)
-  assert.deepEqual(thirdDay?.todo, { id: 'dentist', plannedDate: '2026-10-06' })
   assert.equal(digest([todoOn('dentist', '2026-10-07')], 'fading', 'en'), null)
   assert.equal(digest([todoOn('dentist', '2026-10-07')], 'daily', 'en')?.body, 'Task dentist · 2 days ago')
   assert.equal(digest([dentist], 'off', 'en'), null)
@@ -115,8 +120,6 @@ test('buildTodoDigestMessage counts overdue tasks it does not name', () => {
 
   assert.equal(message?.title, '1 задача на сегодня')
   assert.equal(message?.body, 'Water the plants\nCall grandma · 1 день назад\nи ещё 2 просроченные')
-  assert.equal(message?.todo, null)
-  assert.deepEqual(message?.actions, [])
   assert.equal(digest(todos, 'off', 'ru')?.body, 'Water the plants')
 })
 
@@ -171,8 +174,6 @@ test('buildTodoDigestMessage lists tasks without a date only when they are due',
     tag: 'todo-digest',
     url: '/todo',
     isSilent: true,
-    todo: null,
-    actions: [],
   })
 })
 
@@ -191,14 +192,6 @@ test('buildTodoDigestMessage puts tasks without a date after the dated ones', ()
 
   assert.equal(withQuietOverdue?.title, '1 task without a date')
   assert.equal(withQuietOverdue?.body, 'Task undated-0 · no date\nand 1 more overdue')
-  assert.equal(withQuietOverdue?.todo, null)
-})
-
-test('buildTodoDigestMessage offers actions for a single task without a date', () => {
-  const message = digest([todoOn('cv', null, 'Sync the CV')], 'fading', 'en', true)
-
-  assert.deepEqual(message?.todo, { id: 'cv', plannedDate: null })
-  assert.deepEqual(message?.actions.map(({ action }) => action), ['complete', 'postpone'])
 })
 
 test('shortenTodoContent keeps the first line and cuts long text without breaking characters', () => {

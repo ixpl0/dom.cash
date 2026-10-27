@@ -5,14 +5,13 @@ import { appendErrorReason } from '../../app/utils/server-error'
 import { toSupportedLocale } from '../../shared/utils/shared/locale'
 import { FOREIGN_ADDRESSES } from './helpers/redirect-cases'
 
-test('parseServiceWorkerMessage reads task changes and navigation inside the app', () => {
-  assert.deepEqual(parseServiceWorkerMessage({ type: 'todo-changed' }), { type: 'todo-changed' })
+test('parseServiceWorkerMessage reads navigation inside the app', () => {
   assert.deepEqual(parseServiceWorkerMessage({ type: 'navigate', url: '/todo' }), { type: 'navigate', url: '/todo' })
 })
 
 test('parseServiceWorkerMessage ignores other messages and addresses outside the app', () => {
   assert.equal(parseServiceWorkerMessage(null), null)
-  assert.equal(parseServiceWorkerMessage('todo-changed'), null)
+  assert.equal(parseServiceWorkerMessage('navigate'), null)
   assert.deepEqual(
     FOREIGN_ADDRESSES.map(url => parseServiceWorkerMessage({ type: 'navigate', url })),
     FOREIGN_ADDRESSES.map(() => null),

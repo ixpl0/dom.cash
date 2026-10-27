@@ -39,7 +39,7 @@ const readZonedTime = (now: Date, timeZone: string): ZonedTime | null => {
 
 export const listDigestTodos = async (userId: string, today: string, database: Database): Promise<DigestTodo[]> => {
   const todoRows = await database
-    .select({ id: todo.id, content: todo.content, plannedDate: todo.plannedDate })
+    .select({ content: todo.content, plannedDate: todo.plannedDate })
     .from(todo)
     .where(and(
       isVisibleTo(database, userId),
@@ -48,8 +48,7 @@ export const listDigestTodos = async (userId: string, today: string, database: D
     ))
     .orderBy(asc(todo.plannedDate), asc(todo.createdAt))
 
-  return todoRows.map(({ id, content, plannedDate }) => ({
-    id,
+  return todoRows.map(({ content, plannedDate }) => ({
     content,
     plannedDate: plannedDate === null ? null : getPlainDate(plannedDate),
   }))

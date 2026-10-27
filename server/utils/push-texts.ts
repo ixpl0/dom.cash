@@ -5,7 +5,7 @@ type PluralForms = readonly [string, ...string[]]
 
 type CountedTextKey = 'todayTitle' | 'overdueTitle' | 'undatedTitle' | 'daysAgo' | 'moreToday' | 'moreOverdue' | 'moreUndated'
 
-type PlainTextKey = 'noDate' | 'complete' | 'postpone' | 'testTitle' | 'testBody'
+type PlainTextKey = 'noDate' | 'testTitle' | 'testBody'
 
 interface PushTexts {
   counted: Record<CountedTextKey, PluralForms>
@@ -25,8 +25,6 @@ const PUSH_TEXTS: Record<SupportedLocale, PushTexts> = {
     },
     plain: {
       noDate: 'no date',
-      complete: 'Done',
-      postpone: 'Tomorrow',
       testTitle: 'Notifications work',
       testBody: 'This is how the daily task digest will arrive',
     },
@@ -43,8 +41,6 @@ const PUSH_TEXTS: Record<SupportedLocale, PushTexts> = {
     },
     plain: {
       noDate: 'без даты',
-      complete: 'Готово',
-      postpone: 'Завтра',
       testTitle: 'Уведомления работают',
       testBody: 'Так будет приходить сводка задач',
     },

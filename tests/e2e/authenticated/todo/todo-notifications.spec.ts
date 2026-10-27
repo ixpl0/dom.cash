@@ -73,19 +73,17 @@ test.describe('Todo notifications', () => {
     const today = toLocalIsoDate(new Date())
     const createResponse = await request.post('/api/todo', { data: { content: 'Pay for the internet', plannedDate: `${today}T00:00` } })
     expect(createResponse.ok()).toBe(true)
-    const { id } = await createResponse.json()
 
     expect(await sendTodoDigestNow(request, today)).toBe(1)
 
     const [, digest] = await readRecordedPushes(request, endpoint)
-    expect(digest).toEqual(expect.objectContaining({
+    expect(digest).toEqual({
+      title: '1 task for today',
+      body: 'Pay for the internet',
       tag: 'todo-digest',
       url: '/todo',
-      body: 'Pay for the internet',
       isSilent: true,
-      todo: { id, plannedDate: today },
-    }))
-    expect(digest?.actions.map(({ action }) => action)).toEqual(['complete', 'postpone'])
+    })
   })
 
   test('should remind of tasks without a date when the user asks for it', async ({ page, context, request }) => {
@@ -98,7 +96,7 @@ test.describe('Todo notifications', () => {
     await expect(page.getByTestId('todo-notifications-undated')).toHaveValue('off')
 
     const createResponse = await request.post('/api/todo', { data: { content: 'Close the TBC card' } })
-    const { id } = await createResponse.json()
+    expect(createResponse.ok()).toBe(true)
     const today = toLocalIsoDate(new Date())
     expect(await sendTodoDigestNow(request, today)).toBe(0)
 
@@ -110,22 +108,7 @@ test.describe('Todo notifications', () => {
     expect(await readRecordedPushes(request, endpoint)).toEqual([expect.objectContaining({
       title: '1 task without a date',
       body: 'Close the TBC card · no date',
-      todo: { id, plannedDate: null },
     })])
-  })
-
-  test('should move a task from the digest to tomorrow and complete it', async ({ request }) => {
-    const today = toLocalIsoDate(new Date())
-    const tomorrow = toLocalIsoDate(new Date(Date.now() + 24 * 60 * 60 * 1000))
-    const createResponse = await request.post('/api/todo', { data: { content: 'Call grandma', plannedDate: `${today}T00:00` } })
-    const { id } = await createResponse.json()
-
-    const moveResponse = await request.put(`/api/todo/${encodeURIComponent(id)}/planned-date`, { data: { plannedDate: today, newPlannedDate: tomorrow } })
-    expect(moveResponse.ok()).toBe(true)
-    expect(await moveResponse.json()).toEqual(expect.objectContaining({ plannedDate: `${tomorrow}T00:00`, isCompleted: false }))
-
-    const staleResponse = await request.put(`/api/todo/${encodeURIComponent(id)}/completion`, { data: { isCompleted: true, plannedDate: today } })
-    expect(await staleResponse.json()).toEqual(expect.objectContaining({ plannedDate: `${tomorrow}T00:00`, isCompleted: false }))
   })
 
   test('should explain that notifications are blocked and notice when they get allowed', async ({ page, context }) => {

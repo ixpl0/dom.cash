@@ -13,16 +13,12 @@ export default defineNuxtPlugin({
 
     const { $i18n } = useNuxtApp()
     const { user } = useAuthState()
-    const todoStore = useTodoStore()
     const notificationsStore = useTodoNotificationsStore()
 
     navigator.serviceWorker.addEventListener('message', (event: MessageEvent<unknown>) => {
       const message = parseServiceWorkerMessage(event.data)
 
-      if (message?.type === 'todo-changed') {
-        todoStore.markStale()
-      }
-      else if (message?.type === 'navigate') {
+      if (message) {
         navigateTo(message.url)
       }
     })

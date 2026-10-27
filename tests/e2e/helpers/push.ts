@@ -8,8 +8,6 @@ export interface RecordedPushMessage {
   tag: string
   url: string
   isSilent: boolean
-  todo: { id: string, plannedDate: string } | null
-  actions: Array<{ action: string, title: string }>
 }
 
 interface RecordedPush {

@@ -5,7 +5,10 @@ import type { SupportedLocale } from '~~/shared/utils/shared/locale'
 import { isAppPath } from '~~/shared/utils/shared/redirect'
 import { isValidTimeZone } from '~~/shared/utils/shared/time-zones'
 
-export type ServiceWorkerMessage = { type: 'todo-changed' } | { type: 'navigate', url: string }
+export interface ServiceWorkerMessage {
+  type: 'navigate'
+  url: string
+}
 
 export const SERVICE_WORKER_URL = '/sw.js'
 
@@ -19,9 +22,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export const parseServiceWorkerMessage = (data: unknown): ServiceWorkerMessage | null => {
   if (!isRecord(data)) {
     return null
-  }
-  if (data.type === 'todo-changed') {
-    return { type: 'todo-changed' }
   }
   if (data.type === 'navigate' && isAppPath(data.url)) {
     return { type: 'navigate', url: data.url }

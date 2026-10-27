@@ -16,21 +16,9 @@ const readMessage = (event) => {
   }
 }
 
-const toLocalIsoDate = (date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const getTomorrow = () => {
-  const now = new Date()
-  return toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1))
-}
-
 const showMessage = (message) => {
   if (!message) {
-    return self.registration.showNotification(DEFAULT_TITLE, { icon: ICON_URL, badge: BADGE_URL, data: { url: DEFAULT_URL, todo: null } })
+    return self.registration.showNotification(DEFAULT_TITLE, { icon: ICON_URL, badge: BADGE_URL, data: { url: DEFAULT_URL } })
   }
 
   return self.registration.showNotification(message.title, {
@@ -40,8 +28,7 @@ const showMessage = (message) => {
     silent: Boolean(message.isSilent),
     icon: ICON_URL,
     badge: BADGE_URL,
-    data: { url: message.url || DEFAULT_URL, todo: message.todo || null },
-    actions: Array.isArray(message.actions) ? message.actions : [],
+    data: { url: message.url || DEFAULT_URL },
   })
 }
 
@@ -78,55 +65,6 @@ const openApp = async (url) => {
   appWindow.postMessage({ type: 'navigate', url: appPath })
 }
 
-const announceTodoChange = async () => {
-  const windows = await getAppWindows()
-  windows.forEach(client => client.postMessage({ type: 'todo-changed' }))
-}
-
-const createTodoRequest = (action, todo) => {
-  const todoPath = `/api/todo/${encodeURIComponent(todo.id)}`
-
-  switch (action) {
-    case 'complete': {
-      return { path: `${todoPath}/completion`, body: { isCompleted: true, plannedDate: todo.plannedDate } }
-    }
-    case 'postpone': {
-      return { path: `${todoPath}/planned-date`, body: { plannedDate: todo.plannedDate, newPlannedDate: getTomorrow() } }
-    }
-    default: {
-      return null
-    }
-  }
-}
-
-const runTodoAction = async (action, { url, todo }) => {
-  const request = todo ? createTodoRequest(action, todo) : null
-
-  if (!request) {
-    await openApp(url)
-    return
-  }
-
-  try {
-    const response = await fetch(request.path, {
-      method: 'PUT',
-      headers: JSON_HEADERS,
-      body: JSON.stringify(request.body),
-      credentials: 'same-origin',
-    })
-
-    if (!response.ok) {
-      await openApp(url)
-      return
-    }
-
-    await announceTodoChange()
-  }
-  catch {
-    await openApp(url)
-  }
-}
-
 const renewSubscription = async (event) => {
   const options = event.oldSubscription ? event.oldSubscription.options : null
   const subscription = event.newSubscription || (options ? await self.registration.pushManager.subscribe(options) : null)
@@ -156,11 +94,11 @@ self.addEventListener('push', (event) => {
 })
 
 self.addEventListener('notificationclick', (event) => {
-  const { notification, action } = event
-  const data = { url: DEFAULT_URL, todo: null, ...notification.data }
+  const { notification } = event
+  const { url } = { url: DEFAULT_URL, ...notification.data }
 
   notification.close()
-  event.waitUntil(action ? runTodoAction(action, data) : openApp(data.url))
+  event.waitUntil(openApp(url))
 })
 
 self.addEventListener('pushsubscriptionchange', (event) => {

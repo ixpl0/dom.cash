@@ -27,11 +27,6 @@ export const todoCompletionSchema = z.object({
   plannedDate: z.iso.date().nullable(),
 })
 
-export const todoPlannedDateSchema = z.object({
-  plannedDate: z.iso.date().nullable(),
-  newPlannedDate: z.iso.date(),
-})
-
 export const updateTodoSchema = z.object({
   content: todoContentSchema.optional(),
   plannedDate: plannedDateSchema.nullable().optional(),

@@ -286,8 +286,6 @@ test('sendTodoDigests sends the digest at the local digest time once a day', asy
       tag: 'todo-digest',
       url: '/todo',
       isSilent: true,
-      todo: null,
-      actions: [],
     },
     options: { ttlSeconds: 12 * 60 * 60, urgency: 'normal', topic: 'todo-digest' },
   }])
@@ -406,7 +404,7 @@ test('sendTodoDigests forgets gone devices and keeps going past a broken time zo
   assert.deepEqual(readEndpoints(database), ['https://fcm.googleapis.com/fcm/send/friend', PHONE_ENDPOINT])
 })
 
-test('sendTodoDigests sends a silent reminder about an overdue task with actions and normal urgency', async () => {
+test('sendTodoDigests sends a silent reminder about an overdue task without buttons and with normal urgency', async () => {
   const database = await createDatabaseWithUsers()
   const db = useDatabase(database.event)
   await subscribeOwner(database)
@@ -416,7 +414,12 @@ test('sendTodoDigests sends a silent reminder about an overdue task with actions
   await sendTodoDigests(db, MOSCOW_NINE_AM, sender.send)
 
   const [sent] = sender.getSent()
-  assert.equal(sent?.message.isSilent, true)
-  assert.deepEqual(sent?.message.todo, { id: 'overdue', plannedDate: '2026-10-08' })
+  assert.deepEqual(sent?.message, {
+    title: '1 overdue task',
+    body: 'Task overdue · 1 day ago',
+    tag: 'todo-digest',
+    url: '/todo',
+    isSilent: true,
+  })
   assert.deepEqual(sent?.options, { ttlSeconds: 12 * 60 * 60, urgency: 'normal', topic: 'todo-digest' })
 })
