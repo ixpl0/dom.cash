@@ -2,7 +2,7 @@
 
 ## Setup & Infrastructure
 
-* **Node**: 22.16+ (`.nvmrc`, `engines` in `package.json`; unit tests use `node:sqlite`). pnpm is pinned via the `packageManager` field.
+* **Node**: 24+ (`.nvmrc`, `engines` in `package.json`; unit tests use `node:sqlite`). pnpm is pinned via the `packageManager` field.
 * **Package manager**: pnpm 10.
 * **Framework**: Nuxt 4 (https://nuxt.com/docs/getting-started/introduction).
 * **Language**: TypeScript 5 (https://www.typescriptlang.org/docs/).
